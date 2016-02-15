@@ -1,0 +1,16 @@
+= Nuclear Invaders
+:revdate: 2016-02-15
+
+// This document is written in AsciiDoc/Asciidoctor format.
+// See: <http://asciidoctor.org>.
+
+// You may do whatever you want with this work, so long as you retain
+// the copyright/authorship/acknowledgment/credit notice(s) and this
+// license in all redistributed copies and derived works.  There is no
+// warranty.
+
+This game is a ZX Spectrum port (for
+http://programandala.net/en.program.solo_forth.html[Solo Forth]),
+under development, of
+http://www.zonadepruebas.com/viewtopic.php?t=4231[Jupiter ACE's
+Nuclear Invaders] (by Dancresp, 2013).
