@@ -1,47 +1,318 @@
-\ Nuclear Invaders
+( Nuclear Invaders )
 
-\ A port for Solo Forth
-\ (http://programandala.net/en.program.solo_forth.html) of a
+  \ XXX UNDER DEVELOPMENT
+
+\ Version 0.0.0+201602151530
+
+\ Description
+
+\ This game is a ZX Spectrum port (for Solo Forth:
+\ http://programandala.net/en.program.solo_forth.html) of a
 \ game written by Dancresp in 2013 for Jupiter ACE
-\ (http://www.zonadepruebas.com/viewtopic.php?t=4231)
+\ (http://www.zonadepruebas.com/viewtopic.php?t=4231).
 
 \ Author: Marcos Cruz (programandala.net)
 
-\ XXX UNDER DEVELOPMENT
+\ License
 
-\ 2016-02-14: Started changing the layout of the original source code.
+\ You may do whatever you want with this work, so long as you
+\ retain the copyright/authorship/acknowledgment/credit
+\ notice(s) and this license in all redistributed copies and
+\ derived works.  There is no warranty.
 
-0 VARIABLE X   0 VARIABLE H   0 VARIABLE V   0 VARIABLE U   0 VARIABLE L
-0 VARIABLE N   0 VARIABLE R   0 VARIABLE P   0 VARIABLE S   0 VARIABLE D
+  \ History
+  \
+  \ 2016-02-14: Started changing the layout of the original
+  \ source code.
+  \
+  \ 2016-02-15: Splitted all lines. Divided the code into
+  \ blocks. A lot of factoring is needed.
 
-: CLRSCR 2 0 AT 608 SPACES ;
+( init )
 
-: PAUSA 0 DO 200 0 DO LOOP LOOP ;
+variable tank-x
+variable shoot-x
+variable shoot-y  \ 0 if no shoot
+variable ufo-x
+variable lifes
+variable phase
+variable record
+variable invader  \ data pointer
+variable score
+variable invaders
 
-: USING AT DUP DUP DUP 1000 < IF 48 EMIT THEN 100 < IF 48 EMIT THEN 10 < IF 48 EMIT THEN . ;
+( clrscr at pause )
 
-: RND 15403 C@ 31 AND ;
+: clrscr  ( -- )
+  2 0 at 608 spaces  ;
+  \ Clear screen except the status bars.
 
-: GRAFICOS 1 3 7 13 15 5 8 4 128 192 224 176 240 160 16 32 1 3 7 13 15 2 10 128 192 224 176 240 64 160 80 8 36 47 59 63 31 8 16 32 72 232 184 248 240 32 16 8 4 15 27 63 63 40 6 32 64 224 176 248 248 40 192 3 31 63 57 63 14 25 12 192 248 252 156 252 112 152 48 3 31 63 57 63 6 13 48 192 248 252 156 252 96 176 12 1 3 3 127 255 255 255 255 0 128 128 252 254 254 254 254 0 7 31 63 109 255 57 16 0 224 248 252 182 255 156 8 4 34 16 8 96 4 18 36 64 136 16 32 12 32 144 72 0 1 1 1 1 1 0 0 66 32 71 15 30 76 135 35 2 100 240 250 217 240 196 18 251 251 251 0 223 223 223 0 0 0 0 0 0 0 255 0 3 28 35 32 33 35 33 32 224 28 226 2 194 226 194 130 37 47 46 38 32 28 3 0 82 122 58 50 2 28 224 0 12039 12255 DO I C! -1 +LOOP ;
+: at  ( y x -- )  swap at-xy  ;  \ XXX TMP
 
-: INSTRU CLS 1 8 AT ." NUCLEAR INVADERS" 6 4 AT ." CONTROLS: LEFT  = Z" 7 14 AT ." RIGHT = X" 8 14 AT ." FIRE  = ENTER" 14 6 AT ." *PRESS KEY TO START*" 21 6 AT ." C SCAINET SOFT, 2013" BEGIN INKEY UNTIL 9 PAUSA ;
+: pause  ( n -- )
+  0 do  200 0 do  loop  loop  ;
 
-: PRESENTA CLS ."  SCORE<1>   HI-SCORE   SCORE<2>" S @ 1 3 USING R @ 1 14 USING 5 14 AT ." PLAY" 7 8 AT ." NUCLEAR INVADERS" 10 5 AT ." *SCORE ADVANCE TABLE*" 12 9 AT ." op =? MYSTERY" 14 9 AT ." cd =30 POINTS" 16 9 AT ." gh =20 POINTS" 18 9 AT ." kl=10 POINTS" 22 4 AT ." mnmn" 13 SPACES ." CREDIT 00" BEGIN INKEY UNTIL CLRSCR 21 1 AT ." wwwwwwwwwwwwwwwwwwwwwwwwwwwwww" 22 2 AT ." 3" 11 9 AT ." PLAY PLAYER<1>" 10 0 DO 1 3 AT 4 SPACES 3 PAUSA 1 3 AT ." 0000" 3 PAUSA LOOP 3 L ! 2 N ! 0 S ! ;
+( .score )
 
-: INICIO CLRSCR 15 15 N @ - DUP U ! AT N @ 2 * 2 + DUP 0 DO ." v" LOOP 4 U @ AT 0 DO ." v" LOOP 3 13 DO U @ DUP I SWAP AT ." v" N @ 0 DO ." xy" LOOP ." v" I 1+ SWAP AT ." v" N @ 0 DO ." z{" LOOP ." v" -2 +LOOP 99 103 DUP 107 DUP 3 13 DO I 1 AT DUP EMIT DUP 1+ EMIT I 29 AT DUP EMIT 1+ EMIT -2 +LOOP 3 0 5 0 99 3 0 7 0 103 3 0 9 0 103 3 0 11 0 107 3 0 5 29 99 3 0 7 29 103 3 0 9 29 103 3 0 11 29 107 3 0 13 29 107 9999 10049 DO I C! -1 +LOOP -200 U ! 3 X ! 0 V ! 10000 P ! 30 D ! ;
+: .score  ( n y x -- )
+  at dup dup dup 1000 < if  [char] 0 emit  then
+                  100 < if  [char] 0 emit  then
+                   10 < if  [char] 0 emit  then .  ;
 
-: MOVER X @ DUP 27 < IF INKEY 120 = IF X @ 1+ X ! THEN THEN 3 > IF INKEY 122 = IF X @ 1- X ! THEN 20 X @ 1- AT ."  mn " ;
+: rnd  ( -- n )
+  15403 c@ 31 and  ;
+  \ Return a random number _n_ (0..31).
 
-: INVASOR P @ C@ O> IF P @ 1+ C@ 0= IF RND D @ 5 < IF 10 ELSE 26 THEN > IF 1 P @ 1+ C! THEN 0 ELSE P @ 10025 < IF 1 ELSE -1 THEN DUP DUP P @ 3 + C@ + P @ 3 + C! P @ 2 + C@ P @ 3 + C@ AT 0> IF SPACE THEN P @ 4 + C@ P @ 3 + C@ 2 MOD 0> IF 2 - THEN DUP EMIT 1+ EMIT 0< IF SPACE THEN P @ 3 + C@ DUP 14 N @ -  = IF DROP 1 ELSE 15 N @ + = IF 1 ELSE 0 THEN THEN THEN ELSE 0 THEN P @ 10045 = IF 10000 ELSE P @ 5 + THEN P ! ;
+( graphics )
 
-: UFO U @ DUP 0< IF 1+ U ! ELSE DUP 27 > IF 3 SWAP AT 3 SPACES -200 U ! ELSE 1+ DUP U ! 3 SWAP AT ."  op" THEN THEN ;
+: graphics  ( -- )
+  1 3 7 13 15 5 8 4
+  128 192 224 176 240 160 16 32
+  1 3 7 13 15 2 10 128
+  192 224 176 240 64 160 80 8
+  36 47 59 63 31 8 16 32
+  72 232 184 248 240 32 16 8
+  4 15 27 63 63 40 6 32
+  64 224 176 248 248 40 192 3
+  31 63 57 63 14 25 12 192
+  248 252 156 252 112 152 48 3
+  31 63 57 63 6 13 48 192
+  248 252 156 252 96 176 12 1
+  3 3 127 255 255 255 255 0
+  128 128 252 254 254 254 254 0  -->
 
-: DISPARO V @ 0= IF INKEY 13 = IF X @ H ! 19 V ! THEN ELSE V @ DUP H @ AT SPACE 5 < IF 0 V ! ELSE V @ 2- V ! IMPACTO 0= IF V @ H @ AT 115 EMIT THEN THEN THEN ;
+( graphics )
 
-: IMPACTO 9216 V @ 32 * + H @ + C@ 32 = IF 0 ELSE V @ 15 < IF V @ 3 = IF 3 U @ 1+ AT ." tu" 18 12 DO I 15 BEEP LOOP RND 12 / 1+ 50 * DUP 3 U @ 1+ AT . S @ + DUP S ! 1 3 USING 20 PAUSA 3 U @ AT 4 SPACES 200 U ! ELSE D @ 1- D ! V @ 3 - 2 / H @ 15 > IF 5 + THEN V @ DUP 5 = IF DROP 30 ELSE 10 > IF 10 ELSE 20 THEN THEN S @ + DUP S ! 1 3 USING 1- 5 * 10000 + V ! V @ 2 + C@ V @ 3 + C@ DUP 15 < IF 1+ THEN 2 PICK 2 PICK AT ." qr" 10 100 BEEP AT 2 SPACES V @ DUP C@ 1- SWAP C! V @ C@ 0> IF 0 V @ 1+ C! H @ 15 < IF 0 ELSE 29 THEN V @ 3 + C! V @ 2 + C@ V @ 3 + C@ AT H @ 15 < IF SPACE THEN V @ 4 + C@ DUP EMIT 1+ EMIT THEN THEN THEN 0 V ! 1 THEN ;
+  7 31 63 109 255 57 16 0
+  224 248 252 182 255 156 8 4
+  34 16 8 96 4 18 36 64
+  136 16 32 12 32 144 72 0
+  1 1 1 1 1 0 0 66
+  32 71 15 30 76 135 35 2
+  100 240 250 217 240 196 18 251
+  251 251 0 223 223 223 0 0
+  0 0 0 0 0 255 0 3
+  28 35 32 33 35 33 32 224
+  28 226 2 194 226 194 130 37
+  47 46 38 32 28 3 0 82
+  122 58 50 2 28 224 0
+  12039 12255 do i c! -1 +loop ;
+  \ Redefine lowercase letters as graphics.
 
-: VIDAS 100 200 DO I 20 BEEP -5 +LOOP 30 PAUSA L @ 1- DUP DUP 0> IF DUP 22 AT . DUP 2 * 2 + 22 SWAP AT 2 SPACES ELSE 17 11 AT ." GAME  OVER" S @ R @ > IF S @ R ! THEN THEN L ! 0= ;
+( Instructions )
 
-: FASE D @ 0= IF N @ DUP 5 < IF 1+ THEN N ! 100 PAUSA INICIO THEN ;
+: instructions  ( -- )
+  cls
+  1 8 at ." nuclear invaders"
+  6 4 at ." controls: left  = z"
+  7 14 at ." right = x"
+  8 14 at ." fire  = enter"
+  14 6 at ." *press key to start*"
+  21 6 at ." c scainet soft, 2013"
+  begin  inkey  until  9 pause  ;
 
-: RUN 9 PAUSA GRAFICOS INSTRU BEGIN PRESENTA BEGIN INICIO BEGIN 2 PAUSA MOVER DISPARO UFO FASE INVASOR UNTIL VIDAS UNTIL 200 PAUSA 0 UNTIL ;
+( presentation )
+
+: presentation  ( -- )
+  cls
+  ."  score<1>   hi-score   score<2>"
+  score @ 1 3 .score
+  record @ 1 14 .score
+  5 14 at ." play"
+  7 8 at ." nuclear invaders"
+  10 5 at ." *score advance table*"
+  12 9 at ." op =? mystery"
+  14 9 at ." cd =30 points"
+  16 9 at ." gh =20 points"
+  18 9 at ." kl=10 points"
+  22 4 at ." mnmn" 13 spaces
+  ." credit 00"
+  begin  inkey  until  clrscr  -->
+
+( presentation )
+
+  21 1 at ." wwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+  22 2 at ." 3"
+  11 9 at ." play player<1>"
+  10 0 do
+    1 3 at 4 spaces  3 pause
+    1 3 at ." 0000" 3 pause
+  loop
+  3 lifes ! 2 phase ! 0 score !  ;
+
+( init )
+
+: init-ufo  ( -- )  -200 ufo-x !  ;
+
+: init
+  clrscr
+  15 15 phase @ - dup ufo-x ! at phase @ 2 * 2+
+  dup 0 do ." v" loop
+  4 ufo-x @ at 0 do ." v" loop
+  3 13 do
+    ufo-x @ dup i swap at ." v"
+    phase @ 0 do ." xy" loop
+    ." v" i 1+ swap at ." v"
+    phase @ 0 do ." z{" loop
+    ." v"
+  -2 +loop  -->
+
+( init )
+
+  99 103 dup 107 dup
+  3 13 do
+    i 1 at dup emit dup 1+ emit i 29 at dup emit 1+ emit
+  -2 +loop
+  3 0 5 0 99 3 0 7
+  0 103 3 0 9 0 103 3
+  0 11 0 107 3 0 5 29
+  99 3 0 7 29 103 3 0
+  9 29 103 3 0 11 29 107
+  3 0 13 29 107
+  9999 10049 do  i c! -1  +loop
+  init-ufo 3 tank-x ! 0 shoot-y !
+  10000 invader ! 30 invaders !  ;
+  \ Start screen.
+
+( move-tank )
+
+: move-tank  ( -- )
+  tank-x @ dup
+  27 < if
+    inkey 120 = if  tank-x @ 1+ tank-x !  then
+  then
+  3 > if
+    inkey 122 = if  tank-x @ 1- tank-x !  then
+  then
+  20 tank-x @ 1- at ."  mn " ;
+
+( move-invader )
+
+: move-invader  ( -- f )
+  invader @ c@ 0> if
+    invader @ 1+ c@ 0= if
+      rnd invaders @ 5 < if 10 else 26 then
+      > if 1 invader @ 1+ c! then 0
+
+-->
+
+( move-invader )
+
+    else
+      invader @ 10025 < if  1  else  -1  then
+      dup dup invader @ 3 + c@ + invader @ 3 + c!
+      invader @ 2+ c@ invader @ 3 + c@ at
+      0> if  space  then
+      invader @ 4 + c@ invader @ 3 + c@ 2 mod 0> if  2-  then
+      dup emit 1+ emit 0< if space then
+      invader @ 3 + c@ dup 14 phase @ -  =
+      if  drop 1  else  15 phase @ + = if  1  else  0  then
+      then
+    then
+  else  0  then
+  invader @ 10045 = if    10000
+                    else  invader @ 5 +
+                    then  invader !  ;
+
+
+( ufo )
+
+: ufo  ( -- )
+  ufo-x @ dup 0<
+  if    1+ ufo-x !
+  else  dup 27 > if     3 swap at 3 spaces init-ufo
+                 else   1+ dup ufo-x ! 3 swap at ."  op"
+                 then
+  then  ;
+
+( impact )
+
+: impact  ( -- f )
+  9216 shoot-y @ 32 * + shoot-x @ + c@ 32 =
+  if  0
+  else
+    shoot-y @ 15 < if
+      shoot-y @ 3 = if
+        3 ufo-x @ 1+ at ." tu"
+        18 12 do  i 15 beep  loop
+        rnd 12 / 1+ 50 * dup 3 ufo-x @ 1+ at
+        . score @ + dup score !
+        1 3 .score 20 pause 3 ufo-x @ at 4 spaces
+        200 ufo-x !
+      else
+
+-->
+
+( impact )
+
+        invaders @ 1- invaders !
+        shoot-y @ 3 - 2 / shoot-x @ 15 >  if  5 +  then
+        shoot-y @ dup 5 = if   drop 30
+                          else 10 > if  10  else  20  then
+                          then
+        score @ + dup score !
+        1 3 .score 1- 5 * 10000 + shoot-y !
+        shoot-y @ 2+ c@ shoot-y @ 3 + c@ dup 15 < if  1+  then
+        2 pick 2 pick at ." qr"
+        10 100 beep at 2 spaces
+
+-->
+
+( impact )
+
+        shoot-y @ dup c@ 1- swap c! shoot-y @ c@ 0> if
+          0 shoot-y @ 1+ c! shoot-x @ 15 < if 0 else 29 then
+          shoot-y @ 3 + c! shoot-y @ 2+ c@ shoot-y @ 3 + c@ at
+          shoot-x @ 15 < if  space  then
+          shoot-y @ 4 + c@ dup emit 1+ emit
+        then
+      then
+    then  shoot-y off  1
+  then  ;
+
+( shoot )
+
+: shoot
+  shoot-y @ 0=
+  if    inkey 13 = if  tank-x @ shoot-x ! 19 shoot-y !  then
+  else  shoot-y @ dup shoot-x @ at space 5 <
+        if    0 shoot-y !
+        else  shoot-y @ 2- shoot-y ! impact 0=
+              if  shoot-y @ shoot-x @ at 115 emit  then
+        then
+  then ;
+
+( alive game-over next-phase )
+
+: alive  ( -- )
+  dup 22 at . dup 2 * 2+ 22 swap at 2 spaces  ;
+
+: game-over  ( -- )
+  17 11 at ." game  over"
+  score @ record @ > if  score @ record !  then  ;
+
+: alive?  ( -- f )
+  100 200 do  i 20 beep  -5 +loop
+  30 pause lifes @ 1- dup dup 0>
+  if  alive  else  game-over  then  lifes ! 0= ;
+
+: next-phase  ( -- )
+  invaders @ 0= if
+    phase @ dup 5 < if  1+  then
+    phase ! 100 pause init
+  then ;
+
+( run )
+
+: run  ( -- )
+  graphics instructions
+  begin  presentation
+    begin  init
+      begin   2 pause
+              move-tank shoot ufo next-phase move-invader
+      until
+      alive?
+    until  200 pause
+  again  ;
+
+\ vim: filetype=soloforth
