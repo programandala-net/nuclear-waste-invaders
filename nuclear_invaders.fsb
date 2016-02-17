@@ -2,7 +2,7 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.0.0+201602160104
+\ Version 0.0.0+201602170319
 
 \ Description
 
@@ -35,7 +35,9 @@ only forth definitions
 need roll       need inkey
 need bleep      need beep>bleep
 need os-chars   need os-udg
-need abort"
+need 2/         need abort"
+
+need benched
 
 [defined] binary  ?\ : binary  ( -- )  2 base !  ;
 
@@ -46,16 +48,16 @@ need abort"
 
 ( Variables) debug-point
 
-variable tank-x   \ coordinate (column)
-variable shoot-x  \ coordinate (column)
-variable shoot-y  \ coordinate (row), 0 if no shoot
-variable ufo-x    \ coordinate (column)
-variable lifes    \ counter
-variable phase    \ counter
-variable score    \ counter
-variable record   \ max score
-variable invaders \ counter
-variable invader  \ data pointer
+variable tank-x       \ coordinate (column)
+variable shoot-x      \ coordinate (column)
+variable shoot-y      \ coordinate (row), 0 if no shoot
+variable ufo-x        \ coordinate (column)
+variable lifes        \ counter (0..3)
+variable phase        \ counter (2..5)
+variable score        \ counter
+variable record       \ max score
+variable invaders     \ counter
+variable invader-type \ element of table  (0..8)
 
 -->
 
@@ -76,16 +78,16 @@ variable invader  \ data pointer
 
 -->
 
-( .score ) debug-point
+( .score .record update-score  ) debug-point
 
-: .score  ( n y x -- )
-  at-yx dup dup dup 1000 < if  [char] 0 emit  then
-                     100 < if  [char] 0 emit  then
-                      10 < if  [char] 0 emit  then .  ;
+: (.score)  ( n x y -- )  at-xy s>d <# # # # #> type  ;
+: .score  ( -- )  score @ 3 1 (.score)  ;
+: .record  ( -- )  record @ 14 1 (.score)  ;
+: update-score  ( n -- )  score +! .score  ;
 
-: rnd  ( -- n )
-  15403 c@ 31 and  ;
+: rnd  ( -- n )  15403 c@ 31 and  ;
   \ Return a random number _n_ (0..31).
+  \ XXX TODO
 
 -->
 
@@ -109,11 +111,6 @@ udg-set os-udg !
 : >udg  ( c -- a )  'a' - scans * udg-set +  ;
   \ Convert UDG char _c_ to the address _a_ of its bitmap.
 
-' >udg >body cell+ constant >'a'
-: debug-point  ( -- )  debug-point
-  >'a' @ 97 <> abort" >udg has been corrupted"  ;
-  \ XXX TMP -- for debugging
-
 : >scan  ( n c -- a )  >udg +  ;
   \ Convert scan number _n_ of UDG char _c_ to its address _a_.
 
@@ -123,17 +120,23 @@ udg-set os-udg !
 
 -->
 
-( graphics-on graphics-off )
+( graphic text mode )
 
-: graphics-on  ( -- )  udg-set 'a' scans * -  os-chars !  ;
-  \ Set the UDG set as main font, pointing the first UDG
-  \ to char 'a'. This way the original code will work without
+udg-set 'a' scans * -  constant graphic
+  \ Address of a presumed font whose char `a` is the first UDG
+  \ of the game.  This way the original code will work without
   \ change.
   \ XXX TMP -- compatibility layer for the original code
 
-: graphics-off ( -- )  15360 os-chars !  ;
-  \ Set the ROM charset.
-  \ XXX TMP -- compatibility layer for the original code
+15360 constant text
+  \ Address of the ROM charset (char 0).
+
+: mode  ( a -- )  os-chars !  ;
+  \ Set the charset to address _a_ (the bitmap of char 0).
+
+  \ Usage examples:
+  \   graphic mode  \ print UDG instead of `a`..`}`
+  \   text mode     \ ROM charset 0..127, plus UDG 128..255
 
 -->
 
@@ -145,14 +148,18 @@ udg-set os-udg !
   loop  drop  ;
   \ Store a 1x1 UDG sprite into char _c_.
 
+: sprite  ( n0..n7 c "name" -- )  dup constant sprite!  ;
+
 : 2sprite!  ( n0..n7 c -- )
   scans 0 do
     dup scans 1+ i - pick flip i scan! 1+  \ first UDG
     dup scans 1+ i - roll      i scan! 1-  \ second UDG
   loop  drop  ;
-  \ Store a 2x1 UDG sprite into char _c_.
+  \ Store a 2x1 UDG sprite into chars _c_ and _c_+1.
   \ Scans _n0..n7_ are 16-bit: high part is char _c_,
   \ and low part is the next char.
+
+: 2sprite  ( n0..n7 c "name" -- )  dup constant 2sprite!  ;
 
 -->
 
@@ -295,7 +302,7 @@ decimal  -->
 ( graphics ) debug-point
 
 binary
-  \ "qr", explosion, frame 2
+  \ "qr", explosion, frame 2 (for invaders)
 0000010001000000
 0010001010001000
 0001000000010000
@@ -312,7 +319,7 @@ decimal  -->
 ( graphics ) debug-point
 
 binary
-  \ "s", char 115, laser
+  \ "s", char 115, projectile
 00000000
 00000001
 00000001
@@ -329,7 +336,7 @@ decimal  -->
 ( graphics ) debug-point
 
 binary
-  \ "tu", explosion, frame 1
+  \ "tu", explosion, frame 1 (for the UFO)
 0000000000000010
 0010000001100100
 0100011111110000
@@ -417,12 +424,12 @@ decimal  -->
 
 : instructions  ( -- )
   cls
-   1 8 at-yx ." nuclear invaders"
-   6 4 at-yx ." controls: left  = z"
-  7 14 at-yx           ." right = x"
-  8 14 at-yx           ." fire  = enter"
-  14 6 at-yx ." *press key to start*"
-  21 6 at-yx ." c scainet soft, 2013"
+   8 1 at-xy ." nuclear invaders"
+   4 6 at-xy ." controls: left  = z"
+  14 7 at-xy           ." right = x"
+  14 8 at-xy           ." fire  = enter"
+  6 14 at-xy ." *press key to start*"
+  6 21 at-xy ." c scainet soft, 2013"
   wait 9 pause  ;
 
 -->
@@ -432,29 +439,27 @@ decimal  -->
 : presentation  ( -- )
   cls
   ."  score<1>   hi-score   score<2>"
-  score @ 1 3 .score
-  record @ 1 14 .score
-  5 14 at-yx ." play"
-  7 8 at-yx ." nuclear invaders"
-  10 5 at-yx ." *score advance table*"
-  12 9 at-yx ." op =? mystery"
-  14 9 at-yx ." cd =30 points"
-  16 9 at-yx ." gh =20 points"
-  18 9 at-yx ." kl=10 points"
-  22 4 at-yx ." mnmn" 13 spaces
-  ." credit 00"
+  .score .record
+  14  5 at-xy ." play"
+   8  7 at-xy ." nuclear invaders"
+   5 10 at-xy ." *score advance table*"
+   9 12 at-xy ." op =? mystery"
+   9 14 at-xy ." cd =30 points"
+   9 16 at-xy ." gh =20 points"
+   9 18 at-xy ." kl=10 points"
+   4 22 at-xy ." mnmn" 13 spaces ." credit 00"
   wait clear-arena  -->
 
 ( presentation ) debug-point
 
-  21 1 at-yx ." wwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
-  22 2 at-yx ." 3"
-  11 9 at-yx ." play player<1>"
+   1 21 at-xy ." wwwwwwwwwwwwwwwwwwwwwwwwwwwwww"
+   2 22 at-xy ." 3"
+   9 11 at-xy ." play player<1>"
+
   10 0 do
-    1 3 at-yx 4 spaces  3 pause
-    1 3 at-yx ." 0000" 3 pause
-  loop
-  3 lifes ! 2 phase ! score off  ;
+   3  1 at-xy 4 spaces  3 pause
+   3  1 at-xy ." 0000" 3 pause
+  loop  ;
 
 -->
 
@@ -464,13 +469,16 @@ decimal  -->
   \ which has the following structure:
   \
   \ +0 = lifes (0..3)
-  \ +1 = active? (0..1)
-  \ +2 = y coordinate (row)
-  \ +3 = x coordinate (column)
-  \ +4 = main graphic (character)
+  \ +2 = active? (0..1)
+  \ +4 = y coordinate (row)
+  \ +6 = x coordinate (column)
+  \ +8 = main graphic (character)
 
   \ The `invader` variable points to the data of the current
   \ invader in the table.
+
+      9 constant invader-types
+8 cells constant /invader-type
 
 create default-invaders-data
   \ Default invaders data table.
@@ -480,43 +488,80 @@ create default-invaders-data
 here
 
   \ lifes    active?   y      x     character
-    3 c,     0 c,      5 c,   0 c,  'c' c,
-    3 c,     0 c,      7 c,   0 c,  'g' c,
-    3 c,     0 c,      9 c,   0 c,  'g' c,
-    3 c,     0 c,     11 c,   0 c,  'k' c,
-    3 c,     0 c,      5 c,  29 c,  'c' c,
-    3 c,     0 c,      7 c,  29 c,  'g' c,
-    3 c,     0 c,      9 c,  29 c,  'g' c,
-    3 c,     0 c,     11 c,  29 c,  'k' c,
-    3 c,     0 c,     13 c,  29 c,  'k' c,
+    3 ,     0 ,      5 ,   0 ,  'c' ,
+    3 ,     0 ,      7 ,   0 ,  'g' ,
+    3 ,     0 ,      9 ,   0 ,  'g' ,
+    3 ,     0 ,     11 ,   0 ,  'k' ,
+    3 ,     0 ,      5 ,  29 ,  'c' ,
+    3 ,     0 ,      7 ,  29 ,  'g' ,
+    3 ,     0 ,      9 ,  29 ,  'g' ,
+    3 ,     0 ,     11 ,  29 ,  'k' ,
+    3 ,     0 ,     13 ,  29 ,  'k' ,
 
 here swap - constant /invaders-data
   \ Space occupied by the invaders data.
 
+-->
+
+( invaders-data ) debug-point
+
 create invaders-data  /invaders-data allot
   \ Current invaders data.
 
+: 'invader   ( -- a )  invader-type @ invaders-data +  ;
+  \ Data address _a_ of the current invader type.
+
+: invader-lifes   ( -- a )  'invader            ;
+: invader-active  ( -- a )  'invader cell+      ;
+: invader-y       ( -- a )  'invader [ 2 cells ] literal +  ;
+: invader-x       ( -- a )  'invader [ 3 cells ] literal +  ;
+: invader-char    ( -- a )  'invader [ 4 cells ] literal +  ;
+
 -->
 
-( draw-containers ) debug-point
+( containers ) debug-point
 
-: .brick  ( -- )  ." v"  ;
+: brick  ( -- )  ." v"  ;
 
-: draw-containers  ( -- )
-  15 15 phase @ - dup ufo-x ! at-yx phase @ 2* 2+
-  dup 0 do  ." v"  loop
-  4 ufo-x @ at-yx 0 do  ." v"  loop
-  3 13 do
-    ufo-x @ dup i at-xy ." v"
-    phase @ 0 do ." xy" loop  \ top of containers
-    ." v" i 1+ at-xy ." v"
-    phase @ 0 do ." z{" loop  \ bottom of containers
-    ." v"
-  -2 +loop  ;
+here 1+ s" vvvvvvvvvvvv" s, constant bricks
+  \ Compile a string of bricks and save the address
+  \ of its first char.
+
+here 1+ s" vxyxyxyxyxy" s, constant containers-top
+here 1+ s" vz{z{z{z{z{" s, constant containers-bottom
+  \ Compile strings which hold a brick followed by nuclear
+  \ containers (top and bottom parts) and save the addresses of
+  \ their first char.
+
+-->
+
+( containers ) debug-point
+
+ 4 constant containers-top-y
+15 constant containers-bottom-y
+
+variable containers-x
+
+: containers  ( -- )
+  15 phase @ - containers-x !
+  bricks phase @ 2* 2+ 2dup
+  containers-x @ containers-bottom-y  at-xy type
+  containers-x @ containers-top-y     at-xy type
+  phase @ 2* 1+  containers-x @
+  containers-top-y [ containers-bottom-y 2- ] literal do
+    2dup 2dup
+    i 1+ at-xy containers-bottom swap type brick
+    i    at-xy containers-top    swap type brick
+  -2 +loop  2drop  ;
+  \ Draw the nuclear containers.
+
+  \ XXX benchmark:  6102 frames / 1000 executions
 
 -->
 
 ( init ) debug-point
+
+: init-game  ( -- )  3 lifes !  2 phase !  score off  ;
 
 : init-invaders-data  ( -- )
   default-invaders-data invaders-data /invaders-data move  ;
@@ -524,7 +569,7 @@ create invaders-data  /invaders-data allot
 : init-ufo  ( -- )  -200 ufo-x !  ;
 
 : init-invaders  ( -- )
-  init-invaders-data  invaders-data invader !  30 invaders !
+  init-invaders-data  0 invader-type !  30 invaders !
   init-ufo  ;
 
 : init-tank  ( -- )  3 tank-x !  shoot-y off  ;
@@ -533,130 +578,230 @@ create invaders-data  /invaders-data allot
 
 ( init ) debug-point
 
-: init  ( -- )
-  clear-arena draw-containers
-  99 103 dup 107 dup
-  3 13 do
-    1 i at-xy dup emit dup 1+ emit 29 i at-xy dup emit 1+ emit
-  -2 +loop
+: .2sprite  ( c -- )  dup emit 1+ emit  ;
 
-  init-invaders init-tank  ;
+: parade  ( -- )
+  99 dup 103 dup 107 dup
+  3 13 do
+     1 i at-xy dup .2sprite
+    29 i at-xy     .2sprite
+  -2 +loop  ;
+  \ XXX TODO -- more legible
+
+: init-arena  ( -- )  clear-arena containers parade  ;
+
+: init-round  ( -- )  init-arena init-invaders init-tank  ;
 
 -->
 
 ( move-tank ) debug-point
 
+20 constant tank-y      \ coordinate (row)
+ 3 constant tank-min-x
+27 constant tank-max-x
+
+: tank-limit  ( column -- column' )
+  tank-max-x min tank-min-x max  ;
+
 : move-tank  ( -- )
-  tank-x @ dup
-  27 < if
-    inkey 'x' = if  1 tank-x +!  then
-  then
-  3 > if
-    inkey 'z' = if  -1 tank-x +!  then
-  then
-  tank-x @ 1- 20 at-xy ."  mn " ;
+  tank-x @  inkey 'x' = abs +  inkey 'z' = +  tank-limit
+  dup tank-x !
+  1- tank-y at-xy ."  mn " ;
 
 -->
 
 ( move-invader ) debug-point
+
+: at-invader  ( -- )  invader-x @ invader-y @ at-xy  ;
+  \ Set the cursor position at the coordinates of the invader.
+
+: invader-frame  ( -- c )
+  invader-char @ invader-x @ 2 mod 0> 2* +  ;
+  \ Frame of the invader.
+
+: .invader-frame  ( -- )  invader-frame .2sprite  ;
+  \ Print the frame of the invader.
+
+: .invader  ( n -- )
+    dup at-invader 0> if  space  then
+    .invader-frame 0< if  space  then  ;
+  \ Print the current invader.
+  \ _n_ is its x increment (1 or -1).
+
+: move-active-invader  ( -- )
+  1 invader-type @ 5 < 0= ?negate  ( 1 | -1 )
+  dup invader-x +!  .invader
+  invader-x @ dup 14 phase @ -  =
+  if  drop 1  else  15 phase @ + =  then  ;  -->
+
+( move-invader ) debug-point
+
+: move-inactive-invader  ( -- )
+  rnd  26 invaders @ 5 < 16 * -  >
+  if  invader-active on  then  ;
+
+: next-invader  ( -- )
+  invader-type @ [ invader-types 1- ] literal =
+  if  invader-type off  else  1 invader-type +!  then  ;
+
+: (move-invader)  ( -- f )
+  invader-active @ if    move-active-invader
+                   else  move-inactive-invader false  then  ;
 
 : move-invader  ( -- f )
-  invader @ c@ 0> if
-    invader @ 1+ c@ 0= if
-      rnd invaders @ 5 < if 10 else 26 then
-      > if 1 invader @ 1+ c! then 0
+  invader-lifes @ if     (move-invader)
+                  else   false
+                  then   next-invader  ;
 
 -->
-
-( move-invader ) debug-point
-
-    else
-      invader @ 10025 < if  1  else  -1  then
-      dup dup invader @ 3 + c@ + invader @ 3 + c!
-      invader @ 2+ c@ invader @ 3 + c@ at-yx
-      0> if  space  then
-      invader @ 4 + c@ invader @ 3 + c@ 2 mod 0> if  2-  then
-      dup emit 1+ emit 0< if space then
-      invader @ 3 + c@ dup 14 phase @ -  =
-      if  drop 1  else  15 phase @ + = if  1  else  0  then
-      then
-    then
-  else  0  then
-  invader @ 10045 = if    10000
-                    else  invader @ 5 +
-                    then  invader !  ;  -->
 
 ( ufo ) debug-point
 
+ 3 constant ufo-y       \ coordinate (row)
+27 constant ufo-max-x   \ coordinate (column)
+
+: ufo-invisible?  ( -- f )  ufo-x @ 0<  ;
+  \ Is the UFO invisible?
+
+: at-ufo  ( -- )  ufo-x @ ufo-y at-xy  ;
+  \ Set the cursor position at the coordinates of the UFO.
+
+: -ufo  ( -- )  at-ufo 3 spaces init-ufo  ;
+  \ Delete and init the UFO.
+
+: ufo-lost?  ( -- f )  ufo-x @ ufo-max-x >  ;
+  \ Is the UFO lost?
+
+: flying-ufo  ( -- )  1 ufo-x +! at-ufo ."  op"  ;
+  \ Update the position of the UFO and show it.
+
+: (ufo)  ( -- )  ufo-lost?  if  -ufo  else  flying-ufo  then  ;
+  \ Manage the UFO.
+
 : ufo  ( -- )
-  ufo-x @ dup 0<
-  if    1+ ufo-x !
-  else  dup 27 > if     3 at-xy 3 spaces init-ufo
-                 else   1+ dup ufo-x ! 3 at-xy ."  op"
-                 then
-  then  ;
+  ufo-invisible? if  1 ufo-x +!  else  (ufo)  then  ;
+  \ Manage the UFO, if it's visible.
+
+-->
+
+( ufo-impacted ) debug-point
+
+: ufo-bang  ( -- )  18 12 do  i 15 beep  loop  ;
+
+: ufo-in-fire  ( -- )  ufo-x @ 1+ ufo-y at-xy ." tu"  ;
+
+: ufo-explosion  ( -- )  ufo-in-fire ufo-bang  ;
+
+: ufo-points  ( -- n )  rnd 12 / 1+ 50 *  ;
+  \ Random points for impacting the UFO.
+
+: ufo-bonus  ( -- )
+  ufo-points dup ufo-x @ 1+ 3 at-xy .  update-score  ;
+  \ Update the score with the UFO bonus.
+
+: ufo-impacted  ( -- )
+  ufo-explosion ufo-bonus 20 pause -ufo  ;
+
+-->
+
+( invader-impacted ) debug-point
+
+: invader-points  ( -- n )
+  shoot-y @ 3 - 2/          \ depending on the row
+  shoot-x @ 15 > abs 5 * +  \ add 5 when x>15  -- XXX why?
+  shoot-y @
+  dup 5 = if  drop 30
+          else  10 > 10 * 20 +  then  ;
+  \ Points for impacting an invader.
+
+: invader-bonus  ( -- )  invader-points  update-score  ;
+  \ Update the score with the invader bonus.
+
+: invader-explosion  ( -- )
+  ;
+  \ XXX TODO
+
+: invader-impacted  ( -- )
+  -1 invaders +!  invader-explosion invader-bonus  ;
 
 -->
 
 ( impact ) debug-point
 
-: impact  ( -- f )
-  9216 shoot-y @ 32 * + shoot-x @ + c@ 32 =
-  if  0
-  else
-    shoot-y @ 15 < if
-      shoot-y @ 3 = if
-        ufo-x @ 1+ 3 at-xy ." tu"
-        18 12 do  i 15 beep  loop
-        rnd 12 / 1+ 50 * dup ufo-x @ 1+ 3 at-xy
-        . score @ + dup score !
-        1 3 .score 20 pause ufo-x @ 3 at-xy 4 spaces
-        200 ufo-x !
-      else
+  \ XXX TODO -- factor
+
+: (impact)  ( -- )
+  shoot-y @ ufo-y = if  ufo-impacted exit  then
+  invader-impacted
+
+  invader-type @ >r
+
+  score @ 1- invader-type !
+    \ XXX TODO -- check the original
+
+  invader-y @ invader-x @ dup 15 < abs +
+  2dup at-yx ." qr"  10 100 beep at-yx 2 spaces
+
+  -1 invader-lifes +!
+  invader-lifes @ if
+    invader-active off
+    shoot-x @ 15 < abs 29 * invader-x !  at-invader
+    shoot-x @ 15 < if  space  then
+    invader-char @ .2sprite
+  then  r> invader-type !  ;
+  \ Manage the impact.
 
 -->
 
 ( impact ) debug-point
 
-        invaders @ 1- invaders !
-        shoot-y @ 3 - 2 / shoot-x @ 15 >  if  5 +  then
-        shoot-y @ dup 5 = if   drop 30
-                          else 10 > if  10  else  20  then
-                          then
-        score @ + dup score !
-        1 3 .score 1- 5 * 10000 + shoot-y !
-        shoot-y @ 2+ c@ shoot-y @ 3 + c@ dup 15 < if  1+  then
-        2dup at-yx ." qr"
-        10 100 beep at-yx 2 spaces
+: impact  ( -- )
+  shoot-y @ 15 < if  (impact)  then  shoot-y off  ;
+  \ Manage the impact, if the projectil is high enough.
 
--->
+: missed?  ( -- )
+  9216 shoot-y @ 32 * + shoot-x @ + c@ bl =  ;
+  \ Did the projectile missed the target?
+  \ XXX TODO adapt
+  \ XXX TODO reverse the logic: keep the target char
 
-( impact ) debug-point
-
-        shoot-y @ dup c@ 1- swap c! shoot-y @ c@ 0> if
-          0 shoot-y @ 1+ c! shoot-x @ 15 < if 0 else 29 then
-          shoot-y @ 3 + c! shoot-y @ 2+ c@
-          shoot-y @ 3 + c@ at-yx
-          shoot-x @ 15 < if  space  then
-          shoot-y @ 4 + c@ dup emit 1+ emit
-        then
-      then
-    then  shoot-y off  1
-  then  ;
+: impact?  ( -- f )
+  missed? if  false  else  impact true  then  ;
+  \ Did the projectil impacted?
+  \ If so, do manage the impact.
 
 -->
 
 ( shoot ) debug-point
 
-: shoot
-  shoot-y @ 0=
-  if    inkey 13 = if  tank-x @ shoot-x ! 19 shoot-y !  then
-  else  shoot-y @ dup shoot-x @ at-yx space 5 <
-        if    shoot-y off
-        else  shoot-y @ 2- shoot-y ! impact 0=
-              if  shoot-y @ shoot-x @ at-yx 115 emit  then
-        then
-  then ;
+: .projectile  ( -- )  shoot-x @ shoot-y @ at-xy 115 emit  ;
+  \ Show the projectile.
+
+: fire?  ( -- f )  inkey 13 =  ;
+
+: fire  ( -- )
+  tank-x @ shoot-x ! [ tank-y 1- ] literal shoot-y !  ;
+  \ The tank fires.
+
+: -projectile  ( -- )  shoot-x @ shoot-y @ at-xy space  ;
+  \ Delete the projectile.
+
+: projectile-lost?  ( -- f )  shoot-y @ 5 <  ;
+  \ Is the projectile lost?
+
+: shooted  ( -- )
+  -projectile projectile-lost?
+  if    shoot-y off
+  else  -2 shoot-y +! impact? ?exit  .projectile  then  ;
+  \ Manage the projectile.
+
+: shooted?  ( -- )  shoot-y @  ;
+  \ Has the tank already shooted?
+
+: shoot  ( -- )
+  shooted? if  shooted exit  then
+  fire? if  fire  then  ;
+  \ Manage the shoot.
 
 -->
 
@@ -685,31 +830,44 @@ create invaders-data  /invaders-data allot
   if  .lifes  else  game-over  then  dup lifes ! 0= ;
 
 : next-phase  ( -- )
-  invaders @ 0= if
-    phase @ dup 5 < if  1+  then  phase ! 100 pause init
-  then ;
+  invaders @ ?exit
+  phase @ 5 < abs +! 100 pause init-round  ;
 
 -->
 
 ( run ) debug-point
 
 : round  ( -- )
+  init-round
   begin   2 pause
           move-tank shoot ufo next-phase move-invader
   until  ;
 
+: game  ( -- )
+  init-game begin  round the-end?  until  200 pause  ;
+
 : run  ( -- )
-  instructions
-  begin  presentation
-    begin  init round the-end?  until  200 pause
-  again  ;
+  instructions begin  presentation game  again  ;
+
+-->
+
+( Debugging tools)
+
+: g0  ( -- )  text mode  0 0 at-xy  ;
+: g1  ( -- )  graphic mode  ;
+: g  ( xt -- )  g1 execute g0  ;
+: cg  ( xt -- )  cls g1 execute g0  ;
+
+init-game init-invaders init-tank
 
   \ ==========================================================
   \ History
 
   \ This is mainly a compilation of the git commit comments.
 
-  \ 2016-02-14: Started changing the layout of the original
+  \ 2016-02-14:
+  \
+  \ Started changing the layout of the original
   \ source code.
   \
   \ 2016-02-15:
@@ -721,13 +879,23 @@ create invaders-data  /invaders-data allot
   \ - Indent the word definitions and the control structures.
   \ - Split lines at 63 columns.
   \ - Add block titles.
+  \ 
+  \ 2016-02-16:
   \
   \ Adapt graphics and data; start factoring.
   \ - Convert the graphics to binary numbers.
   \ - Implement words to define the graphics.
-  \ - Adapt the invaders data.
+  \ - Adapt the invaders' data.
   \ - Factorize some words.
-  \ - Adapt old `pick`.
+  \ - Adapt ACE Forth's `pick`.
   \ - Optimize some code idioms.
+  \
+  \ 2016-02-17:
+  \
+  \ Factor code, improve data, accelerate printing.
+  \ - Factor the shoot manager.
+  \ - Factor the invaders' manager.
+  \ - Make the printing of containers faster.
+  \ - Improve the invaders' data manipulation.
 
 \ vim: filetype=soloforth
