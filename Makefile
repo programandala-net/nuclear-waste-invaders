@@ -20,6 +20,7 @@
 # History
 
 # 2016-03-22: First version, based on the Makefile of Solo Forth.
+# 2016-03-23: Adapted to the new splitted library of Solo Forth.
 
 ################################################################
 # Notes
@@ -48,12 +49,22 @@ clean:
 	rm -f tmp/*
 	rm -f disk_2_nuclear_invaders.mgt
 
+
+main_source_file=src/nuclear_invaders.fsb
+secondary_source_files=$(sort $(wildcard src/00*.fsb))
+library_source_files=$(sort $(wildcard src/lib/*.fsb))
+
+source_files = \
+	$(main_source_file)\ $(secondary_source_files)\ $(library_source_files)
+
 tmp/disk_2_nuclear_invaders.fsb: \
-	src/solo_forth_library.fsb \
-	src/nuclear_invaders.fsb
+	$(secondary_source_files) \
+	$(library_source_files) \
+	$(main_source_file)
 	cat \
-		src/solo_forth_library.fsb \
-		src/nuclear_invaders.fsb \
+		$(secondary_source_files) \
+		$(library_source_files) \
+		$(main_source_file) \
 		> tmp/disk_2_nuclear_invaders.fsb
 
 disk_2_nuclear_invaders.mgt: tmp/disk_2_nuclear_invaders.fsb

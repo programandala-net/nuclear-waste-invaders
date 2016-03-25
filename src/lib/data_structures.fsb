@@ -1,0 +1,71 @@
+  \ data_structures.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 20160324
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Misc words related to data structures.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+( buffer: cvariable enum )
+
+[unneeded] buffer:
+?\ : buffer:  ( u "name" -- )  create allot  ;
+
+[unneeded] cvariable
+?\ : cvariable  ( "name"  -- )  create 1 allot  ;
+
+[unneeded] enum
+?\ : enum  (  n "name" -- n+1 )  dup constant 1+  ;
+
+( set )
+
+: set  ( x a "name" -- )
+  create  swap , ,
+  does>   ( pfa )  dup @ swap cell+ @ !  ;
+
+  \ doc{
+  \
+  \ set  ( x a "name" -- )
+  \
+  \ Define a word "name" which, when executed, will  cause  the
+  \ value _x_  to be stored at _a_.
+  \
+  \ Origin: Forth-79 (Reference Word Set); Forth-83 (Appendix
+  \ B.  Uncontrolled Reference Words).
+  \
+  \ }doc
+
+( link@ link, )
+
+  \ 2015-11-15
+
+  \ Credit:
+  \
+  \ Code written after the description by Rick VanNorman,
+  \ published on Forth Dimensions (volume 20, number 3, pages
+  \ 19-22, 1998-09).
+
+defer link@  ( node1 -- node2 )
+  ' @ ' link@ defer!
+  \ Fetch the linked list node _node_ is pointing to.
+
+: link,  ( node -- )  here over @ , swap !  ;
+  \ Create a new linked list node, pointing to _node_.
+
+  \ vim: filetype=soloforth

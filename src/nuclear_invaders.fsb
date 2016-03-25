@@ -1,8 +1,8 @@
-( Nuclear Invaders )
+( nuclear-invaders )
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.0.0+201602252144
+\ Version 0.0.0+201603260017
 
 \ Description
 
@@ -79,9 +79,11 @@ defer (debug-point)  ' noop ' (debug-point) defer!
   \ Address and size of the screen attributes.
   \ XXX TODO -- not used yet
 
- 2 constant arena-top-y
-21 constant arena-bottom-y
-22 constant status-bar-y
+
+     2 constant arena-top-y
+    21 constant tank-y
+tank-y constant arena-bottom-y
+    23 constant status-bar-y
   \ XXX TMP --
   \ XXX TODO --
 
@@ -100,6 +102,8 @@ defer (debug-point)  ' noop ' (debug-point) defer!
 -->
 
 ( Colors) debug-point
+
+  \ XXX TODO -- move to the library of Solo Forth.
 
 : set-color  ( b -- )  23695 c!  ;
   \ Set the attribute _b_ as the current color, by modifying
@@ -213,7 +217,7 @@ create controls  here
 here swap - /controls / constant max-controls
   \ Number of controls stored in `controls`.
 
--->
+max-controls 1- constant last-control  -->
 
 ( next-controls )
 
@@ -239,7 +243,7 @@ current-controls @ set-controls
   \ Default controls.
 
 : next-controls  ( -- )
-  current-controls @ 1+  dup max-controls > 0= abs *
+  current-controls @ 1+  dup last-control > 0= abs *
   dup current-controls !  set-controls  ;
   \ Change the current controls.
 
@@ -255,6 +259,9 @@ current-controls @ set-controls
 
 ( udg-set udg>bitmap >scan scan! ) debug-point
 
+        $80 constant first-udg  \ first UDG code in Solo Forth
+        $FF constant last-udg   \ last UDG code in Solo Forth
+
         128 constant udgs       \ number of UDGs \ XXX TMP --
           8 constant /udg       \ bytes per UDG
 udgs /udg * constant /udg-set   \ size of the UDG set in bytes
@@ -265,9 +272,8 @@ udg-set os-udg !
   \ Point system UDG to the game UDG set.
   \ Solo Forth will use this set for chars 128..255.
 
-: udg>bitmap  ( c -- a )  $80 - /udg * udg-set +  ;
+: udg>bitmap  ( c -- a )  first-udg - /udg * udg-set +  ;
   \ Convert UDG char _c_ to the address _a_ of its bitmap.
-  \ $80 is the code of the first UDG in Solo Forth.
 
 : >scan  ( n c -- a )  udg>bitmap +  ;
   \ Convert scan number _n_ of UDG char _c_ to its address _a_.
@@ -384,8 +390,6 @@ variable player   1 player !   \ XXX TODO -- not used yet
 
 ( latest-sprite-width latest-sprite-height )
 
-$80 constant first-udg
-$FF constant last-udg
     variable >udg  first-udg >udg !  \ next free UDG
 
 variable latest-sprite-width
@@ -1199,7 +1203,9 @@ decimal  -->
 
 ( instructions ) debug-point
 
-: show-controls  ( -- )  0 12 at-xy .controls  ;
+: at-controls  ( -- )  0 12 at-xy  ;
+
+: show-controls  ( -- )  at-controls .controls  ;
 
 : menu  ( -- )
   begin
@@ -1255,21 +1261,21 @@ arena-top-y columns * attributes + constant arena-top-attribute
 
 ( game-screen ) debug-point
 
-: row>pixel  ( n1 -- n2 )  8 * 191 -  ;
+: row>pixel  ( n1 -- n2 )  8 * 191 swap -  ;
   \ Convert a row (0..23) to a pixel y coordinate (0..191).
 
 : bar-ruler  ( -- )
-  text-color 0 status-bar-y row>pixel plot 255 0 adraw  ;
+  text-color
+  [ tank-y row>pixel 8 - ] literal
+  0 over plot  255 swap adraw  ;
   \ Draw the ruler of the status bar.
 
-: .life-icons  ( -- )
-  life-color
-  lifes @ 0 ?do  tank$ type  loop  ."   "  ;
-  \ Print one icon for each remaining life.
+: at-lifes  ( -- )  0 status-bar-y at-xy  ;
 
 : .lifes  ( -- )
-  2 status-bar-y at-xy lifes text-color ? .life-icons  ;
-  \ Print number of lifes and life icons.
+  at-lifes life-color
+  lifes @ 0 ?do  tank$ type  loop  ."   "  ;
+  \ Print one icon for each remaining life.
 
 : status-bar  ( -- )  bar-ruler .lifes  ;
 
@@ -1447,7 +1453,6 @@ variable containers-left-x   variable containers-right-x
 
   \ XXX TODO -- try
 
-                   20 constant tank-y
                     1 constant tank-min-x
 columns udg/tank - 1- constant tank-max-x
   \ Mininum and maximin columns of the tank.
@@ -1981,7 +1986,7 @@ variable delay  50 delay !  \ ms
   container-bottom .2x1sprite 8 emit 8 emit
   broken-bottom-left-container .1x1sprite
   xy swap 1+ swap at-xy
-  container-bottom .2x1sprite 
+  container-bottom .2x1sprite
   container-bottom .2x1sprite 8 emit
   broken-bottom-right-container .1x1sprite cr  ;
   \ Show the graphics of the broken containers.
@@ -2095,6 +2100,11 @@ init-level
   \ - Add broken container effect.
   \ - Fix the color of the number of lifes.
   \
-  \ XXX -- commited here
+  \ 2016-03-25:
+  \
+  \ - Update to the new organization of the Solo Forth library.
+  \ - Fix the status bar.
+  \ - Modify the printing of lifes.
+  \ - Fix the count of controls.
 
   \ vim: filetype=soloforth
