@@ -8032,13 +8032,14 @@ arena-top-y columns * attributes + constant arena-top-attribute
 
 ( game-screen ) debug-point
 
+need pixel-addr
+
 : row>pixel  ( n1 -- n2 )  8 * 191 swap -  ;
   \ Convert a row (0..23) to a pixel y coordinate (0..191).
 
 : bar-ruler  ( -- )
-  text-color
-  [ tank-y row>pixel 8 - ] literal
-  0 over plot  255 swap adraw  ;
+  [ 0 tank-y row>pixel 8 - pixel-addr nip ] literal
+  columns $FF fill  ;
   \ Draw the ruler of the status bar.
 
 : at-lifes  ( -- )  0 status-bar-y at-xy  ;
@@ -8877,5 +8878,7 @@ init-level
   \ - Fix the status bar.
   \ - Modify the printing of lifes.
   \ - Fix the count of controls.
+  \
+  \ XXX REMARK -- commited here
 
   \ vim: filetype=soloforth

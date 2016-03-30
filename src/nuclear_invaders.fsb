@@ -2,7 +2,7 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.0.0+201603260017
+\ Version 0.0.0+201603301314
 
 \ Description
 
@@ -903,24 +903,6 @@ sprite-string ufo-explosion$  ( -- ca len )
 
 decimal  -->
 
-( ruler ) debug-point
-
-binary
-
-  \ horizontal ruler
-00000000
-00000000
-00000000
-00000000
-00000000
-00000000
-11111111
-00000000
-
-1x1sprite ruler
-
-decimal  -->
-
 ( container-top ) debug-point
 
 binary
@@ -1261,25 +1243,29 @@ arena-top-y columns * attributes + constant arena-top-attribute
 
 ( game-screen ) debug-point
 
+need pixel-addr
+
 : row>pixel  ( n1 -- n2 )  8 * 191 swap -  ;
   \ Convert a row (0..23) to a pixel y coordinate (0..191).
 
-: bar-ruler  ( -- )
-  text-color
-  [ tank-y row>pixel 8 - ] literal
-  0 over plot  255 swap adraw  ;
+: ruler  ( -- )
+  [ 0 tank-y row>pixel 8 - pixel-addr nip ] literal
+  columns $FF fill  ;
   \ Draw the ruler of the status bar.
 
 : at-lifes  ( -- )  0 status-bar-y at-xy  ;
+  \ Set the cursor position to the position of the life icons.
 
 : .lifes  ( -- )
   at-lifes life-color
   lifes @ 0 ?do  tank$ type  loop  ."   "  ;
   \ Print one icon for each remaining life.
 
-: status-bar  ( -- )  bar-ruler .lifes  ;
+: status-bar  ( -- )  ruler .lifes  ;
+  \ Draw the status bar.
 
 : game-screen  ( -- )  init-colors cls score-bar status-bar  ;
+  \ Draw the game screen.
 
 -->
 
@@ -2106,5 +2092,7 @@ init-level
   \ - Fix the status bar.
   \ - Modify the printing of lifes.
   \ - Fix the count of controls.
+  \
+  \ XXX REMARK -- commited here
 
   \ vim: filetype=soloforth

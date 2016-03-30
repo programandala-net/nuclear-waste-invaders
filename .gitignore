@@ -1,6 +1,3 @@
-_doc
-_draft
-_ex
-_original
-_tmp
-_tools
+_meta
+*.szx
+*.z80
