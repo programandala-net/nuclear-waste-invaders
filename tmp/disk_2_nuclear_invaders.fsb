@@ -23,10 +23,18 @@
 \ derived works.  There is no warranty.
 
   \ vim: filetype=soloforth
+  \ 001_loader.fsb
+  \
+  \ This file is part of Nuclear Invaders
+  \ http://programandala.net/en.program.nuclear_invaders.html
+
 ( Nuclear Invaders -- load block  )
 
 2 load
-  \ Compile the `need` utility, which must be on block 2.
+  \ Compile the `need` utility, which must be in block 2.
+
+need locate
+  \ We need the word `locate`
 
 locate nuclear-invaders
   \ Find the block of the game, which must be after the library
@@ -42,18 +50,26 @@ load
   \ Compile the game.
 
   \ vim: filetype=soloforth
-  \ 002_need.fsb
+  \ 002.need.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605071836
 
   \ -----------------------------------------------------------
   \ Description
 
   \ The `need` utility which manages the library dependencies.
   \ It must be at block 2 of the library.
+  \
+  \ The utility consists of words `need`, `needed`, `reneed`
+  \ and `reneeded`. All of them are deferred words. Their
+  \ default behaviour is set by `set-located-need`: locate the
+  \ required word searching the blocks of the library.
+  \
+  \ An alternative faster behaviour is provided by the
+  \ `indexer` tool, in other module.
 
   \ -----------------------------------------------------------
   \ Author
@@ -67,12 +83,52 @@ load
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( contains delimited located )
+  \ -----------------------------------------------------------
+  \ History
 
-  \ XXX TMP
-  \ XXX INFORMER
-  \ : contains  ( ca1 len1 ca2 len2 -- f )  2dup cr type ." in"
-  \ 2over -trailing cr type ." ?" cr .s key drop search nip nip ;
+  \ 2015-06: First version, partly based on code from Afera.
+  \
+  \ 2015-06-25: Fix: `require` and `locate` needed to save the
+  \ parsed words to the circular string buffer.
+  \
+  \ 2015-09-13: Rename `require` to `need`, and all related
+  \ words accordingly.  The reason is `require` and `required`
+  \ are standard words (in Forth-94 and Forth-2012), and should
+  \ not be used for different purposes.
+  \
+  \ 2015-10-05: Fix `needed`. The trailing and leading spaces
+  \ of the string, sometimes used to prevent name clashes, had
+  \ to be removed before `undefined?`. `-leading` has to be
+  \ moved to the kernel.
+  \
+  \ 2015-10-16: Add `[needed]`.  It allows selective
+  \ compilation depending on the word specified by `need` or
+  \ `needed`.  Improve `located`: now the string searched for
+  \ is delimited with spaces. This prevents name clashes and
+  \ makes it unnecessary to add the spaces explicitly in risky
+  \ cases.
+  \
+  \ 2015-10-25: Improve `need` and `needed` a bit.
+  \
+  \ 2016-04-02: Factor `new-needed-word` from `needed`.  This
+  \ change was needed for `indexer`.
+  \
+  \ 2016-04-03: Make `need` and related words deferred. Factor
+  \ `new-needed-word` from `needed`. These changes were needed
+  \ for `indexer`.
+  \
+  \ 2016-04-26: Improve `located`: when the user press the
+  \ break key, throw exception #-28 ("user interrupt");
+  \ formerly the ordinary #-268 ("required, but not located")
+  \ was thrown by the calling word.
+  \
+  \ 2016-05-06: Make `from` and `locate` optional. Compact the
+  \ blocks.
+  \
+  \ 2016-05-07: Improve documentation. Fix the word shown when
+  \ `?locate` throws an error.
+
+( contains delimited located ?located )
 
 : contains  ( ca1 len1 ca2 len2 -- f )  search nip nip  ;
 
@@ -80,7 +136,7 @@ load
   \
   \ contains ( ca1 len1 ca2 len2 -- f )
   \
-  \ Does the string ca1 len1 contains the string ca2 len2?
+  \ Does string _ca1 len1_ contain string _ca2 len2_?
   \
   \ }doc
 
@@ -95,9 +151,9 @@ variable last-locatable  blk/disk 1- last-locatable !
 
   \ doc{
   \
-  \ delimited   ( ca1 len1 -- ca2 len2 )
+  \ delimited  ( ca1 len1 -- ca2 len2 )
   \
-  \ Add a leading space and trailing space to the string _ca1
+  \ Add one leading space and one trailing space to string _ca1
   \ len1_, returning the result _ca2 len2_ in the circular
   \ string buffer.
   \
@@ -108,51 +164,253 @@ variable last-locatable  blk/disk 1- last-locatable !
   default-first-locatable @  first-locatable !
   do  0 i line>string 2over
       contains if  2drop i unloop exit  then
-      break-key? ?leave
-  loop  2drop false  ;
+      break-key? #-28 ?throw \ "user interrupt"
+  loop  2drop 0  ;
 
   \ doc{
   \
-  \ located  ( ca len -- block | false )
+  \ located  ( ca len -- block | 0 )
   \
   \ Locate the first block whose header contains the string _ca
-  \ len_ (but surrounded by spaces), and return its number. If
-  \ not found, return _false_.  The search is case-sensitive.
+  \ len_ (surrounded by spaces), and return its number. If not
+  \ found, return zero.  The search is case-sensitive.
+  \
+  \ }doc
+
+2variable needed-word
+
+-->
+
+( ?located reneeded reneed needed-word [needed] [unneeded] )
+
+: ?located  ( n -- )
+  dup ?exit  needed-word 2@ parsed-name 2! #-268 throw  ;
+
+  \ doc{
+  \
+  \ ?located ( n -- )
+  \
+  \ If _n_ is zero, throw an exception -268 ("required, but not
+  \ located").
+  \
+  \ }doc
+
+defer reneeded  ( ca len -- )
+
+  \ doc{
+  \
+  \ reneeded  ( ca len -- )
+  \
+  \ Load the first block whose header contains the string _ca
+  \ len_ (surrounded by spaces).  If not found, throw an
+  \ exception -268 ("required, but not located").
+  \
+  \ This is a deferred word whose default behaviour is
+  \ `locate-reneeded`.
+  \
+  \ }doc
+
+: locate-reneeded  ( ca len -- )  located ?located load  ;
+
+  \ doc{
+  \
+  \ locate-reneeded  ( ca len -- )
+  \
+  \ Locate the first block whose header contains the string _ca
+  \ len_ (surrounded by spaces), and load it. If not found,
+  \ throw an exception -268 ("required, but not located").
+  \
+  \ This is the default behaviour of the deferred word
+  \ `reneeded`.
+  \
+  \ }doc
+
+defer reneed  ( "name" -- )
+
+  \ doc{
+  \
+  \ reneed  ( ca len -- )
+  \
+  \ Load the first block whose header contains "name" (but
+  \ surrounded by spaces).
+  \
+  \ This is a deferred word whose default behaviour is
+  \ `locate-reneed`.
+  \
+  \ }doc
+
+: locate-reneed  ( "name" -- )
+  parse-name save-string reneeded  ;
+
+  \ doc{
+  \
+  \ locate-reneed  ( ca len -- )
+  \
+  \ Locate the first block whose header contains "name" (but
+  \ surrounded by spaces), and load it.  If not found, throw an
+  \ exception -268 ("required, but not located").
+  \
+  \ This is the default behaviour of the deferred word
+  \ `reneed`.
+  \
+  \ }doc
+
+: [needed]  ( "name" -- f )
+  parse-name needed-word 2@ 2dup or
+  if  compare 0= exit  then  2drop 2drop true  ; immediate
+
+  \ doc{
+  \
+  \ [needed]  ( "name" -- f )
+  \
+  \ Parse "name".  If there's no unresolved `need`, `needed`,
+  \ `reneed` or `reneeded`, return true.  Otherwise, if "name"
+  \ is the needed word specified by the last execution of
+  \ `need` or `needed`, return _true_, else return _false_.
+  \
+  \ }doc
+
+: [unneeded]  ( "name" -- f )
+  postpone [needed] 0=  ; immediate
+
+  \ doc{
+  \
+  \ [unneeded]  ( "name" -- f )
+  \ 
+  \ Parse "name".  If there's no unresolved `need`, `needed`,
+  \ `reneed` or `reneeded`, return false.  Otherwise, if "name"
+  \ is the needed word specified by the last execution of
+  \ `need` or `needed`, return _false_, else return _true_.
+  \
+  \ }doc
+
+: new-needed-word  ( ca len -- ca' len' )
+  -trailing -leading save-string 2dup needed-word 2!  ;
+
+  \ doc{
+  \
+  \ new-needed-word  ( ca1 len -- ca2 len' )
+  \ 
+  \ Remove trailing and leading spaces from the word _ca1 len_,
+  \ which is the parameter of the latest `need` `needed`,
+  \ `reneed` or `reneeded`, store it in the circular string
+  \ buffer and return it as _ca2 len'_ for further processing.
   \
   \ }doc
 
 -->
 
-( ?located locate from reneeded reneed )
+( needed need )
 
-: ?located  ( block | 0 -- )  dup 0= #-268 ?throw  ;
-
-  \ XXX FIXME -- the word shown by the exception may have been
-  \ overwritten in the circular string buffer.
+defer needed  ( ca len -- )
 
   \ doc{
   \
-  \ ?located ( f -- )
+  \ needed  ( ca len -- )
   \
-  \ If f is zero, throw an exception -268.
+  \ If the string _ca len_ is not the name of a word found in
+  \ the current search order, load the first block of the
+  \ library where "name" is included in the block header (but
+  \ surrounded by spaces).  If not found, throw an exception
+  \ -268 ("required, but not located").
+  \
+  \ This is a deferred word whose default behaviour is
+  \ `locate-needed`.
   \
   \ }doc
 
-: locate  ( "name" -- block | false )
-  parse-name save-string located  ;
+: locate-needed  ( ca len -- )
+  \ cr ." need " 2dup type  \ XXX INFORMER
+  needed-word 2@ 2>r  new-needed-word  2dup undefined?
+  if  locate-reneeded  else  2drop  then  2r> needed-word 2!  ;
 
   \ doc{
   \
-  \ locate  ( "name" -- block | false )
+  \ locate-needed  ( ca len -- )
+  \
+  \ If the string _ca len_ is not the name of a word found in
+  \ the current search order, locate the first block of the
+  \ library where "name" is included in the block header (but
+  \ surrounded by spaces), and load it.  If not found, throw an
+  \ exception -268 ("required, but not located").
+  \
+  \ This is the default behaviour of the deferred word
+  \ `needed`.
+  \
+  \ }doc
+
+defer need  ( "name" -- )
+
+  \ doc{
+  \
+  \ need  ( "name" -- )
+  \
+  \ If "name" is not found in the current search order, locate
+  \ the first block of the library where "name" is included is
+  \ the block header (surrounded by spaces), and load it.  If
+  \ not found, throw an exception -268 ("required, but not
+  \ located").
+  \
+  \ This is a deferred word whose default behaviour is
+  \ `locate-need`.
+  \
+  \ }doc
+
+: locate-need  ( "name" -- )  parse-name locate-needed  ;
+
+  \ doc{
+  \
+  \ locate-need  ( "name" -- )
+  \
+  \ If "name" is not found in the current search order, locate
+  \ the first block of the library where "name" is included is
+  \ the block header (surrounded by spaces), and load it.  If
+  \ not found, throw an exception -268 ("required, but not
+  \ located").
+  \
+  \ This is the default behaviour of the deferred word `need`.
+  \
+  \ }doc
+
+: set-located-need  ( -- )
+  ['] locate-reneeded ['] reneeded  defer!
+  ['] locate-reneed   ['] reneed    defer!
+  ['] locate-need     ['] need      defer!
+  ['] locate-needed   ['] needed    defer!  ;
+
+  \ doc{
+  \
+  \ set-located-need  ( -- )
+  \
+  \ Set the default behaviour of `need`, `needed`, `reneed` and
+  \ `reneeded`: Use `locate` for searching the library.
+  \
+  \ The alternative, provided by the optional `indexer` tool,
+  \ is set by `set-indexed-need`.
+  \
+  \ }doc
+
+set-located-need
+
+blk @ 1+ dup default-first-locatable !  first-locatable !
+
+( locate from need-here )
+
+[unneeded] locate [unneeded] from and
+?\ : locate  ( "name" -- n )  parse-name save-string located  ;
+
+  \ doc{
+  \
+  \ locate  ( "name" -- n )
   \
   \ Locate the first block whose header contains "name"
   \ (surrounded by spaces), and return its number. If not
-  \ found, return _false_.
-  \ The search is case-sensitive.
+  \ found, return zero.  The search is case-sensitive.
   \
   \ }doc
 
-: from  ( "name" -- )  locate ?located first-locatable !  ;
+[unneeded] from
+?\ : from  ( "name" -- )  locate ?located first-locatable !  ;
 
   \ doc{
   \
@@ -160,11 +418,14 @@ variable last-locatable  blk/disk 1- last-locatable !
   \
   \ Locate the first block whose header contains "name"
   \ (surrounded by spaces), and set it the first one `located`
-  \ will search from. If not found, throw an exception -268.
+  \ will search from. If not found, throw an exception -268
+  \ ("required, but not located").
   \
-  \ This word is intended to prevent undesired matches clashes
+  \ This word is intended to prevent undesired name clashes
   \ during the execution of `need` and related words. "name" is
-  \ supposed to be a conventional marker. Usage examples:
+  \ supposed to be a conventional marker.
+  \
+  \ Usage examples:
 
   \ ----
   \ ( x )
@@ -173,7 +434,7 @@ variable last-locatable  blk/disk 1- last-locatable !
   \
   \ ( use-x )
   \
-  \ from ==data-structures== need x
+  \ from ==data-structures==  need x
   \
   \ ( y )  ==data-structures==
   \
@@ -187,150 +448,38 @@ variable last-locatable  blk/disk 1- last-locatable !
 
   \ }doc
 
-: reneeded  ( ca len -- )  located ?located load  ;
+[unneeded] need-here ?exit
 
+: need-here  ( "name" -- )
+  parse-name
+  needed-word 2@ 2>r  new-needed-word  2dup undefined?
+  if  blk @ load  else  2drop  then  2r> needed-word 2!  ;
+    
   \ doc{
   \
-  \ reneeded  ( ca len -- )
+  \ need-here  ( "name" -- )
   \
-  \ Locate the first block whose header contains the string
-  \ _ca len_ (surrounded by spaces), and load it. If not found,
-  \ throw an exception -268.
+  \ If "name" is not a word found in the current search order,
+  \ load the current block.
   \
-  \ }doc
-
-: reneed  ( "name" -- )  parse-name save-string reneeded  ;
-
-  \ doc{
-  \
-  \ reneed  ( ca len -- )
-  \
-  \ Locate the first block whose header contains "name"
-  \ (surrounded by spaces), and load it.
-  \
-  \ }doc
-
--->
-
-( needed-word [needed] [unneeded] needed need )
-
-2variable needed-word
-
-  \ XXX TODO -- make `[needed]` and `[unneeded]` optional.
-
-: [needed]  ( "name" -- wf )
-  parse-name needed-word 2@ 2dup or
-  if  compare 0=  exit  then  2drop 2drop true   ; immediate
-
-  \ doc{
-  \
-  \ [needed]  ( "name" -- wf )
-  \
-  \ Is "name" the needed word specified by the last execution
-  \ of `need` or `needed`?
-  \
-  \ }doc
-
-: [unneeded]  ( "name" -- wf )
-  postpone [needed] 0=  ; immediate
-
-  \ doc{
-  \
-  \ [unneeded]  ( "name" -- wf )
-  \
-  \ Is "name" different than the needed word specified by the
-  \ last execution of `need` or `needed`?
-  \
-  \ }doc
-
-: needed  ( ca len -- )
-  needed-word 2@ 2>r
-  -trailing -leading save-string 2dup needed-word 2!
-  2dup undefined?
-  if  reneeded  else  2drop  then  2r> needed-word 2!  ;
-
-  \ doc{
-  \
-  \ needed  ( ca len -- )
-  \
-  \ If the string _ca len_ is not the name of a word found in
-  \ the current search order, locate the first block of the
-  \ library where "name" is included in the block header
-  \ (surrounded by spaces), and load it.
-  \
-  \ }doc
-
-: need  ( "name" -- )  parse-name needed  ;
-
-  \ doc{
-  \
-  \ need  ( "name" -- )
-  \
-  \ If "name" is not found in the current search order, locate
-  \ the first block of the library where "name" is included is
-  \ the block header (surrounded by spaces), and load it.
-  \
-  \ }doc
-
-blk @ 1+ dup default-first-locatable !  first-locatable !
-
-  \ vim: filetype=soloforth
-  \ alias.alias.fsb
-  \
-  \ This file is part of Solo Forth
-  \ http://programandala.net/en.program.solo_forth.html
-
-  \ Last modified: 20160324
-
-  \ -----------------------------------------------------------
-  \ Description
-
-  \ An implementation of `alias`.
-
-  \ -----------------------------------------------------------
-  \ Author
-
-  \ Marcos Cruz (programandala.net), 2015, 2016.
-
-  \ -----------------------------------------------------------
-  \ License
-
-  \ You may do whatever you want with this work, so long as you
-  \ retain every copyright, credit and authorship notice, and
-  \ this license.  There is no warranty.
-
-( alias )
-
-: alias  ( xt "name" -- )  defer latest name> defer!  ;
-
-  \ doc{
-  \
-  \ alias  ( xt "name" -- )
-  \
-  \ Create an alias _name_ that will execute _xt_.
-  \
-  \ Aliases don't inherit the precedence (set by `immediate`)
-  \ and restricted (set by `compile-only`) attributes from the
-  \ original word.
-  \
-  \ Aliases have their own execution token, different from the
-  \ original _xt_.
+  \ This is a faster alternative to `need`, when the needed
+  \ word is in the same block, and conditional compilation is
+  \ used with `?\`, `?(` or `[if]`.
   \
   \ }doc
 
   \ vim: filetype=soloforth
-  \ assembler.fsb
+  \ assembler.z80-asm.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201604130136
 
   \ -----------------------------------------------------------
   \ Description
 
-  \ Two versions of a Z80 assembler, called `z80-asm` (default)
-  \ and `z80-asm,` (experimental), and some related words.
+  \ A Z80 assembler called `z80-asm`.
 
   \ -----------------------------------------------------------
   \ Authors
@@ -356,381 +505,19 @@ blk @ 1+ dup default-first-locatable !  first-locatable !
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( z80-asm, )
+  \ -------------------------------------------------------------
+  \ History
 
-  \ XXX UNDER DEVELOPMENT -- Fork of `z80-asm`, with modified
-  \ syntax.
+  \ 2015: Adapted from Afera. Main development.
   \
-  \ 2015-12-25 First changes:
+  \ 2016-04-11: Moved `macro` to its own module.
   \
-  \ 1. "," suffixes in Z80 instructions;
-  \ 2. one single set of conditions;
-  \ 3. "a" and "r" prefixes in control structures;
-  \ 4. condition "m" renamed to "ne".
-
-  \ XXX TODO
-  \
-  \ - combine changes 2..4 with the previous version.
-  \ - rename `|mark` and `|resolve`
-  \ - remove all "retCOND" and "callCOND" and "jpCOND"
-  \   (or make them optional
-  \ - make absolute-jump control structures optional.
-  \
-
-  \ Z80 assembler for Solo Forth
-
-  \ XXX TODO `get-order` here and `set-order` at the end.
-
-only forth definitions
-
-need ?pairs  need 3dup
-
-: 8*   ( n1 -- n2 )  2* 2* 2*  ;
-
-: z80-asm,  ( -- )  assembler  ;
-
-also assembler definitions hex
-
--->
-
-( z80-asm, -- registers )
-
-0 constant b   1 constant c   2 constant d   3 constant e
-4 constant h   5 constant l   6 constant m   7 constant a
-
-0 constant bc  2 constant de  4 constant hl
-
-6 constant sp  6 constant af
-
-DD constant ix-op  FD constant iy-op
-
-: ix  ( -- rphl )  ix-op c, hl  ;
-: iy  ( -- rphl )  iy-op c, hl  ;
-
-: ?page  ( n -- n )  dup 80 + FF swap u< #-269 ?throw  ;
-  \ Branch too long?
-
--->
-
-( z80-asm, -- defining words for z80 instructions)
-
-: m1  ( 8b "name" -- )
-  create c, does>  ( -- )  ( pfa ) c@ c,  ;
-  \ 1-byte opcode without parameters.
-
-: m2  ( 8b "name" -- )
-  create c, does>  ( r -- )  ( r pfa ) c@ + c,  ;
-  \ 1-byte opcode with register encoded in bits 0-3.
-
-: m3  ( 8b "name" -- )
-  create c, does>  ( r -- )  ( r pfa ) c@ swap 8* + c,  ;
-  \ 1-byte opcode with register encoded in bits 3-5.
-
-: m4  ( 8b "name" -- )
-  create c, does>  ( 8b -- )  ( 8b pfa ) c@ c, c,  ;
-  \ 1-byte opcode with 1-byte parameter.
-
-: m5  ( 8b "name" -- )
-  create c, does>  ( 16b -- )  ( 16b pfa ) c@ c, ,  ;
-  \ 1-byte opcode with 2-byte parameter.
-
-: m6  ( 8b "name" -- )
-  create c, does>  ( r -- )  ( r pfa ) CB c, c@ + c,  ;
-  \ Rotation of registers.
-
-  -->
-
-( z80-asm, -- defining words for z80 instructions)
-
-: m7  ( 8b "name" -- )
-  create c, does>  ( r bit -- )
-    ( r bit pfa ) CB c, c@ swap 8* + + c,  ;
-  \ Bit manipulation of registers.
-
-: m8  ( 16b "name" -- )
-  create , does>  ( -- )  ( pfa ) @ ,  ;
-  \ 2-byte opcodes.
-
-: m9  ( 8b "name" -- )
-  create c, does>  ( a -- )
-    ( a pfa )  c@ c, here 1+ - ?page c,  ;
-  \ Relative jumps.
-
--->
-
-( z80-asm, -- defining words for z80 instructions)
-
-: ma  ( 8b "name" -- )
-  create c, does>  ( disp rphl -- )
-    ( disp rphl pfa ) c@ c, drop c,  ;
-  \ Index registers with register.
-
-: mb  ( 8b "name" -- )
-  create c, does>  ( disp rphl -- )
-    ( disp rphl pfa ) CB c, c@ c, drop c,  ;
-  \ Rotation with index registers.
-
-: mc  ( 8b "name" -- )
-  create c, does>  ( disp rphl bit -- )
-    ( disp rphl bit pfa )
-    CB c, c@ rot drop rot c, swap 8* + c,  ;
-  \ Bit manipulation with index registers.
-
--->
-
-( z80-asm, -- opcodes)
-
-  \ XXX FIXME ftap
-
-00 m1 nop, 02 m3 stap, 03 m3 incp, 04 m3 inc, 05 m3 dec, 07 m1
-rlca, 08 m1 exaf, 09 m3 addp, 0A m3 ftap, 0B m3 decp, 0F m1
-rrca, 10 m9 djnz, 17 m1 rla, 18 m9 jr,  1F m1 rra, 20 m9 jrnz,
-22 m5 sthl, 27 m1 daa, 28 m9 jrz, 2A m5 fthl, 2F m1 cpl, 30 m9
-jrnc, 32 m5 sta, 37 m1 scf, 38 m9 jrc, 3A m5 fta, 3F m1 ccf, 76
-m1 halt, 80 m2 add, 88 m2 adc, 90 m2 sub, 98 m2 sbc, B8 m2 cp,
-C1 m3 pop, C2 m5 jpnz, C3 m5 jp, C5 m3 push, C6 m4 add#, C7 m2
-rst, C9 m1 ret, CA m5 jpz, CD m5 call, CE m4 adc#, D2
-
--->
-
-( z80-asm, -- opcodes)
-
-m5 jpnc, D3 m4 out, 41 m3 outbc, D6 m4 sub#, D9 m1 exx, DA m5
-jpc, DB m4 in, 40 m3 inbc, 0DE m4 sbc#, E2 m5 jppo, E3 m1
-exsp, E6 m4 and#, E9 m1 jphl, EA m5 jppe, EB m1 exde, EE m4
-xor#, F2 m5 jpp, F3 m1 di,  F6 m4 or#, F9 m1 ldsp, FA m5 jpm,
-FB m1 ei, FE m4 cp#, 00 m6 rlc, 08 m6 rrc, 10 m6 rl, 18 m6
-rr, 20 m6 sla,  28 m6 sra, 38 m6 srl,  40 m7 bit, 80 m7 res, C0
-m7 set, B0ED m8 ldir, B8ED m8 lddr, 44ED m8 neg, 57ED m8 ldai,
-47ED m8 ldia, 56ED m8 im1 5EED m8 im2 B1ED m8 cpir, 6FED m8
-rld,
-
--->
-
-( z80-asm, -- opcodes)
-
-: jpix,  ( -- )  ix-op c, jphl,  ;
-: ldp#,  ( 16b rp -- )  8* 1+ c, ,  ;
-: ld#,  ( 8b r -- )  8* 06 + c, c,  ;
-: ld,  ( r1 r2 -- )  8* 40 + + c,  ;
-: sbcp,  ( rp -- )  ED c, 8* 42 + c,  ;
-: adcp,  ( rp1 rp2 -- )  ED c, 8* 4A + c,  ;
-: stp,  ( a rp -- )  ED c, 8* 43 + c, ,  ;
-: ftp,  ( a rp -- )  ED c, 8* 4B + c, ,  ;
-
-: addix,  ( rp -- )  ix-op c, addp,  ;
-: addiy,  ( rp -- )  iy-op c, addp,  ;
-
-  \ Macros
-
-: clr,  ( rp -- )  0 swap ldp#,  ;
-: ldp,  ( rp1 rp2 -- )  2dup ld, 1+ swap 1+ swap ld,  ;
-
-  \ ZX Spectrum specific
-
-CF m4 hook, \ rst 0x08
-D7 m1 prt,  \ rst 0x16
-
--->
-
-( z80-asm, -- index register opcodes)
-
-86 ma addx, 8E ma adcx, 96 ma subx, 9E ma sbcx, A6 ma andx,
-AE ma xorx, B6 ma orx,  BE ma cpx,  34 ma incx, 35 ma decx,
-06 mb rlcx, 0E mb rrcx, 16 mb rlx,  1E mb rrx,  26 mb slax,
-2E mb srax, 3E mb srlx, 46 mc bitx, 86 mc resx, C6 mc setx,
-
-: ftx,   ( disp rpi r -- )   nip 8* 46 + c, c,  ;
-: stx,   ( r disp rphl -- )  drop swap 70 + c, c,  ;
-: st#x,  ( 8b disp rpi -- )  drop 36 c, swap c, c,  ;
-: ftpx,  ( disp rpi rp -- )  3dup 1+ ftx, rot 1+ -rot ftx,  ;
-: stpx,  ( disp rpi rp -- )  3dup 1+ stx, rot 1+ -rot stx,  ;
-
--->
-
-( z80-asm, -- conditions)
-
-  \ Conditions are Z80 opcodes for the required jump
-  \ instruction.
-  \
-  \ Example: `z aif` compiles a `jp nz`, so `z` is the code for
-  \ `jp nz`.
-  \
-  \ Control structures that compile relative jumps modify the
-  \ opcode accordingly. Example: `z rif` compiles a `jr nz `
-
-C2 constant z  CA constant nz D2 constant cy DA constant nc
-E2 constant pe EA constant po F2 constant ne  FA constant p
-
-  \ XXX FIXME condition `m` has been renamed to `ne` because of
-  \ the register `m`; but maybe all registers should be
-  \ renamed.
-  \ XXX TODO ne->ns and p->ps
-
-: jp>jr  ( op1 -- op2 )  dup nc > #-273 ?throw  A2 -  ;
-  \ Convert an absolute-jump condition to a relative-jump
-  \ condition.  Throw error #-273 if the condition is
-  \ invalid.
-
--->
-
-( z80-asm, -- conditional ret and call)
-
-  \ Conditional ret
-
-: ?ret,  ( op -- )  8 xor 2- c,  ;
-
-: retc,  ( -- )  cy ?ret,  ;    : retnc,  ( -- )  nc ?ret,  ;
-: retz,  ( -- )  z ?ret,  ;     : retnz,  ( -- )  nz ?ret,  ;
-: retm,  ( -- )  ne ?ret,  ;     : retp,  ( -- )  p ?ret,  ;
-: retpe,  ( -- )  pe ?ret,  ;   : retpo,  ( -- )  po ?ret,  ;
-
-  \ Conditional call
-
-: ?call,  ( a op -- )  8 xor 2+ c, ,  ;
-
-: callc,  ( -- )  cy ?call, ;
-: callnc,  ( -- )  nc ?call,  ;
-: callz,  ( -- )  z ?call, ;
-: callnz,  ( -- )  nz ?call,  ;
-: callm,  ( -- )  ne ?call, ;
-: callp,  ( -- )  p ?call,  ;
-: callpe,  ( -- )  pe ?call, ;
-: callpo, ( -- )  po ?call,  ;
-
--->
-
-( z80-asm, -- control structures with relative jumps)
-
-  \ XXX TODO document
-
-: >relmark  ( -- orig )  here 1-  ;
-  \ Leave the origin address of a forward relative branch
-  \ just compiled, to be resolved by `>relresolve`.
-
-: relresolve  ( orig dest -- )  1- over - ?page swap c!  ;
-  \ Resolve a relative branch.
-
-: >relresolve  ( orig -- )  here relresolve  ;
-  \ Resolve a forward relative branch.
-
-: <relresolve  ( dest -- )  here 1- swap relresolve  ;
-  \ Resolve a backward relative branch.
-
--->
-
-( z80-asm, -- control structures with relative jumps)
-
-: ahead  ( -- orig  )  18 , >relmark  ;
-  \ Create a relative branch forward.
-  \ Leave the origin address of a forward relative branch
-  \ just compiled, to be resolved by `>relresolve`.
-  \ Note: 0x18 is the Z80 opcode for `jr`.
-
-: rif  ( op -- orig cs-id )  jp>jr , >relmark 0A  ;
-
-: rthen  ( orig cs-id -- )  0A ?pairs >relresolve  ;
-
-: relse  ( orig cs-id -- cs-id ) \ XXX TODO document
-  0A ?pairs 18 rif rot swap rthen 0A  ;
-  \ Note 0x18 is the opcode of `jr`.
-
-: rbegin  (  -- dest cs-id )  <mark 0B  ;
-
-: rwhile  (  op -- orig cs-id )  jp>jr rif 2+  ;
-
-: runtil  (  dest cs-id op -- )  , 0B ?pairs <relresolve  ;
-  \ compile a relative conditional jump
-
-: ragain  (  dest cs-id -- )  18 runtil  ;
-  \ compile `jr`
-
-: rrepeat  (  dest cs-id1 orig cs-id2 )
-  2swap ragain 2- rthen  ;
-
-: rstep    ( dest cs-id -- )  10 runtil  ;  -->
-  \ compile `djnz`
-
-( z80-asm, -- control structures with absolute jumps)
-
-  \ XXX TODO document
-
-: aif  (  op -- orig cs-id )  c, >mark 08  ;
-
-: athen  (  orig cs-id -- )  08 ?pairs >resolve  ;
-
-: aelse  (  cs-id -- cs-id )
-  08 ?pairs C3 aif rot swap athen 08  ;
-  \ C3 = opcode of `jp`
-
-: abegin  (  -- dest cs-id )  <mark 09  ;
-
-: awhile  (  op -- orig cs-id )  aif 2+  ;
-
-: auntil  (  cs-id op -- )  c, 09 ?pairs <resolve  ;
-  \ Compile an absolute conditional jump.
-
-: aagain  (  cs-id -- )  C3 auntil  ;
-  \ Compile an absolute jump.
-
-: arepeat  (  dest cs-id1 orig cs-id2 )
-  2swap aagain 2- athen  ;
-
-: |mark  ( -- a )  here 2-  ;
-  \ Leave the address of an absolute forward reference.
-
-: |resolve  ( a -- )  |mark swap !  ;
-  \ Resolve an absolute forward reference.
-
--->
-
-( z80-asm, -- last opcodes and macros)
-
-  \ `and`, `or` and `xor` are defined at the end, in order to
-  \ avoid name clashes with the Forth words that have the same
-  \ name:
-
-A0 m2 and,  B0 m2 or,  A8 m2 xor,
-
-  \ Macro, 16-bit subtract:
-: subp,  ( rp -- )  a and sbcp,  ;
-
-  \ Macro to test 16-bit register for zero:
-: tstp,  ( rp -- )  dup a ld, 1+ or,  ;
-
--->
-
-( z80-asm, -- unresolved macro endm )
-
-6 cells allocate-string
-  \ Temporary space to store unresolved addresses during
-  \ compilation. `pad` can not be used because it's transient
-  \ and changes during the compilation. The circular string
-  \ buffer is used.
-  \
-  \ XXX TODO -- use the heap instead, when implemented
-
-: unresolved  ( n -- a )  cells [ dup ] literal +  ;  drop
-  \ Return the address of the _n_ unresolved address.  Note:
-  \ The address returned by `allocate-string` is directly
-  \ compiled into `unresolved`. This saves a definition.  `dup`
-  \ and `drop` are used to pass the stack check at the end of
-  \ the definition.
-
-only forth definitions also assembler
-
-: macro  ( "name" -- )  : asm  ;
-: endm  ( -- )  end-asm postpone ;  ;  immediate
-
-decimal only forth
+  \ 2016-04-13: Made `calc` independent from the assembler and
+  \ moved it to the floating point module. Fixed `execute-hl`.
 
 ( z80-asm )
 
-\ Z80 assembler for Solo Forth
-
-  \ XXX NOTE: first version
-
-  \ XXX TODO `get-order` here and `set-order` at the end.
+  \ XXX TODO -- `get-order` here and `set-order` at the end.
 
 only forth definitions
 
@@ -744,7 +531,9 @@ also assembler definitions hex
 
 -->
 
-( z80-asm -- registers )
+( z80-asm )
+
+  \ Registers
 
 0 constant b   1 constant c   2 constant d   3 constant e
 4 constant h   5 constant l   6 constant m   7 constant a
@@ -763,7 +552,9 @@ DD constant ix-op  FD constant iy-op
 
 -->
 
-( z80-asm -- defining words for z80 instructions)
+( z80-asm )
+
+  \ Defining words for z80 instructions
 
 : m1  ( 8b "name" -- )
   \ 1-byte opcode without parameters.
@@ -791,7 +582,9 @@ DD constant ix-op  FD constant iy-op
 
   -->
 
-( z80-asm -- defining words for z80 instructions)
+( z80-asm )
+
+  \ Defining words for z80 instructions
 
 : m7  ( 8b "name" -- )
   \ Bit manipulation of registers.
@@ -813,7 +606,9 @@ DD constant ix-op  FD constant iy-op
 
 -->
 
-( z80-asm -- defining words for z80 instructions)
+( z80-asm )
+
+  \ Defining words for z80 instructions
 
 : ma  ( 8b "name" -- )
   \ Index registers with register.
@@ -837,7 +632,9 @@ DD constant ix-op  FD constant iy-op
 
 -->
 
-( z80-asm -- opcodes)
+( z80-asm )
+
+  \ Opcodes
 
   \ XXX FIXME ftap
 
@@ -857,7 +654,9 @@ cp# 00 m6 rlc 08 m6 rrc 10 m6 rl 18 m6 rr 20 m6 sla  28 m6 sra
 lddr 44ED m8 neg 57ED m8 ldai 47ED m8 ldia 56ED m8 im1 5EED m8
 im2 B1ED m8 cpir 6FED m8 rld -->
 
-( z80-asm -- opcodes)
+( z80-asm )
+
+  \ Opcodes
 
 : 0outbc  ( -- )  ED c, 71 c,  ;
 : jpix  ( -- )  ix-op c, jphl  ;
@@ -882,7 +681,9 @@ im2 B1ED m8 cpir 6FED m8 rld -->
 CF m4 hook       \ rst 0x08
 D7 m1 prt  -->   \ rst 0x16
 
-( z80-asm -- index register opcodes)
+( z80-asm )
+
+  \ Index register opcodes
 
 86 ma addx 8E ma adcx 96 ma subx 9E ma sbcx A6 ma andx
 AE ma xorx B6 ma orx  BE ma cpx  34 ma incx 35 ma decx
@@ -897,7 +698,9 @@ AE ma xorx B6 ma orx  BE ma cpx  34 ma incx 35 ma decx
 
 -->
 
-( z80-asm -- conditional ret and call)
+( z80-asm )
+
+  \ Conditional ret and call
 
   \ Condition codes for relative jumps
 
@@ -936,9 +739,12 @@ E2 constant pe' EA constant po' F2 constant m'  FA constant p'
 
 -->
 
-( z80-asm -- control structures with relative jumps)
+( z80-asm )
 
-  \ XXX TODO document
+  \ Control structures with relative jumps
+
+  \ XXX TODO -- document
+  \ XXX TODO -- rename `rel...` to `r...`
 
 : >relmark  ( -- orig )  here 1-  ;
   \ Leave the origin address of a forward relative branch
@@ -982,7 +788,9 @@ E2 constant pe' EA constant po' F2 constant m'  FA constant p'
 : step    ( dest cs-id -- )  10 until  ;  -->
   \ compile `djnz`
 
-( z80-asm -- control structures with absolute jumps)
+( z80-asm )
+
+  \ Control structures with absolute jumps
 
   \ XXX TODO document
 
@@ -1013,7 +821,9 @@ E2 constant pe' EA constant po' F2 constant m'  FA constant p'
 
 -->
 
-( z80-asm -- last opcodes and macros)
+( z80-asm )
+
+  \ Last opcodes and macros
 
   \ `and`, `or` and `xor` are defined at the end, in order to
   \ avoid name clashes with the Forth words that have the same
@@ -1031,7 +841,7 @@ A0 m2 and  B0 m2 or  A8 m2 xor
 
 -->
 
-( z80-asm -- unresolved macro endm )
+( z80-asm )
 
 6 cells allocate-string
   \ Temporary space to store unresolved addresses during
@@ -1048,52 +858,7 @@ A0 m2 and  B0 m2 or  A8 m2 xor
   \ and `drop` are used to pass the stack check at the end of
   \ the definition.
 
-only forth definitions also assembler
-
-: macro  ( "name" -- )  : asm  ;
-: endm  ( -- )  end-asm postpone ;  ;  immediate
-
-decimal only forth
-
-( calc end-calc )
-
-need z80-asm
-
-  \ current @  also assembler definitions
-  \ XXX OLD
-  \ XXX TODO
-
-macro calc  ( -- )  exx EF c,  endm
-  \ 0xEF = `rst 0x28`, call the ROM calculator
-
-macro end-calc  ( -- )  38 c, exx  next ix ldp  endm
-  \ 0x38 = ROM calculator `end-calc` command
-  \
-  \ XXX TODO It seems IX is not used by the calculator,
-  \ so this code will work:
-  \ macro end-calc  ( -- )  38 c, exx  endm
-
-  \ current !  previous
-  \ XXX OLD
-  \ XXX TODO
-
-( << >> )
-
-  \ For dumping assembled code to screen.
-
-  \ Credit:
-  \
-  \ Code adapted from Pygmy Forth.
-
-  \ XXX TODO finish adapt
-
-need @c+  need for
-
-: <<  ( -- a depth )  here depth  ;
-: >>  ( a depth -- )
-  depth 1- - #-258 ?throw cr base @ >r hex
-  dup 4 u.r space  here over - for  c@+ 3 u.r  step drop
-  r> base !  space   ;
+decimal only forth definitions
 
 ( execute-hl call-xt )
 
@@ -1106,11 +871,15 @@ need @c+  need for
   \ variable.  The code was factored to two assembler macros in
   \ order to make it reusable.
 
+need z80-asm  need macro
+
 macro execute-hl  ( -- )
-  here 6 + bc ldp#  \ point IP to phony_compiled_word
+  0000 bc stp  |mark  \ save the Forth IP
+  0000 bc ldp# |mark  \ point IP to phony_compiled_word
   jphl          \ execute the xt in HL
-  \ phony_compiled_word:
+  >resolve \ phony_compiled_word
   here cell+ ,      \ point to the phony xt following
+  0000 bc ldp#  |resolve  \ restore the Forth IP
   endm
   \ Compile an `execute` with the xt hold in HL.
 
@@ -1121,7 +890,7 @@ macro call-xt  ( xt -- )
   \ This is the low-level equivalent of `execute`.
 
   \ vim: filetype=soloforth
-  \ benchmarking.fsb
+  \ benchmark.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
@@ -1200,17 +969,17 @@ need vector-loop-benchmark
   .(   n1 n2 all-benchmarks) cr
 
   \ vim: filetype=soloforth
-  \ blocks.fsb
+  \ chars.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201604271451
 
   \ -----------------------------------------------------------
   \ Description
 
-  \ Words related to disk blocks.
+  \ Misc words related to characters.
 
   \ -----------------------------------------------------------
   \ Author
@@ -1224,177 +993,32 @@ need vector-loop-benchmark
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( ?--> )
+  \ -----------------------------------------------------------
+  \ History
 
-: ?-->  ( f -- )  if  postpone -->  then  ; immediate
+  \ 2016-04-27: Move `ascii-char?` and `control-char?` from
+  \ module "tool.dump.fsb".
+  
+( ascii-char? control-char? )
+
+: ascii-char?    ( c -- f )  128 <  ;
 
   \ doc{
   \
-  \ ?-->  ( f -- )
+  \ ascii-char?    ( c -- f )
   \
-  \ If _f_ is not false, continue interpretation on the next
-  \ sequential block.  parse area. This word is used for
-  \ conditional compilation.
+  \ Is character _c_ an ASCII character?
   \
   \ }doc
 
 
-  \ XXX TMP -- `?\` is still in the kernel
-
-  \ : ?\  ( f "ccc<eol>" -- )  if  postpone \  then  ; immediate
+: control-char?  ( c -- f )  bl <  ;
 
   \ doc{
   \
-  \ ?\  ( f "ccc" -- )
+  \ control-char?    ( c -- f )
   \
-  \ If _f_ is not false, parse and discard the rest of the
-  \ parse area. This word is used for conditional compilation.
-  \
-  \ }doc
-
-( update flush thru )
-
-[unneeded] update
-?\ : update  ( -- )  disk-buffer @ $8000 or disk-buffer !  ;
-
-  \ doc{
-  \
-  \ update  ( -- )
-  \
-  \ Mark the current block buffer as modified.  The block will
-  \ subsequently be transferred automatically to disk should
-  \ its buffer be required for storage of a different block, or
-  \ upon execution of `flush` or `save-buffers`.
-  \
-  \ Origin: Forth-83 (Required Word Set), Forth-94 (BLOCK),
-  \ Forth-2012 (BLOCK).
-  \
-  \ }doc
-
-[unneeded] flush
-?\ : flush  ( -- )  save-buffers empty-buffers  ;
-
-  \ doc{
-  \
-  \ flush  ( -- )
-  \
-  \ Perform the function of `save-buffers`, then unassign all
-  \ block buffers.
-  \
-  \ Origin: Forth-83 (Required Word Set), Forth-94 (BLOCK),
-  \ Forth-2012 (BLOCK).
-  \
-  \ }doc
-
-[unneeded] thru
-?\ : thru  ( block1 block2 -- )  1+ swap ?do  i load  loop  ;
-  \ XXX FIXME -- when block1>block2
-
-  \ doc{
-  \
-  \ thru ( block1 block2 -- )
-  \
-  \ Load consecutively the blocks from _block1_ through
-  \ _block2_.
-  \
-  \ Origin: Forth-79 (Reference Word Set), Forth-83
-  \ (Controlled Reference Words), Forth-94 (BLOCK EXT),
-  \ Forth-2012 (BLOCK EXT).
-  \
-  \ }doc
-
-( continued ?load reload loads +load +thru loader )
-
-[unneeded] continued
-?\ : continued  ( u -- )  ?loading (load)  ;
-
-  \ doc{
-  \
-  \ continued  ( u -- )
-  \
-  \ Continue interpretation at block _u_.
-  \
-  \ Origin: Forth-79 (Reference Word Set), Forth-83 (Appendix
-  \ B. Uncontrolled Reference Words).
-  \
-  \ }doc
-
-[unneeded] ?load
-?\ : ?load  ( block f -- )  if  dup load  then  drop  ;
-
-  \ Credit:
-  \
-  \ Code from Pygmy Forth.
-  \
-  \ doc{
-  \
-  \ ?load  ( block f -- )
-  \
-  \ Load block _block_ if flag _f_ is true, else do nothing.
-  \
-  \ }doc
-
-[unneeded] reload
-?\ : reload  ( -- )  empty-buffers  scr @ load  ;
-
-  \ doc{
-  \
-  \ reload  ( -- )
-  \
-  \ Load the most recently loader or listed block.
-  \
-  \ }doc
-
-[unneeded] loads
-?\ : loads  ( block n -- )  bounds ?do  i load  loop  ;
-
-  \ Credit:
-  \
-  \ Word from MMSFORTH.
-
-  \ doc{
-  \
-  \ loads  ( block n -- )
-  \
-  \ Load _n_ blocks starting from block _block_.
-  \
-  \ }doc
-
-[unneeded] +load  [unneeded] +thru  and
-?\ : +load  ( n -- )  blk @ + load  ;
-
-[unneeded] +thru
-?\ : +thru  ( n1 n2 -- )  1+ swap do  i +load  loop  ;
-
-
-[unneeded] loader ?exit
-
-: loader  ( block "name" -- )
-  create ,  does>  ( pfa )  @ load  ;
-
-  \ doc{
-  \
-  \ loader  ( block "name" -- )
-  \
-  \ Define a word "name" which, when executed, will  load block
-  \ _block_.
-  \
-  \ Origin: `loads`, found on Forth-79 (Reference Word Set) and
-  \ Forth-83 (Appendix B. Uncontrolled Reference Words).
-  \
-  \ }doc
-
-( .line )
-
-: .line  ( n1 n2 -- )  line>string -trailing type  ;
-
-  \ doc{
-  \
-  \ .line  ( n1 n2 -- )
-  \
-  \ Print line _n1_ from block _n2_, without trailing spaces.
-  \
-  \ Origin: fig-Forth.
+  \ Is character _c_ a control character?
   \
   \ }doc
 
@@ -1404,7 +1028,7 @@ need vector-loop-benchmark
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605071928
 
   \ -----------------------------------------------------------
   \ Description
@@ -1423,24 +1047,59 @@ need vector-loop-benchmark
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( [false] [true] )
+  \ -----------------------------------------------------------
+  \ History
 
-         0 constant [false] immediate
-[false] 0= constant [true]  immediate
+  \ 2015-06-04: Add `[if] [else] [then]`, adapted from Afera.
+  \ 2015-06-17: Add `[true]`, `[false]`.
+  \ 2015-06-25: Finish `[if] [else] [then]`.
+  \ 2015-10-22: Rename words that convert header addresses.
+  \ 2015-10-24: Move `body>name`, `name>link`, `link>name` and
+  \ `>>link` from the kernel.
+  \ 2015-10-29: Move `smudge` and `smudged` from the kernel.
+  \ 2015-11-13: Move `?pairs` from the kernel.
+  \ 2016-03-19: Add `save-here` and `restore-here`.
+  \ 2016-04-17: Add `name>>`.
+  \ 2016-04-24: Add `]l`, `]2l`, `exec`, `eval`.
+  \ 2016-04-24: Add `[const]`, `[2const]`, `[cconst]`.
+  \ 2016-04-24: Move `cliteral` from the kernel.
+  \ 2016-04-24: Move `n,` from module "tool.marker.fsb".
+  \ 2016-04-25: Simplify `exec`, move `possibly` from the
+  \ module "tool.marker.fsb".
+  \ 2016-04-25: Move `n,`, `n@`, `n!` to the module
+  \ "memory.misc.fsb".
+  \ 2016-04-26: Fix `restore-here`. Add `name>interpret`,
+  \ `name>compile`.  Move `current-latest` from the kernel,
+  \ formerly called `latest`.
+  \ 2016-04-27: Add `comp'`, `[comp']`. Move `warning` from the
+  \ kernel. Add `warn.throw`, `warn.message`, `warn-throw`
+  \ and common factors.
+  \ 2016-04-29: Add `string-parameter`.
+  \ 2016-05-02: Join several blocks to save space.
+  \ 2016-05-02: Move `[compile]` from the kernel.
+  \ 2016-05-04: Compact the blocks.
+  \ 2016-05-05: Update `s=` to `str=`.
+  \ 2016-05-06: Move `current-latest` back to the kernel.
+  \ 2016-05-07: Add `?(`, a simpler alternative to `[if]`.
 
-( [if] [else] [then] )
+( [false] [true] [if] [else] [then] )
 
-need s=
+[unneeded] [true]  ?\   0 constant [false] immediate exit 
+[unneeded] [false] ?\  -1 constant [true]  immediate exit
+
+need str=
+
+  \ Note: `[if]` uses 124 bytes of data space (not including
+  \ `str=`).
 
 : [else]  ( "..." -- )
 
-  \ 1 begin   parse-name 2dup swap c@ and \ XXX OLD
   1 begin   parse-name dup
-    while   2dup s" [if]" s=
+    while   2dup s" [if]" str=
             if    2drop 1+
-            else  2dup s" [else]" s=
+            else  2dup s" [else]" str=
                   if    2drop 1- dup if  1+  then
-                  else  s" [then]" s= if  1-  then
+                  else  s" [then]" str= if  1-  then
                   then
             then  ?dup 0= if  exit  then
   repeat  2drop drop  ; immediate
@@ -1449,7 +1108,21 @@ need s=
 
 : [then]  ( -- )  ; immediate
 
-( body>name name>body link>name name>link >>link name<name )
+( ?( )
+
+need str=
+
+  \ Note: `?((` uses 35 bytes of data space (not including
+  \ `str=`).
+
+: ?(  ( f "ccc<space><question><paren><space>" -- )
+  0= ?exit  begin   parse-name dup
+            while   s" ?)" str= ?exit
+            repeat  ; immediate
+
+: ?)  ( -- )  ; immediate
+
+( body>name name>body link>name name>link name<name )
 
 [unneeded] body>name
 ?\ : body>name  ( pfa -- nt ) body> >name  ;
@@ -1457,48 +1130,59 @@ need s=
 [unneeded] name>body
 ?\ : name>body  ( nt -- pfa ) name> >body  ;
 
-[unneeded] link>name dup  ?\ need alias
-?\ ' cell+ alias link>name  ( nt -- pfa )
+[unneeded] link>name
+?\ need alias  ' cell+ alias link>name  ( nt -- pfa )
 
-[unneeded] name>link dup  ?\ need alias
-?\ ' cell- alias name>link  ( nt -- pfa )
+[unneeded] name>link
+?\ need alias  ' cell- alias name>link  ( nt -- pfa )
 
-[unneeded] >>link dup  ?\ need alias
-?\ ' cell+ alias >>link  ( xtp -- lfa )
-
-[unneeded] name<name dup  ?\ need name>link
-?\ : name<name  ( nt1 -- nt2 )  name>link @s  ;
+[unneeded] name<name
+?\ need name>link  : name<name  ( nt1 -- nt2 )  name>link @s  ;
   \ Get the previous _nt2_ from _nt1_.
 
-( name>interpret name>compile )
+( >>link name>> )
 
-  \ XXX UNDER DEVELOPMENT
+[unneeded] >>link
+?\ need alias  ' cell+ alias >>link  ( xtp -- lfa )
 
+[unneeded] name>>
+?\ : name>>  ( nt -- xtp )  [ 2 cells ] literal -  ;
+
+( name>interpret name>compile comp' [comp'] )
+
+need ?(
+
+[unneeded] name>interpret ?(
 : name>interpret  ( nt -- xt | 0 )
-  ;
+  dup name> swap compile-only? 0= and  ;  ?)
 
   \ doc{
   \
   \ name>interpret  ( nt -- xt | 0 )
   \
-  \ Return a _xt_ that represents the interpretation semantics
-  \ of the word _nt_. If _nt_ has no interpretation
-  \ semantics, return zero.
+  \ Return _xt_ that represents the interpretation semantics of
+  \ the word _nt_. If _nt_ has no interpretation semantics,
+  \ return zero.
   \
   \ Origin: Forth-2012 (TOOLS EXT).
   \
   \ }doc
 
-: name>compile  ( nt -- x xt )
-  ;
+[unneeded] name>compile ?(
+
+: (comp')  ( nt -- xt )
+  immediate?  if    ['] execute
+              else  ['] compile,  then  ;
+
+: name>compile  ( nt -- x xt )  dup name> swap (comp')  ;  ?)
 
   \ doc{
   \
   \ name>compile  ( nt -- x xt )
   \
-  \ Return _x xt_ that represents the compilation semantics
-  \ of the word _nt_. The  returned _xt_ has the stack
-  \ effect ( i*x  x -- j*x  ).  Executing _xt_ consumes
+  \ Compilation token _x xt_ represents the compilation
+  \ semantics of the word _nt_. The  returned _xt_ has the
+  \ stack effect ( i*x  x -- j*x  ).  Executing _xt_ consumes
   \ _x_ and performs the compilation semantics of the word
   \ represented by _nt_.
   \
@@ -1506,12 +1190,61 @@ need s=
   \
   \ }doc
 
-( smudge smudged )
+[unneeded] comp' ?(  need need-here  need-here name>compile
 
-need c!toggle-bits
+: comp'  ( "name" -- x xt )
+  defined dup ?defined name>compile  ;  ?)
 
+  \ doc{
+  \
+  \ comp'  ( "name" -- x xt )
+  \
+  \ Compilation token _x xt_ represents the compilation
+  \ semantics of "name".
+  \
+  \ Origin: Gforth.
+  \
+  \ }doc
+
+[unneeded] [comp'] ?(  need need-here  need-here comp'
+
+: [comp']  ( Compilation: "name" -- ) ( Run-time: -- x xt )
+  comp' postpone 2literal  ; immediate compile-only  ?)
+
+  \ doc{
+  \
+  \ [comp']  ( Compilation: "name" -- ) ( Run-time: -- x xt )
+  \
+  \ Compilation token _x xt_ represents the compilation
+  \ semantics of "name".
+  \
+  \ Origin: Gforth.
+  \
+  \ }doc
+
+( ?pairs [compile] smudge smudged )
+
+[unneeded] ?pairs
+?\ : ?pairs  ( x1 x2 -- )  <> #-22 ?throw  ;  exit
+
+  \ doc{
+  \
+  \ ?pairs  ( x1 x2 -- )
+  \
+  \ If _x1_ not equals _x2_ throw error #-22 (control structure
+  \ mismatch).
+  \
+  \ }doc
+
+[unneeded] [compile]
+?\ : [compile]  ( "name" -- )  ' compile,  ; immediate  exit
+
+
+need ?(
+
+[unneeded] smudged ?(  need c!toggle-bits
 : smudged  ( nt -- )
-  smudge-mask swap system-bank c!toggle-bits default-bank  ;
+  smudge-mask swap system-bank c!toggle-bits default-bank  ; ?)
 
   \ doc{
   \
@@ -1524,7 +1257,8 @@ need c!toggle-bits
   \
   \ }doc
 
- : smudge  ( -- )  latest smudged  ;
+[unneeded] smudge ?(  need need-here  need-here smudged
+: smudge  ( -- )  latest smudged  ;  ?)
 
   \ doc{
   \
@@ -1542,32 +1276,394 @@ need c!toggle-bits
   \
   \ }doc
 
-( ?pairs )
+( ]l ]2l exec eval save-here restore-here )
 
-: ?pairs  ( x1 x2 -- )  <> #-22 ?throw  ;
-  \ If _x1_ not equals _x2_ throw an error -22 (control
-  \ structure mismatch).
+need [if]
 
-( save-here restore-here )
+[needed] ]l [if]
+
+: ]l  ( x -- )  ] postpone literal  ; immediate compile-only
+
+  \ doc{
+  \
+  \ ]l  ( x -- )
+  \
+  \ A short form of the idiom `] literal`.
+  \
+  \ }doc
+
+[then]
+
+[needed] ]2l [if]
+
+: ]2l  ( xd -- )  ] postpone 2literal  ; immediate compile-only
+
+  \ doc{
+  \
+  \ ]2l  ( xd -- )
+  \
+  \ A short form of the idiom `] 2literal`.
+  \
+  \ }doc
+
+[then]
+
+[needed] save-here [needed] restore-here or [if]
 
 variable here-backup
 : save-here  ( -- )  here here-backup !  ;
-: restore-here  ( -- )  here-backup there  ;
+: restore-here  ( -- )  here-backup @ there  ;
 
+  \ XXX TODO -- behead `here-backup`
+
+[then]
+
+( possibly exec eval )
+
+  \ Credit:
+  \
+  \ Code of `possibly` adapted from Wil Baden.
+
+need [if]
+
+[needed] possibly [if]
+
+: possibly  ( "name" -- )
+  defined ?dup if  name> execute  then  ;
+
+  \ doc{
+  \
+  \ possibly  ( "name" -- )
+  \
+  \ Parse "name".  If "name" is the name of a word in the
+  \ current search order, execute it; else do nothing.
+  \
+  \ }doc
+
+[then]
+
+[needed] exec [if]
+
+: exec  ( "name" -- i*x )
+  defined ?dup 0= #-13 ?throw  name> execute  ;
+
+  \ doc{
+  \
+  \ exec  ( "name" -- i*x )
+  \
+  \ Parse "name".  If "name" is the name of a word in the
+  \ current search order, execute it; else throw exception
+  \ #-13.
+  \
+  \ }doc
+
+[then]
+
+[needed] eval [if]
+
+: eval  ( i*x "name" -- j*x )  parse-name evaluate  ;
+
+  \ doc{
+  \
+  \ exec  ( i*x "name" -- j*x )
+  \
+  \ Parse and evaluate "name".
+  \ 
+  \ This is a common factor of `[const]`, `[2const]` and
+  \ `[cconst]`.
+  \
+  \ }doc
+
+[then]
+
+( [const] [2const] [cconst] cliteral )
+
+need eval  need [if]
+
+[needed] [const] [if]
+
+: [const]  ( "name" -- )
+  eval postpone literal  ; immediate compile-only  [then]
+
+
+  \ doc{
+  \
+  \ [const]  ( "name" -- )
+  \
+  \ Evaluate "name". Then compile the single-cell value left on
+  \ the stack.
+  \
+  \ This word is intented to compile constants as literals, in
+  \ order to gain execution speed. "name" can be any word, as
+  \ long as its execution returns a single-cell value on the
+  \ stack.
+  \
+  \ Usage example:
+  \ 
+  \ ----
+  \ 48 constant zx
+  \ : test  ( -- )  [const] zx .  ;
+  \ ----
+  \
+  \ }doc
+
+[needed] [2const] [if]
+
+: [2const]  ( "name" -- )
+  eval postpone 2literal  ; immediate compile-only  [then]
+
+  \ doc{
+  \
+  \ [2const]  ( "name" -- )
+  \
+  \ Evaluate "name". Then compile the double-cell value left on
+  \ the stack.
+  \
+  \ This word is intented to compile double-cell constants as
+  \ literals, in order to gain execution speed.
+  \
+  \ Usage example:
+  \ 
+  \ ----
+  \ 48. 2constant zx
+  \ : test  ( -- )  [2const] zx d.  ;
+  \ ----
+  \
+  \ }doc
+
+[needed] [cconst] [if]
+
+: [cconst]  ( "name" -- )
+  eval postpone cliteral  ; immediate compile-only  [then]
+
+  \ doc{
+  \
+  \ [cconst]  ( "name" -- )
+  \
+  \ Evaluate "name". Then compile the char left
+  \ on the stack.
+  \
+  \ This word is intented to compile char constants as literals, in
+  \ order to gain execution speed.
+  \
+  \ Usage example:
+  \
+  \ ----
+  \ 48 cconstant zx
+  \ : test  ( -- )  [cconst] zx emit  ;
+  \ ----
+  \
+  \ }doc
+
+: cliteral  ( b -- )  compile clit c,  ; immediate compile-only
+
+  \ doc{
+  \
+  \ cliteral  ( b -- )
+  \
+  \ Compile _b_ in the current definition.
+  \
+  \ This word does the same than `literal` but saves one byte
+  \ of data space.
+  \
+  \ Origin: Comus.
+  \
+  \ }doc
+
+( warnings )
+
+need user  need search-wordlist
+
+user warnings  \ flag
+
+  \ doc{
+  \
+  \ warnings  ( -- a )
+  \
+  \ User variable that holds a flag. If it's zero, no warning
+  \ is shown when a compiled word is not unique in the
+  \ `current` vocabulary.
+  \
+  \ }doc
+
+: no-warnings?  ( -- f )  warnings @ 0=  ;
+
+  \ doc{
+  \
+  \ no-warnings?  ( -- f )
+  \
+  \ Are the warnings deactivated?
+  \
+  \ }doc
+
+: not-redefined?  ( ca len -- ca len xt false | ca len true )
+  2dup get-current search-wordlist 0=  ;
+
+  \ doc{
+  \
+  \ not-redefined?  ( ca len -- ca len xt false | ca len true )
+  \ 
+  \ Is the word name _ca len_ not yet defined in the
+  \ current compilation word list?
+  \
+  \ }doc
+
+: ?warn  ( ca len -- ca len | ca len xt )
+    no-warnings? if  unnest exit  ( ca len )  then
+  not-redefined? if  unnest                   then
+  ( ca len | ca len xt )  ;
+
+  \ doc{
+  \
+  \ ?warn  ( ca len -- ca len | ca len xt )
+  \
+  \ A common factor of `warn.throw`, `warn.message` and
+  \ `warn-throw`.  Check if a warning about the redefinition of
+  \ the word name _ca len_ is needed.  If no warning is needed,
+  \ unnest the calling definition and return _ca len_. If a
+  \ warning is needed, return _ca len_ and the _xt_ of the word
+  \ found in the current compilation wordlist.
+  \
+  \ See `warn.throw`, `warn-throw`, `warn.message`.
+  \
+  \ }doc
+
+( warn.throw warn.message warn-throw )
+
+need warnings  need [if]
+
+[needed] warn.throw [if]
+
+: warn.throw  ( ca len -- ca len )
+  ?warn ( ca len xt )  drop 2drop .error-word  #-257 .throw  ;
+
+  \ doc{
+  \
+  \ warn.throw  ( ca len -- ca len )
+  \
+  \ Alternative behaviour for the deferred word `warn`.  If the
+  \ contents of the user variable `warnings` is not zero and
+  \ the word name _ca len_ is already defined in the current
+  \ compilation word list, print throw error #-257, without
+  \ actually throwing an error.
+  \
+  \ See `warn-throw`, `warn.message`.
+  \
+  \ }doc
+
+' warn.throw ' warn defer!  warnings on   [then]
+
+[needed] warn.message [if]
+
+: warn.message  ( ca len -- ca len )
+  ?warn ( ca len xt )  ." redefined " >name .name  ;
+
+  \ doc{
+  \
+  \ warn.message  ( ca len -- ca len )
+  \
+  \ Alternative behaviour for the deferred word `warn`.  If the
+  \ contents of the user variable `warnings` is not zero and
+  \ the word name _ca len_ is already defined in the current
+  \ compilation word list, print a warning message.
+  \
+  \ See `warn.throw`, `warn-throw`.
+  \
+  \ }doc
+
+' warn.message ' warn defer!  warnings on  [then]
+
+[needed] warn-throw [if]
+
+: warn-throw  ( ca len -- ca len )
+  ?warn ( ca len xt )  #-257 throw  ;
+
+  \ doc{
+  \
+  \ warn-throw  ( ca len -- ca len )
+  \
+  \ Alternative behaviour for the deferred word `warn`.  If the
+  \ contents of the user variable `warnings` is not zero and
+  \ the word name _ca len_ is already defined in the current
+  \ compilation word list, throw error #-257 instead of
+  \ printing a warning message.
+  \
+  \ See `warn.throw`, `warn.message`.
+  \
+  \ }doc
+
+' warn-throw ' warn defer!  warnings on  [then]
+
+( string-parameter )
+
+  \ Credit:
+  \
+  \ Inspired by pForth's `param`.
+
+: string-parameter  ( -- ca len )
+  rp@ cell+ dup >r    ( a1 ) ( R: a1 )
+    \ get the address, in the return stack,
+    \ that contains the return address of the calling word,
+    \ which contains the address of the compiled string
+  @ count             ( ca len ) ( R: a1 )
+    \ get the string
+  dup char+ r@ @ +    ( ca len a2 ) ( R: a1 )
+    \ calculate the new return address of the calling word,
+    \ in order to skip the string
+  r> !  ;
+    \ update the return address of the calling word,
+
+  \ XXX TODO -- benchmark this alternative:
+
+: string-parameter2  ( -- ca len )
+  rp@ cell+ dup >r    ( a1 ) ( R: a1 )
+    \ get the address, in the return stack,
+    \ that contains the return address of the calling word,
+    \ which contains the address of the compiled string
+  dup @ count         ( a1 ca len ) ( R: a1 )
+    \ get the string
+  dup char+ rot +    ( ca len a2 ) ( R: a1 )
+    \ calculate the new return address of the calling word,
+    \ in order to skip the string
+  r> !  ;
+    \ update the return address of the calling word,
+
+: string-parameter3  ( -- ca len )
+  \ XXX UNDER DEVELOPMENT
+  rp@ cell+ dup       ( a1 )
+    \ get the address, in the return stack,
+    \ that contains the return address of the calling word,
+    \ which contains the address of the compiled string
+  dup @ count         ( a1 ca len )
+    \ get the string
+  rot dup >r over char+ over +    ( ca len a2 )
+    \ calculate the new return address of the calling word,
+    \ in order to skip the string
+  r> !  ;
+    \ update the return address of the calling word,
+
+  \ doc{
+  \
+  \ string-param  ( -- ca len )
+  \
+  \ Return a string compiled after the calling word.
+  \
+  \ See `warning"` and `(warning")` for a usage example.
+  \
+  \ }doc
 
   \ vim: filetype=soloforth
-  \ flow.case.fsb
+  \ data.misc.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605020054
 
   \ -----------------------------------------------------------
   \ Description
 
-  \ Several implementations of the standard
-  \ `case` and some variants of `of`.
+  \ Misc words related to data structures.
 
   \ -----------------------------------------------------------
   \ Author
@@ -1580,6 +1676,1052 @@ variable here-backup
   \ You may do whatever you want with this work, so long as you
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2015-11-15: Add `link@` and `link,`.
+  \ 2016-04-28: Rename `set` to `storer` and improve it. Add
+  \ `cstorer`.
+  \ 2016-05-02: Join two blocks to save space.
+
+( buffer: cvariable enum link@ link, )
+
+[unneeded] buffer:
+?\ : buffer:  ( u "name" -- )  create allot  ;  exit
+
+[unneeded] cvariable
+?\ : cvariable  ( "name"  -- )  create 1 allot  ;  exit
+
+[unneeded] enum
+?\ : enum  (  n "name" -- n+1 )  dup constant 1+  ;  exit
+
+[unneeded] link@  [unneeded] link, and ?exit
+
+  \ Credit:
+  \
+  \ Code of `link@` and `link,` written after the description
+  \ by Rick VanNorman, published on Forth Dimensions (volume
+  \ 20, number 3, pages 19-22, 1998-09).
+
+defer link@  ( node1 -- node2 )  ' @ ' link@ defer!
+  \ Fetch the linked list node _node_ is pointing to.
+
+: link,  ( node -- )  here over @ , swap !  ;
+  \ Create a new linked list node, pointing to _node_.
+
+( storer cstorer )
+
+need [if]
+
+[needed] storer [if]
+
+: storer  ( x a "name" -- )
+  create  2,  does>   ( -- ) ( pfa )  2@ !  ;
+
+  \ doc{
+  \
+  \ storer  ( x a "name" -- )
+  \
+  \ Define a word "name" which, when executed, will  cause  the
+  \ value _x_  to be stored at _a_.
+  \
+  \ Origin: word `set` found in Forth-79 (Reference Word Set)
+  \ and Forth-83 (Appendix B.  Uncontrolled Reference Words).
+  \
+  \ }doc
+
+[then]
+
+[needed] cstorer [if]
+
+: cstorer  ( c ca "name" -- )
+  create  2,  does>   ( -- ) ( pfa )  2@ c!  ;
+
+  \ doc{
+  \
+  \ cstorer  ( c ca "name" -- )
+  \
+  \ Define a word "name" which, when executed, will  cause _c_
+  \ to be stored at _ca_.
+  \
+  \ Origin: variant of the word `set` found in Forth-79
+  \ (Reference Word Set) and Forth-83 (Appendix B.
+  \ Uncontrolled Reference Words).
+  \
+  \ }doc
+
+[then]
+
+  \ vim: filetype=soloforth
+  \ data.value.double.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 20160324
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ `2to` for a non-standard version of
+  \ `2value`.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+( 2value 2to )
+
+  \ Implementation of `2value` (from Forth-2012) but with
+  \ the non-standard word `2to`
+
+: 2value  ( xd "name"  -- )  2constant  ;
+
+: 2to  ( Interpretation: xd "name" -- )
+       ( Compilation: "name" -- )
+  ' >body compiling? if    postpone literal postpone 2!
+                     else  2!  then  ; immediate
+
+  \ vim: filetype=soloforth
+  \ data.value.forth-94.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 20160324
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ The Forth-94 version of `value`.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+( value to )
+
+  \ Origin: Forth-94.
+
+: value  ( n "name"  -- )  constant  ;
+
+: to  ( Interpretation: n "name" -- )
+      ( Compilation: "name" -- )
+  ' >body compiling? if    postpone literal postpone !
+                     else  !  then  ; immediate
+
+  \ vim: filetype=soloforth
+  \ data_stack.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201605020046
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Words that manipulate the data stack.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-06-22: Add `2nip`.
+  \ 2015-10-16: Move `roll` from the kernel.
+  \ 2015-11-09: Add `swapped`.
+  \ 2015-11-22: Add `3drop`, `4drop`.
+  \ 2015-12-16: Add `nup`, `drup`, `dip`.
+  \ 2015-12-22: Move `3dup` from the assembler and rewrite in Z80.
+  \ 2016-02-26: Add `ndrop`, `2ndrop`.
+  \ 2016-04-24: Move `pick` from the kernel.
+  \ 2016-05-02: Join several blocks to save space.
+
+( 2nip pick roll )
+
+need [if]
+
+  \ Credit:
+  \
+  \ Code from Afera; original code from DZX-Forth.
+
+[needed] 2nip [if]  code 2nip  ( x1 x2 x3 x4 -- x3 x4 )
+  E1 c, D1 c, F1 c, F1 c, C3 c, pushhlde ,  end-code  [then]
+    \ pop hl
+    \ pop de
+    \ pop af
+    \ pop af
+    \ jp pushhlde
+
+  \ doc{
+  \
+  \ 2nip  ( x1 x2 x3 x4 -- x3 x4 )
+  \
+  \ }doc
+
+[needed] pick [if]
+code pick  ( xu .. x1 x0 u -- xu .. x1 x0 xu )
+  E1 c,  29 c,  39 c,  C3 c, fetchhl ,  end-code  [then]
+    \ pop hl
+    \ add hl,hl
+    \ add hl,sp
+    \ jp fetch.hl
+
+  \ doc{
+  \
+  \ pick  ( xu .. x1 x0 u -- xu .. x1 x0 xu )
+  \
+  \ }doc
+
+  \ Credit:
+  \
+  \ Code adapted from DZX-Forth.
+
+[needed] pick [if]  need z80-asm
+
+code roll  ( xu xn .. x0 u -- xn .. x0 xu )
+
+  hl pop  hl addp  hl de ldp  sp addp
+    \ pop hl
+    \ add hl,hl
+    \ ld e,l
+    \ ld d,h
+    \ add hl,sp
+
+  bc push  m c ld  hl incp  m b ld
+    \ push bc
+    \ ld c,(hl)
+    \ inc hl
+    \ ld b,(hl)
+
+  bc push  de bc ldp  hl de ldp  bc tstp
+    \ push bc
+    \ ld b,d
+    \ ld c,e
+    \ ld d,h
+    \ ld e,l
+    \ ld a,b
+    \ or c
+
+  0000 jpz |mark 0 unresolved !   hl decp  hl decp  lddr
+    \ jp z,roll.end
+    \ dec hl
+    \ dec hl
+    \ lddr
+    \ roll.end:
+  0 unresolved @ >resolve  hl pop  bc pop  exsp
+    \ pop hl
+    \ pop bc
+    \ ex (sp),hl
+  jpnext  end-code
+
+  \ doc{
+  \
+  \ roll  ( xu xn .. x0 u -- xn .. x0 xu )
+  \
+  \ }doc
+
+[then]
+
+( 3drop 4drop 3dup )
+
+need [if]
+
+[needed] 3drop [if]
+code 3drop  ( x1 x2 x3 -- )
+  E1 c,  E1 c,  E1 c,  jpnext  end-code  [then]
+    \ pop hl
+    \ pop hl
+    \ pop hl
+    \ jp next
+
+  \ doc{
+  \
+  \ 3drop  ( x1 x2 x3 -- )
+  \
+  \ }doc
+
+[needed] 4drop [if]
+code 4drop  ( x1 x2 x3 x4 -- )
+  E1 c,  E1 c,  E1 c,  E1 c,  jpnext  end-code  [then]
+    \ pop hl
+    \ pop hl
+    \ pop hl
+    \ pop hl
+    \ jp next
+
+  \ doc{
+  \
+  \ 4drop  ( x1 x2 x3 x4 -- )
+  \
+  \ }doc
+
+[needed] 3dup [if]
+code 3dup  ( x1 x2 x3 -- x1 x2 x3 x1 x2 x3 )
+  D9 c,
+    \ exx
+  C1 c,  D1 c,  E1 c,  E5 c,  D5 c,  C5 c,  E5 c,  D5 c,  C5 c,
+    \ pop bc
+    \ pop de
+    \ pop hl
+    \ push hl
+    \ push de
+    \ push bc
+    \ push hl
+    \ push de
+    \ push bc
+  D9 c,  jpnext  end-code  [then]
+    \ exx
+    \ jp next
+
+  \ doc{
+  \
+  \ 3dup  ( x1 x2 x3 -- x1 x2 x3 x1 x2 x3 )
+  \
+  \ }doc
+
+  \ slower and smaller version of `3dup`:
+
+  \ : 3dup  ( x1 x2 x3 -- x1 x2 x3 x1 x2 x3 )  dup 2over rot  ;
+
+( 2rot swapped )
+
+need [if]
+
+[needed] 2rot [if]
+
+need roll
+
+: 2rot  ( x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
+  5 roll 5 roll  ;
+
+  \ doc{
+  \
+  \ 2rot  ( x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
+  \
+  \ }doc
+
+  \ Credit:
+  \
+  \ Adapted from code written by Sam Suan Chen, published
+  \ on Forth Dimensions (volume 6, number 6, page 9, 1985-03).
+
+[then]
+
+[needed] swapped [if]
+
+: swapped  ( i*x n1 n2 -- j*x )
+  >r 1+ cells sp@ +     ( i*x a1 ) ( R: n2 )
+  r> 2+ cells sp@ +     ( i*x a1 a2 )
+  over @ over @         ( i*x a1 a2 x1 x2 )
+  >r swap !  r> swap !  ;
+
+  \ Usage example:
+  \
+  \   ( 1 2 3 4 5 )  1 4 swapped  ( 4 2 3 1 5 )
+
+  \ Original code by Sam Suan Chen,
+  \ with an equivalent usage example:
+
+  \ : xyswap  ( i*x n -- j*x )
+  \   16 /mod >r dup + sp@ + sp@ r> dup + +
+  \   over @ over @
+  \   >r swap !  r> swap !  ;
+  \
+  \   ( 1 2 3 4 5 )  $25 xyswap  ( 4 2 3 1 5 )
+
+[then]
+
+( nup drup dip 0dup -dup )
+
+need [if]
+
+[needed] nup [if]  code nup  ( x1 x2 -- x1 x1 x2 )
+  E1 c,  D1 c,  D5 c,  C3 c, pushhlde ,  end-code  [then]
+    \ pop hl
+    \ pop de
+    \ push de
+    \ jp pushhlde
+  \ Also called `under`.
+
+  \ doc{
+  \
+  \ nup  ( x1 x2 -- x1 x1 x2 )
+  \
+  \ }doc
+
+[needed] drup [if]  code drup  ( x1 x2 -- x1 x1 )
+  D1 c,  E1 c,  E5 c,  E5 c,  jpnext  end-code  [then]
+    \ pop de
+    \ pop hl
+    \ push hl
+    \ push hl
+    \ jp next
+
+  \ doc{
+  \
+  \ drup  ( x1 x2 -- x1 x1 )
+  \
+  \ }doc
+
+[needed] dip [if]  code dip  ( x1 x2 -- x2 x2 )
+  E1 c, D1 c, E5 c, E5 c,  jpnext  end-code  [then]
+    \ pop hl
+    \ pop de
+    \ push hl
+    \ push hl
+    \ jp next
+
+  \ doc{
+  \
+  \ dip  ( x1 x2 -- x2 x2 )
+  \
+  \ }doc
+
+[needed] 0dup [if]  code 0dup  ( x -- x | 0 0 )
+  E1 c,  78 04 + c,  B0 05 + c,
+    \ pop hl
+    \ ld a,h
+    \ or l
+  C2 c, pushhl ,  E5 c,  jppushhl  end-code  [then]
+    \ jp z,push_hl
+    \ push hl
+    \ jp push_hl
+
+  \ doc{
+  \
+  \ 0dup  ( x -- x | 0 0 )
+  \
+  \ Duplicate _x_ if it's zero.
+  \
+  \ }doc
+
+[needed] -dup [if]  code -dup  ( x -- x | 0 0 )
+  E1 c,  CB c, 7C c,  C2 c, pushhl ,  E5 c,  jppushhl  end-code
+    \ pop hl
+    \ bit 7,h ; negative?
+    \ jp z,push_hl
+    \ push hl
+    \ jp push_hl
+  [then]
+
+  \ doc{
+  \
+  \ -dup  ( x -- x x | x )
+  \
+  \ Duplicate _x_ if it's negative.
+  \
+  \ }doc
+
+( ndrop 2ndrop )
+
+need [if]  need z80-asm
+
+[needed] ndrop [if]
+
+code ndrop  ( x1..xn n -- )
+
+  hl pop  hl addp  exde  \ DE = n cells
+    \ pop hl
+    \ add hl,hl
+    \ ex de,hl
+  0 hl ldp#  sp addp  \ HL = stack pointer
+    \ ld hl,0
+    \ add hl,sp
+  de addp  ldsp  \ update SP
+    \ add hl,de
+    \ ld sp,hl
+  jpnext  end-code
+
+  \ doc{
+  \
+  \ ndrop  ( x1..xn n -- )
+  \
+  \ Drop _n_ cell items from the stack.
+  \
+  \ }doc
+
+[then]
+
+[needed] 2ndrop [if]
+
+code 2ndrop  ( dx1..dxn n -- )
+
+  hl pop  hl addp  hl addp  exde  \ DE = n cells
+    \ pop hl
+    \ add hl,hl
+    \ add hl,hl
+    \ ex de,hl
+  0 hl ldp#  sp addp  \ HL = stack pointer
+    \ ld hl,0
+    \ add hl,sp
+  de addp  ldsp  \ update SP
+    \ add hl,de
+    \ ld sp,hl
+  jpnext  end-code
+
+  \ doc{
+  \
+  \ ndrop  ( dx1..dxn n -- )
+  \
+  \ Drop _n_ double cell items from the stack.
+  \
+  \ }doc
+
+[then]
+
+  \ vim: filetype=soloforth
+  \ define.alias.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201605052257
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Implementation of `alias`.  Features of an alias defined with
+  \ `alias`:
+  \
+  \ - It has the execution token of the original word.
+  \ - It does not inherit the attributes of the original word,
+  \   which can be set with `immediate` and `compile-only`.
+  \ - It does not use data space memory.
+  \ - It can be reconfigured with `realias` and `alias!`, but
+  \   the compiled aliases don't change.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-10-25: First version of `alias`: it creates a deferred
+  \ word and initializes it. Second version: it recognizes code
+  \ words and patches their code field instead.
+  \
+  \ 2015-12-26: New alternative version, adapted to DTC: if
+  \ _xt_ is a deferred word, the alias will point to the word
+  \ it's associated to.
+  \
+  \ 2016-02-27: Fixed the DTC version: the alias of an
+  \ unitialized deferred word executed the default error even
+  \ after the initialization of the deferred word.
+  \
+  \ 2016-03-04: Removed the ITC version.
+  \
+  \ 2016-04-17: Improved `alias`: nowe the aliases have the xt
+  \ of the original word.
+  \
+  \ 2016-04-18: Wrote `realias`.
+  \
+  \ 2016-04-29: Add `alias!`, a useful common factor of
+  \ `alias` and `realias`.
+  \
+  \ 2016-05-05: Add conditional compilation. Improve
+  \ documentation.
+
+( alias! alias realias )
+
+need name>>  need !s
+
+[defined] alias!
+?\ : alias!  ( xt nt -- )  name>> !s  ;
+
+  \ doc{
+  \
+  \ alias!  ( xt nt -- )
+  \
+  \ Set the alias _nt_ to execute _xt_.
+  \
+  \ See `alias`, `realias`.
+  \
+  \ }doc
+
+[unneeded] alias
+?\ : alias  ( xt "name" -- )  header reveal latest alias!  ;
+
+  \ doc{
+  \
+  \ alias  ( xt "name" -- )
+  \
+  \ Create an alias _name_ that will execute _xt_.
+  \
+  \ Aliases have the execution token _xt_ of the original word,
+  \ but don't inherit its precedence (set by `immediate`) and
+  \ restricted (set by `compile-only`) attributes.
+  \
+  \ See `realias`, `alias!`.
+  \
+  \ Origin: Gforth.
+  \
+  \ }doc
+
+[unneeded] realias ?exit
+
+: realias  ( xt "name" -- )
+  defined dup 0= #-13 ?throw alias!  ;
+
+  \ doc{
+  \
+  \ realias  ( xt "name" -- )
+  \
+  \ Set the alias _name_ to execute _xt_.
+  \
+  \ See `alias`, `alias!`.
+  \
+  \ }doc
+
+  \ vim: filetype=soloforth
+  \ define.colon-no-name.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201604241823
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ `:name`.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-24: Moved `:noname` from the library.
+
+( :noname )
+
+: :noname  ( -- xt )
+  here  dup lastxt !  last off  !csp
+  docolon code-field,
+  noname? on  ]  ;
+
+  \ XXX TODO -- documentation
+
+  \ doc{
+  \
+  \ :noname  ( -- xt )
+  \
+  \ Origin: Forth-94 (CORE EXT), Forth-2012 (CORE EXT).
+  \
+  \ }doc
+
+  \ vim: filetype=soloforth
+  \ define.deferred.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201605040149
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Words related to deferred words.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-17: Added `deferred`, using the old definition of
+  \ `alias`.
+  \
+  \ 2016-05-04: Move `defer@` from the kernel, document most
+  \ words, compact the blocks.
+
+( deferred defers defer@ action-of )
+
+[unneeded] deferred 
+?\ : deferred  ( xt "name" -- )  defer latest name> defer!  ;
+
+  \ doc{
+  \
+  \ deferred  ( xt "name" -- )
+  \
+  \ Create a deferred word _name_ that will execute _xt_.  The
+  \ effect is the same than `defer name  xt ' name defer!`.
+  \
+  \ }doc
+
+[unneeded] defers
+?\ : defers  ( "name" -- )  ' defer@ compile,  ; immediate
+  
+  \ doc{
+  \
+  \ defers  ( Compilation: "name" -- )
+  \
+  \ Compile the present contents of the deferred word "name"
+  \ into the current definition. I.e. this produces static
+  \ binding as if "name" was not deferred.
+  \
+  \ Origin: Gforth.
+  \
+  \ }doc
+
+  \ Credit:
+  \
+  \ Code adapted from Afera.
+
+[unneeded] defer@
+?\ : defer@  ( xt1 -- xt2 )  >defer @  ;
+
+  \ doc{
+  \
+  \ defer@  ( xt1 -- xt2 )
+  \
+  \ Return the word _xt2_ currently associated to the deferred
+  \ word _xt1_.
+  \
+  \ Origin: Forth-2012 (CORE EXT).
+  \
+  \ }doc
+
+[unneeded] deferred? 
+?\ : deferred?  ( xt -- f )  c@ $C3 =  ;
+
+  \ doc{
+  \
+  \ deferred?  ( xt -- f )
+  \
+  \ Is _xt_ a deferred word?
+  \
+  \ The code of a deferred word starts with a Z80 jump ($C3) to
+  \ the word it's associated to.
+  \
+  \ }doc
+
+[unneeded] action-of ?exit
+
+: action-of  ( Interpretation: "name" -- xt )
+             ( Compilation:    "name" -- )
+             ( Runtime:        -- xt )
+  ' compiling? if    postpone literal postpone defer@
+               else  defer@  then  ; immediate
+  \ doc{
+  \
+  \ action-of  ( -- )
+  \   ( Interpretation: "name" -- xt )
+  \   ( Compilation:    "name" -- )
+  \   ( Runtime:        -- xt )
+  \
+  \ Return the code field address of a deferred word.
+  \
+  \ Origin: Forth-2012 (CORE EXT).
+  \
+  \ }doc
+
+  \ Credit:
+  \
+  \ Code adapted from Afera.
+
+( <is> [is] is  )
+
+  \ Credit:
+  \
+  \ Code adapted from Afera.
+
+: <is>  ( xt "name" -- )  ' defer!  ;
+
+: [is]  ( xt "name" -- )
+  postpone ['] postpone defer!  ; immediate compile-only
+
+: is  ( xt "name" -- )
+  compiling? if  postpone [is]  else  <is>  then  ; immediate
+
+  \ vim: filetype=soloforth
+  \ exception.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201605032252
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ The management of exceptions.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-09: Main development.
+  \
+  \ 2015-10: Fixes.
+  \
+  \ 2016-04-14: Restored the file from the repository. It was
+  \ removed from version 0.3.0+2016-04-09 by mistake. Updated
+  \ the headers and documentation.  Renamed `(.throw)` to
+  \ `.throw-message`, and `msg-scr` to `error-messages-block`.
+  \ Fixed `error>ordinal`.
+  \
+  \ 2016-04-25: Add carriage return before the exception
+  \ message in `.throw-message`.
+  \
+  \ 2016-04-29: Add `warning"`.
+  \
+  \ 2016-05-03: Document `warning"`.
+
+( abort" )
+
+  \ Credit:
+  \
+  \ Code adapted from DZX-Forth.
+
+[defined] abort-message ?\ 2variable abort-message
+
+: (abort")  ( n -- )
+  r> count rot if  abort-message 2! -2 throw  then + >r  ;
+
+: abort"  ( Compilation: "ccc<quote>" -- )
+  postpone (abort") ,"  ; immediate compile-only
+
+( error>ordinal error>line )
+
+: error>ordinal  ( -n1 -- +n2 )
+  abs dup 256 < ?exit
+      dup 1000 < if  [ 256 091 - ] literal - exit  then
+      [ 1000 286 - 256 091 - + ] literal -   ;
+
+  \ XXX TODO  add OS codes
+
+  \ doc{
+  \
+  \ error>ordinal  ( -n1 -- +n2 )
+  \
+  \ Convert an error code _n1_ to its ordinal position _+n2_ in
+  \ the library.
+
+  \ ----
+  \ -n1 =  -90..-1        \ Standard error codes
+  \        -285..-256     \ Solo Forth error codes
+  \        -1024..-1000   \ G+DOS error codes
+  \ +n2 =  1..146
+  \ ----
+
+  \ }doc
+
+: error>line  ( -n1 -- n2 )
+  error>ordinal dup >r
+  begin  dup dup 16 / - r@ <>  while  1+  repeat  rdrop  ;
+
+  \ doc{
+  \
+  \ error>line  ( -n1 -- n2 )
+  \
+  \ Convert error code _-n1_ to line _n2_ relative to the block
+  \ that contains the error messages.
+  \
+  \ }doc
+
+( error-messages-block .throw-message )
+
+need error>line  need .line
+
+variable error-messages-block
+s" Standard error codes" located error-messages-block !
+  \ XXX TODO rename!
+
+  \ doc{
+  \
+  \ error-messages-block  ( -- a )
+  \
+  \ Variable that holds the block that holds the error
+  \ messages.
+  \
+  \ }doc
+
+: .throw-message  ( n -- )
+  error-messages-block @
+  if    cr error>line error-messages-block @ .line space
+  else  .throw#  then  ;
+
+' .throw-message ' .throw defer!
+
+  \ doc{
+  \
+  \ .throw-message  ( n -- )
+  \
+  \ Extended behaviour of the deferred word `.throw`: Print the
+  \ text of throw error _n_.  The variable
+  \ `error-messages-block` holds the number of the first
+  \ block where messages are hold. If it contains zero, only
+  \ the error number is printed.
+  \
+  \ }doc
+
+( ?compiling ?executing )
+
+[unneeded] ?compiling
+?\ : ?compiling  ( -- )  compiling? 0= -14 ?throw  ;
+
+  \ doc{
+  \
+  \ ?compiling  ( -- )
+  \
+  \ Issue an error if not compiling.
+  \
+  \ }doc
+
+[unneeded] ?executing
+?\ : ?executing  ( -- )  compiling? -263 ?throw  ;
+
+  \ doc{
+  \
+  \ ?executing  ( -- )
+  \
+  \ Issue an error if not executing.
+  \
+  \ }doc
+
+( warning" )
+
+  \ Credit:
+  \
+  \ Adapted from pForth and modified.
+
+need string-parameter
+
+: (warning")  ( f -- )
+  string-parameter rot if  type  else  2drop  then  ;
+
+  \ doc{
+  \
+  \ (warning") ( f -- )
+  \
+  \ Inner procedure compiled by `warning"`.  If _f_ is not
+  \ zero, print the compiled message; else do nothing.
+  \
+  \ }doc
+
+: warning"
+  \ Compilation: ( "ccc<quote>" -- )
+  \ Execution:   ( f -- )
+  postpone (warning") ,"  ; immediate compile-only
+
+  \ doc{
+  \
+  \ warning"
+  \ 
+  \ Compilation: ( "ccc<quote>" -- )
+  \
+  \ Parse and compile a message.
+  \
+  \ Execution:   ( f -- )
+  \
+  \ If _f_ is not zero, print the compiled message; else do
+  \ nothing.
+  \
+  \ }doc
+
+  \ vim: filetype=soloforth
+
+  \ flow.case.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201605060116
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Several implementations of the standard Eaker's `case`
+  \ structure and some variants of `of`.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-24: Add `need pick`, because `pick` has been moved
+  \ from the kernel to the library.
+  \
+  \ 2016-05-06: Replace two remaining `[compile]` with
+  \ `postpone`.
 
 ( case )
 
@@ -1601,12 +2743,12 @@ variable here-backup
   postpone else  ; immediate compile-only
 
 : endcase
-  ( Compilation: 0 orig1..orign -- )
-  ( Run-time: x -- )
-  postpone drop  begin  ?dup  while  [compile] then  repeat
+  \ ( Compilation: 0 orig1..orign -- )
+  \ ( Run-time: x -- )
+  postpone drop  begin  ?dup  while  postpone then  repeat
   ; immediate compile-only
 
-( case )  \ eforth-case )
+( eforth-case )
 
   \ Credit:
   \
@@ -1626,14 +2768,14 @@ variable here-backup
   postpone else  ; immediate compile-only
 
 : (endcase) ( 0 orig1..orign -- )
-  begin  ?dup  while  [compile] then  repeat  ;
+  begin  ?dup  while  postpone then  repeat  ;
 
 : endcase
   ( Compilation: 0 orig1..orign -- )
   ( Run-time: x -- )
   postpone drop (endcase)  ; immediate compile-only
 
-( case )  \ 94-doc-case )
+( 94-doc-case )
 
   \ Credit:
   \
@@ -1665,7 +2807,7 @@ variable here-backup
   postpone drop  \ discard case value
   0 ?do  postpone then  loop  ; immediate compile-only
 
-( case )  \ abersoft-case )
+( abersoft-case )
 
   \ Credit:
   \
@@ -1798,7 +2940,7 @@ need within
 
 ( any-of )
 
-need any?
+need any?  need pick
 
 : (any-of)  ( x0 x1..xn n -- x0 x0 | x0 0 )
   dup 1+ pick >r any? r> tuck and  ;
@@ -1822,8 +2964,7 @@ need any?
   \
   \ Code from Galope.  Originally based on code by Mark Willis
   \ posted to <lang.comp.forth>:
-  \ Message-ID:
-  \ <64b90787-344c-4ee0-a0e4-4e2c12b3dec3@googlegroups.com>
+  \ Message-ID: <64b90787-344c-4ee0-a0e4-4e2c12b3dec3@googlegroups.com>
   \ Date: Fri, 24 Jan 2014 02:08:22 -0800 (PST)
 
 : default-of  ( -- )
@@ -1861,7 +3002,7 @@ need any?
   \   endcase  ;
 
   \ vim: filetype=soloforth
-  \ data_stack.fsb
+  \ graphics.attributes.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
@@ -1871,7 +3012,7 @@ need any?
   \ -----------------------------------------------------------
   \ Description
 
-  \ Words that manipulate the data stack.
+  \ Words related to screen attributes.
 
   \ -----------------------------------------------------------
   \ Author
@@ -1885,671 +3026,83 @@ need any?
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( 2nip )  \ ==datastack==
+( attr )
 
-  \ Credit:
-  \
-  \ Code from Afera; original code from DZX-Forth.
+need z80-asm need (attr-addr)
 
-code 2nip  ( x1 x2 x3 x4 -- x3 x4 )
+code attr ( col line -- b )
 
-  E1 c,            \ pop hl
-  D1 c,            \ pop de
-  F1 c,            \ pop af
-  F1 c,            \ pop af
-  C3 c, pushhlde , \ jp pushhlde
+  \ Return the color attribute of the given cursor coordinates.
+
+  de pop  hl pop  l d ld
+    \ d = col
+    \ e = line
+  (attr-addr) call
+    \ hl = attribute address
+  m l ld  0 h ld#
+    \ hl = attribute
+  jppushhl
 
   end-code
 
-  \ doc{
-  \
-  \ 2nip  ( x1 x2 x3 x4 -- x3 x4 )
-  \
-  \ }doc
+( attr-addr )
 
-( roll )
+need z80-asm need (attr-addr)
 
-  \ doc{
-  \
-  \ roll  ( xu xn .. x0 u -- xn .. x0 xu )
-  \
-  \ }doc
+code attr-addr ( col line -- a )
 
-  \ Credit:
-  \
-  \ Code adapted from DZX-Forth.
+  \ Return the color attribute address of the given cursor
+  \ coordinates.
+
+  de pop  hl pop  l d ld
+    \ d = col
+    \ e = line
+  (attr-addr) call
+    \ hl = attribute address
+  jppushhl
+
+  end-code
+
+\ (attr-addr) \
 
 need z80-asm
 
-code roll  ( xu xn .. x0 u -- xn .. x0 xu )
+create (attr-addr)  ( -- a )
 
-  hl pop  hl addp  hl de ldp  sp addp
-    \ pop hl
-    \ add hl,hl
-    \ ld e,l
-    \ ld d,h
-    \ add hl,sp
+  \ Address of a Z80 routine that calculates the color
+  \ attribute address of a cursor position.  This is a modified
+  \ version of the ROM routine at 0x2583.
 
-  bc push  m c ld  hl incp  m b ld
-    \ push bc
-    \ ld c,(hl)
-    \ inc hl
-    \ ld b,(hl)
+  \ Input:
+  \   d = column (0..31)
+  \   e = line (0..23)
+  \ Output:
+  \   hl = address of the attribute in the screen
 
-  bc push  de bc ldp  hl de ldp
-    \ push bc
-    \ ld b,d
-    \ ld c,e
-    \ ld d,h
-    \ ld e,l
+  asm
 
-  bc tstp
-    \ ld a,b
-    \ or c
+  e a ld  \ line to a 0x00..0x17 (max 00010111)
+  rrca rrca rrca  \ rotate bits left
+  a e ld  \ store in d as an intermediate value
+  E0 and#  \ pick up bits 11100000 (was 00011100)
+  d xor  \ combine with column 0x00..0x1F
+  a l ld  \ low byte now correct
+  e a ld  \ bring back intermediate result from d
+  03 and#  58 xor#
+    \ mask to give correct third of screen
+    \ combine with base address
+  a h ld  \ high byte correct
+  ret
 
-  0000 jpz |mark 0 unresolved !
-    \ jp z,roll.end
-
-  hl decp  hl decp  lddr
-    \ dec hl
-    \ dec hl
-    \ lddr
-
-    \ roll.end:
-  0 unresolved @ >resolve
-  hl pop  bc pop  exsp
-    \ pop hl
-    \ pop bc
-    \ ex (sp),hl
-
-  jpnext
-
-  end-code
-
-( 3drop 4drop )
-
-code 3drop  ( x1 x2 x3 -- )
-  E1 c,  E1 c,  E1 c,
-    \ pop hl
-    \ pop hl
-    \ pop hl
-  jpnext  end-code
-
-  \ doc{
-  \
-  \ 3drop  ( x1 x2 x3 -- )
-  \
-  \ }doc
-
-code 4drop  ( x1 x2 x3 x4 -- )
-  E1 c,  E1 c,  E1 c,  E1 c,
-    \ pop hl
-    \ pop hl
-    \ pop hl
-    \ pop hl
-  jpnext  end-code
-
-  \ doc{
-  \
-  \ 4drop  ( x1 x2 x3 x4 -- )
-  \
-  \ }doc
-
-( 3dup )
-
-code 3dup  ( x1 x2 x3 -- x1 x2 x3 x1 x2 x3 )
-  D9 c,
-    \ exx
-  C1 c,  D1 c,  E1 c,
-    \ pop bc
-    \ pop de
-    \ pop hl
-  E5 c,  D5 c,  C5 c,
-    \ push hl
-    \ push de
-    \ push bc
-  E5 c,  D5 c,  C5 c,
-    \ push hl
-    \ push de
-    \ push bc
-  D9 c,
-    \ exx
-  jpnext  end-code
-
-  \ doc{
-  \
-  \ 3dup  ( x1 x2 x3 -- x1 x2 x3 x1 x2 x3 )
-  \
-  \ }doc
-
-exit  \ slower and smaller version:
-
-: 3dup  ( x1 x2 x3 -- x1 x2 x3 x1 x2 x3 )  dup 2over rot  ;
-
-( 2rot )
-
-need roll
-
-: 2rot  ( x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
-  5 roll 5 roll  ;
-
-  \ doc{
-  \
-  \ 2rot  ( x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
-  \
-  \ }doc
-
-( swapped )
-
-  \ Credit:
-  \
-  \ Adapted from code written by Sam Suan Chen, published
-  \ on Forth Dimensions (volume 6, number 6, page 9, 1985-03).
-
-: swapped  ( i*x n1 n2 -- j*x )
-  >r 1+ cells sp@ +     ( i*x a1 ) ( R: n2 )
-  r> 2+ cells sp@ +     ( i*x a1 a2 )
-  over @ over @         ( i*x a1 a2 x1 x2 )
-  >r swap !  r> swap !  ;
-
-  \ Usage example:
-  \
-  \   ( 1 2 3 4 5 )  1 4 swapped  ( 4 2 3 1 5 )
-
-  \ Original code by Sam Suan Chen,
-  \ with an equivalent usage example:
-
-  \ : xyswap  ( i*x n -- j*x )
-  \   16 /mod >r dup + sp@ + sp@ r> dup + +
-  \   over @ over @
-  \   >r swap !  r> swap !  ;
-  \
-  \   ( 1 2 3 4 5 )  $25 xyswap  ( 4 2 3 1 5 )
-
-( nup drup dip )
-
-code nup  ( x1 x2 -- x1 x1 x2 )
-  E1 c,  D1 c,  D5 c,  C3 c, pushhlde ,
-    \ pop hl
-    \ pop de
-    \ push de
-    \ jp pushhlde
-  end-code
-  \ Also called `under`.
-
-  \ doc{
-  \
-  \ nup  ( x1 x2 -- x1 x1 x2 )
-  \
-  \ }doc
-
-code drup  ( x1 x2 -- x1 x1 )
-  D1 c,  E1 c,  E5 c,  E5 c,  jpnext
-    \ pop de
-    \ pop hl
-    \ push hl
-    \ push hl
-    \ jp next
-  end-code
-
-  \ doc{
-  \
-  \ drup  ( x1 x2 -- x1 x1 )
-  \
-  \ }doc
-
-code dip  ( x1 x2 -- x2 x2 )
-  E1 c, D1 c, E5 c, E5 c,  jpnext
-    \ pop hl
-    \ pop de
-    \ push hl
-    \ push hl
-    \ jp next
-  end-code
-
-  \ doc{
-  \
-  \ dip  ( x1 x2 -- x2 x2 )
-  \
-  \ }doc
-
-( 0dup -dup )
-
-code 0dup  ( x -- x | 0 0 )
-  E1 c,  78 04 + c,  B0 05 + c,
-    \ pop hl
-    \ ld a,h
-    \ or l
-  C2 c, pushhl ,  E5 c,  jppushhl
-    \ jp z,push_hl
-    \ push hl
-    \ jp push_hl
-  end-code
-
-  \ doc{
-  \
-  \ 0dup  ( x -- x | 0 0 )
-  \
-  \ Duplicate _x_ if it's zero.
-  \
-  \ }doc
-
-code -dup  ( x -- x | 0 0 )
-  E1 c,  CB c, 7C c,
-    \ pop hl
-    \ bit 7,h ; negative?
-  C2 c, pushhl ,  E5 c,  jppushhl
-    \ jp z,push_hl
-    \ push hl
-    \ jp push_hl
-  end-code
-
-  \ doc{
-  \
-  \ -dup  ( x -- x x | x )
-  \
-  \ Duplicate _x_ if it's negative.
-  \
-  \ }doc
-
-( ndrop )
-
-need z80-asm
-
-code ndrop  ( x1..xn n -- )
-
-  hl pop  hl addp  exde  \ DE = n cells
-    \ pop hl
-    \ add hl,hl
-    \ ex de,hl
-  0 hl ldp#  sp addp  \ HL = stack pointer
-    \ ld hl,0
-    \ add hl,sp
-  de addp  ldsp  \ update SP
-    \ add hl,de
-    \ ld sp,hl
-  jpnext
-  end-code
-
-  \ doc{
-  \
-  \ ndrop  ( x1..xn n -- )
-  \
-  \ Drop _n_ cell items from the stack.
-  \
-  \ }doc
-
-( 2ndrop )
-
-need z80-asm
-
-code 2ndrop  ( dx1..dxn n -- )
-
-  hl pop  hl addp  hl addp  exde  \ DE = n cells
-    \ pop hl
-    \ add hl,hl
-    \ add hl,hl
-    \ ex de,hl
-  0 hl ldp#  sp addp  \ HL = stack pointer
-    \ ld hl,0
-    \ add hl,sp
-  de addp  ldsp  \ update SP
-    \ add hl,de
-    \ ld sp,hl
-  jpnext
-  end-code
-
-  \ doc{
-  \
-  \ ndrop  ( dx1..dxn n -- )
-  \
-  \ Drop _n_ double cell items from the stack.
-  \
-  \ }doc
+  end-asm
 
   \ vim: filetype=soloforth
-  \ data_structures.fsb
-  \
-  \ This file is part of Solo Forth
-  \ http://programandala.net/en.program.solo_forth.html
-
-  \ Last modified: 20160324
-
-  \ -----------------------------------------------------------
-  \ Description
-
-  \ Misc words related to data structures.
-
-  \ -----------------------------------------------------------
-  \ Author
-
-  \ Marcos Cruz (programandala.net), 2015, 2016.
-
-  \ -----------------------------------------------------------
-  \ License
-
-  \ You may do whatever you want with this work, so long as you
-  \ retain every copyright, credit and authorship notice, and
-  \ this license.  There is no warranty.
-
-( buffer: cvariable enum )
-
-[unneeded] buffer:
-?\ : buffer:  ( u "name" -- )  create allot  ;
-
-[unneeded] cvariable
-?\ : cvariable  ( "name"  -- )  create 1 allot  ;
-
-[unneeded] enum
-?\ : enum  (  n "name" -- n+1 )  dup constant 1+  ;
-
-( set )
-
-: set  ( x a "name" -- )
-  create  swap , ,
-  does>   ( pfa )  dup @ swap cell+ @ !  ;
-
-  \ doc{
-  \
-  \ set  ( x a "name" -- )
-  \
-  \ Define a word "name" which, when executed, will  cause  the
-  \ value _x_  to be stored at _a_.
-  \
-  \ Origin: Forth-79 (Reference Word Set); Forth-83 (Appendix
-  \ B.  Uncontrolled Reference Words).
-  \
-  \ }doc
-
-( link@ link, )
-
-  \ 2015-11-15
-
-  \ Credit:
-  \
-  \ Code written after the description by Rick VanNorman,
-  \ published on Forth Dimensions (volume 20, number 3, pages
-  \ 19-22, 1998-09).
-
-defer link@  ( node1 -- node2 )
-  ' @ ' link@ defer!
-  \ Fetch the linked list node _node_ is pointing to.
-
-: link,  ( node -- )  here over @ , swap !  ;
-  \ Create a new linked list node, pointing to _node_.
-
-  \ vim: filetype=soloforth
-  \ debugging.tilde-tilde.fsb
-  \
-  \ This file is part of Solo Forth
-  \ http://programandala.net/en.program.solo_forth.html
-
-  \ Last modified: 20160324
-
-  \ -----------------------------------------------------------
-  \ Description
-
-  \ The `~~` debugging tool.
-
-  \ -----------------------------------------------------------
-  \ Author
-
-  \ Marcos Cruz (programandala.net), 2015, 2016.
-
-  \ -----------------------------------------------------------
-  \ License
-
-  \ You may do whatever you want with this work, so long as you
-  \ retain every copyright, credit and authorship notice, and
-  \ this license.  There is no warranty.
-
-( ~~ )
-
-  \ 2016-02-18: First version.
-
-need :noname  need defer  need is
-
-variable ~~?    ~~? on      \ active?
-variable ~~x    ~~x off     \ x coordinate
-variable ~~y    ~~y off     \ y coordinate
-variable ~~key  ~~key off   \ quit key, or zero if no pause
-
-: ~~show  ( nt line block -- )
-  ~~x @ ~~y @ at-xy ." Block " . ." Line " . .name .s   ;
-  \ Show the debugging info.
-
-: ~~control  ( -- )
-  ~~key @ ?dup 0= ?exit  key = if  quit  then  ;
-  \ If `~~key` is non-zero, wait for a key and quit if it
-  \ equals the contents of `~~key`.
-
-2variable ~~backup-xy
-
-defer ~~save  ( -- )  defer ~~restore  ( -- )
-
-:noname  ( -- )  xy ~~backup-xy 2!        ; is ~~save
-:noname  ( -- )     ~~backup-xy 2@ at-xy  ; is ~~restore
-  \ Save and restore the current coordinates.
-
--->
-
-
-( ~~ )
-
-: (~~)  ( nt line block -- )
-  ~~? @
-  if    ~~save ~~show ~~control ~~restore
-  else  2drop drop  then  ;
-  \ Execute the debugging code, if debugging is active.
-
-: ~~  ( -- )
-  latest      postpone literal
-  >in @ c/l / postpone literal
-  blk @       postpone literal
-  postpone (~~)  ; immediate compile-only
-  \ Compile debugging code.
-  \ This word was inspired by Gforth's `~~`.
-
-  \ deferred.fsb
-  \
-  \ This file is part of Solo Forth
-  \ http://programandala.net/en.program.solo_forth.html
-
-  \ Last modified: 20160324
-
-  \ -----------------------------------------------------------
-  \ Description
-
-  \ Words related to deferred words.
-
-  \ -----------------------------------------------------------
-  \ Author
-
-  \ Marcos Cruz (programandala.net), 2015, 2016.
-
-  \ -----------------------------------------------------------
-  \ License
-
-  \ You may do whatever you want with this work, so long as you
-  \ retain every copyright, credit and authorship notice, and
-  \ this license.  There is no warranty.
-
-( defers action-of )
-
-  \ Credit:
-  \
-  \ Code adapted from the Afera library.
-
-: defers  ( "name" -- )  ' defer@ compile,  ; immediate
-  \ Compile the present contents of the deferred word "name"
-  \ into the current definition. I.e. this produces static
-  \ binding as if "name" was not deferred.
-  \
-  \ Origin: Gforth.
-
-: action-of  ( Interpretation: "name" -- xt )
-             ( Compilation:    "name" -- )
-             ( Runtime:        -- xt )
-  ' compiling? if    postpone literal postpone defer@
-               else  defer@  then  ; immediate
-  \ Return the code field address of a deferred word.
-  \
-  \ Origin: Forth-2012 (CORE EXT).
-
-( <is> [is] is  )
-
-  \ Credit:
-  \
-  \ Code adapted from the Afera library.
-
-: <is>  ( xt "name" -- )  ' defer!  ;
-
-: [is]  ( xt "name" -- )
-  postpone ['] postpone defer!  ; immediate compile-only
-
-: is  ( xt "name" -- )
-  compiling? if  postpone [is]  else  <is>  then  ; immediate
-
-( deferred? )
-
-  \ XXX REMARK -- This word can not distinguish deferred words
-  \ and aliases, which are created also by `defer`.
-
-: deferred?  ( xt -- wf )  c@ $C3 =  ;
-  \ Is _xt_ a deferred word?
-  \ The code of a deferred word starts with a Z80 jump ($C3)
-  \ to the word it's associated to.
-
-  \ vim: filetype=soloforth
-  \ exceptions.fsb
-  \
-  \ This file is part of Solo Forth
-  \ http://programandala.net/en.program.solo_forth.html
-
-  \ Last modified: 20160324
-
-  \ -----------------------------------------------------------
-  \ Description
-
-  \ The management of exceptions.
-
-  \ -----------------------------------------------------------
-  \ Author
-
-  \ Marcos Cruz (programandala.net), 2015, 2016.
-
-  \ -----------------------------------------------------------
-  \ License
-
-  \ You may do whatever you want with this work, so long as you
-  \ retain every copyright, credit and authorship notice, and
-  \ this license.  There is no warranty.
-
-( abort" )
-
-  \ Credit:
-  \
-  \ Code adapted from DZX-Forth.
-
-  \ XXX TODO use `error`, by modifying `throw`
-
-[defined] abort-message ?\ 2variable abort-message
-
-: (abort")  ( n -- )
-  r> count rot if  abort-message 2! -2 throw  then + >r  ;
-
-: abort"  ( Compilation: "ccc<quote>" -- )
-  postpone (abort") ,"  ; immediate compile-only
-
-( error>ordinal error>line )
-
-: error>ordinal  ( -n1 -- +n2 )
-  \ Convert an error code to its ordinal position in the
-  \ library.
-  \ -n1 =  -90..-1        \ Standard error codes
-  \        -285..-256     \ Solo Forth error codes
-  \        -1024..-1000   \ G+DOS error codes
-  \ +n2 =  1..146
-
-  \ XXX TODO  add OS codes
-
-  abs
-  dup 256 < ?exit
-  dup 1000 < if  [ 255 091 - ] literal - exit  then
-  [ 1000 286 - 255 091 - + ] literal -   ;
-
-: error>line  ( n1 -- n2 )
-  error>ordinal dup >r
-  begin
-    dup dup 16 / - r@ <>  while  1+
-  repeat  rdrop  ;
-
-\ msg-scr (.throw) \
-
-need error>line  need .line
-
-variable msg-scr
-s" Standard error codes" locate msg-scr !
-  \ XXX TODO rename!
-
-  \ doc{
-  \
-  \ msg-scr  ( -- a )
-  \
-  \ Variable that holds the block that holds the error
-  \ messages.
-  \
-  \ }doc
-
-: (.throw)  ( n -- )
-  msg-scr @
-  if  error>line msg-scr @ .line space  else  .throw#  then  ;
-
-' (.throw) ' .throw defer!
-
-  \ doc{
-  \
-  \ (.throw)  ( n -- )
-  \
-  \ Extended behaviour of the deferred word `.throw`:
-  \ Print the text of throw error _n_.  The variable `msg-scr`
-  \ contains the number of the first block where messages are
-  \ hold. If it contains zero, only the error number is printer.
-  \
-  \ }doc
-
-( ?compiling ?executing )
-
-[unneeded] ?compiling
-?\ : ?compiling  ( -- )  compiling? 0= -14 ?throw  ;
-
-  \ doc{
-  \
-  \ ?compiling  ( -- )
-  \
-  \ Issue an error if not compiling.
-  \
-  \ }doc
-
-[unneeded] ?executing
-?\ : ?executing  ( -- )  compiling? -263 ?throw  ;
-
-  \ doc{
-  \
-  \ ?executing  ( -- )
-  \
-  \ Issue an error if not executing.
-  \
-  \ }doc
-
-  \ vim: filetype=soloforth
-
   \ graphics.lines.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605070026
 
   \ -----------------------------------------------------------
   \ Description
@@ -2567,7 +3120,11 @@ s" Standard error codes" locate msg-scr !
   \ You may do whatever you want with this work, so long as you
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
-
+ 
+  \ -----------------------------------------------------------
+  \ Latest changes
+ 
+  \ 2016-05-07: Make block titles compatible with `indexer`.
 
 ( rdraw )
 
@@ -2577,11 +3134,11 @@ s" Standard error codes" locate msg-scr !
 
 need z80-asm
 
-code rdraw  ( xc yc -- )
+code rdraw  ( gx gy -- )
 
   \ Draw a line relative to the current coordinates.
   \
-  \ xc yc = relative coordinates from the current ones
+  \ gx gy = relative coordinates from the current ones
 
   \ XXX FIXME -- use the whole screen
 
@@ -2605,7 +3162,7 @@ code rdraw  ( xc yc -- )
 
   jpnext end-code
 
-\ (rdraw) \
+( (rdraw )
 
   \ XXX UNDER DEVELOPMENT
 
@@ -2613,7 +3170,7 @@ code rdraw  ( xc yc -- )
 
 need z80-asm
 
-create (rdraw)
+create (rdraw
 asm
 
 
@@ -2690,35 +3247,41 @@ asm
 
 end-asm
 
-( adraw ) \ from Abersoft Forth
+( adraw )
 
   \ Credit:
   \
   \ Code adapted from Abersoft Forth's `DRAW`.
 
-need plot
+need plot  need os-coordx  need os-coordy
 
 2variable x1  2variable incx  2variable y1  2variable incy
 
-  \ System variables used:
-  \   23677 = COORDX
-  \   23678 = COORDY
-
-: adraw  ( xc yc -- )
+: adraw  ( gx gy -- )
 
   \ Draw a line from the current coordinates to the given
   \ absolute coordinates.
 
-  23678 c@ ( y0 ) dup 0 swap y1 2! - dup abs rot
+  [ os-coordy ] literal c@ ( y0 )
+  dup 0 swap y1 2! - dup abs rot
   \ ( +-ydiff ydiff x )
-  23677 c@ ( x0 ) dup 0 swap x1 2! - dup abs rot
+
+  [ os-coordx ] literal c@ ( x0 )
+  dup 0 swap x1 2! - dup abs rot
   \ ( +-ydiff +-xdiff xdiff ydiff )
+
   max >r dup 0<  \ negative xdiff?
   if    abs 0 swap r@ ud/mod dnegate
   else  0 swap r@ ud/mod  then
+
   incx 2! drop dup 0<  \ negative ydiff?
   if    abs 0 swap r@ ud/mod dnegate
   else  0 swap r@ ud/mod  then
+
+  -->
+
+( adraw )
+
   incy 2! drop r> 1+ 0
   do  x1 @ y1 @ plot
       x1 2@ incx 2@ d+ x1 2!
@@ -2890,7 +3453,7 @@ need os-chars  need os-udg
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201604071548
 
   \ -----------------------------------------------------------
   \ Description
@@ -2916,7 +3479,7 @@ need (pixel-addr)
 
   \ XXX TODO use z80-asm
 
-code pixel-addr  ( xc yc -- n a )
+code pixel-addr  ( gx gy -- n a )
   \ Address of a pixel in the screen.
   \ x = 0..255
   \ y = 0..191
@@ -3024,7 +3587,7 @@ create (pixel-addr)  ( -- a )
 
 need (pixel-addr)
 
-code plot  ( xc yc -- )
+code plot  ( gx gy -- )
 
   D9 c,               \ exx ; save Forth IP
   E1 c,               \ pop hl
@@ -3056,7 +3619,7 @@ code plot  ( xc yc -- )
 
 need (pixel-addr)  need z80-asm
 
-code set-pixel  ( xc yc -- )
+code set-pixel  ( gx gy -- )
 
   \ XXX FIXME system halt?
 
@@ -3082,7 +3645,7 @@ code set-pixel  ( xc yc -- )
 
 need (pixel-addr)  need z80-asm
 
-code reset-pixel  ( xc yc -- )
+code reset-pixel  ( gx gy -- )
 
   hl pop  de pop  bc push
   l b ld  e c ld  (pixel-addr) call
@@ -3106,7 +3669,7 @@ code reset-pixel  ( xc yc -- )
 
 need (pixel-addr)  need z80-asm
 
-code toggle-pixel  ( xc yc -- )
+code toggle-pixel  ( gx gy -- )
 
   hl pop  de pop  bc push
   l b ld  e c ld  (pixel-addr) call
@@ -3121,7 +3684,7 @@ code toggle-pixel  ( xc yc -- )
 
 need (pixel-addr)  need z80-asm
 
-code test-pixel  ( xc yc -- f )
+code test-pixel  ( gx gy -- f )
   hl pop  de pop  bc push
   \ l = y coordinate
   \ e = x coordinate
@@ -3141,18 +3704,9 @@ code test-pixel  ( xc yc -- f )
 
 ( pixels )
 
-  \ Credit:
-  \
-  \ Original code written by Juan Antonio Paz,
-  \ published on Microhobby, issue 170 (1988-05), page 21:
-  \ http://microhobby.org/numero170.htm
-  \ http://microhobby.speccy.cz/mhf/170/MH170_21.jpg
-
 need z80-asm
 
 code pixels  ( -- u )
-
-  \ Return the number of pixels set on the screen.
 
   exx
   4000 hl ldp#  l b ld  l c ld
@@ -3167,6 +3721,23 @@ code pixels  ( -- u )
   exx
   jpnext
   end-code
+
+  \ doc{
+  \
+  \ pixels  ( -- u )
+  \
+  \ Number of pixels set on the screen.
+  \
+  \ }doc
+
+  \ 26 bytes used.
+
+  \ Credit:
+  \
+  \ Original code written by Juan Antonio Paz,
+  \ published on Microhobby, issue 170 (1988-05), page 21:
+  \ http://microhobby.org/numero170.htm
+  \ http://microhobby.speccy.cz/mhf/170/MH170_21.jpg
 
   \ Original code:
   \
@@ -3188,6 +3759,198 @@ code pixels  ( -- u )
   \ jr nz,byte
   \ ret
 
+( slow-pixels )
+
+  \ Slower version of `pixels`.
+
+need bits
+: pixels  ( -- u )  16384 6144 bits  ;
+
+  \ vim: filetype=soloforth
+  \ graphics.udg.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201604231622
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Words to define User Defined Graphics.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-23: Add `0udg:`. Factor `0udg!` from `udg!`.
+  \ Improve the documentation.
+  \
+  \ 2016-04-24: Add `udg[` and `0udg[`.
+
+( 0udg! udg! 0udg: udg: )
+
+need os-udg
+
+: 0udg!  ( b0..b7 n -- )
+  8 * os-udg @ + dup 7 + do  i c!  -1 +loop  ;
+
+  \ doc{
+  \
+  \ udg!  ( b0..b7 n -- )
+  \
+  \ Store the given 8 bytes into UDG number _n_ (0..127).
+  \
+  \ - b0 = first (top) scan
+  \ - b7 = last (bottom) scan
+  \
+  \ }doc
+
+: udg!  ( b0..b7 c -- )  128 - 0udg!  ;
+
+  \ doc{
+  \
+  \ udg!  ( b0..b7 c -- )
+  \
+  \ Store the given 8 bytes into UDG char _c_ (128..255).
+  \
+  \ - b0 = first (top) scan
+  \ - b7 = last (bottom) scan
+  \
+  \ }doc
+
+: udg:  ( b0..b7 c "name" -- )  dup constant  udg!  ;
+
+  \ doc{
+  \
+  \ udg:  ( b0..b7 c "name" -- )
+  \
+  \ Create a constant "name" for UDG char _c_ (128..255) and
+  \ store the given 8 bytes into that UDG char.
+
+  \ - b0 = first (top) scan
+  \ - b7 = last (bottom) scan
+  \
+  \ }doc
+
+: 0udg:  ( b0..b7 n "name" -- )  dup constant 0udg!  ;
+
+  \ doc{
+  \
+  \ 0udg:  ( b0..b7 n "name" -- )
+  \
+  \ Create a constant "name" for UDG number _n_ (0..127) and
+  \ store the given 8 bytes into UDG char _128+n_.
+
+  \ - b0 = first (top) scan
+  \ - b7 = last (bottom) scan
+  \
+  \ }doc
+
+( 0udg[ udg[ )
+
+need os-udg
+
+variable first-udg
+variable current-udg
+variable current-scan
+
+[defined] binary ?\  : binary  ( -- )  2 base !  ;
+
+: 0udg[  ( b -- )
+  dup first-udg !  current-udg !  current-scan off  binary  ;
+
+  \ doc{
+  \
+  \ 0udg[  ( b -- )
+  \
+  \ Start a set of UDG definitions, from UDG number _b_
+  \ (0..255).
+  \
+  \ See: `udg[`, `|`, `||`, `||]`.
+  \
+  \ }doc
+
+: udg[  ( c -- )  128 - 0udg[  ;
+
+  \ doc{
+  \
+  \ udg[  ( c -- )
+  \
+  \ Start a set of UDG definitions, from UDG character _c_
+  \ (128..255).
+  \
+  \ See: `0udg[`, `|`, `||`, `||]`.
+  \
+  \ Usage example:
+  \
+  \ ----
+  \ 140 udg[  \ define UDG 140..144
+  \
+  \ 00111100 | 00111100 | 00111100 | 00111100 | 00111100 ||
+  \ 01111110 | 01111110 | 01111110 | 01111110 | 01011110 ||
+  \ 11111111 | 11111111 | 11111111 | 10111111 | 10111111 ||
+  \ 11111111 | 11111111 | 10111111 | 10111111 | 11111111 ||
+  \ 11111111 | 10111111 | 10111111 | 11111111 | 11111111 ||
+  \ 11001111 | 11011111 | 11111111 | 11111111 | 11111111 ||
+  \ 01111110 | 01111110 | 01111110 | 01111110 | 01111110 ||
+  \ 00111100 | 00111100 | 00111100 | 00111100 | 00111100 ||]
+  \ ----
+  \
+  \ }doc
+
+: |  ( b -- )
+  os-udg @ current-udg @ 8 * current-scan @ + + c!
+  1 current-udg +!  ;
+
+  \ doc{
+  \
+  \ |  ( b -- )
+  \
+  \ Store scan _b_ into the current UDG being defined.
+  \
+  \ See: `0udg[`, `udg[`, `||`, `||]`.
+  \
+  \ }doc
+
+: || ( b -- )
+  |  1 current-scan +!  first-udg @ current-udg !  ;
+
+  \ doc{
+  \
+  \ || ( b -- )
+  \
+  \ Store scan _b_ into the current UDG being defined and start
+  \ a new row of scans.
+  \
+  \ See: `0udg[`, `udg[`, `|`, `||]`.
+  \
+  \ }doc
+
+
+: ||]  ( b -- )  ||  decimal  ;
+
+  \ doc{
+  \
+  \ ||]  ( b -- )
+  \
+  \ Store scan _b_ into the current UDG being defined and stop
+  \ defining UDGs.
+  \
+  \ See: `0udg[`, `udg[`, `|`, `||`.
+  \
+  \ }doc
 
   \ vim: filetype=soloforth
   \ keyboard.fsb
@@ -3195,7 +3958,7 @@ code pixels  ( -- u )
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605070030
 
   \ -----------------------------------------------------------
   \ Description
@@ -3214,8 +3977,13 @@ code pixels  ( -- u )
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-  \ }}} =======================================================
-  \ Keyboard {{{
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-24: Remove `char`, which has been moved to the
+  \ library.
+  \
+  \ 2016-05-07: Make block titles compatible with `indexer`.
 
 ( at-accept clear-accept set-accept )
 
@@ -3403,11 +4171,13 @@ need aborted?
   \ If no key is pressed return _false_.  If a key is pressed,
   \ discard it and wait for a second key. Then return _true_ if
   \ it's a carriage return, else return _false_.
-
+  \
   \ Usage example:
   \
+  \ ----
   \ : listing  ( -- )
   \   begin  ." bla " nuf?  until  ." Aborted"  ;
+  \ ----
   \
   \ }doc
 
@@ -3424,11 +4194,15 @@ need aborted?
   \ If no key is pressed return _false_.  If a key is pressed,
   \ discard it and wait for a second key. Then return _true_ if
   \ it's _c_, else return _false_.
-
+  \
+  \ This word is a useful factor of `nuf?`.
+  \
   \ Usage example:
   \
+  \ ----
   \ : listing  ( -- )
   \   begin  ." bla "  bl aborted?  until  ." Aborted"  ;
+  \ ----
   \
   \ }doc
 
@@ -3441,7 +4215,7 @@ need aborted?
 : break?  ( -- f )
   key? dup if  key 2drop break-key?  then  ;
 
-( Keyboard rows ports)
+( kk-ports kk, kk@ )
 
   \ Adapted from Afera.
   \ XXX UNDER DEVELOPMENT
@@ -3460,8 +4234,6 @@ need aborted?
   \ combinations.
   \
   \ -----------------------------------------------------------
-
-( kk-ports kk, kk@ )
 
   \ There are two versions of `kk,` and `kk@`. They depend on the
   \ value of `/kk`, a constant that holds the bytes ocuppied by
@@ -3604,14 +4376,14 @@ drop
 
 create kk-chars
 
-char 1 c,  char 2 c,  char 3 c,  char 4 c,  char 5 c,
-char q c,  char w c,  char e c,  char r c,  char t c,
-char a c,  char s c,  char d c,  char f c,  char g c,
-128    c,  char z c,  char x c,  char c c,  char v c,
-char 0 c,  char 9 c,  char 8 c,  char 7 c,  char 6 c,
-char p c,  char o c,  char i c,  char u c,  char y c,
-129    c,  char l c,  char k c,  char j c,  char h c,
-130    c,  131    c,  char m c,  char n c,  char b c,
+'1' c,  '2' c,  '3' c,  '4' c,  '5' c,
+'q' c,  'w' c,  'e' c,  'r' c,  't' c,
+'a' c,  's' c,  'd' c,  'f' c,  'g' c,
+128 c,  'z' c,  'x' c,  'c' c,  'v' c,
+'0' c,  '9' c,  '8' c,  '7' c,  '6' c,
+'p' c,  'o' c,  'i' c,  'u' c,  'y' c,
+129 c,  'l' c,  'k' c,  'j' c,  'h' c,
+130 c,  131 c,  'm' c,  'n' c,  'b' c,
 
 ( pressed pressed? )
 
@@ -3724,12 +4496,12 @@ code inkey  ( -- c | 0 )
   end-code
 
   \ vim: filetype=soloforth
-  \ operators.1-cell.fsb
+  \ math.operators.1-cell.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605020257
 
   \ -----------------------------------------------------------
   \ Description
@@ -3748,18 +4520,44 @@ code inkey  ( -- c | 0 )
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
+  \ -----------------------------------------------------------
+  \ Latest changes
 
-( under+ )  \ ==operators==
+  \ 2015: Add `within`, `between`, and common operators.
+  \ 2015-08-12: Add `lshift`. Improve `2/`.
+  \ 2015-08-14: Add `under+`, in Forth.
+  \ 2015-11-01: Add `rshift` and faster `lshift`.
+  \ 2015-11-13: Add `sqrt` (version by Wil Baden).
+  \ 2015-12-15: Rewrote `under+` in Z80.
+  \ 2015-12-21: Add `polarity`.
+  \ 2015-12-22: Add `%` and `u%`.
+  \ 2015-12-29: Add second version of `sqrt` (from Computer One
+  \ Forth).
+  \ 2016-03-20: Add `+under`, a variant of `under+`.
+  \ 2016-04-05: Add `cell/`.
+  \ 2016-04-07: Add `bits`, generic version of `pixels`.
+  \ 2016-04-27: Add `sgn`, `<=>`, `either`, `neither`.
+  \ 2016-04-28: Fix `<=>`. Add `0max`.
+  \ 2016-05-01: Add `clshift`.
+  \ 2016-05-02: Compact the blocks to save space. Remove `sgn`
+  \ because `polarity` does the same already.
+
+( under+ +under )
+
+need [if]
+
+[needed] under+ [if]
 
 code under+  ( n1|u1 x n2|u2 -- n3|u3 x )
-  D9 c,           \ exx
-  D1 c,           \ pop de
-  C1 c,           \ pop bc
-  E1 c,           \ pop hl
-  19 c,           \ add hl,de
-  E5 c,           \ push hl
-  C5 c,           \ push bc
-  D9 c,           \ exx
+  D9 c, D1 c, C1 c, E1 c, 19 c, E5 c, C5 c, D9 c,
+  \ exx
+  \ pop de
+  \ pop bc
+  \ pop hl
+  \ add hl,de
+  \ push hl
+  \ push bc
+  \ exx
   jpnext  end-code
 
   \ doc{
@@ -3768,7 +4566,12 @@ code under+  ( n1|u1 x n2|u2 -- n3|u3 x )
   \
   \ Add _n2|u2_ to _n1|u2_, giving the sum _n3|u3_.
   \
+  \ See `+under`.
+  \
   \ Origin: Comus.
+  \
+  \ The word is written in Z80. This is an example
+  \ implementation in Forth:
   \
   \ ----
   \ : under+  ( n1|u1 x n2|u2 -- n3|u3 x )
@@ -3777,17 +4580,20 @@ code under+  ( n1|u1 x n2|u2 -- n3|u3 x )
   \
   \ }doc
 
-( +under )
+[then]
+
+[needed] +under [if]
 
 code +under  ( n1|u1 n2|u2 x -- n3|u3 x )
-  D9 c,           \ exx
-  C1 c,           \ pop bc
-  D1 c,           \ pop de
-  E1 c,           \ pop hl
-  19 c,           \ add hl,de
-  E5 c,           \ push hl
-  C5 c,           \ push bc
-  D9 c,           \ exx
+  D9 c, C1 c, D1 c, E1 c, 19 c, E5 c, C5 c, D9 c,
+  \ exx
+  \ pop bc
+  \ pop de
+  \ pop hl
+  \ add hl,de
+  \ push hl
+  \ push bc
+  \ exx
   jpnext  end-code
 
   \ doc{
@@ -3796,7 +4602,12 @@ code +under  ( n1|u1 n2|u2 x -- n3|u3 x )
   \
   \ Add _n2|u2_ to _n1|u2_, giving the sum _n3|u3_.
   \
+  \ See `under+`
+  \
   \ Origin: Comus.
+  \
+  \ The word is written in Z80. This is an example
+  \ implementation in Forth:
   \
   \ ----
   \ : +under  ( n1|u1 n2|u2 x -- n3|u3 x )
@@ -3805,17 +4616,19 @@ code +under  ( n1|u1 n2|u2 x -- n3|u3 x )
   \
   \ }doc
 
+[then]
+
   \ XXX TODO -- variant after PFE's `(under+)`:
   \ : +under  ( n1 n2 -- n1+n2 n2 )  tuck + swap  ;
 
-( within between )
+( within between % u% )
+
+[unneeded] within
+?\ : within  ( n1|u1 n2|u2 n3|u3 -- f )  over - >r - r> u<  ;
 
   \ Credit:
   \
   \ Code from DZX-Forth.
-
-[unneeded] within
-?\ : within  ( n1|u1 n2|u2 n3|u3 -- f )  over - >r - r> u<  ;
 
   \ doc{
   \
@@ -3837,10 +4650,14 @@ code +under  ( n1|u1 n2|u2 x -- n3|u3 x )
 
 : between  ( n1|u1 n2|u2 n3|u3 -- f )  over - -rot - u< 0=  ;
 
+  \ Credit:
+  \
+  \ http://dxforth.netbay.com.au/between.html
+
   \ doc{
   \
   \ between  ( n1|u1 n2|u2 n3|u3 -- f )
-
+  \
   \ Perform a comparison of a test value _n1|u1_ with a lower
   \ limit _n2|u2_ and an upper limit _n3|u3_, returning _true_
   \ if either (n2|u2 <= n3|u3 and (n2|u2 <= n1|u1 and n1|u1 <=
@@ -3848,20 +4665,18 @@ code +under  ( n1|u1 n2|u2 x -- n3|u3 x )
   \ n3|u3)) is true, returning _false_ otherwise. An ambiguous
   \ condition exists if _n1|u1_, _n2|u2_, and _n3|u3_ are not
   \ all the same type.
-
-  \ name  ( -- )
   \
   \ }doc
 
-  \ Credit:
-  \
-  \ http://dxforth.netbay.com.au/between.html
+[unneeded] %
+?\ : %  ( n1 n2 -- n3 )  100 swap */  ;
+  \ _n1_ is percentage _n3_ of _n2_
 
-( polarity )
+[unneeded] u%
+?\ : u%  ( u1 u2 -- u3 )  >r 100 um* r> um/mod nip  ;
+  \ _u1_ is percentage _u3_ of _u2_
 
-  \ Credit:
-  \
-  \ Code adapted from Z88 CamelForth.
+( polarity <=> )
 
 code polarity  ( n -- -1 | 0 | 1 )
   D1 c, 78 02 + c,  B0 03 + c,  CA c, ' false ,
@@ -3869,11 +4684,9 @@ code polarity  ( n -- -1 | 0 | 1 )
     \ ld a,d
     \ or e
     \ jp z,false_code
-
   CB c, 10 03 + c,  ED c, 62 c,
     \ rl d ; set carry if DE -ve
     \ sbc hl,hl ; HL=0 if DE +ve, or -1 if DE -ve
-
   78 05 + c,  F6 c, 01 c,  68 07 + c,  jppushhl
     \ ld a,l
     \ or 1
@@ -3881,24 +4694,84 @@ code polarity  ( n -- -1 | 0 | 1 )
     \ jp push_hl
   end-code
 
-( u<= u>= <= >= 0>= 0<= )
+  \ doc{
+  \
+  \ polarity  ( n -- -1|0|1 )
+  \
+  \ If _n_ is zero, return zero.
+  \ If _n_ is negative, return negative one.
+  \ If _n_ is positive, return positive one.
+  \
+  \ The word is written in Z80. This is an example
+  \ implementation in Forth:
+  \
+  \ ----
+  \ : polarity  ( n -- -1|0|1 )
+  \   dup 0= ?exit  0< ?dup ?exit  1  ;
+  \ ----
+  \
+  \ }doc
+
+  \ Credit:
+  \
+  \ Assembler version of `polarity` adapted from Z88
+  \ CamelForth.
+
+[unneeded] <=>
+?\ : <=>  ( n1 n2 -- -1|0|1 )  - polarity  ;
+
+  \ doc{
+  \
+  \ <=>  ( n1 n2 -- -1|0|1 )
+  \
+  \ If _n1_ equals _n2_, return zero.
+  \ If _n1_ is less than _n2_, return negative one.
+  \ If _n1_ is greater than _n2_, return positive one.
+  \
+  \ }doc
+
+( u<= u>= <= >= 0>= 0<= 0max )
 
 [unneeded] u<=  ?\ : u<=  ( u1 u2 -- f )  u> 0=  ;  exit
 [unneeded] u>=  ?\ : u>=  ( u1 u2 -- f )  u< 0=  ;  exit
 [unneeded] <=   ?\ : <=   ( n1 n2 -- f )  > 0=   ;  exit
 [unneeded] >=   ?\ : >=   ( n1 n2 -- f )  < 0=   ;  exit
 [unneeded] 0>=  ?\ : 0>=  ( n1 n2 -- f )  0< 0=  ;  exit
-[unneeded] 0<=  ?\ : 0<=  ( n1 n2 -- f )  0> 0=  ;
+[unneeded] 0<=  ?\ : 0<=  ( n1 n2 -- f )  0> 0=  ;  exit
+
+[unneeded] 0max ?exit
+
+code 0max  ( n -- n | 0 )
+  E1 c,  CB c, 10 05 + c,  DA c, ' false ,  CB c, 18 05 + c,
+    \ pop hl
+    \ rl h ; negative?
+    \ jp c,false_
+    \ rr h
+  jppushhl  end-code
+    \ jp push_hl
+
+  \ Credit:
+  \
+  \ Idea from IsForth.
+
+  \ doc{
+  \
+  \ 0max  ( n -- n | 0 )
+  \
+  \ If _n_ is negative, return 0; else return _n_.
+  \ This is a faster alternative to the idiom `0 max`.
+  \
+  \ }doc
 
 ( lshift )
-
-need z80-asm
 
   \ Credit:
   \
   \ Code adapted from Z88 CamelForth.
 
-  \ 16 bytes used
+  \ Data space used: 16 bytes.
+
+need z80-asm
 
 code lshift  ( x1 u -- x2 )
 
@@ -3944,7 +4817,7 @@ need z80-asm
   \
   \ Code adapted from Z88 CamelForth.
 
-  \ 19 bytes used
+  \ Data space used: 19 bytes.
 
 code rshift  ( x1 u -- x2 )
 
@@ -3968,8 +4841,10 @@ code rshift  ( x1 u -- x2 )
   \
   \ Code adapted from DZX-Forth.
 
-  \ This version is smaller (16 bytes used) but slower (133%
-  \ the execution time of the version adapted from Z88 CamelForth).
+  \ This version is 3 bytes smaller but slower (133% the
+  \ execution time of the version adapted from Z88 CamelForth).
+
+  \ Data space used: 16 bytes.
 
 code rshift  ( x1 u -- x2 )
   D1 c,           \ pop de
@@ -3983,12 +4858,94 @@ code rshift  ( x1 u -- x2 )
   C3 c, ,         \ jp begin
   end-code
 
-( 2/ )
+( clshift )
+
+code clshift  ( b1 u -- b2 )
+
+  D1 c,  E1 c,  78 05 + c,  1C c,
+    \ pop de
+    \ pop hl
+    \ ld a,l
+    \ inc e
+  here
+    \ begin:
+  1D c,  CA c, pusha ,  80 07 + c,  C3 c, ,
+    \ dec e
+    \ jp z,push_a
+    \ add a,a
+    \ jp begin
+  end-code
+
+( crshift )
+
+  \ XXX UNDER DEVELOPMENT -- 2016-05-01
+
+code crshift  ( b1 u -- b2 )
+
+  D1 c,  E1 c,  78 05 + c,  1C c,
+    \ pop de
+    \ pop hl
+    \ ld a,l
+    \ inc e
+  here
+    \ begin:
+  1D c,  CA c, pusha ,
+    \ dec e
+    \ jp z,push_a
+  \ 80 07 + c,
+    \ rra
+  C3 c, ,
+    \ jp begin
+
+  end-code
+
+( bits )
+
+  \ Credit:
+  \
+  \ Based on a pixels counter written by Juan Antonio Paz,
+  \ published on Microhobby, issue 170 (1988-05), page 21:
+  \ http://microhobby.org/numero170.htm
+  \ http://microhobby.speccy.cz/mhf/170/MH170_21.jpg
+
+  \ Data space used: 29 bytes.
+
+need z80-asm
+
+code bits  ( ca len -- u )
+
+  0 hl ldp#  \ init bit count
+  exx  \ save IP and count
+  de pop  hl pop  \ memory zone
+  begin
+    d a ld  e or  nz if
+      08 b ld#  \ bits per byte
+      begin  m rrc  cy if  exx hl incp exx  then  step
+      hl incp  de decp  \ next byte
+  2swap again then
+    \ Note: `2swap` is needed because `begin again` and `if
+    \ then` are not nested.
+
+  exx jppushhl end-code
+
+  \ doc{
+  \
+  \ bits  ( ca len -- u )
+  \
+  \ Count the number of bits set in memory zone _ca len_.
+  \
+  \ }doc
+
+( 2/ cell/ )
 
   \ Credit:
   \
   \ Code from Spectrum Forth-83.
   \ Documentation partly based on lina.
+
+need [if]
+
+[needed] 2/ [needed] cell/ or [if]
 
 code 2/  ( x1 -- x2 )
   E1 c,           \ pop hl
@@ -4013,12 +4970,21 @@ code 2/  ( x1 -- x2 )
   \
   \ }doc
 
+[then]
+
+[unneeded] cell/  ?\ need alias  ' 2/ alias cell/
+  \ Credit:
+  \
+  \ Idea from IsForth.
+
 ( sqrt )
 
   \ Credit:
   \
   \ Original code by Wil Baden, published on Forth Dimensions
   \ (volume 18, number 5, page 27, 1997-01).
+
+  \ XXX TODO -- benchmark
 
 need d2*  need 2/
 
@@ -4045,6 +5011,10 @@ need d2*  need 2/
   \
   \ Adapted from Sinclair QL's Computer One Forth.
 
+  \ XXX TODO -- benchmark
+
+need 2/
+
 : sqrt  ( n1 -- n2 )
   dup 0< -24 ?throw  \ invalid numeric argument
   dup
@@ -4054,6 +5024,8 @@ need d2*  need 2/
   then  ;
 
 ( sm/rem )
+
+  \ XXX TODO -- remove, it's in the kernel
 
   \ Credit:
   \
@@ -4099,6 +5071,8 @@ need d2*  need 2/
   \ Credit:
   \
   \ Forth-94 documentation.
+
+need sm/rem
 
 : /-rem  ( n1 n2 -- n3 n4 )  >r  s>d  r> sm/rem  ;
 
@@ -4160,11 +5134,11 @@ need d2*  need 2/
 
   \ Floored-division operators
 
-need fm/mod
-
   \ Credit:
   \
   \ Forth-94 documentation.
+
+need fm/mod
 
 : /_mod  ( n1 n2 -- n3 n4 )  >r s>d r> fm/mod  ;
 
@@ -4176,28 +5150,289 @@ need fm/mod
 
 : */_  ( n1 n2 n3 -- n4 )   */_mod nip  ;
 
-( any? )
+( any? either neither )
+
+need [if]
+
+[needed] any? [if]  need roll  variable (any?)
+
+: any?  ( x0 x1..xn n -- f )
+  dup 1+ roll (any?) !
+  0 swap 0 do  swap (any?) @ = or  loop  ;
+
+  \ doc{
+  \
+  \ any?  ( x0 x1..xn n -- f )
+  \
+  \ Is any _x1..xn_ equal to _x0_?
+  \
+  \ Origin: F83.
+  \
+  \ }doc
 
   \ Credit:
   \
   \ Code from F83.
 
-need roll
+[then]
 
-variable (any?)
+  \ Credit:
+  \
+  \ Code from IsForth (version 1.23b).
 
-: any?  ( x0 x1..xn n -- f )
-  dup 1+ roll (any?) !
-  0 swap 0 do  swap (any?) @ = or  loop  ;
-  \ Is any _x1..xn_ equal to _x0_?
+[needed] either [if]
 
-( % u% )
+: either  ( n1|u1 n2|u2 n3|u3 -- f )
+  -rot over = -rot = or  ;
 
-: %  ( n1 n2 -- n3 )  100 swap */  ;
-  \ _n1_ is percentage _n3_ of _n2_
+  \ doc{
+  \
+  \ either  ( n1|u1 n2|u2 n3|u3 -- f )
+  \
+  \ Return _true_ if _n1|u1_ equals either _n2|u2_ or _n3|u3_;
+  \ else return _false_.
+  \
+  \ }doc
 
-: u%  ( u1 u2 -- u3 )  >r 100 um* r> um/mod nip  ;
-  \ _u1_ is percentage _u3_ of _u2_
+[then]
+
+[needed] neither [if]
+
+: neither  ( n1|u1 n2|u2 n3|u3 -- f )
+  -rot over <> -rot <> and  ;
+
+  \ doc{
+  \
+  \ neither  ( n1|u1 n2|u2 n3|u3 -- f )
+  \
+  \ Return _true_ if _n1|u1_ is not equal to either _n2|u2_ or
+  \ _n3|u3_; else return _false_.
+  \
+  \ }doc
+
+[then]
+
+( split join )
+
+need [if]
+
+[needed] split [if]
+
+code split  ( x -- b1 b2 )
+  E1 c,
+    \ pop hl
+  16 c, 00 c,  58 05 + c,  68 04 + c,  26 c, 00 c,
+    \ ld d,0
+    \ ld e,l
+    \ ld l,h
+    \ ld h,0
+  C3 c, pushhlde ,  end-code
+    \ jp push_hlde
+
+  \ Credit:
+  \
+  \ Idea from IsForth.
+
+  \ doc{
+  \
+  \ split  ( x -- b1 b2 )
+  \
+  \ Get _b1_ and _b2_ from the 2 bytes which compose _x_: _b1_
+  \ is the high-order byte and _b2_ is the low-order byte.
+  \
+  \ See `join`.
+  \
+  \ Origin: IsForth.
+  \
+  \ }doc
+
+[then]
+
+[needed] join [if]
+
+code join  ( b1 b2 -- x )
+  D1 c,  60 03 + c,  D1 c,  68 03 + c,
+    \ pop de
+    \ ld h,e
+    \ pop de
+    \ ld l,e
+  jppushhl  end-code
+    \ jp push_hl
+
+  \ doc{
+  \
+  \ join  ( b1 b2 -- x )
+  \
+  \ _b1_ is the low-order byte of _x_, and _b2_ is the
+  \ high-order byte of _x_.
+  \
+  \ See `split`.
+  \
+  \ Origin: IsForth.
+  \
+  \ }doc
+
+[then]
+
+  \ vim: filetype=soloforth
+  \ memory.bank.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201604241652
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Words related to memory banks.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2016-04-17: Moved `!s` and `!cs` from the kernel.
+  \
+  \ 2016-04-24: Moved `get-default-bank` and `set-default-bank`
+  \ from the kernel.
+
+( !s c!s )
+
+: !s  ( x a -- )  system-bank ! default-bank  ;
+
+  \ doc{
+  \
+  \ !s  ( x a -- )
+  \
+  \ Store _x_ into address _a_ of the system bank.
+  \
+  \ }doc
+
+: c!s  ( c ca -- )  system-bank c! default-bank  ;
+
+  \ doc{
+  \
+  \ c!s  ( c ca -- )
+  \
+  \ Store _c_ into address _ca_ of the system bank.
+  \
+  \ }doc
+
+( get-default-bank set-default-bank )
+
+
+: get-default-bank  ( -- +n )  default-bank# c@  ;
+
+  \ doc{
+  \
+  \ get-default-bank  ( -- +n )
+  \
+  \ Get the current default bank _+n_ (0..7) paged in at
+  \ $C000..$FFFF.
+  \
+  \ }doc
+
+: set-default-bank  ( +n -- )  default-bank# c!  ;
+
+  \ doc{
+  \
+  \ set-default-bank  ( +n -- )
+  \
+  \ Set _+n_ (0..7) as the default memory bank paged in at
+  \ $C000..$FFFF.
+  \
+  \ }doc
+
+  \ vim: filetype=soloforth
+  \ memory.ports.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201605071939
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Words for ports input and output.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-05-07: Improve documentation. Compact the blocks.
+
+( @p !p )
+
+need ?(
+
+[unneeded] @p ?(
+code @p  ( a -- b )
+  E1 c,  C5 c,  48 05 + c,  40 04 + c,  ED c, 68 c,
+    \ pop hl
+    \ push bc
+    \ ld c,l
+    \ ld b,h
+    \ in l,(c)
+  C1 c,  26 c, 00 c,  jppushhl  end-code
+    \ pop bc
+    \ ld h,0x00
+    \ jp pushhl
+
+  \ doc{
+  \
+  \ @p  ( a -- b )
+  \
+  \ Input byte _b_ from port _a_.
+  \
+  \ }doc
+
+?)
+
+[unneeded] !p ?(
+code !p  ( b a -- )
+  E1 c,  D1 c,  C5 c,  48 05 + c,  40 04 + c,  ED c, 59 c,
+    \ pop hl
+    \ pop de ; char in e
+    \ push bc
+    \ ld c,l
+    \ ld b,h
+    \ out (c),e
+  C1 c,  jpnext  end-code
+    \ pop bc
+    \ jp next
+
+  \ doc{
+  \
+  \ !p  ( b a -- )
+  \
+  \ Output byte _b_ to port _a_.
+  \
+  \ }doc
+
+?)
 
   \ vim: filetype=soloforth
   \ parsing.fsb
@@ -4205,7 +5440,7 @@ variable (any?)
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201604250136
 
   \ -----------------------------------------------------------
   \ Description
@@ -4224,11 +5459,17 @@ variable (any?)
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( parse-line )
+  \ -----------------------------------------------------------
+  \ History
 
-  \ XXX OLD -- 2015-09-13: moved to kernel
-  \ : source  ( -- a len )  \ Forth-94
-  \   blk @ ?dup if  block b/buf  else  tib #tib @  then  ;
+  \ 2015-09-13: Add `parse-char`.
+  \ 2015-10-06: Move `word` from the kernel.
+  \ 2015-10-18: Move `command` from the editor and rename it to
+  \ `parse-line`.
+  \ 2015-10-22: Fix `parse-char`.
+  \ 2016-04-24: Move `char` and `[char]` from the kernel.
+
+( parse-line )
 
 : parse-line  ( "ccc<eol>" -- ca len )
   source span @ min c/l min  >in @ span @ min /string
@@ -4238,8 +5479,9 @@ variable (any?)
   \
   \ parse-line  ( "ccc<eol>" -- ca len )
   \
-  \ Get the text string until the end of line.  Note: this is a
-  \ factor of the editor's `text`.
+  \ Get the text string until the end of line.
+  \
+  \ This word is a useful factor of Specforth editor's `text`.
   \
   \ }doc
 
@@ -4296,7 +5538,7 @@ variable (any?)
 
 ( defined? )
 
-: defined?  ( ca len -- wf )  undefined? 0=  ;
+: defined?  ( ca len -- f )  undefined? 0=  ;
 
 ( save-input restore-input )
 
@@ -4315,7 +5557,13 @@ variable (any?)
   ;
 
 -->
+
 ( save-input restore-input )
+
+  \ XXX UNDER DEVELOPMENT
+  \
+  \ 2016-01-01: Code copied from m3Forth:
+  \ https://github.com/oco2000/m3forth/blob/master/lib/include/core-ext.f
 
 : restore-input ( xn ... x1 n -- f )
   source-id 0>
@@ -4328,18 +5576,56 @@ variable (any?)
   then
   ;
 
+( char [char] )
+
+need cliteral
+
+: char  ( "name" -- c )  parse-name drop c@  ;
+  
+  \ doc{
+  \
+  \ char  ( "name" -- c )
+  \ 
+  \ Parse "name" and put the value of its first character on
+  \ the stack.
+  \
+  \ Origin: Forth-94 (CORE), Forth-2012 (CORE).
+  \
+  \ }doc
+
+: [char]  ( "name" -- c )
+  char cliteral  ; immediate compile-only
+
+  \ doc{
+  \
+  \ [char]
+  \ 
+  \ Compilation: ( "name" -- )
+  \
+  \ Parse "name" and append the run-time semantics given below
+  \ to the current definition.
+  \
+  \ Run-time: ( -- c )
+  \
+  \ Place _c_, the value of the first character of _name_, on
+  \ the stack.
+  \
+  \ Origin: Forth-94 (CORE), Forth-2012 (CORE).
+  \
+  \ }doc
+
   \ vim: filetype=soloforth
-  \ memory.ports.fsb
+  \ printing.color.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605040109
 
   \ -----------------------------------------------------------
   \ Description
 
-  \ Words for ports input and output.
+  \ Words related to color.
 
   \ -----------------------------------------------------------
   \ Author
@@ -4353,39 +5639,299 @@ variable (any?)
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
+  \ -----------------------------------------------------------
+  \ History
 
-( @p )
+  \ 2016-05-01: Start. New words:
 
-code @p  ( a -- b )
+  \   color@ color! color-mask@ color-mask! color 2color
+  \   permcolor@ permcolor! permcolor-mask@ permcolor-mask!
+  \   permcolor 2permcolor paper@ paper! ink@ ink!  bright@
+  \   bright! flash! flash@
+  \
+  \ 2016-05-04: Move `inverse` and `overprint` from the kernel.
 
-  \ Input byte _b_ from port _a_.
+  \ -----------------------------------------------------------
+  \ Documentation
 
-  E1 c,           \ pop hl
-  C5 c,           \ push bc
-  48 05 + c,      \ ld c,l
-  40 04 + c,      \ ld b,h
-  ED c, 68 c,     \ in l,(c)
-  C1 c,           \ pop bc
-  26 c, 00 c,     \ ld h,0x00
-  jppushhl        \ jp pushhl
-  end-code
+  \ (From the ZX Spectrum +3 manual transcribed by Russell
+  \ Marks et al.; and from the ZX Spectrum ROM disassembly.)
 
-( !p )
+  \ System variables:
 
-code !p  ( b a -- )
+  \ 23693 = ATTR_P -- permanent colors
 
-  \ Output byte _b_ to port _a_.
+  \         {fl}{br}{   paper   }{  ink    }
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ ATTR_P  |   |   |   |   |   |   |   |   |
+  \         |   |   |   |   |   |   |   |   |
+  \ 23693   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
 
-  E1 c,           \ pop hl
-  D1 c,           \ pop de ; char in e
-  C5 c,           \ push bc
-  48 05 + c,      \ ld c,l
-  40 04 + c,      \ ld b,h
-  ED c, 59 c,     \ out (c),e
-  C1 c,           \ pop bc
-  jpnext          \ jp (ix)
+  \ 23694 = MASK_P -- permanent mask
+  \ MASK_P is used for transparent colours. Any bit that is 1
+  \ shows that the corresponding attribute is taken not from
+  \ ATTR_P but from what is already on the screen.
 
-  end-code
+  \         {fl}{br}{   paper   }{  ink    }
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ MASK_P  |   |   |   |   |   |   |   |   |
+  \         |   |   |   |   |   |   |   |   |
+  \ 23694   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+  \ 23695 = ATTR_T -- temporary colors
+
+  \         {fl}{br}{   paper   }{  ink    }
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ ATTR_T  |   |   |   |   |   |   |   |   |
+  \         |   |   |   |   |   |   |   |   |
+  \ 23695   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+  \ 23696 = MASK_T -- temporary mask
+  \ MASK_T is used for transparent colours. Any bit that is 1
+  \ shows that the corresponding attribute is taken not from
+  \ ATTR_T but from what is already on the screen.
+
+  \         {fl}{br}{   paper   }{  ink    }
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ MASK_T  |   |   |   |   |   |   |   |   |
+  \         |   |   |   |   |   |   |   |   |
+  \ 23696   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+  \ P_FLAG holds the print flags.  Even bits are the temporary
+  \ flags; odd bits are the permanent flags.
+
+  \         {paper9 }{ ink9 }{ inv1 }{ over1}
+  \          ___ ___ ___ ___ ___ ___ ___ ___
+  \ P_FLAG  |   |   |   |   |   |   |   |   |
+  \         | p | t | p | t | p | t | p | t |
+  \ 23697   |___|___|___|___|___|___|___|___|
+  \           7   6   5   4   3   2   1   0
+
+( color@ color! color-mask@ color-mask! color 2color )
+
+need os-attr-t  need os-mask-t
+
+: color@  ( -- b )  os-attr-t c@  ;
+
+  \ doc{
+  \
+  \ color!  ( b -- )
+  \
+  \ Set temporary color attribute _b_.
+  \
+  \ }doc
+
+: color!  ( b -- )  os-attr-t c!  ;
+
+  \ doc{
+  \
+  \ color!  ( b -- )
+  \
+  \ Set temporary color attribute _b_.
+  \
+  \ }doc
+
+: color-mask@  ( -- b )  os-mask-t c@  ;
+
+  \ doc{
+  \
+  \ color-mask!  ( b -- )
+  \
+  \ Set temporary color attribute mask _b_.
+  \
+  \ }doc
+
+: color-mask!  ( b -- )  os-mask-t c!  ;
+
+  \ doc{
+  \
+  \ color-mask!  ( b -- )
+  \
+  \ Set temporary color attribute mask _b_.
+  \
+  \ }doc
+
+: color  ( b "name" -- )
+  create ,  does>  ( -- ) ( pfa ) @ color!  ;
+
+  \ doc{
+  \
+  \ color  ( b "name" -- )
+  \
+  \ Create a definition "name" that, when executed, will
+  \ set temporary color attribute _b_.
+  \
+  \ }doc
+
+: 2color  ( b1 b2 "name" -- )
+  create 2,  does>  ( -- ) ( pfa ) 2@ color! color-mask!  ;
+
+  \ doc{
+  \
+  \ 2color  ( b1 b2 "name" -- )
+  \
+  \ Create a definition "name" that, when executed, will
+  \ set temporary color attribute _b2_ and mask _b1_.
+  \
+  \ }doc
+
+( permcolor@ permcolor! permcolor-mask@ permcolor-mask! )
+
+need os-attr-p  need os-mask-p
+
+: permcolor@  ( -- b )  os-attr-p c@  ;
+
+  \ doc{
+  \
+  \ permcolor!  ( -- b )
+  \
+  \ Get permanent color attribute _b_.
+  \
+  \ }doc
+
+: permcolor!  ( b -- )  os-attr-p c!  ;
+
+  \ doc{
+  \
+  \ permcolor!  ( b -- )
+  \
+  \ Set permanent color attribute _b_.
+  \
+  \ }doc
+
+: permcolor-mask@  ( -- b )  os-mask-p c@  ;
+
+  \ doc{
+  \
+  \ permcolor-mask@  ( -- b )
+  \
+  \ Get permanent color attribute mask _b_.
+  \
+  \ }doc
+
+: permcolor-mask!  ( b -- )  os-mask-p c!  ;
+
+  \ doc{
+  \
+  \ permcolor-mask!  ( b -- )
+  \
+  \ Set permanent color attribute mask _b_.
+  \
+  \ }doc
+
+( permcolor 2permcolor )
+
+need permcolor!  need permcolor-mask!
+
+: permcolor  ( b "name" -- )
+  create ,
+  does>  ( -- ) ( pfa ) @ permcolor!  ;
+
+  \ doc{
+  \
+  \ permcolor  ( b "name" -- )
+  \
+  \ Create a definition "name" that, when executed, will
+  \ set permanent color attribute _b_.
+  \
+  \ }doc
+
+: 2permcolor  ( b1 b2 "name" -- )
+  create 2,
+  does>  ( -- ) ( pfa ) 2@ permcolor! permcolor-mask!  ;
+
+  \ doc{
+  \
+  \ 2permcolor  ( b1 b2 "name" -- )
+  \
+  \ Create a definition "name" that, when executed, will
+  \ set permanent color attribute _b2_ and mask _b1_.
+  \
+  \ }doc
+
+( paper@ paper! ink@ ink! )
+
+need lshift  need rshift  need color@  need color!
+
+: paper>  ( n1 -- n2 )  %00111000 and 3 rshift  ;
+: >paper  ( n1 -- n2 )  %00000111 and 3 lshift  ;
+
+: paper@  ( -- b )  color@ paper>  ;
+
+: paper!  ( b -- )  >paper color@ %11000111 and or color!  ;
+
+: ink@  ( -- b )
+  color@ %00000111 and  ;
+
+: ink!  ( b -- )
+  %00000111 and color@ %11111000 and or color!  ;
+
+( bright@ bright! flash! flash@ )
+
+need color@  need color!
+
+: bright@  ( -- f )
+  color@ %01000000 and 0=  ;
+
+: bright!  ( f -- )
+  %10000000 and color@ %10111111 and or color!  ;
+
+: flash@  ( -- f )
+  color@ %10000000 and 0=  ;
+
+: flash!  ( f -- )
+  %10000000 and color@ %01111111 and or color!  ;
+
+( inverse overprint )
+
+code inverse  ( f -- )
+  E1 c,  78 04 + c,  B0 05 + c,  28 c, 06 c,
+    \ pop hl
+    \ ld a,h
+    \ or l
+    \ jr z,inverse.off
+  FD c, CB c, 57 c, C6 08 02 * + c,  jpnext
+    \ set 2,(iy+sys_p_flag_offset) ; temporary inverse flag
+    \ _jp_next
+    \ inverse.off:
+  FD c, CB c, 57 c, 86 08 02 * + c,  jpnext  end-code
+    \ res 2,(iy+sys_p_flag_offset) ; temporary inverse flag
+    \ _jp_next
+
+  \ doc{
+  \
+  \ inverse  ( f -- )
+  \
+  \ If _f_ is zero, turn the inverse mode off; else turn it on.
+  \
+  \ }doc
+
+code overprint  ( f -- )
+  E1 c,  78 04 + c,  B0 05 + c,  28 c, 06 c,
+    \ pop hl
+    \ ld a,h
+    \ or l
+    \ jr z,overprint.off
+  FD c, CB c, 57 c, C6 08 00 * + c,  jpnext
+    \ set 0,(iy+sys_p_flag_offset) ; temporary overprint flag
+    \ _jp_next
+    \ overprint.off:
+  FD c, CB c, 57 c, 86 08 00 * + c,  jpnext  end-code
+    \ res 0,(iy+sys_p_flag_offset) ; temporary overprint flag
+    \ _jp_next
+
+  \ doc{
+  \
+  \ overprint  ( f -- )
+  \
+  \ If _f_ is zero, turn the overprint mode off; else turn it
+  \ on.
+  \
+  \ }doc
 
   \ vim: filetype=soloforth
   \ printing.control.fsb
@@ -4393,12 +5939,12 @@ code !p  ( b a -- )
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160325
+  \ Last modified: 201605060140
 
   \ -----------------------------------------------------------
   \ Description
 
-  \ Words related printing control characters.
+  \ Words related to printing control characters.
 
   \ -----------------------------------------------------------
   \ Author
@@ -4412,29 +5958,77 @@ code !p  ( b a -- )
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( tabulate tab-stop )
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015: Add words to print cr, bs, backspaces.
+  \
+  \ 2016: Add `tabulate`.
+  \
+  \ 2016-05-01: Test and document `tabulate`.
+  \
+  \ 2016-05-04: Move `printer` from the kernel.
+  \
+  \ 2016-05-06: Fix and add conditional compilation.
+
+( printer tabulate )
+
+[unneeded] printer
+?\ : printer  ( -- )  3 channel printing on  ;  exit
 
 need column
 
-  \ 2015-12-14
-  \ XXX FIXME
+variable /tabulate  8 /tabulate !
+  \ doc{
+  \
+  \ /tabulate  ( -- a )
+  \
+  \ A variable that holds the number of spaces that `tabulate`
+  \ counts for. Its default value is 8.
+  \
+  \ See `tabulate`.
+  \
+  \ }doc
 
-variable tab-stop  8 tab-stop !
-
-: tabulate  ( -- )  column 1+ tab-stop @ tuck mod - spaces  ;
+: tabulate  ( -- )  column 1+ /tabulate @ tuck mod - spaces  ;
+  \ doc{
+  \
+  \ tabulate  ( -- )
+  \
+  \ Display the appropriate number of spaces to tabulate to the
+  \ next position, using the value of `/tabulate`.
+  \
+  \ Note `tabulate` does not uses the "tab" control code, whose
+  \ behaviour depends on the screen mode (in the default screen
+  \ mode, it moves the cursor 16 positions to right).
+  \ `tabulate` is independent on the screen mode, since it uses
+  \ spaces.
+  \
+  \ See `/tabulate`.
+  \
+  \ }doc
 
 ( 'cr' 'tab' 'bs' crs tab tabs backspace backspaces )
 
- 6 constant 'tab'
- 8 constant 'bs'
-13 constant 'cr'
+[unneeded] 'tab' [unneeded] tab [unneeded] tabs and and
+?\ 6 constant 'tab'
 
-: tab          ( -- )  'tab' emit  ;
-: backspace    ( -- )  'bs'  emit  ;
+[unneeded] 'bs' [unneeded] backspace [unneeded] backspaces
+and and ?\ 8 constant 'bs'
 
-: crs           ( n -- )  'cr'  emits  ;
-: tabs          ( n -- )  'tab' emits  ;
-: backspaces    ( n -- )  'bs'  emits  ;
+[unneeded] 'cr' [unneeded] crs and ?\ 13 constant 'cr'
+
+[unneeded] tab [unneeded] tabs and 
+?\ : tab  ( -- )  'tab' emit  ;
+
+[unneeded] backspace [unneeded] backspaces and 
+?\ : backspace    ( -- )  'bs'  emit  ;
+
+[unneeded] crs  ?\ : crs   ( n -- )  'cr'  emits  ;
+[unneeded] tabs ?\ : tabs  ( n -- )  'tab' emits  ;
+
+[unneeded] backspaces
+?\ : backspaces    ( n -- )  'bs'  emits  ;
 
   \ vim: filetype=soloforth
   \ printing.cursor.fsb
@@ -4442,7 +6036,7 @@ variable tab-stop  8 tab-stop !
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160325
+  \ Last modified: 201605072052
 
   \ -----------------------------------------------------------
   \ Description
@@ -4461,29 +6055,78 @@ variable tab-stop  8 tab-stop !
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-10-14: Add `column`, `row`, `at-x`, `at-y`, adapted
+  \ from Galope.
+  \ 2016-05-01: Add conditional compilation and documentation.
+  \ 2016-05-07: Fix typos and conditional compilation.
+
 ( column last-column row last-row at-x at-y )
 
-: column  ( -- col )  xy drop  ;
+[unneeded] column [unneeded] last-column and
+[unneeded] at-y and
+?\ : column  ( -- col )  xy drop  ;
+  \ doc{
+  \
+  \ column  ( -- col )
+  \
   \ Current column (x coordinate).
+  \
+  \ }doc
 
-: last-column  ( -- row  )  column 1-  ;
-  \ Last column (x coordinate).
+[unneeded] last-column
+?\ : last-column  ( -- row  )  column 1-  ;
+  \ doc{
+  \
+  \ last-column  ( -- col )
+  \
+  \ Last column (x coordinate) in the current screen mode.
+  \
+  \ }doc
 
-: row  ( -- row )  xy nip  ;
+[unneeded] row [unneeded] last-row [unneeded] at-x and and
+?\ : row  ( -- row )  xy nip  ;
+  \ doc{
+  \
+  \ row  ( -- row )
+  \
   \ Current row (y coordinate).
+  \
+  \ }doc
 
-: last-row  ( -- row  )  row 1-  ;
-  \ Last row (y coordinate).
+[unneeded] last-row
+?\ : last-row  ( -- row  )  row 1-  ;
+  \ doc{
+  \
+  \ last-row  ( -- row )
+  \
+  \ Last row (y coordinate) in the current screen mode.
+  \
+  \ }doc
 
-: at-x  ( col -- )  row at-xy  ;
-  \ Set the cursor
-  \ at the given column (x coordinate)
-  \ and the current row (y coordinate).
+[unneeded] at-x
+?\ : at-x  ( col -- )  row at-xy  ;
+  \ doc{
+  \
+  \ at-x ( col -- )
+  \
+  \ Set the cursor at the given column (x coordinate) and the
+  \ current row (y coordinate).
+  \
+  \ }doc
 
-: at-y  ( row -- )  column swap at-xy  ;
-  \ Set the cursor
-  \ at the current column (x coordinate)
-  \ and the given row (y coordinate).
+[unneeded] at-y
+?\ : at-y  ( row -- )  column swap at-xy  ;
+  \ doc{
+  \
+  \ at-y ( row -- )
+  \
+  \ Set the cursor at the current column (x coordinate) and the
+  \ given row (y coordinate).
+  \
+  \ }doc
 
   \ vim: filetype=soloforth
   \ random.fsb
@@ -4491,12 +6134,14 @@ variable tab-stop  8 tab-stop !
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201604082315
 
   \ -----------------------------------------------------------
   \ Description
 
-  \ Random number generators.
+  \ Pseudo-random number generators.
+  \
+  \ See benchmark results in <development_benchmarks.rng.fsb>.
 
   \ -----------------------------------------------------------
   \ Author
@@ -4510,29 +6155,22 @@ variable tab-stop  8 tab-stop !
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( randomize randomize0 )
+( rnd random )
 
-need os-seed
+  \ Random Number Generator by C. G. Montgomery
 
-[needed] randomize0 ?\ : randomize  ( n -- )  os-seed !  ;
-  \ Set the seed of the random number generator.
-
-need os-frames
-
-: randomize0  ( n -- )
-  ?dup 0=  if  os-frames @  then  os-seed !  ;
-  \ Set the seed of the random number generator;
-  \ if _n_ is zero use the system frames counter instead.
-
-( rnd random )  \ ==rng==
-
-  \ Credit:
+  \ 2015-12-13: Found here:
+  \ http://web.archive.org/web/20060707001752/http://www.tinyboot.com/index.html
   \
-  \ Code adapted from Leo Brodie's _Starting Forth_.
+  \ 2016-03-31: Adapted to Solo Forth.
+  \
+  \ 2016-04-08: Updated the constant after the latest
+  \ benchmarks.
 
-need os-seed
+2variable rnd-seed  $0111 rnd-seed !
 
-: rnd  ( -- n )  os-seed @ 31421 * 6927 + dup os-seed !  ;
+: rnd  ( -- u )
+  rnd-seed 2@ $62DC um* rot 0 d+ over rnd-seed 2!  ;
 
 : random  ( n -- 0..n-1 )  rnd um* nip  ;
 
@@ -4543,433 +6181,7 @@ need random
 : random-range ( n1 n2 -- n3 ) over - 1+ random +  ;
   \ Return a random number from _n1_ (min) to _n2_ (max).
 
-( rng-benchmark )
-
-  \ Random number generator benchmark
-
-need set-pixel  need bench{  need pixels  need u%  need 3dup
-
-256 192 * constant #pixels
-  \ number of pixels of the screen
-
-defer rng  ( n -- 0..n-1 )
-
-: pixels%.  ( u -- )  #pixels u% 0.r ." %"  ;
-  \ Print _u_ pixels as a percentage of the maximum
-  \ number of pixels.
-
-: .pixels  ( u -- )  dup u. ." pixels (" pixels%. ." )"  ;
-  \ Print _u_ as the number of pixels.
-
-: .title  ( ca len -- )  ." Code: " type  ;
-
-variable cycles
-
-defer .cycles  ( -- )
-
-: (.cycles)  ( -- )
-  cycles ?  s" cycles" cycles @ 1 = + type  ;
-  \ Print the number of cycles.
-
-: .time  ( d -- )  bench. ." per cycle" cr  ;
-
-: .result  ( ca len d -- )
-  2>r pixels >r  .title cr  r> .pixels cr
-  2r> .time .cycles   ;
-  \ Calculate and print the result of the benchmark.
-  \ _d_ is the time in frames; _ca len_ is the title.
-
--->
-
-( rng-benchmark )
-
-defer random-coords  ( -- xc yc )
-  \ Random graphic coordinates. Configurable depending on the
-  \ type of `random` to benchmark.
-
-: (random-coords)  ( -- xc yc )  256 rng 193 rng  ;
-  \ Default behaviour of `random-coords`.
-
-: fill-screen  ( -- )
-  #pixels 0 do  random-coords set-pixel  loop  ;
-  \ Fill the screen with random pixels.
-
-: signal  ( -- )  cycles @ %111 and border  ;
-  \ Change the border color according to the current count
-  \ of cycles, just to show that the benchmark is running.
-
-: (rng-benchmark)  ( -- d )
-  1 cycles +!  signal  bench{ fill-screen }bench  ;
-  \ Do the RNG benchmark of ony cycle and return its result.
-
-: wait  ( -- )  key drop  ;
-
-: finish  ( ca len d -- )  0 border  .result  wait  ;
-  \ Finish the benchmark.
-  \ _d_ is the time in frames; _ca len_ is the title.
-
-: init  ( xt1 xt2 x3 -- )
-  ['] random-coords defer!  ['] .cycles defer!  ['] rng defer!
-  page  -1 cycles !  ;
-
-defer finish?  ( i*x -- j*x f )
-  \ Finish the benchmark?
-
-: new-pixels?  ( n1 -- n2 f )  pixels tuck =  ;
-  \ Are there new pixels on the screen, comparing the previous
-  \ count _n1_ with the new count _n2_?
-
-' new-pixels? ' finish? defer!  -->
-
-( rng-benchmark )
-
-defer rng-benchmark  ( ca len xt -- )
-  \ Do a RNG benchmark for the `random` word _xt_ with title
-  \ _ca len_.
-
-: (rng-benchmark2)  ( ca len -- )
-  0 begin   (rng-benchmark) 2>r
-            finish? dup 0= if  2rdrop  then
-  until     drop 2r> finish  ;
-  \ Do a double RNG benchmark with title _ca len_: The time
-  \ required to complete one cycle (49152 random pixels), plus
-  \ the number of cycles required until the number of pixels
-  \ doesn't change.
-
-: rng-benchmark2  ( ca len xt -- )
-  ['] (.cycles) ['] (random-coords) init  (rng-benchmark2)  ;
-  \ Do a double RNG benchmark for the `random` word _xt_ with
-  \ title _ca len_: The time required to complete one cycle
-  \ (49152 random pixels), plus the number of cycles required
-  \ until the number of pixels doesn't change.
-
-  \ The best `random` words need several cycles. In such cases
-  \ it's useful a simpler test to show only the pixels set at
-  \ the end of the first cycle:
-
-' rng-benchmark2 ' rng-benchmark defer!  \ default benchmark
-
-: (.cycle)  ( -- )  ." First cycle only"  ;
-
-: (rng-benchmark1)  ( ca len -- )
-  (rng-benchmark) .result wait  ;
-  \ Do a one-cycle RNG benchmark with title _ca len_: Only the
-  \ time required to complete one cycle (49152 random pixels).
-
-: rng-benchmark1  ( ca len xt -- )
-  ['] (.cycle) ['] (random-coords) init  (rng-benchmark1)  ;
-  \ Do a one-cycle RNG benchmark for `random` word _xt_ with
-  \ title _ca len_: Only the time required to complete one
-  \ cycle (49152 random pixels).
-
--->
-
-( rng-benchmark )
-
-  \ Versions for 8-bit `rnd`.
-
-: crnd-coords  ( -- xc yc )  rng rng 192 min  ;
-  \ Random graphic coordinates for 8-bit `rnd`.
-
-: rng8-benchmark2  ( ca len xt -- )
-  ['] (.cycles) ['] crnd-coords init  (rng-benchmark2)  ;
-  \ Do a one-cycle RNG benchmark for 8-bit `rnd` word _xt_ with
-  \ title _ca len_: Only the time required to complete one
-  \ cycle (49152 random pixels).
-
-: rng8-benchmark1  ( ca len xt -- )
-  ['] (.cycle) ['] crnd-coords init  (rng-benchmark1)  ;
-  \ Do a one-cycle RNG benchmark for 8-bit `rnd` word _xt_ with
-  \ title _ca len_: Only the time required to complete one
-  \ cycle (49152 random pixels).
-
-( all-rng-benchmarks )
-
-  \ Execute all 16-bit RNG benchmarks
-
-need rng-benchmark  need +thru  1 13 +thru
-
-ace-rng-benchmark   dx-rng-benchmark
-gf-rng-benchmark    jer-rng-benchmark
-jml-rng-benchmark   lb-rng-benchmark
-lina-rng-benchmark  mb-rng-benchmark
-sf83-rng-benchmark  tt-rng-benchmark
-vf-rng-benchmark    z88-rng-benchmark
-zh-rng-benchmark
-
-  \ Execute single-cycle benchmarks of RNG that need more than
-  \ one cycle to finish:
-
-' rng-benchmark1 ' rng-benchmark defer!
-
-dx-rng-benchmark  vf-rng-benchmark
-
-( ace-random )
-
-  \ Credit:
-  \
-  \ Adapted from ACE Forth, after the Jupiter ACE manual.
-  \ Also used by Abersoft Forth in its bundled game
-  \ "Bertie".
-
-need os-seed
-
-: ace-rnd  ( -- n )
-  os-seed @ 75 um* 75. d+ 2dup u< - - 1- dup os-seed !  ;
-
-: ace-random  ( n1 -- n2 )  ace-rnd um* nip  ;
-
-need rng-benchmark
-
-: ace-rng-benchmark  ( -- )
-  s" Jupiter ACE manual" ['] ace-random rng-benchmark  ;
-
-( dx-random )
-
-  \ Credit:
-  \
-  \ Code from DX-Forth 4.13.
-
-2variable dx-seed  1. dx-seed 2!
-
-need d*
-
-: dx-rnd ( -- u )
-  dx-seed 2@ $15A4E35. d* 1. d+ tuck dx-seed 2!  ;
-  \ Get random number
-
-: dx-random ( u -- 0..u-1 )  dx-rnd um* nip  ;
-  \ Get random number between 0 and u-1
-
-need rng-benchmark
-
-: dx-rng-benchmark  ( -- )
-  s" DX-Forth" ['] dx-random rng-benchmark  ;
-
-( gf-random )
-
-  \ Credit:
-  \
-  \ Adapted from Gforth.
-
-need os-seed  need ud*
-
-: gf-rnd  ( -- n )
-  272958469. os-seed @ ud* d>s 1+ dup os-seed !  ;
-
-: gf-random  ( n1 -- n2 )  gf-rnd um* nip  ;
-
-need rng-benchmark
-
-: gf-rng-benchmark  ( -- )
-  s" Gforth" ['] gf-random rng-benchmark  ;
-
-( jer-random )
-
-  \ Credit:
-  \
-  \ Random number generator by J. E. Rickenbacker, published on
-  \ Forth Dimensions (volume 2, number 2, page 34, 1980-07).
-
-need os-seed
-
-: jer-rnd  ( -- n )
-  os-seed @ 259 * 3 + 32767 and dup os-seed !  ;
-
-: jer-random ( n1 -- n2 )
-  jer-rnd 32767 */  ;
-  \ Return a random number _n2_ (0 <= n2 < n1).
-
-  \ XXX Note: patterns
-
-need rng-benchmark
-
-: jer-rng-benchmark  ( -- )
-  s" J. E. Rickenbacker" ['] jer-random rng-benchmark  ;
-
-( jml-random )
-
-  \ Credit:
-  \
-  \ Adapted from code written by José Manuel Lazo,
-  \ published on Microhobby, issue 85 (1986-07), page 24:
-  \ http://microhobby.org/numero085.htm
-  \ http://microhobby.speccy.cz/mhf/085/MH085_24.jpg
-
-need z80-asm  need os-seed
-
-code jml-rnd  ( -- u )
-
-  os-seed fthl  hl push
-  hl addp  hl addp  hl addp  hl addp  hl addp  hl addp
-  de pop  de addp  0029 de ldp#  de addp
-  os-seed sthl
-  jppushhl
-  end-code
-
-: jml-random  ( n -- 0..n-1 )  jml-rnd um* nip  ;
-
-need rng-benchmark
-
-: jml-rng-benchmark  ( -- )
-  s" J.M. Lazo" ['] jml-random rng-benchmark  ;
-
-( lb-random )
-
-  \ Credit:
-  \
-  \ Code adapted from Leo Brodie's _Starting Forth_.
-
-need os-seed
-
-: lb-rnd  ( -- n )  os-seed @ 31421 * 6927 + dup os-seed !  ;
-
-: lb-random  ( n -- 0..n-1 )  lb-rnd um* nip  ;
-
-need rng-benchmark
-
-: lb-rng-benchmark  ( -- )
-  s" Leo Brodie" ['] lb-random rng-benchmark  ;
-
-( lina-random )
-
-need os-seed
-
-: lina-rnd  ( -- n )
-  os-seed @ 107465 * 234567 + dup os-seed !  ;
-
-: lina-random  ( n1 -- n2 )  lina-rnd um* nip ;
-
-need rng-benchmark
-
-: lina-rng-benchmark  ( -- )
-  s" lina" ['] lina-random rng-benchmark  ;
-
-( mb-random )
-
-  \ Credit:
-  \
-  \ Adapted from code published by Milos Bazelides:
-  \ http://web.archive.org/web/20150225121110/http://baze.au.com/misc/z80bits.html#4
-
-need z80-asm  need os-seed
-
-code mb-rnd  ( -- n )
-  os-seed de ftp
-  d a ld  e h ld  #253 l ld#
-  a or  de sbcp
-  0 sbc#  de sbcp
-  0 d ld#  d sbc  a e ld
-  de sbcp
-  cy if  hl incp  then
-  os-seed sthl
-  jppushhl   end-code
-
-: mb-random  ( n1 -- n2 )  mb-rnd um* nip  ;
-
-  \ Original code:
-
-  \ ----
-  \ ; Input: none
-  \ ; Output: HL = pseudo-random number, period 65536
-
-  \ Rand16:
-  \  ld  de,Seed    ; Seed is usually 0
-  \  ld  a,d
-  \  ld  h,e
-  \  ld  l,253
-  \  or  a
-  \  sbc  hl,de
-  \  sbc  a,0
-  \  sbc  hl,de
-  \  ld  d,0
-  \  sbc  a,d
-  \  ld  e,a
-  \  sbc  hl,de
-  \  jr  nc,Rand
-  \  inc  hl
-  \ Rand:
-  \  ld  (Rand16+1),hl
-  \  ret
-  \ ----
-
-need rng-benchmark
-
-: mb-rng-benchmark  ( -- )
-  s" Milos Bazelides" ['] mb-random rng-benchmark  ;
-
-( sf83-random )
-
-  \ Credit:
-  \
-  \ Code from Spectrum Forth-83.
-
-need os-seed  3 os-seed !
-
-: sf83-random  ( n -- 0..n-1 )
-  os-seed @ 743 * 43 + dup os-seed ! um* swap drop  ;
-
-need rng-benchmark
-
-: sf83-rng-benchmark  ( -- )
-  s" Spectrum Forth-83" ['] sf83-random rng-benchmark  ;
-
-( tt-random )
-
-  \ Credit:
-  \
-  \ Code from tt.pfe, Tetris for terminals, redone in
-  \ ANSI-Forth.  Written 1994-04-05 by Dirk Uwe Zoller.
-
-need os-seed
-
-: tt-random   ( n -- 0..n-1 )
-    os-seed @ 13 * $7FFF and
-    dup os-seed !  swap mod ;
-
-need rng-benchmark
-
-: tt-rng-benchmark  ( -- )
-  s" Tetris for terminals" ['] tt-random rng-benchmark  ;
-
-( vf-random )
-
-  \ Credit:
-  \
-  \ Code from vForth.
-
-need os-frames
-
-: vf-random  ( n1 -- n2 )
-  1+ 8195 os-frames @ um* 1. d+
-  16383 um/mod drop
-  \ dup os-seed !
-  swap mod  ;
-
-need rng-benchmark
-
-: vf-rng-benchmark  ( -- )
-  s" vForth" ['] vf-random rng-benchmark  ;
-
-( z88-random )
-
-  \ Credit:
-  \
-  \ Code adapted from Z88 CamelForth.
-
-need ud*  need os-seed
-
-: z88-random  ( u1 -- u2 )
-  1103515245. \ 20077 16838
-  os-seed @ ud* 12345. d+ over os-seed !
-  rot ud/mod 2drop  ;
-
-need rng-benchmark
-
-: z88-rng-benchmark  ( -- )
-  s" Z88 CamelForth" ['] z88-random rng-benchmark  ;
-
-( zh-random )
+( fast-rnd fast-random )
 
   \ Credit:
   \
@@ -4978,7 +6190,7 @@ need rng-benchmark
 
 need z80-asm  need os-seed
 
-code zh-rnd  ( -- n )
+code fast-rnd  ( -- u )
 
   os-seed fthl
     \ ld hl,(seed)
@@ -5005,7 +6217,7 @@ code zh-rnd  ( -- n )
     \ ld (seed),hl
   jppushhl   end-code
 
-: zh-random  ( n1 -- n2 )  zh-rnd um* nip  ;
+: fast-random  ( n -- 0..n-1 )  fast-rnd um* nip  ;
 
   \ Original code:
 
@@ -5047,84 +6259,7 @@ code zh-rnd  ( -- n )
   \      ret
   \ ----
 
-need rng-benchmark
-
-: zh-rng-benchmark  ( -- )
-  s" Z80 Heaven" ['] zh-random rng-benchmark  ;
-
-( random-byte )
-
-code random-byte  ( -- b )
-  ED c, 5F c,     \ ld a,r
-  C3 c, pusha ,   \ jp pusha
-  end-code
-
-need bench{
-
-: random-byte-test  ( -- )
-  ['] random-byte ['] rng defer!  cls  bench{ pixels
-  do  rng rng 192 min set-pixel  loop  }bench.
-  ." Z80 R register" cr key drop ;
-
-( lcm-random )
-
-  \ XXX UNDER DEVELOPMENT
-
-  \ Credit:
-  \
-  \ Adapted from code written by Everett F. Carter, published
-  \ on Forth Dimensions (volume 16, number 2, page 17,
-  \ 1994-08).
-
-need d*  need du/mod  need 2nip
-
-2variable 2seed
-
-2147483647. 2constant max32
-
-  \ Linear Congruential Method, the "minimal standard
-  \ generator", Park & Miller, 1988, Comm of the ACM, 31(10),
-  \ pp. 1192-1201
-: lcm-rnd  ( -- d )
-  \ XXX FIXME -- it always returns 0
-  2seed 2@ 16807. d*
-  max32 du/mod  2nip
-  2dup 2seed 2!  ;
-
-  \ \ Original code:
-  \ : lcm-rnd  ( -- d )
-  \   2seed 2@ 16807. umd*
-  \   max32 umd/mod
-  \   2drop 2seed 2!  ;
-
-: lcm-random  ( n1 -- n2 )  lcm-rnd d>s um* nip  ;
-
-need rng-benchmark
-
-: lcm-rng-benchmark  ( -- )
-  s" LCM" ['] lcm-random rng-benchmark  ;
-
-( all-rng-benchmarks )
-
-  \ Execute all 8-bit RNG benchmarks
-
-need rng-benchmark  need +thru  1 4 +thru
-
-' rng8-benchmark2 ' rng-benchmark defer!
-
-jw-rng-benchmark
-mb1-rng-benchmark
-mb2-rng-benchmark
-zh-rng-benchmark
-
-  \ Execute single-cycle benchmarks of RNG that need more than
-  \ one cycle to finish:
-
-' rng8-benchmark1 ' rng-benchmark defer!
-
-jw-rng-benchmark
-
-( jw-crnd )
+( crnd crandom )
 
   \ 2015-12-25
 
@@ -5135,7 +6270,7 @@ jw-rng-benchmark
 
 need os-seed
 
-code jw-crnd  ( -- b )
+code crnd  ( -- b )
 
   os-seed fthl
     \ ld      hl,(randData)
@@ -5153,10 +6288,7 @@ code jw-crnd  ( -- b )
     \ jp push_a
   end-code
 
-need rng-benchmark
-
-: jw-rng-benchmark  ( -- )
-  s" Joe Wingbermuehle" ['] jw-crnd rng-benchmark  ;
+: crandom  ( b -- 0..b-1 )  crnd um* nip  ;
 
   \ Original code:
 
@@ -5179,141 +6311,20 @@ need rng-benchmark
   \         ret
   \ ----
 
-( mb1-crandom )
+( randomize randomize0 )
 
-  \ XXX UNDER DEVELOPMENT
+[defined] randomize
+?\  need os-seed  : randomize  ( n -- )  os-seed !  ;
+  \ Set the seed of the random number generator.
 
-  \ 2015-12-25
+[needed] randomize ?exit
 
-  \ Credit:
-  \ http://web.archive.org/web/20150225121110/http://baze.au.com/misc/z80bits.html#4
+need os-frames
 
-   \ This is a very simple linear congruential generator. The
-   \ formula is x[i + 1] = (5 * x[i] + 1) mod 256. Its only
-   \ advantage is small size and simplicity. Due to nature of
-   \ such generators only a couple of higher bits should be
-   \ considered random.
-
-  \ Input: none
-  \ Output: A = pseudo-random number, period 256
-
-need z80-asm  need os-seed
-
-code mb1-crnd  ( -- b )
-
-  os-seed fta
-    \ ld  a,(seed) ; Seed is usually 0
-  a d ld  a add  a add  d add
-    \  ld  d,a
-    \  add  a,a
-    \  add  a,a
-    \  add  a,d
-  a inc  os-seed sta
-    \  inc  a    ; another possibility is ADD A,7
-    \  ld  (seed),a
-  pusha jp
-  end-code
-
-: mb1-crandom  ( n1 -- n2 )  mb1-crnd um* nip  ;
-  \ XXX FIXME -- it always return zero
-
-need rng-benchmark
-
-  \ : mb1-rng-benchmark  ( -- )
-  \   s" Milos Bazelides 1" ['] mb1-crandom rng-benchmark  ;
-
-: mb1-rng-benchmark  ( -- )
-  s" Milos Bazelides 1" ['] mb1-crnd rng-benchmark  ;
-
-( mb2-crandom )
-
-  \ XXX UNDER DEVELOPMENT
-
-  \ 2015-12-25
-
-  \ Credit:
-  \ http://web.archive.org/web/20150225121110/http://baze.au.com/misc/z80bits.html#4
-
-   \ This is a very simple linear congruential generator. The
-   \ formula is x[i + 1] = (5 * x[i] + 1) mod 256. Its only
-   \ advantage is small size and simplicity. Due to nature of
-   \ such generators only a couple of higher bits should be
-   \ considered random.
-
-  \ Input: none
-  \ Output: A = pseudo-random number, period 256
-
-need z80-asm  need os-seed
-
-code mb2-crnd  ( -- b )
-
-  os-seed fta
-    \ ld  a,(seed) ; Seed is usually 0
-  a d ld  a add  a add  d add
-    \  ld  d,a
-    \  add  a,a
-    \  add  a,a
-    \  add  a,d
-  07 add#  os-seed sta
-    \  add a,7
-    \  ld  (seed),a
-  pusha jp  end-code
-
-: mb2-crandom  ( n1 -- n2 )  mb2-crnd um* nip  ;
-  \ XXX FIXME -- it always return zero
-
-need rng-benchmark
-
-  \ : mb2-rng-benchmark  ( -- )
-  \   s" Milos Bazelides 2" ['] mb2-crandom rng-benchmark  ;
-
-: mb2-rng-benchmark  ( -- )
-  s" Milos Bazelides 2" ['] mb2-crnd rng-benchmark  ;
-
-( zh-crnd )
-
-  \ 2015-12-25
-
-  \ Credit:
-  \
-  \ Code adapted from:
-  \ http://z80-heaven.wikidot.com/math#toc40
-
-code zh-crnd  ( -- b )
-
-  os-seed fta  a e ld
-  a add  e add  a add  a add  e add  #83 add#
-  os-seed sta
-  pusha jp
-
-  end-code
-
-need rng-benchmark
-
-: zh-rng-benchmark  ( -- )
-  s" Z80 Heaven (8 bit)" ['] zh-crnd rng-benchmark  ;
-
-  \ This is one of many variations of PRNGs. This routine is
-  \ not particularly useful for many games, but is fairly
-  \ useful for shuffling a deck of cards. It uses SMC, but that
-  \ can be fixed by defining randSeed elsewhere and using ld
-  \ a,(randSeed) at the beginning.
-
-  \ PseudoRandByte:
-  \ ;f(n+1)=13f(n)+83
-  \ ;97 cycles
-  \      .db 3Eh     ;start of ld a,*
-  \ randSeed:
-  \      .db 0
-  \      ld c,a
-  \      add a,a
-  \      add a,c
-  \      add a,a
-  \      add a,a
-  \      add a,c
-  \      add a,83
-  \      ld (randSeed),a
-  \      ret
+: randomize0  ( n -- )
+  ?dup 0=  if  os-frames @  then  randomize  ;
+  \ Set the seed of the random number generator;
+  \ if _n_ is zero use the system frames counter instead.
 
   \ vim: filetype=soloforth
   \ screen_mode.fsb
@@ -5321,7 +6332,7 @@ need rng-benchmark
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605071336
 
   \ -----------------------------------------------------------
   \ Description
@@ -5341,40 +6352,32 @@ need rng-benchmark
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( columns rows )
+  \ -----------------------------------------------------------
+  \ Latest changes
 
-need value
+  \ 2016-05-07: Compact the blocks.
 
-32 value columns  24 value rows
+( columns rows set-mode-output set-font )
 
-( set-banked-mode-output )
+[unneeded] columns [unneeded] rows and
+?\ need value  32 value columns  24 value rows  exit
 
-need set-mode-output
+[unneeded] set-font
+?\ need os-chars  : set-font  ( a -- )  os-chars !  ;  exit
 
-0 constant (output-routine)
+  \ doc{
+  \
+  \ set-font  ( a -- )
+  \
+  \ Set the system font to _a_.  This is used by all modes:
+  \ `mode32`, `mode42` and `mode64`. The value of _a_ depends
+  \ on the mode: In `mode32` and `mode42`, _a_ is the address
+  \ of char 0, i.e. 256 bytes below the space char; In `mode64`
+  \ _a_ is the address of space char.
+  \
+  \ }doc
 
-code (banked-mode-output)  ( -- )
-  C5 c,                 \ push bc ; save Forth IP
-  CD c, 0 ,             \ call output_routine ; to be patched
-
-  here cell- ' (output-routine) >body !
-    \ Store the address where the address of the output routine
-    \ must be stored, into the constant `(output-routine)`.
-
-  C1 c,                 \ pop bc ; restore Forth IP
-  DD c, 21 c, next ,    \ ld ix,next ; restore IX, just in case
-  jpnext  end-code
-
-: set-banked-mode-output  ( a -- )
-  (output-routine) !  \ patch `(banked-mode-output)`
-  ['] (banked-mode-output) set-mode-output  ;
-  \ Associate the output routine at _a_ (which is in the code
-  \ bank) to the system channels "K", "S" and "P", using and
-  \ intermediate routine to page the code bank in and out.
-
-( set-mode-output set-font )
-
-need os-chars  need os-chans
+need os-chans
 
 : set-mode-output  ( a -- )
   os-chans @ 2dup ! 2dup 5 + ! 15 + !  ;
@@ -5389,19 +6392,30 @@ need os-chars  need os-chans
   \ }doc
   \ XXX TODO -- why also "P"?
 
-: set-font  ( a -- )  os-chars !  ;
+( set-banked-mode-output )
 
-  \ doc{
-  \
-  \ set-font  ( a -- )
-  \
-  \ Set the system font to _a_.  This is used by all modes:
-  \ `mode32`, `mode42` and `mode64`. The value of _a_ depends
-  \ on the mode: In `mode32` and `mode42`, _a_ is the address
-  \ of char 0, i.e. 256 bytes below the space char; In `mode64`
-  \ _a_ is the address of space char.
-  \
-  \ }doc
+need set-mode-output
+
+0 constant (output-routine)
+
+code (banked-mode-output)  ( -- )
+  C5 c,  CD c, 0 ,
+    \ push bc ; save Forth IP
+    \ call output_routine ; to be patched
+  here cell- ' (output-routine) >body !
+    \ Store the address where the address of the output routine
+    \ must be stored, into the constant `(output-routine)`.
+  C1 c,  DD c, 21 c, next ,  jpnext  end-code
+    \ pop bc ; restore Forth IP
+    \ ld ix,next ; restore IX, just in case
+    \ jp next
+
+: set-banked-mode-output  ( a -- )
+  (output-routine) !  \ patch `(banked-mode-output)`
+  ['] (banked-mode-output) set-mode-output  ;
+  \ Associate the output routine at _a_ (which is in the code
+  \ bank) to the system channels "K", "S" and "P", using and
+  \ intermediate routine to page the code bank in and out.
 
   \ vim: filetype=soloforth
   \ sound.48.fsb
@@ -5409,7 +6423,7 @@ need os-chars  need os-chans
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201604140114
 
   \ -----------------------------------------------------------
   \ Description
@@ -5428,20 +6442,38 @@ need os-chars  need os-chans
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( bleep )  \ ==sound48==
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015: Main development.
+  \ 2016-04-14: Documented `bleep` and `beep>bleep`.
+
+( bleep )
 
   \ Credit:
   \
   \ Code modified from Abersoft Forth.
 
 code bleep  ( duration pitch -- )
-  E1 c, D1 c, C5 c,   \ pop hl / pop de / push bc
-  CD c, 03B5 ,        \ call rom_beeper
-  C1 c,               \ pop bc
-  DD c, 21 c, next ,  \ ld ix,next ; restore ix
-  jpnext              \ jp (ix)
+  E1 c,  D1 c,  C5 c,  CD c, 03B5 ,
+    \ pop hl
+    \ pop de
+    \ push bc ; save Forth IP
+    \ call rom_beeper
+  C1 c,  DD c, 21 c, next ,
+    \ pop bc ; restore Forth IP
+    \ ld ix,next ; restore ix
+  jpnext
   end-code
-  \ Produce a tone in the noise maker.
+
+  \ doc{
+  \
+  \ bleep  ( duration pitch -- )
+  \
+  \ Produce a tone in the internal beeper.
+  \
+  \ }doc
+
 
 ( beep>bleep )
 
@@ -5454,9 +6486,15 @@ code bleep  ( duration pitch -- )
 : beep>bleep  ( frequency duration1 -- duration2 pitch )
   over 1000 */ swap
   4375 100 rot */ 30 -  ;
-  \ Convert the parameters of the original ZX Spectrum's `beep`
-  \ command _frequency duration_ to those required by Solo
-  \ Forth's `bleep`.
+
+  \ doc{
+  \
+  \ beep>bleep  ( frequency duration1 -- duration2 pitch )
+  \
+  \ Convert the parameters of Sinclair BASIC `beep` to Solo
+  \ Forth `bleep`. See `bleep`.
+  \
+  \ }doc
 
 ( laser-gun )
 
@@ -5559,7 +6597,7 @@ code ambulance  ( n -- )
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201604242153
 
   \ -----------------------------------------------------------
   \ Description
@@ -5578,6 +6616,11 @@ code ambulance  ( n -- )
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-24: Remove `[char]` and `char`, which have been
+  \ moved to the library.
 
 ( parse-escaped-string )
 
@@ -5603,14 +6646,14 @@ also escaped-voc definitions
   \ \f = form feed
   \ \l = line feed
   \ \n = new line (implementation dependent)
-char " 1 2constant q  13 1 2constant r  9 1 2constant t
+'"' 1 2constant q  13 1 2constant r  9 1 2constant t
   \ \q = double quote
   \ \r = carriage return
   \ \t = horizontal tab
 11 1 2constant v  0 1 2constant z
   \ \v = vertical tab
   \ \z = null character
-char " 1 2constant "  char \ 1 2constant \
+'"' 1 2constant "  '\' 1 2constant \
   \ \" = double quote
   \ \\ = backslash
 
@@ -5634,7 +6677,7 @@ only forth definitions  need char>string   need search-wordlist
 
 : unescape-char  ( c -- c1..cn n )
   dup char>string escaped-wordlist search-wordlist
-  if  nip execute  else  [char] \ 2  then  ;
+  if  nip execute  else  '\' 2  then  ;
   \ Translate a escaped char to a number of chars and their
   \ count.
   \ c1..cn = chars to make the string with
@@ -5643,8 +6686,8 @@ only forth definitions  need char>string   need search-wordlist
 
 : parse-escaped-string  ( "ccc<quote>"  -- ca len )
   0 0  \ dummy empty string to start with
-  begin  parse-char dup [char] " <>  while  \ not finished?
-    dup [char] \ =  \ possibly escaped char?
+  begin  parse-char dup '"' <>  while  \ not finished?
+    dup '\' =  \ possibly escaped char?
     if    drop parse-char unescape-char
     else  1  then  chars>string s+
   repeat  drop  ;
@@ -5680,17 +6723,17 @@ need parse-escaped-string
   ; immediate compile-only
 
   \ vim: filetype=soloforth
-  \ strings.fsb
+  \ strings.misc.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605050040
 
   \ -----------------------------------------------------------
   \ Description
 
-  \ String words and tools.
+  \ Misc words related to strings.
 
   \ -----------------------------------------------------------
   \ Author
@@ -5704,9 +6747,25 @@ need parse-escaped-string
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( s= )
+  \ -----------------------------------------------------------
+  \ Latest changes
 
-: s=  ( ca1 len1 ca2 len2 -- f )  compare 0=  ;
+  \ 2016-04-22: Add `s""`, moved from the kernel.
+  \ 2016-04-24: Add `need pick`, because `pick` has been moved
+  \ from the kernel to the library.
+  \ 2016-04-27: Add `char-in-string?` and `char-position?`.
+  \ 2016-05-05: Rename `s=` to `str=`. Add `str<` and `str>`.
+
+( str= str< str> )
+
+[unneeded] str=
+?\ : str=  ( ca1 len1 ca2 len2 -- f )  compare 0=  ;  exit
+
+[unneeded] str<
+?\ : str<  ( ca1 len1 ca2 len2 -- f )  compare 0<  ;  exit
+
+[unneeded] str>
+?\ : str>  ( ca1 len1 ca2 len2 -- f )  compare 0>  ;  exit
 
 ( sconstant )
 
@@ -5746,6 +6805,8 @@ need parse-escaped-string
   \ Credit:
   \
   \ Code adapted from Afera.
+
+need pick
 
 [defined] lengths
 ?\ : lengths   2over nip over  ;
@@ -5836,7 +6897,7 @@ need under+
 
 ( prefix? suffix? )
 
-need s=  need [if]
+need str=  need [if]
 
   \ Credit:
   \
@@ -5844,7 +6905,9 @@ need s=  need [if]
   \ string-prefix-question.fs).
 
 [needed] prefix? [if]
-: prefix?  ( ca1 len1 ca2 len2 -- f ) tuck 2>r min 2r> s=  ;
+
+: prefix?  ( ca1 len1 ca2 len2 -- f ) tuck 2>r min 2r> str=  ;
+
 [then]
 
   \ Credit:
@@ -5852,9 +6915,13 @@ need s=  need [if]
   \ Code from Galope (module string-suffix-question.fs).
 
 [needed] suffix? [if]
-: suffix? ( ca1 len1 ca2 len2 -- wf )
+
+need pick
+
+: suffix? ( ca1 len1 ca2 len2 -- f )
   \ Is string _ca2 len2_ the end of string _ca1 len1_?
-  2swap dup 3 pick - /string s=  ;
+  2swap dup 3 pick - /string str=  ;
+
 [then]
 
 ( -prefix )
@@ -5918,12 +6985,120 @@ need suffix?
 
   \ }doc
 
+( string/ )
+
+code string/  ( ca1 len1 len2 -- ca2 len2 )
+    \                           ;   T  B
+    \                           ;  -- --
+  D9 c,  C1 c,  D1 c,  E1 c,
+    \ exx          ; save IP    ;  04 01
+    \ pop bc       ; len2       ;  10 01
+    \ pop de       ; len1       ;  10 01
+    \ pop hl       ; ca1        ;  10 01
+  19 c,  A7 c,  ED c, 42 c,
+    \ add hl,de                 ;  11 01
+    \ and a        ; cy=0       ;  04 01
+    \ sbc hl,bc    ; hl=ca2     ;  15 02
+  E5 c,  C5 c,
+    \ push hl                   ;  11 01
+    \ push bc                   ;  11 01
+  D9 c,  jpnext
+    \ exx          ; restore IP ;  04 01
+    \ jp (ix)                   ;  08 02
+    \                           ;  -- --
+    \                           ;  98 13 Total
+  end-code
+
+  \ doc{
+  \
+  \ string/  ( ca1 len1 len2 -- ca2 len2 )
+  \
+  \ Return the _len2_ ending characters of string _ca1 len1_.
+  \
+  \ }doc
+
+exit
+
+  \ Slower version, 1 byte shorter
+  \
+  \ Credit: code from Galope.
+
+: string/  ( ca1 len1 len2 -- ca2 len2 )
+  >r + r@ - r>  ;
+  \ Return the _len2_ ending characters of string _ca1 len1_.
+
+( s"" )
+
+: s""  ( -- ca len )  0 allocate-string 0  ;
+
+  \ doc{
+  \
+  \ s""  ( -- ca len )
+  \
+  \ Return an empty string in the circular string buffer.
+  \
+  \ }doc
+
+( char-in-string? char-position? )
+
+need -rot  need [if]
+
+[needed] char-in-string? [if]
+
+: char-in-string? ( ca len c -- f )
+  -rot bounds
+  ?do  dup i c@ = if  drop true unloop exit  then  loop
+  drop false  ;
+
+  \ doc{
+  \
+  \ char-in-string? ( ca len c -- f )
+  \
+  \ Is char _c_ in string _ca len_?
+  \
+  \ }doc
+
+[then]
+
+[needed] char-position? [if]
+
+: char-position?  ( ca len c -- +n true | false )
+  -rot 0 ?do
+    2dup i + c@ = if  2drop i true unloop exit  then
+  loop  2drop false  ;
+
+  \ doc{
+  \
+  \ char-position?  ( ca len c -- +n true | false )
+  \
+  \ If char _c_ is in string _ca len_, return its first
+  \ position _+n_ and _true_; else return _false_.
+  \
+  \ }doc
+
+[then]
+
+( ruler )
+
+: ruler  ( c len -- ca len )
+  dup allocate-string swap 2dup 2>r rot fill 2r>  ;
+
+  \ doc{
+  \
+  \ ruler  ( c len -- ca len )
+  \
+  \ Return a string _ca len_ of characters _c_.
+  \
+  \ }doc
+
+  \ vim: filetype=soloforth
+
   \ system_variables.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605011901
 
   \ -----------------------------------------------------------
   \ Description
@@ -5941,6 +7116,15 @@ need suffix?
   \ You may do whatever you want with this work, so long as you
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-23: Fix: graphic coordinates variables were not
+  \ included in the block title.
+  \
+  \ 2016-05-01: Add `os-attr-p`, `os-mask-p`, `os-attr-t`,
+  \ `os-mask-t`
 
 ( os-chars os-chans os-flags2 os-seed os-frames os-udg )
 
@@ -5968,13 +7152,49 @@ need suffix?
   \ 1 cell:
   \ address of the User Defined Graphics (characters 128..255)
 
+( os-coords os-coordx os-coordy )
+
+[unneeded] os-coords      ?\ 23677 constant os-coords
+  \ 2 cells:
+  \ coordinates of last point plotted
+
+[unneeded] os-coordx      ?\ 23677 constant os-coordx
+  \ 1 cell:
+  \ x-coordinate of last point plotted
+
+[unneeded] os-coordy      ?\ 23678 constant os-coordy
+  \ 1 cell:
+  \ y-coordinate of last point plotted
+
+( os-attr-p os-mask-p os-attr-t os-mask-t os-p-flag )
+
+[unneeded] os-attr-p      ?\ 23693 constant os-attr-p
+  \ 1 cell:
+  \ permanent color attribute
+
+[unneeded] os-mask-p      ?\ 23694 constant os-mask-p
+  \ 1 cell:
+  \ permanent transparent color attribute mask
+
+[unneeded] os-attr-t      ?\ 23695 constant os-attr-t
+  \ 1 cell:
+  \ temporary color attribute
+
+[unneeded] os-mask-t      ?\ 23696 constant os-mask-t
+  \ 1 cell:
+  \ temporary transparent color attribute mask
+
+[unneeded] os-p-flag      ?\ 23697 constant os-mask-t
+  \ 1 cell:
+  \ print flags
+
   \ vim: filetype=soloforth
   \ time.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605070036
 
   \ -----------------------------------------------------------
   \ Description
@@ -5993,7 +7213,12 @@ need suffix?
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( ms )  \ ==time==
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-05-07: Make block titles compatible with `indexer`.
+
+( ms )
 
 need os-frames
 
@@ -6423,7 +7648,7 @@ need get-time  need get-date
   \ }doc
 
   \ vim: filetype=soloforth
-  \ tools.listing.blocks.fsb
+  \ tool.debug.tilde-tilde.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
@@ -6433,7 +7658,7 @@ need get-time  need get-date
   \ -----------------------------------------------------------
   \ Description
 
-  \ Words to list blocks.
+  \ The `~~` debugging tool.
 
   \ -----------------------------------------------------------
   \ Author
@@ -6447,177 +7672,52 @@ need get-time  need get-date
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
+( ~~ )
 
-( list )
+  \ 2016-02-18: First version.
 
-need .line  need nuf?
+need :noname  need defer  need is
 
-: list  ( n -- )
+variable ~~?    ~~? on      \ active?
+variable ~~x    ~~x off     \ x coordinate
+variable ~~y    ~~y off     \ y coordinate
+variable ~~key  ~~key off   \ quit key, or zero if no pause
 
-  \ List block number _n_.
+: ~~show  ( nt line block -- )
+  ~~x @ ~~y @ at-xy ." Block " . ." Line " . .name .s   ;
+  \ Show the debugging info.
 
-  dup scr !
-  cr ." Scr # " .
-  l/scr 0 do
-    cr i 2 .r space i scr @ .line
-    nuf? ?leave
-  loop cr  ;
+: ~~control  ( -- )
+  ~~key @ ?dup 0= ?exit  key = if  quit  then  ;
+  \ If `~~key` is non-zero, wait for a key and quit if it
+  \ equals the contents of `~~key`.
 
-( index .index )
+2variable ~~backup-xy
 
-need .line  need nuf?
+defer ~~save  ( -- )  defer ~~restore  ( -- )
 
-: .index  ( n -- )  cr dup 3 .r space 0 swap .line  ;
-  \ Print the first line of the block _n_.
+:noname  ( -- )  xy ~~backup-xy 2!        ; is ~~save
+:noname  ( -- )     ~~backup-xy 2@ at-xy  ; is ~~restore
+  \ Save and restore the current coordinates.
 
-: index  ( n1 n2 -- )
+-->
 
-  \ doc{
-  \
-  \ index  ( n1 n2 -- )
-  \
-  \ Print the first line of each block over the range from
-  \ _n1_ to _n2_.
-  \
-  \ }doc
 
-  1+ swap do
-    cr i 3 .r space 0 i .line  nuf? ?leave
-  loop  ;
+( ~~ )
 
-( index-like )
+: (~~)  ( nt line block -- )
+  ~~? @
+  if    ~~save ~~show ~~control ~~restore
+  else  2drop drop  then  ;
+  \ Execute the debugging code, if debugging is active.
 
-need .index  need nuf?
-
-[defined] contains
-  ?\ : contains  ( ca1 len1 ca2 len2 -- f )  search nip nip  ;
-     \ Does the string _ca1 len1_ contains the string _ca2
-     \ len2?_
-
-: index-like  ( n1 n2 "name" -- )
-
-  \ doc{
-  \
-  \ index-like  ( n1 n2 "name" -- )
-  \
-  \ Print the first line of each block over the range from
-  \ _n1_ to _n2_, as long as the string "name" is included in
-  \ the line. The string comparison is case-sensitive.
-  \
-  \ }doc
-
-  parse-name 2swap
-  1+ swap do
-    0 i line>string 2over contains if  i .index  then
-    nuf? ?leave
-  loop  2drop  ;
-
-( index-ilike )
-
-need .index
-
-[defined] contains
-  ?\ : contains  ( ca1 len1 ca2 len2 -- f )  search nip nip  ;
-     \ Does the string _ca1 len1_ contains the string _ca2
-     \ len2?_
-
-: index-ilike  ( n1 n2 "name" -- )
-
-  \ doc{
-  \
-  \ index-ilike  ( n1 n2 "name" -- )
-  \
-  \ Print the first line of each block over the range from
-  \ _n1_ to _n2_, as long as the string "name" is included in
-  \ the line. The string comparison is case-insensitive.
-  \
-  \ }doc
-
-  parse-name save-string 2dup uppers
-  2swap 1+ swap do
-    save-string  0 i line>string save-string 2dup uppers
-    2over contains if  i .index  then
-    nuf? ?leave
-  loop  2drop  ;
-
-  \ Note: The parsed string is re-saved to the circular string
-  \ buffer in every iteration in order to prevent it from being
-  \ overwritten by the strings of the index lines, because the
-  \ circular string buffer is small.
-
-  \ vim: filetype=soloforth
-  \ value.double.fsb
-  \
-  \ This file is part of Solo Forth
-  \ http://programandala.net/en.program.solo_forth.html
-
-  \ Last modified: 20160324
-
-  \ -----------------------------------------------------------
-  \ Description
-
-  \ `2to` for a non-standard version of
-  \ `2value`.
-
-  \ -----------------------------------------------------------
-  \ Author
-
-  \ Marcos Cruz (programandala.net), 2015, 2016.
-
-  \ -----------------------------------------------------------
-  \ License
-
-  \ You may do whatever you want with this work, so long as you
-  \ retain every copyright, credit and authorship notice, and
-  \ this license.  There is no warranty.
-
-( 2value 2to )
-
-  \ Implementation of `2value` (from Forth-2012) but with
-  \ the non-standard word `2to`
-
-: 2value  ( d "name"  -- )  2constant  ;
-
-: 2to  ( Interpretation: d "name" -- )
-       ( Compilation: "name" -- )
-  ' >body compiling? if    postpone literal postpone 2!
-                     else  2!  then  ; immediate
-
-  \ vim: filetype=soloforth
-  \ value.forth-94.fsb
-  \
-  \ This file is part of Solo Forth
-  \ http://programandala.net/en.program.solo_forth.html
-
-  \ Last modified: 20160324
-
-  \ -----------------------------------------------------------
-  \ Description
-
-  \ The Forth-94 version of `value`.
-
-  \ -----------------------------------------------------------
-  \ Author
-
-  \ Marcos Cruz (programandala.net), 2015, 2016.
-
-  \ -----------------------------------------------------------
-  \ License
-
-  \ You may do whatever you want with this work, so long as you
-  \ retain every copyright, credit and authorship notice, and
-  \ this license.  There is no warranty.
-
-( value to )
-
-  \ Origin: Forth-94.
-
-: value  ( n "name"  -- )  constant  ;
-
-: to  ( Interpretation: n "name" -- )
-      ( Compilation: "name" -- )
-  ' >body compiling? if    postpone literal postpone !
-                     else  !  then  ; immediate
+: ~~  ( -- )
+  latest      postpone literal
+  >in @ c/l / postpone literal
+  blk @       postpone literal
+  postpone (~~)  ; immediate compile-only
+  \ Compile debugging code.
+  \ This word was inspired by Gforth's `~~`.
 
   \ vim: filetype=soloforth
   \ word_lists.fsb
@@ -6625,7 +7725,7 @@ need .index
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201603252323
+  \ Last modified: 201605042148
 
   \ -----------------------------------------------------------
   \ Description
@@ -6638,6 +7738,16 @@ need .index
   \ You may do whatever you want with this work, so long as you
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-17: Added the requisite of `recurse`, which is not
+  \ in the kernel anymore.
+  \
+  \ 2016-05-02: Join several blocks, to save space.
+  \
+  \ 2016-05-04: Improve the documentation of `trail`.
 
 ( wid>link wid>name named-wid wid>vocabulary )
 
@@ -6669,7 +7779,7 @@ need alias
   \
   \ }doc
 
-: named-wid ( wid -- )  (wid>name) latest swap !  ;
+: named-wid  ( wid -- )  (wid>name) latest swap !  ;
 
   \ doc{
   \
@@ -6695,47 +7805,48 @@ need alias
 
   \ Credit: Code from eForth.
 
+need recurse
+
 : order@  ( a -- u*wid u )
   dup @ dup if    >r cell+  recurse  r> swap 1+ exit
             then  nip  ;
   \ XXX TODO use the actual number of vocs in context,
   \ not a trailing zero
 
-: get-order  ( -- u*wid u )  context order@ ;
+: get-order  ( -- u*wid u )  context order@  ;
 
-( wid-of )
+( wid-of swap-current trail find-name-in find )
 
+[unneeded] wid-of
+?\ : wid-of  ( "name" -- wid )  ' >body  ;  exit
+  \ Return the _wid_ of vocabulary "name".
+  
   \ Credit:
   \
   \ Adapted from eForth's `widof`.
 
-: wid-of  ( "name" -- wid )  ' >body  ;
-  \ Return the _wid_ of vocabulary "name".
-
-( swap-current trail )
-
 [unneeded] trail
-?\ : trail  ( -- nt )  context @ @  ;
+?\ : trail  ( -- nt )  context @ @  ;  exit
 
   \ doc{
   \
   \ trail ( -- nt )
   \
-  \ Leave the _nt_ of the topmost word in the
-  \ `context` vocabulary.
+  \ Leave the _nt_ of the topmost word in the first word list
+  \ of the search order.
   \
   \ }doc
 
-[unneeded] swap-current ?\ exit
+need [if]     [needed] swap-current [if]
+
 : swap-current  ( wid1 -- wid2 )
-  get-current swap set-current  ;
+  get-current swap set-current  ;    [then]
 
   \ Credit:
   \
   \ Idea from lpForth.
 
-( find-name-in find )
-
+[needed] find-name-in [if]
 : find-name-in  ( ca len wid -- nt | 0 )  @ find-name-from  ;
 
   \ doc{
@@ -6746,13 +7857,16 @@ need alias
   \ word list _wid_. If the definition is found, return its
   \ _nt_, else return zero.
   \
-  \ The search is case-sensitive.
+  \ The search is case-sensitive.  // XXX TODO -- confirm
   \
   \ }doc
 
+[then]
+
+[needed] find [if]
 : find  ( ca -- ca 0 | xt 1 | xt -1 )
   dup count find-name dup
-  if  nip name>immediate? 1 or negate  then  ;
+  if  nip name>immediate? 1 or negate  then  ;  [then]
 
   \ doc{
   \
@@ -6769,11 +7883,17 @@ need alias
   \
   \ }doc
 
+  \ vim: filetype=soloforth
+  \ nuclear_invaders.fsb
+  \
+  \ This file is part of Nuclear Invaders
+  \ http://programandala.net/en.program.nuclear_invaders.html
+
 ( nuclear-invaders )
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.0.0+201603260017
+\ Version 0.0.0+201603301314
 
 \ Description
 
@@ -6810,7 +7930,8 @@ need os-chars  need os-udg  need 2/           need abort"
 need value     need case    need random       need columns
 need rows      need ocr     need ms           need s+
 need 2value    need row     need char>string  need s\"
-need alias     need plot    need adraw
+need alias     need plot    need adraw        need inverse
+need overprint need column
 
 4 constant /kk
 need kk-ports  need kk-1#   need pressed?     need kk-chars
@@ -6829,8 +7950,10 @@ defer (debug-point)  ' noop ' (debug-point) defer!
 
 : debug-point  ( -- )
   (debug-point)
-  \ latest .name
-  depth abort" Stack is not empty"
+  depth if
+    cr ." Latest word: " latest .name
+    cr .s  #-258 throw \ stack imbalance
+  then
   \ ." blk " blk @ .
   \ key drop
   ;
@@ -6849,7 +7972,6 @@ defer (debug-point)  ' noop ' (debug-point) defer!
 22528 constant attributes  768 constant /attributes
   \ Address and size of the screen attributes.
   \ XXX TODO -- not used yet
-
 
      2 constant arena-top-y
     21 constant tank-y
@@ -6900,7 +8022,8 @@ tank-y constant arena-bottom-y
             magenta color ufo-color
 
 : init-colors  ( -- )
-  0 paper 7 ink 0 flash 0 bright 0 inverse 1 border  ;
+  0 paper 7 ink 0 flash 0 bright
+  0 overprint 0 inverse 1 border  ;
   \ XXX TMP --
 
 -->
@@ -7194,7 +8317,6 @@ variable latest-sprite-udg
   0 ?do  dup c, 1+  loop  drop  r> 2constant  ;
   \ Create a definition "name" that will return a string
   \ containing all UDGs of the lastest sprite defined.
-  \ XXX TODO --
 
 -->
 
@@ -7566,6 +8688,7 @@ decimal  -->
 ( broken-top-brick ) debug-point
 
   \ This UDG is used with reversed colors, depending on
+  \ the side of the building.
 
 binary
 
@@ -7583,6 +8706,9 @@ binary
 decimal  -->
 
 ( broken-bottom-brick ) debug-point
+
+  \ This UDG is used with reversed colors, depending on
+  \ the side of the building.
 
 binary
 
@@ -7671,24 +8797,6 @@ binary
 
 2x1sprite!
 sprite-string ufo-explosion$  ( -- ca len )
-
-decimal  -->
-
-( ruler ) debug-point
-
-binary
-
-  \ horizontal ruler
-00000000
-00000000
-00000000
-00000000
-00000000
-00000000
-11111111
-00000000
-
-1x1sprite ruler
 
 decimal  -->
 
@@ -8037,21 +9145,24 @@ need pixel-addr
 : row>pixel  ( n1 -- n2 )  8 * 191 swap -  ;
   \ Convert a row (0..23) to a pixel y coordinate (0..191).
 
-: bar-ruler  ( -- )
+: ruler  ( -- )
   [ 0 tank-y row>pixel 8 - pixel-addr nip ] literal
   columns $FF fill  ;
   \ Draw the ruler of the status bar.
 
 : at-lifes  ( -- )  0 status-bar-y at-xy  ;
+  \ Set the cursor position to the position of the life icons.
 
 : .lifes  ( -- )
   at-lifes life-color
   lifes @ 0 ?do  tank$ type  loop  ."   "  ;
   \ Print one icon for each remaining life.
 
-: status-bar  ( -- )  bar-ruler .lifes  ;
+: status-bar  ( -- )  ruler .lifes  ;
+  \ Draw the status bar.
 
 : game-screen  ( -- )  init-colors cls score-bar status-bar  ;
+  \ Draw the game screen.
 
 -->
 
@@ -8329,7 +9440,7 @@ columns udg/tank - 1- constant tank-max-x
 : level-message  ( -- ca len )
   text-color s" LEVEL " level @ s>d <# # #> s+  ;
 
-: show-level  ( -- ) level-message message  ;
+: show-level  ( -- )  level-message message  ;
 
 : init-combat  ( -- )
   catastrophe off init-invaders init-ufo init-tank init-arena
@@ -8451,7 +9562,6 @@ red papery c,  here  red c,  constant broken-brick-colors
   broken-container? dup if    broken-container
                         then  catastrophe !  ;
   \ Manage the possible damages caused by the current invader.
-  \ XXX TODO -- change the graphic of the container
 
 : flying-invader  ( -- )
   invader-x-inc@ dup 0>  \ flying to the right?
@@ -8878,6 +9988,14 @@ init-level
   \ - Fix the status bar.
   \ - Modify the printing of lifes.
   \ - Fix the count of controls.
+  \
+  \ 2016-03-30:
+  \
+  \ - Make the status bar ruler instantaneous.
+  \
+  \ 2016-05-07:
+  \
+  \ - Update to the changes in Solo Forth.
   \
   \ XXX REMARK -- commited here
 

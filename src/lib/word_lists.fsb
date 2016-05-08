@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201603252323
+  \ Last modified: 201605042148
 
   \ -----------------------------------------------------------
   \ Description
@@ -16,6 +16,16 @@
   \ You may do whatever you want with this work, so long as you
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-17: Added the requisite of `recurse`, which is not
+  \ in the kernel anymore.
+  \
+  \ 2016-05-02: Join several blocks, to save space.
+  \
+  \ 2016-05-04: Improve the documentation of `trail`.
 
 ( wid>link wid>name named-wid wid>vocabulary )
 
@@ -47,7 +57,7 @@ need alias
   \
   \ }doc
 
-: named-wid ( wid -- )  (wid>name) latest swap !  ;
+: named-wid  ( wid -- )  (wid>name) latest swap !  ;
 
   \ doc{
   \
@@ -73,47 +83,48 @@ need alias
 
   \ Credit: Code from eForth.
 
+need recurse
+
 : order@  ( a -- u*wid u )
   dup @ dup if    >r cell+  recurse  r> swap 1+ exit
             then  nip  ;
   \ XXX TODO use the actual number of vocs in context,
   \ not a trailing zero
 
-: get-order  ( -- u*wid u )  context order@ ;
+: get-order  ( -- u*wid u )  context order@  ;
 
-( wid-of )
+( wid-of swap-current trail find-name-in find )
 
+[unneeded] wid-of
+?\ : wid-of  ( "name" -- wid )  ' >body  ;  exit
+  \ Return the _wid_ of vocabulary "name".
+  
   \ Credit:
   \
   \ Adapted from eForth's `widof`.
 
-: wid-of  ( "name" -- wid )  ' >body  ;
-  \ Return the _wid_ of vocabulary "name".
-
-( swap-current trail )
-
 [unneeded] trail
-?\ : trail  ( -- nt )  context @ @  ;
+?\ : trail  ( -- nt )  context @ @  ;  exit
 
   \ doc{
   \
   \ trail ( -- nt )
   \
-  \ Leave the _nt_ of the topmost word in the
-  \ `context` vocabulary.
+  \ Leave the _nt_ of the topmost word in the first word list
+  \ of the search order.
   \
   \ }doc
 
-[unneeded] swap-current ?\ exit
+need [if]     [needed] swap-current [if]
+
 : swap-current  ( wid1 -- wid2 )
-  get-current swap set-current  ;
+  get-current swap set-current  ;    [then]
 
   \ Credit:
   \
   \ Idea from lpForth.
 
-( find-name-in find )
-
+[needed] find-name-in [if]
 : find-name-in  ( ca len wid -- nt | 0 )  @ find-name-from  ;
 
   \ doc{
@@ -124,13 +135,16 @@ need alias
   \ word list _wid_. If the definition is found, return its
   \ _nt_, else return zero.
   \
-  \ The search is case-sensitive.
+  \ The search is case-sensitive.  // XXX TODO -- confirm
   \
   \ }doc
 
+[then]
+
+[needed] find [if]
 : find  ( ca -- ca 0 | xt 1 | xt -1 )
   dup count find-name dup
-  if  nip name>immediate? 1 or negate  then  ;
+  if  nip name>immediate? 1 or negate  then  ;  [then]
 
   \ doc{
   \
@@ -147,3 +161,4 @@ need alias
   \
   \ }doc
 
+  \ vim: filetype=soloforth

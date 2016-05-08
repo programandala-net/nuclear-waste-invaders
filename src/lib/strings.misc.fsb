@@ -1,14 +1,14 @@
-  \ strings.fsb
+  \ strings.misc.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 20160324
+  \ Last modified: 201605050040
 
   \ -----------------------------------------------------------
   \ Description
 
-  \ String words and tools.
+  \ Misc words related to strings.
 
   \ -----------------------------------------------------------
   \ Author
@@ -22,9 +22,25 @@
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( s= )
+  \ -----------------------------------------------------------
+  \ Latest changes
 
-: s=  ( ca1 len1 ca2 len2 -- f )  compare 0=  ;
+  \ 2016-04-22: Add `s""`, moved from the kernel.
+  \ 2016-04-24: Add `need pick`, because `pick` has been moved
+  \ from the kernel to the library.
+  \ 2016-04-27: Add `char-in-string?` and `char-position?`.
+  \ 2016-05-05: Rename `s=` to `str=`. Add `str<` and `str>`.
+
+( str= str< str> )
+
+[unneeded] str=
+?\ : str=  ( ca1 len1 ca2 len2 -- f )  compare 0=  ;  exit
+
+[unneeded] str<
+?\ : str<  ( ca1 len1 ca2 len2 -- f )  compare 0<  ;  exit
+
+[unneeded] str>
+?\ : str>  ( ca1 len1 ca2 len2 -- f )  compare 0>  ;  exit
 
 ( sconstant )
 
@@ -64,6 +80,8 @@
   \ Credit:
   \
   \ Code adapted from Afera.
+
+need pick
 
 [defined] lengths
 ?\ : lengths   2over nip over  ;
@@ -154,7 +172,7 @@ need under+
 
 ( prefix? suffix? )
 
-need s=  need [if]
+need str=  need [if]
 
   \ Credit:
   \
@@ -162,7 +180,9 @@ need s=  need [if]
   \ string-prefix-question.fs).
 
 [needed] prefix? [if]
-: prefix?  ( ca1 len1 ca2 len2 -- f ) tuck 2>r min 2r> s=  ;
+
+: prefix?  ( ca1 len1 ca2 len2 -- f ) tuck 2>r min 2r> str=  ;
+
 [then]
 
   \ Credit:
@@ -170,9 +190,13 @@ need s=  need [if]
   \ Code from Galope (module string-suffix-question.fs).
 
 [needed] suffix? [if]
-: suffix? ( ca1 len1 ca2 len2 -- wf )
+
+need pick
+
+: suffix? ( ca1 len1 ca2 len2 -- f )
   \ Is string _ca2 len2_ the end of string _ca1 len1_?
-  2swap dup 3 pick - /string s=  ;
+  2swap dup 3 pick - /string str=  ;
+
 [then]
 
 ( -prefix )
@@ -235,4 +259,112 @@ need suffix?
   \ a counted string and return its new address _ca2_.
 
   \ }doc
+
+( string/ )
+
+code string/  ( ca1 len1 len2 -- ca2 len2 )
+    \                           ;   T  B
+    \                           ;  -- --
+  D9 c,  C1 c,  D1 c,  E1 c,
+    \ exx          ; save IP    ;  04 01
+    \ pop bc       ; len2       ;  10 01
+    \ pop de       ; len1       ;  10 01
+    \ pop hl       ; ca1        ;  10 01
+  19 c,  A7 c,  ED c, 42 c,
+    \ add hl,de                 ;  11 01
+    \ and a        ; cy=0       ;  04 01
+    \ sbc hl,bc    ; hl=ca2     ;  15 02
+  E5 c,  C5 c,
+    \ push hl                   ;  11 01
+    \ push bc                   ;  11 01
+  D9 c,  jpnext
+    \ exx          ; restore IP ;  04 01
+    \ jp (ix)                   ;  08 02
+    \                           ;  -- --
+    \                           ;  98 13 Total
+  end-code
+
+  \ doc{
+  \
+  \ string/  ( ca1 len1 len2 -- ca2 len2 )
+  \
+  \ Return the _len2_ ending characters of string _ca1 len1_.
+  \
+  \ }doc
+
+exit
+
+  \ Slower version, 1 byte shorter
+  \
+  \ Credit: code from Galope.
+
+: string/  ( ca1 len1 len2 -- ca2 len2 )
+  >r + r@ - r>  ;
+  \ Return the _len2_ ending characters of string _ca1 len1_.
+
+( s"" )
+
+: s""  ( -- ca len )  0 allocate-string 0  ;
+
+  \ doc{
+  \
+  \ s""  ( -- ca len )
+  \
+  \ Return an empty string in the circular string buffer.
+  \
+  \ }doc
+
+( char-in-string? char-position? )
+
+need -rot  need [if]
+
+[needed] char-in-string? [if]
+
+: char-in-string? ( ca len c -- f )
+  -rot bounds
+  ?do  dup i c@ = if  drop true unloop exit  then  loop
+  drop false  ;
+
+  \ doc{
+  \
+  \ char-in-string? ( ca len c -- f )
+  \
+  \ Is char _c_ in string _ca len_?
+  \
+  \ }doc
+
+[then]
+
+[needed] char-position? [if]
+
+: char-position?  ( ca len c -- +n true | false )
+  -rot 0 ?do
+    2dup i + c@ = if  2drop i true unloop exit  then
+  loop  2drop false  ;
+
+  \ doc{
+  \
+  \ char-position?  ( ca len c -- +n true | false )
+  \
+  \ If char _c_ is in string _ca len_, return its first
+  \ position _+n_ and _true_; else return _false_.
+  \
+  \ }doc
+
+[then]
+
+( ruler )
+
+: ruler  ( c len -- ca len )
+  dup allocate-string swap 2dup 2>r rot fill 2r>  ;
+
+  \ doc{
+  \
+  \ ruler  ( c len -- ca len )
+  \
+  \ Return a string _ca len_ of characters _c_.
+  \
+  \ }doc
+
+  \ vim: filetype=soloforth
 

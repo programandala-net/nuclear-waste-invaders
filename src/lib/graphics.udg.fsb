@@ -1,0 +1,186 @@
+  \ graphics.udg.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201604231622
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Words to define User Defined Graphics.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2016-04-23: Add `0udg:`. Factor `0udg!` from `udg!`.
+  \ Improve the documentation.
+  \
+  \ 2016-04-24: Add `udg[` and `0udg[`.
+
+( 0udg! udg! 0udg: udg: )
+
+need os-udg
+
+: 0udg!  ( b0..b7 n -- )
+  8 * os-udg @ + dup 7 + do  i c!  -1 +loop  ;
+
+  \ doc{
+  \
+  \ udg!  ( b0..b7 n -- )
+  \
+  \ Store the given 8 bytes into UDG number _n_ (0..127).
+  \
+  \ - b0 = first (top) scan
+  \ - b7 = last (bottom) scan
+  \
+  \ }doc
+
+: udg!  ( b0..b7 c -- )  128 - 0udg!  ;
+
+  \ doc{
+  \
+  \ udg!  ( b0..b7 c -- )
+  \
+  \ Store the given 8 bytes into UDG char _c_ (128..255).
+  \
+  \ - b0 = first (top) scan
+  \ - b7 = last (bottom) scan
+  \
+  \ }doc
+
+: udg:  ( b0..b7 c "name" -- )  dup constant  udg!  ;
+
+  \ doc{
+  \
+  \ udg:  ( b0..b7 c "name" -- )
+  \
+  \ Create a constant "name" for UDG char _c_ (128..255) and
+  \ store the given 8 bytes into that UDG char.
+
+  \ - b0 = first (top) scan
+  \ - b7 = last (bottom) scan
+  \
+  \ }doc
+
+: 0udg:  ( b0..b7 n "name" -- )  dup constant 0udg!  ;
+
+  \ doc{
+  \
+  \ 0udg:  ( b0..b7 n "name" -- )
+  \
+  \ Create a constant "name" for UDG number _n_ (0..127) and
+  \ store the given 8 bytes into UDG char _128+n_.
+
+  \ - b0 = first (top) scan
+  \ - b7 = last (bottom) scan
+  \
+  \ }doc
+
+( 0udg[ udg[ )
+
+need os-udg
+
+variable first-udg
+variable current-udg
+variable current-scan
+
+[defined] binary ?\  : binary  ( -- )  2 base !  ;
+
+: 0udg[  ( b -- )
+  dup first-udg !  current-udg !  current-scan off  binary  ;
+
+  \ doc{
+  \
+  \ 0udg[  ( b -- )
+  \
+  \ Start a set of UDG definitions, from UDG number _b_
+  \ (0..255).
+  \
+  \ See: `udg[`, `|`, `||`, `||]`.
+  \
+  \ }doc
+
+: udg[  ( c -- )  128 - 0udg[  ;
+
+  \ doc{
+  \
+  \ udg[  ( c -- )
+  \
+  \ Start a set of UDG definitions, from UDG character _c_
+  \ (128..255).
+  \
+  \ See: `0udg[`, `|`, `||`, `||]`.
+  \
+  \ Usage example:
+  \
+  \ ----
+  \ 140 udg[  \ define UDG 140..144
+  \
+  \ 00111100 | 00111100 | 00111100 | 00111100 | 00111100 ||
+  \ 01111110 | 01111110 | 01111110 | 01111110 | 01011110 ||
+  \ 11111111 | 11111111 | 11111111 | 10111111 | 10111111 ||
+  \ 11111111 | 11111111 | 10111111 | 10111111 | 11111111 ||
+  \ 11111111 | 10111111 | 10111111 | 11111111 | 11111111 ||
+  \ 11001111 | 11011111 | 11111111 | 11111111 | 11111111 ||
+  \ 01111110 | 01111110 | 01111110 | 01111110 | 01111110 ||
+  \ 00111100 | 00111100 | 00111100 | 00111100 | 00111100 ||]
+  \ ----
+  \
+  \ }doc
+
+: |  ( b -- )
+  os-udg @ current-udg @ 8 * current-scan @ + + c!
+  1 current-udg +!  ;
+
+  \ doc{
+  \
+  \ |  ( b -- )
+  \
+  \ Store scan _b_ into the current UDG being defined.
+  \
+  \ See: `0udg[`, `udg[`, `||`, `||]`.
+  \
+  \ }doc
+
+: || ( b -- )
+  |  1 current-scan +!  first-udg @ current-udg !  ;
+
+  \ doc{
+  \
+  \ || ( b -- )
+  \
+  \ Store scan _b_ into the current UDG being defined and start
+  \ a new row of scans.
+  \
+  \ See: `0udg[`, `udg[`, `|`, `||]`.
+  \
+  \ }doc
+
+
+: ||]  ( b -- )  ||  decimal  ;
+
+  \ doc{
+  \
+  \ ||]  ( b -- )
+  \
+  \ Store scan _b_ into the current UDG being defined and stop
+  \ defining UDGs.
+  \
+  \ See: `0udg[`, `udg[`, `|`, `||`.
+  \
+  \ }doc
+
+  \ vim: filetype=soloforth

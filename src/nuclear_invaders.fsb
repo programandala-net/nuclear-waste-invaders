@@ -1,3 +1,8 @@
+  \ nuclear_invaders.fsb
+  \
+  \ This file is part of Nuclear Invaders
+  \ http://programandala.net/en.program.nuclear_invaders.html
+
 ( nuclear-invaders )
 
   \ XXX UNDER DEVELOPMENT
@@ -39,7 +44,8 @@ need os-chars  need os-udg  need 2/           need abort"
 need value     need case    need random       need columns
 need rows      need ocr     need ms           need s+
 need 2value    need row     need char>string  need s\"
-need alias     need plot    need adraw
+need alias     need plot    need adraw        need inverse
+need overprint need column
 
 4 constant /kk
 need kk-ports  need kk-1#   need pressed?     need kk-chars
@@ -58,8 +64,10 @@ defer (debug-point)  ' noop ' (debug-point) defer!
 
 : debug-point  ( -- )
   (debug-point)
-  \ latest .name
-  depth abort" Stack is not empty"
+  depth if
+    cr ." Latest word: " latest .name
+    cr .s  #-258 throw \ stack imbalance
+  then
   \ ." blk " blk @ .
   \ key drop
   ;
@@ -78,7 +86,6 @@ defer (debug-point)  ' noop ' (debug-point) defer!
 22528 constant attributes  768 constant /attributes
   \ Address and size of the screen attributes.
   \ XXX TODO -- not used yet
-
 
      2 constant arena-top-y
     21 constant tank-y
@@ -129,7 +136,8 @@ tank-y constant arena-bottom-y
             magenta color ufo-color
 
 : init-colors  ( -- )
-  0 paper 7 ink 0 flash 0 bright 0 inverse 1 border  ;
+  0 paper 7 ink 0 flash 0 bright
+  0 overprint 0 inverse 1 border  ;
   \ XXX TMP --
 
 -->
@@ -423,7 +431,6 @@ variable latest-sprite-udg
   0 ?do  dup c, 1+  loop  drop  r> 2constant  ;
   \ Create a definition "name" that will return a string
   \ containing all UDGs of the lastest sprite defined.
-  \ XXX TODO --
 
 -->
 
@@ -795,6 +802,7 @@ decimal  -->
 ( broken-top-brick ) debug-point
 
   \ This UDG is used with reversed colors, depending on
+  \ the side of the building.
 
 binary
 
@@ -812,6 +820,9 @@ binary
 decimal  -->
 
 ( broken-bottom-brick ) debug-point
+
+  \ This UDG is used with reversed colors, depending on
+  \ the side of the building.
 
 binary
 
@@ -1543,7 +1554,7 @@ columns udg/tank - 1- constant tank-max-x
 : level-message  ( -- ca len )
   text-color s" LEVEL " level @ s>d <# # #> s+  ;
 
-: show-level  ( -- ) level-message message  ;
+: show-level  ( -- )  level-message message  ;
 
 : init-combat  ( -- )
   catastrophe off init-invaders init-ufo init-tank init-arena
@@ -1665,7 +1676,6 @@ red papery c,  here  red c,  constant broken-brick-colors
   broken-container? dup if    broken-container
                         then  catastrophe !  ;
   \ Manage the possible damages caused by the current invader.
-  \ XXX TODO -- change the graphic of the container
 
 : flying-invader  ( -- )
   invader-x-inc@ dup 0>  \ flying to the right?
@@ -2092,6 +2102,14 @@ init-level
   \ - Fix the status bar.
   \ - Modify the printing of lifes.
   \ - Fix the count of controls.
+  \
+  \ 2016-03-30:
+  \
+  \ - Make the status bar ruler instantaneous.
+  \
+  \ 2016-05-07:
+  \
+  \ - Update to the changes in Solo Forth.
   \
   \ XXX REMARK -- commited here
 

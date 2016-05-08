@@ -1,4 +1,4 @@
-  \ debugging.tilde-tilde.fsb
+  \ tool.debug.tilde-tilde.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
@@ -69,3 +69,4 @@ defer ~~save  ( -- )  defer ~~restore  ( -- )
   \ Compile debugging code.
   \ This word was inspired by Gforth's `~~`.
 
+  \ vim: filetype=soloforth

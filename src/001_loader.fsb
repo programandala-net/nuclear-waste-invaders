@@ -1,7 +1,15 @@
+  \ 001_loader.fsb
+  \
+  \ This file is part of Nuclear Invaders
+  \ http://programandala.net/en.program.nuclear_invaders.html
+
 ( Nuclear Invaders -- load block  )
 
 2 load
-  \ Compile the `need` utility, which must be on block 2.
+  \ Compile the `need` utility, which must be in block 2.
+
+need locate
+  \ We need the word `locate`
 
 locate nuclear-invaders
   \ Find the block of the game, which must be after the library

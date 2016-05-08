@@ -1,0 +1,101 @@
+  \ data.misc.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201605020054
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Misc words related to data structures.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ Latest changes
+
+  \ 2015-11-15: Add `link@` and `link,`.
+  \ 2016-04-28: Rename `set` to `storer` and improve it. Add
+  \ `cstorer`.
+  \ 2016-05-02: Join two blocks to save space.
+
+( buffer: cvariable enum link@ link, )
+
+[unneeded] buffer:
+?\ : buffer:  ( u "name" -- )  create allot  ;  exit
+
+[unneeded] cvariable
+?\ : cvariable  ( "name"  -- )  create 1 allot  ;  exit
+
+[unneeded] enum
+?\ : enum  (  n "name" -- n+1 )  dup constant 1+  ;  exit
+
+[unneeded] link@  [unneeded] link, and ?exit
+
+  \ Credit:
+  \
+  \ Code of `link@` and `link,` written after the description
+  \ by Rick VanNorman, published on Forth Dimensions (volume
+  \ 20, number 3, pages 19-22, 1998-09).
+
+defer link@  ( node1 -- node2 )  ' @ ' link@ defer!
+  \ Fetch the linked list node _node_ is pointing to.
+
+: link,  ( node -- )  here over @ , swap !  ;
+  \ Create a new linked list node, pointing to _node_.
+
+( storer cstorer )
+
+need [if]
+
+[needed] storer [if]
+
+: storer  ( x a "name" -- )
+  create  2,  does>   ( -- ) ( pfa )  2@ !  ;
+
+  \ doc{
+  \
+  \ storer  ( x a "name" -- )
+  \
+  \ Define a word "name" which, when executed, will  cause  the
+  \ value _x_  to be stored at _a_.
+  \
+  \ Origin: word `set` found in Forth-79 (Reference Word Set)
+  \ and Forth-83 (Appendix B.  Uncontrolled Reference Words).
+  \
+  \ }doc
+
+[then]
+
+[needed] cstorer [if]
+
+: cstorer  ( c ca "name" -- )
+  create  2,  does>   ( -- ) ( pfa )  2@ c!  ;
+
+  \ doc{
+  \
+  \ cstorer  ( c ca "name" -- )
+  \
+  \ Define a word "name" which, when executed, will  cause _c_
+  \ to be stored at _ca_.
+  \
+  \ Origin: variant of the word `set` found in Forth-79
+  \ (Reference Word Set) and Forth-83 (Appendix B.
+  \ Uncontrolled Reference Words).
+  \
+  \ }doc
+
+[then]
+
+  \ vim: filetype=soloforth

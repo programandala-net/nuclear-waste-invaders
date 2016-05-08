@@ -1,0 +1,80 @@
+  \ memory.bank.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201604241652
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ Words related to memory banks.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2016-04-17: Moved `!s` and `!cs` from the kernel.
+  \
+  \ 2016-04-24: Moved `get-default-bank` and `set-default-bank`
+  \ from the kernel.
+
+( !s c!s )
+
+: !s  ( x a -- )  system-bank ! default-bank  ;
+
+  \ doc{
+  \
+  \ !s  ( x a -- )
+  \
+  \ Store _x_ into address _a_ of the system bank.
+  \
+  \ }doc
+
+: c!s  ( c ca -- )  system-bank c! default-bank  ;
+
+  \ doc{
+  \
+  \ c!s  ( c ca -- )
+  \
+  \ Store _c_ into address _ca_ of the system bank.
+  \
+  \ }doc
+
+( get-default-bank set-default-bank )
+
+
+: get-default-bank  ( -- +n )  default-bank# c@  ;
+
+  \ doc{
+  \
+  \ get-default-bank  ( -- +n )
+  \
+  \ Get the current default bank _+n_ (0..7) paged in at
+  \ $C000..$FFFF.
+  \
+  \ }doc
+
+: set-default-bank  ( +n -- )  default-bank# c!  ;
+
+  \ doc{
+  \
+  \ set-default-bank  ( +n -- )
+  \
+  \ Set _+n_ (0..7) as the default memory bank paged in at
+  \ $C000..$FFFF.
+  \
+  \ }doc
+
+  \ vim: filetype=soloforth
