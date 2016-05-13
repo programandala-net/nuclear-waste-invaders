@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201605071836
+  \ Last modified: 201605080207
 
   \ -----------------------------------------------------------
   \ Description
@@ -75,6 +75,9 @@
   \
   \ 2016-05-07: Improve documentation. Fix the word shown when
   \ `?locate` throws an error.
+  \
+  \ 2016-05-10: Fix a harmless bug: `locate-reneed` called the
+  \ deferred `reneeded` instead of `locate-reneeded`.
 
 ( contains delimited located ?located )
 
@@ -188,7 +191,7 @@ defer reneed  ( "name" -- )
   \ }doc
 
 : locate-reneed  ( "name" -- )
-  parse-name save-string reneeded  ;
+  parse-name save-string locate-reneeded  ;
 
   \ doc{
   \
@@ -224,7 +227,7 @@ defer reneed  ( "name" -- )
   \ doc{
   \
   \ [unneeded]  ( "name" -- f )
-  \ 
+  \
   \ Parse "name".  If there's no unresolved `need`, `needed`,
   \ `reneed` or `reneeded`, return false.  Otherwise, if "name"
   \ is the needed word specified by the last execution of
@@ -238,7 +241,7 @@ defer reneed  ( "name" -- )
   \ doc{
   \
   \ new-needed-word  ( ca1 len -- ca2 len' )
-  \ 
+  \
   \ Remove trailing and leading spaces from the word _ca1 len_,
   \ which is the parameter of the latest `need` `needed`,
   \ `reneed` or `reneeded`, store it in the circular string
@@ -268,7 +271,6 @@ defer needed  ( ca len -- )
   \ }doc
 
 : locate-needed  ( ca len -- )
-  \ cr ." need " 2dup type  \ XXX INFORMER
   needed-word 2@ 2>r  new-needed-word  2dup undefined?
   if  locate-reneeded  else  2drop  then  2r> needed-word 2!  ;
 
@@ -402,7 +404,7 @@ blk @ 1+ dup default-first-locatable !  first-locatable !
   parse-name
   needed-word 2@ 2>r  new-needed-word  2dup undefined?
   if  blk @ load  else  2drop  then  2r> needed-word 2!  ;
-    
+
   \ doc{
   \
   \ need-here  ( "name" -- )

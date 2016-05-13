@@ -8,20 +8,10 @@
 2 load
   \ Compile the `need` utility, which must be in block 2.
 
-need locate
-  \ We need the word `locate`
+need load-section
 
-locate nuclear-invaders
-  \ Find the block of the game, which must be after the library
-  \ blocks.
+load-section nuclear-invaders
 
-dup 1- last-locatable !
-  \ Do not look for needed words beyond the source of the game.
-  \ This makes things faster when a needed word is not found:
-  \ `need` does not waste time searching the rest of the
-  \ blocks.
-
-load
   \ Compile the game.
 
   \ vim: filetype=soloforth

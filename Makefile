@@ -25,9 +25,10 @@
 ################################################################
 # Notes
 
-# $? list of dependencies changed more recently than current target
+# $^ list of all prerequisites
+# $? list of prerequisites changed more recently than current target
+# $< name of first prerequisite
 # $@ name of current target
-# $< name of current dependency
 
 ################################################################
 # Config
@@ -49,25 +50,29 @@ clean:
 	rm -f tmp/*
 	rm -f disk_2_nuclear_invaders.mgt
 
-
-main_source_file=src/nuclear_invaders.fsb
 secondary_source_files=$(sort $(wildcard src/00*.fsb))
 library_source_files=$(sort $(wildcard src/lib/*.fsb))
 
-source_files = \
-	$(main_source_file)\ $(secondary_source_files)\ $(library_source_files)
+tmp/nuclear_invaders.fb: src/nuclear_invaders.fs
+	./bin/fs2fb-section.sh $<
+	mv $(basename $<).fb $@
 
-tmp/disk_2_nuclear_invaders.fsb: \
+tmp/library.fsb: \
 	$(secondary_source_files) \
-	$(library_source_files) \
-	$(main_source_file)
-	cat \
-		$(secondary_source_files) \
-		$(library_source_files) \
-		$(main_source_file) \
-		> tmp/disk_2_nuclear_invaders.fsb
+	$(library_source_files)
+	cat $^ > $@
 
-disk_2_nuclear_invaders.mgt: tmp/disk_2_nuclear_invaders.fsb
-	fsb2-mgt tmp/disk_2_nuclear_invaders.fsb ;\
+tmp/library.fb: tmp/library.fsb
+	fsb2 $<
+	mv $<.fb $@
+
+tmp/disk_2_nuclear_invaders.fb: \
+	tmp/library.fb \
+	tmp/nuclear_invaders.fb
+	cat $^ > $@
+
+disk_2_nuclear_invaders.mgt: tmp/disk_2_nuclear_invaders.fb
+	cp $< $<.copy
+	bin/fb2mgt.sh tmp/disk_2_nuclear_invaders.fb
 	mv tmp/disk_2_nuclear_invaders.mgt .
-
+	mv $<.copy $<
