@@ -7,7 +7,7 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.0.0+201605131201
+\ Version 0.1.0+201605132246
 
 \ Description
 
@@ -63,17 +63,16 @@ defer (debug-point)  ' noop ' (debug-point) defer!
 
 : debug-point  ( -- )
   (debug-point)
+  cr ." block: " blk ?  ." latest word: " latest .name
   depth if
-    cr ." Latest word: " latest .name
+    \ cr ." Latest word: " latest .name
     cr .s  #-258 throw \ stack imbalance
   then
-  \ ." blk " blk @ .
   \ key drop
   ;
   \ Abort if the stack is not empty.
   \ XXX TMP -- for debugging
 
-debug-point
 
   \ ===========================================================
   \ Constants
@@ -97,8 +96,6 @@ tank-y constant arena-bottom-y
   \ ===========================================================
   \ Color
 
-debug-point
-
 0 constant black    1 constant blue   2 constant red
 3 constant magenta  4 constant green  5 constant cyan
 6 constant yellow   7 constant white
@@ -106,8 +103,6 @@ debug-point
 : papery   ( color -- paper-attribute )           8 *  ;
 : brighty  ( attribute -- brighty-attribute )   64 or  ;
 : flashy   ( attribute -- flashy-attribute )   128 or  ;
-
-debug-point
 
   \ XXX TODO -- move to the library of Solo Forth.
 
@@ -119,8 +114,6 @@ debug-point
   create c,  does> ( -- )  ( pfa ) c@ set-color  ;
   \ Create a word "name" that will set attribute _b_ as the
   \ current color.
-
-debug-point
 
               white color text-color
               black color arena-color
@@ -140,8 +133,6 @@ debug-point
   \ ===========================================================
   \ Variables
 
-debug-point
-
 variable tank-x        \ column
 variable projectile-x  \ column
 variable projectile-y  \ row, 0 if no shoot
@@ -159,8 +150,6 @@ record off
   \ ===========================================================
   \ Keyboard
 
-debug-point
-
 13 constant enter-key
 
 0 value kk-left#    0 value kk-right#    0 value kk-fire#
@@ -177,16 +166,6 @@ debug-point
 
 : kk#>c  ( n -- c )  kk-chars + c@  ;
   \ Convert key number _n_ to its char _c_.
-
-  \ : .kk#  ( n -- )
-  \   case  kk-en# of  ." Enter"         endof
-  \         kk-sp# of  ." Space"         endof
-  \   \      kk-cs# of  ." Caps Shift"    endof  \ XXX OLD
-  \   \      kk-ss# of  ." Symbol Shift"  endof  \ XXX OLD
-  \         dup kk#>c upper emit  \ default
-  \   endcase  ;
-  \ Print the name of key number _n_.
-  \ XXX OLD
 
 : kk#>string  ( n -- ca len )
   case  kk-en# of  s" Enter"         endof
@@ -226,11 +205,13 @@ max-controls 1- constant last-control
 : #>kk  ( n -- d )  /kk * kk-ports + kk@  ;
   \ Convert keyboard key number _n_ to its data _d_ (bitmap and
   \ port).
+  \ XXX TODO -- move to Solo Forth
 
 : set-controls  ( n -- )
   >controls     dup c@  dup to kk-left#   #>kk 2to kk-left
              1+ dup c@  dup to kk-right#  #>kk 2to kk-right
-             1+     c@  dup to kk-fire#   #>kk 2to kk-fire  ;
+             1+     c@  dup to kk-fire#   #>kk 2to kk-fire
+             ;
   \ Make controls number _n_ (item of the `controls` table) the
   \ current controls.
 
@@ -246,16 +227,12 @@ current-controls @ set-controls
   dup current-controls !  set-controls  ;
   \ Change the current controls.
 
-debug-point
-
 : beep  ( n1 n2 -- )  beep>bleep bleep  ;
   \ XXX TMP -- compatibility layer for the original code
   \ XXX TODO -- adapt the original beeps
 
   \ ===========================================================
   \ UDG
-
-debug-point
 
         $80 constant first-udg  \ first UDG code in Solo Forth
         $FF constant last-udg   \ last UDG code in Solo Forth
@@ -289,9 +266,8 @@ variable used-udgs  used-udgs off
   \ This is a check done during the interpretation of the
   \ source file.
 
+  \ ===========================================================
   \ Font
-
-debug-point
 
 : font!  ( a -- )  os-chars !  ;
   \ Set the current charset to address _a_
@@ -354,8 +330,6 @@ warnings !
 
   \ ===========================================================
   \ Score
-
-debug-point
 
  1 constant score-y
 14 constant record-x
@@ -454,8 +428,6 @@ variable latest-sprite-udg
   2 free-udg dup constant (2x1sprite!)  ;
 
 : .2x1sprite  ( c -- )  dup emit 1+ emit  ;
-
-debug-point
 
 2 constant udg/invader
 
@@ -861,10 +833,10 @@ sprite-string left-arrow$  ( -- ca len )
 2x1sprite fire-button
 sprite-string fire-button$  ( -- ca len )
 
+decimal
+
   \ ===========================================================
   \ Type
-
-debug-point
 
 : centered  ( len -- column )  columns swap - 2/  ;
   \ Convert a string length to the column required
@@ -892,8 +864,6 @@ debug-point
 
   \ ===========================================================
   \ Instructions
-
-debug-point
 
 : title  ( -- )  s" NUCLEAR INVADERS" 0 center-type  ;
 
@@ -1028,12 +998,8 @@ need pixel-addr
 : game-screen  ( -- )  init-colors cls score-bar status-bar  ;
   \ Draw the game screen.
 
-  \ ( udg/invader invaders-min-x invaders-max-x ) debug-point
-
                     0 constant invaders-min-x
 columns udg/invader - constant invaders-max-x
-
-  \ ( invaders-data ) debug-point
 
   \ Invaders data is stored in a table.
   \ which has the following structure:
@@ -1074,8 +1040,6 @@ here swap - constant /invaders-data
 
   \ XXX TODO -- convert tables to standard structures
 
-  \ ( invaders-data ) debug-point
-
 create invaders-data  /invaders-data allot
   \ Current invaders data.
 
@@ -1102,8 +1066,6 @@ create invaders-data  /invaders-data allot
 : invader-default-x@    ( -- x y )
   'default-invader [ 3 cells ] literal + @  ;
 
-  \ ( set-building-size ) debug-point
-
  4 constant building-top-y
 15 constant building-bottom-y
 
@@ -1122,8 +1084,6 @@ variable containers-left-x   variable containers-right-x
        1+ + building-right-x !  ;
   \ Set the size of the building after the current level.
 
-  \ ( increase-level update-level init-level ) debug-point
-
 5 constant max-level
 
 : increase-level  ( -- )  level @ 1+ max-level min level !  ;
@@ -1135,7 +1095,8 @@ variable containers-left-x   variable containers-right-x
   \ Init the level number and the related variables
   \ (the size of the bulding).
 
-  \ ( building ) debug-point
+  \ ==========================================================
+  \ Building
 
 : floor  ( y -- )
   building-left-x @ swap at-xy
@@ -1167,8 +1128,6 @@ variable containers-left-x   variable containers-right-x
   0 ?do  container-top .2x1sprite  loop  ;
   \ Draw a row of _n_ top parts of containers.
 
-  \ ( building ) debug-point
-
 : .brick  ( -- )  brick-color brick .1x1sprite  ;
   \ Draw a brick.
 
@@ -1182,9 +1141,7 @@ variable containers-left-x   variable containers-right-x
   -2 +loop  2drop  building-top  ;
   \ Draw the building and the nuclear containers.
 
-  \ ( drive ) debug-point
-
-  \ XXX TODO -- try
+  \ ( drive )   \ XXX TODO -- try
 
                     1 constant tank-min-x
 columns udg/tank - 1- constant tank-max-x
@@ -1227,9 +1184,7 @@ columns udg/tank - 1- constant tank-max-x
   \ XXX FIXME -- spaces depend on the direction,
   \ thus this can't work in x range 0..31.
 
-  \ ( drive ) debug-point
-
-  \ XXX TODO -- try
+  \ ( drive )   \ XXX TODO -- try
 
 : at-tank  ( -- )  tank-x @ tank-y at-xy  ;
 : tank-ready  ( -- )  at-tank .tank  ;
@@ -1244,7 +1199,8 @@ columns udg/tank - 1- constant tank-max-x
   moving-tank? ?dup 0= ?exit  -tank move-tank .tank  ;
   \ XXX FIXME -- don't delete the whole tank
 
-  \ ( init ) debug-point
+  \ ==========================================================
+  \ Init
 
 : init-game  ( -- )
   init-ocr  3 lifes !  init-level  score off  game-screen  ;
@@ -1269,8 +1225,6 @@ columns udg/tank - 1- constant tank-max-x
   columns udg/tank - 2/ tank-x !  \ middle of the screen
   projectile-y off  ;
 
-  \ ( init ) debug-point
-
 : parade  ( -- )
   invader-color
   invader-1 dup invader-2 dup invader-3
@@ -1292,7 +1246,8 @@ columns udg/tank - 1- constant tank-max-x
   catastrophe off init-invaders init-ufo init-tank init-arena
   show-level show-player  ;
 
-  \ ( invasion ) debug-point
+  \ ==========================================================
+  \ Invasion
 
 : at-invader  ( -- )  invader-xy@ at-xy  ;
   \ Set the cursor position at the coordinates of the invader.
@@ -1408,8 +1363,6 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Note: `text-color` is needed because the paper color
   \ may have changed.
 
-  \ ( invasion ) debug-point
-
 : activate-invader  ( -- )
   32 random  26 invaders @ 5 < 16 * -  > invader-active !  ;
   \ Activate the current invader, depending on a random
@@ -1441,7 +1394,8 @@ variable delay  50 delay !  \ ms
   \ Move the current invader, if there are units left of it,
   \ and then choose the next one.
 
-  \ ( ufo ) debug-point
+  \ ==========================================================
+  \ UFO
 
  3 constant ufo-y       \ row
 27 constant ufo-max-x   \ column
@@ -1472,8 +1426,6 @@ variable delay  50 delay !  \ ms
   ufo-invisible? if  1 ufo-x +!  else  (move-ufo)  then  ;
   \ Manage the UFO, if it's visible.
 
-  \ ( ufo-impacted ) debug-point
-
 : ufo-bang  ( -- )  18 12 do  i 15 beep  loop  ;
   \ XXX TODO -- explosion sound
 
@@ -1490,8 +1442,6 @@ variable delay  50 delay !  \ ms
   \ Update the score with the UFO bonus.
 
 : ufo-impacted  ( -- )  ufo-explosion ufo-bonus 200 ms -ufo  ;
-
-  \ ( invader-impacted ) debug-point
 
 : invader-points  ( -- n )
   projectile-y @ 3 - 2/          \ depending on the row
@@ -1516,8 +1466,6 @@ variable delay  50 delay !  \ ms
 
 : invader-explosion  ( -- )
   invader-on-fire invader-bang -invader  ;
-
-  \ ( invader-impacted ) debug-point
 
 : impacted-invader  ( -- n )
   projectile-y @ [ building-top-y 1+ ] literal - 2/
@@ -1547,8 +1495,6 @@ variable delay  50 delay !  \ ms
   \ A invader has been impacted by the projectile.
   \ Calculate its type, set it the current one and manage it.
 
-  \ ( impact ) debug-point
-
 : (impact)  ( -- )
   projectile-y @ ufo-y = if  ufo-impacted exit  then
   invader-impacted  ;
@@ -1569,7 +1515,8 @@ variable delay  50 delay !  \ ms
   \ Did the projectil impacted?
   \ If so, do manage the impact.
 
-  \ ( shoot ) debug-point
+  \ ==========================================================
+  \ Shoot
 
 : at-projectile  ( -- )  projectile-xy at-xy  ;
   \ Set the cursor position at the coordinates of the
@@ -1596,8 +1543,6 @@ variable delay  50 delay !  \ ms
   projectile-y @ building-top-y <  ;
   \ Is the projectile lost?
 
-  \ ( shoot ) debug-point
-
 : shooted  ( -- )
   -projectile  projectile-lost? if  projectile-y off exit  then
   -1 projectile-y +! impact? ?exit
@@ -1614,8 +1559,6 @@ variable delay  50 delay !  \ ms
   shooted? if  shooted exit  then  fire? if  fire  then  ;
   \ Manage the shoot.
 
-  \ ( new-record? new-record check-record ) debug-point
-
 : new-record?   ( -- f )  score @ record @ >  ;
   \ Is there a new record?
 
@@ -1625,7 +1568,8 @@ variable delay  50 delay !  \ ms
 : check-record  ( -- )  new-record? if  new-record  then  ;
   \ Check if there's a new record, and set it.
 
-  \ ( alive game-over next-level ) debug-point
+  \ ==========================================================
+  \ Game over
 
 : .game-over  ( -- )  s" GAME OVER" message  ;
 
@@ -1639,8 +1583,6 @@ variable delay  50 delay !  \ ms
 : defeat-tune  ( -- )  100 200 do  i 20 beep  -5 +loop  ;
 
 : defeat  ( -- )  defeat-tune  300 ms  dead  ;
-
-  \ ( run ) debug-point
 
 : victory?  ( -- f )  invaders @ 0=  ;
 
@@ -1813,10 +1755,8 @@ end-section
   \
   \ - Update to the changes in Solo Forth.
   \
-  \ XXX REMARK -- commited here
-  \
   \ 2016-05-13:
   \
-  \ - Converted to FS format.
+  \ - Converted to plain text format, without block headers.
 
   \ vim: filetype=soloforth

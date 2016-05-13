@@ -2,3 +2,4 @@ _meta
 *.szx
 *.z80
 *.mgt
+tmp/

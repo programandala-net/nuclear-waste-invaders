@@ -21,6 +21,7 @@
 
 # 2016-03-22: First version, based on the Makefile of Solo Forth.
 # 2016-03-23: Adapted to the new splitted library of Solo Forth.
+# 2016-05-13: Modified after the new format of the main source.
 
 ################################################################
 # Notes
@@ -54,7 +55,7 @@ secondary_source_files=$(sort $(wildcard src/00*.fsb))
 library_source_files=$(sort $(wildcard src/lib/*.fsb))
 
 tmp/nuclear_invaders.fb: src/nuclear_invaders.fs
-	./bin/fs2fb-section.sh $<
+	./make/fs2fb-section.sh $<
 	mv $(basename $<).fb $@
 
 tmp/library.fsb: \
@@ -73,6 +74,6 @@ tmp/disk_2_nuclear_invaders.fb: \
 
 disk_2_nuclear_invaders.mgt: tmp/disk_2_nuclear_invaders.fb
 	cp $< $<.copy
-	bin/fb2mgt.sh tmp/disk_2_nuclear_invaders.fb
+	make/fb2mgt.sh tmp/disk_2_nuclear_invaders.fb
 	mv tmp/disk_2_nuclear_invaders.mgt .
 	mv $<.copy $<

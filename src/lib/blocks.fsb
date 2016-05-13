@@ -194,7 +194,6 @@
 
 ( .line lineblock>source lineload load-section )
 
-
 [unneeded] .line
 ?\ : .line  ( n1 n2 -- )  line>string -trailing type  ;  exit
 
@@ -265,8 +264,8 @@ variable loading-section
 
 : load-section  ( "name" -- )
   loading-section on
-  blocks @ locate ?do   loading-section @ 0= ?leave  i load
-                  loop  end-section  ; ?)
+  blocks locate ?do   loading-section @ 0= ?leave  i load
+                loop  end-section  ; ?)
 
   \ doc{
   \
