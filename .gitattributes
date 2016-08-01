@@ -1,1 +1,3 @@
+*.fs linguist-language=Forth
 *.fsb linguist-language=Forth
+*.fba linguist-language=Forth

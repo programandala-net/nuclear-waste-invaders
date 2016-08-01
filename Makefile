@@ -54,9 +54,9 @@ clean:
 secondary_source_files=$(sort $(wildcard src/00*.fsb))
 library_source_files=$(sort $(wildcard src/lib/*.fsb))
 
-tmp/nuclear_invaders.fb: src/nuclear_invaders.fs
-	./make/fs2fb-section.sh $<
-	mv $(basename $<).fb $@
+tmp/nuclear_invaders.fba: src/nuclear_invaders.fs
+	./make/fs2fba.sh $<
+	mv $(basename $<).fba $@
 
 tmp/library.fsb: \
 	$(secondary_source_files) \
@@ -69,7 +69,7 @@ tmp/library.fb: tmp/library.fsb
 
 tmp/disk_2_nuclear_invaders.fb: \
 	tmp/library.fb \
-	tmp/nuclear_invaders.fb
+	tmp/nuclear_invaders.fba
 	cat $^ > $@
 
 disk_2_nuclear_invaders.mgt: tmp/disk_2_nuclear_invaders.fb

@@ -1,0 +1,192 @@
+  \ tool.decode.fsb
+  \
+  \ This file is part of Solo Forth
+  \ http://programandala.net/en.program.solo_forth.html
+
+  \ Last modified: 201605210052
+
+  \ -----------------------------------------------------------
+  \ Description
+
+  \ The `decode` utility.
+
+  \ -----------------------------------------------------------
+  \ Author
+
+  \ Marcos Cruz (programandala.net), 2015, 2016.
+
+  \ -----------------------------------------------------------
+  \ Credit
+
+  \ This code was adapted and improved from Afera (2015), by
+  \ the same author.  The Afera version was adapted and deeply
+  \ modified from: Z80 CP/M fig-Forth 1.1g (adaptative version
+  \ by EHR), modified by Dennis L. Wilson.  The original code
+  \ was written by Robert Dudley Ackerman, published on Forth
+  \ Dimensions (volume 4, number 2, page 28, 1982-07).
+
+  \ -----------------------------------------------------------
+  \ License
+
+  \ You may do whatever you want with this work, so long as you
+  \ retain every copyright, credit and authorship notice, and
+  \ this license.  There is no warranty.
+
+  \ -----------------------------------------------------------
+  \ History
+
+  \ 2015-06-05: Copied from Afera. First changes to adapt it.
+  \
+  \ 2015-06-19: Added `?branch`.
+  \
+  \ 2015-07-23: Fix: `clit` was not included in the recognized
+  \ special cases.
+  \
+  \ 2015-08-14: Fixed a recent bug: `sp0 sp!` was used when
+  \ quitting, instead of `sp0 @ sp!`!
+  \
+  \ 2015-10-09: Fix: `slit` was missing from the special cases.
+  \
+  \ 2015-12-21: Fixed `decode-special` after the Forth-83
+  \ version of `do loop`: now the branch address is after `do`
+  \ or `?do`; also added `-branch` to it, in case it is already
+  \ defined during the compilation of `decode-special`.
+  \
+  \ 2015-12-24: Start converting from ITC to DTC.
+  \
+  \ 2016-04-15: Fixed `decode-compile`, which had not been
+  \ adapted from ITC to DTC.
+  \
+  \ 2016-04-17: Added the requisite of `recurse`, which is not
+  \ in the kernel anymore. Updated the history from the
+  \ development history of the project.
+  \
+  \ 2016-04-24: Add support for `2lit`.
+  \
+  \ 2016-04-24: Remove `[char]`, which has been moved to the
+  \ library.
+  \
+  \ 2016-05-17: Need `>body` and `body>`, which has been moved
+  \ to the library.
+  \
+  \ 2016-05-18: Improve `colon-cfa?`. Compact `decode-special`.
+  \ Fix `decode`, which showed the usage instructions before
+  \ checking the word.
+
+( decode )
+
+  \ Variables, indentation and pause control
+
+forth definitions decimal
+
+need body>name  need name>body  need case  need [if]
+need recurse  need >body  need body>
+
+variable decode-level  decode-level off \ depth of nesting
+variable decode-address  \ in the word being decoded
+
+: indent  ( -- )
+  cr decode-address @ u. decode-level @ 2* spaces  ;
+
+: indent+  ( -- )  1 decode-level +! indent  ;
+
+-->
+
+( decode )
+
+  \ Special cases
+
+: decode-branch    ( a1 -- a2 )  cell+ dup @ u.  ;
+
+: decode-literal   ( a1 -- a2 )  cell+ dup @ .  ;
+
+: decode-2literal   ( a1 -- a2 )  cell+ dup 2@ d. cell+  ;
+
+: decode-cliteral  ( a1 -- a2 )  cell+ dup c@ . 1-  ;
+
+: decode-sliteral  ( a1 -- a2 )
+  cell+ dup count type  dup c@ + 1-  ;
+
+: decode-compile   ( a1 -- a2 )  cell+ dup @ >name .name  ;
+
+-->
+
+( decode )
+
+  \ Special cases dispatcher
+
+: decode-special  ( a1 -- a1 | a2 )  dup @ case
+    ['] compile   of  decode-compile    endof
+    ['] lit       of  decode-literal    endof
+    ['] 2lit      of  decode-2literal   endof
+    ['] clit      of  decode-cliteral   endof
+    ['] slit      of  decode-sliteral   endof
+    ['] branch    of  decode-branch     endof
+    ['] 0branch   of  decode-branch     endof
+    ['] ?branch   of  decode-branch     endof
+    ['] (do)      of  decode-branch     endof
+    ['] (?do)     of  decode-branch     endof
+    ['] (.")      of  decode-sliteral   endof
+    [undefined] cslit   ?\ ['] cslit   of decode-sliteral endof
+    [undefined] -branch ?\ ['] -branch of decode-branch   endof
+  endcase  ;  -->
+
+( decode )
+
+  \ Checks of the main code
+
+: decode-end?  ( xt -- f )
+  dup  ['] exit =  swap ['] (;code) =  or  ;
+  \ Is the given xt the end of a definition?
+
+: colon-cfa?  ( cfa -- f )
+  dup c@ $CD = swap 1+ @ docolon = and  ;
+  \ Is _cfa_ a colon definition?
+  \ First, its first byte must be $CD (the Z80 call opcode);
+  \ second, its jump address must be the colon interpreter.
+
+: colon-pfa?  ( pfa -- f )  body> colon-cfa?  ;
+  \ Is _pfa_ a colon definition?
+
+-->
+
+( decode )
+
+  \ Main code
+
+  \ XXX TODO -- pause with `nuf?`
+
+: (decode)  ( pfa -- )
+
+  \ Decode the definition at the given pfa.
+
+  dup colon-pfa? if
+    dup body> decode-address ! indent
+    ." : " dup body>name .name
+    begin   ( pfa+n ) dup decode-address !
+            dup @  ( pfa+n xt ) dup decode-end? 0=
+    while  \ high level & not end of colon definition
+      \ ( pfa+n xt )
+      >body ( pfa+n pfa' ) dup indent+  body>name .name
+      key case  'q' of  sp0 @ sp! quit  endof
+                bl  of  drop            endof
+                swap recurse  \ default
+          endcase  decode-special  cell+  -1 decode-level +!
+    repeat  indent >name .name
+            \ show the last word
+  else  ." Not a colon definition."  then  drop  ;  -->
+
+( decode )
+
+  \ Interface
+
+: decode-usage  ( -- )
+     \  <------------------------------>
+  cr ." Keys: space=more, q=quit, other=deeper." cr  ;
+
+: decode  ( "name" -- )
+  defined  ( nt | 0 )  dup 0= -13 ?throw
+  decode-usage
+  name>body  decode-level off  (decode)  ;
+
+  \ vim: filetype=soloforth

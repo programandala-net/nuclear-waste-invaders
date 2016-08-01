@@ -7,7 +7,7 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.1.0+201605132246
+\ Version 0.2.0+201608011327
 
 \ Description
 
@@ -45,7 +45,12 @@ need value     need case    need random       need columns
 need rows      need ocr     need ms           need s+
 need 2value    need row     need char>string  need s\"
 need alias     need plot    need adraw        need inverse
-need overprint need column
+need overprint need column  need color        need color!
+
+need black  need blue    need red    need magenta  need green
+need cyan   need yellow  need white
+
+need papery  need brighty  need flashy
 
 4 constant /kk
 need kk-ports  need kk-1#   need pressed?     need kk-chars
@@ -94,26 +99,7 @@ tank-y constant arena-bottom-y
   \ XXX TODO --
 
   \ ===========================================================
-  \ Color
-
-0 constant black    1 constant blue   2 constant red
-3 constant magenta  4 constant green  5 constant cyan
-6 constant yellow   7 constant white
-
-: papery   ( color -- paper-attribute )           8 *  ;
-: brighty  ( attribute -- brighty-attribute )   64 or  ;
-: flashy   ( attribute -- flashy-attribute )   128 or  ;
-
-  \ XXX TODO -- move to the library of Solo Forth.
-
-: set-color  ( b -- )  23695 c!  ;
-  \ Set the attribute _b_ as the current color, by modifying
-  \ the system variable ATTR T (temporary attributes).
-
-: color  ( b "name" -- )
-  create c,  does> ( -- )  ( pfa ) c@ set-color  ;
-  \ Create a word "name" that will set attribute _b_ as the
-  \ current color.
+  \ Colors
 
               white color text-color
               black color arena-color
@@ -1281,7 +1267,7 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ because a flag (0|-1) can be used as index.
 
 : broken-wall-color  ( -- )
-  broken-brick-colors flying-to-the-right? + c@ set-color  ;
+  broken-brick-colors flying-to-the-right? + c@ color!  ;
   \ Set the color of the broken wall.  It depends on the side
   \ of the building, because the same two UDGs are used for
   \ both sides, with inverted colors.
@@ -1631,7 +1617,7 @@ variable delay  50 delay !  \ ms
 
 init-level
 
-end-section
+end-app
 
   \ ==========================================================
   \ History

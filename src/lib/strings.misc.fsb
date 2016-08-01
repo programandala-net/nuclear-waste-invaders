@@ -295,7 +295,7 @@ code string/  ( ca1 len1 len2 -- ca2 len2 )
   \
   \ }doc
 
-[unneeded] char-in-string? ?(  need -rot  
+[unneeded] char-in-string? ?(  need -rot
 
 : char-in-string? ( ca len c -- f )
   -rot bounds ?do   dup i c@ = if  drop true unloop exit  then
@@ -309,7 +309,7 @@ code string/  ( ca1 len1 len2 -- ca2 len2 )
   \
   \ }doc
 
-[unneeded] char-position? ?(  need -rot  
+[unneeded] char-position? ?(  need -rot
 
 : char-position?  ( ca len c -- +n true | false )
   -rot 0 ?do   2dup i + c@ = if  2drop i true unloop exit  then

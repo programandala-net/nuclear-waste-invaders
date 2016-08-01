@@ -12,9 +12,9 @@
   \ need decode need words need order need dump
   \ XXX TMP -- for debugging
 
-need load-section
+need load-app
 
-load-section nuclear-invaders
+load-app nuclear-invaders
 
   \ Compile the game.
 
