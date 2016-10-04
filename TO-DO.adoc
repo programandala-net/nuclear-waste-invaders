@@ -1,0 +1,8 @@
+= Nuclear Invaders To-Do
+:author: Marcos Cruz (programandala.net)
+:revdate: 2016-08-01
+
+2016-08-01:
+
+Several players, say 1..4. Simply, save their controls number and score in a
+table.

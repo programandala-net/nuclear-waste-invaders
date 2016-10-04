@@ -7,7 +7,7 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.2.0+201608011327
+\ Version 0.2.0+201608011944
 
 \ Description
 
@@ -112,8 +112,8 @@ tank-y constant arena-bottom-y
             magenta color ufo-color
 
 : init-colors  ( -- )
-  0 paper 7 ink 0 flash 0 bright
-  0 overprint 0 inverse 1 border  ;
+  black paper  white ink  black flash  0 bright
+  0 overprint  0 inverse  blue border  ;
   \ XXX TMP --
 
   \ ===========================================================
@@ -121,7 +121,7 @@ tank-y constant arena-bottom-y
 
 variable tank-x        \ column
 variable projectile-x  \ column
-variable projectile-y  \ row, 0 if no shoot
+variable projectile-y  \ row (0 if no shoot)
 variable ufo-x         \ column
 variable lifes         \ counter (0..3)
 variable level         \ counter (1..5)
@@ -286,6 +286,7 @@ variable ocr-last-udg
   \ Set ROM font for chars 0..127
   \ (in Solo Forth chars 128..255 are UDG).
   \ XXX OLD
+  \ XXX TODO -- move to Solo Forth
 
   \ ===========================================================
   \ Debug
@@ -1251,7 +1252,8 @@ columns udg/tank - 1- constant tank-max-x
 : .invader  ( -- )  invader-color invader-frame .2x1sprite  ;
   \ Print the current invader.
 
-  \ ( invasion )
+  \ ============================================================
+  \ Invasion
 
 variable broken-wall-x
   \ Column of the wall broken by the current alien.
@@ -1290,8 +1292,6 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ XXX TODO -- detect if the wall is already broken, and
   \ change the graphic accordingly.
 
-  \ ( invasion )
-
 : broken-wall  ( -- )
   broken-wall-color flying-to-the-right?
   if  broken-left-wall  else  broken-right-wall  then  ;
@@ -1303,8 +1303,6 @@ red papery c,  here  red c,  constant broken-brick-colors
   else  building-right-x
   then  @ dup broken-wall-x ! =  ;
   \ Has the current invader broken the wall of the building?
-
-  \ ( invasion )
 
 : broken-left-container  ( -- )
   invader-x @ 2+ invader-y @ at-xy
@@ -1320,8 +1318,6 @@ red papery c,  here  red c,  constant broken-brick-colors
   broken-bottom-right-container .1x1sprite  ;
   \ Broke the container on its right side.
 
-  \ ( invasion )
-
 : broken-container  ( -- )
   container-color
   flying-to-the-right?  if    broken-left-container
@@ -1333,8 +1329,6 @@ red papery c,  here  red c,  constant broken-brick-colors
   if    1+ containers-left-x
   else     containers-right-x  then  @ =  ;
   \ Has the current invader broken a container?
-
-  \ ( invasion )
 
 : damages  ( -- )
   broken-wall? if  broken-wall exit  then
@@ -1555,7 +1549,7 @@ variable delay  50 delay !  \ ms
   \ Check if there's a new record, and set it.
 
   \ ==========================================================
-  \ Game over
+  \ Main
 
 : .game-over  ( -- )  s" GAME OVER" message  ;
 
@@ -1587,9 +1581,8 @@ variable delay  50 delay !  \ ms
 
 : run  ( -- )  begin  instructions game  again  ;
 
-  \ ( Debugging tools)
-
-  \ Words for testing and debugging the game.
+  \ ============================================================
+  \ Debugging tools
 
 : .udgs  ( -- )  cr udgs 0 do  i 128 + emit  loop  ;
   \ Print all game UDGs.
@@ -1597,8 +1590,6 @@ variable delay  50 delay !  \ ms
 : ni  ( -- )      next-invader  ;
 : m   ( -- )      move-invader broken-container? home .  ;
 : in  ( -- )      init-game init-combat  ;
-
-  \ ( Debugging tools)
 
 : bc  ( -- )
   cls
@@ -1618,131 +1609,5 @@ variable delay  50 delay !  \ ms
 init-level
 
 end-app
-
-  \ ==========================================================
-  \ History
-
-  \ This is mainly a compilation of the git commit comments.
-
-  \ 2016-02-14:
-  \
-  \ Started changing the layout of the original
-  \ source code.
-  \
-  \ 2016-02-15:
-  \
-  \ - Convert the source to lowercase.
-  \ - Rename Spanish words to English.
-  \ - Rename variables using meaningful names.
-  \ - Indent the word definitions and the control structures.
-  \ - Split lines at 63 columns.
-  \ - Add block titles.
-  \
-  \ 2016-02-16:
-  \
-  \ - Convert the graphics to binary numbers.
-  \ - Implement words to define the graphics.
-  \ - Adapt the invaders' data.
-  \ - Factorize some words.
-  \ - Adapt ACE Forth's `pick`.
-  \ - Optimize some code idioms.
-  \
-  \ 2016-02-17:
-  \
-  \ - Factor the shoot manager.
-  \ - Factor the invaders' manager.
-  \ - Make the printing of containers faster.
-  \ - Improve the invaders' data manipulation.
-  \ - Convert the last `at-yx` to `at-xy`.
-  \ - Add first words to support color.
-  \ - Factor, modify and combine the presentation and
-  \   instructions screens.
-  \ - Name the main sprites.
-  \ - Improve the logic of the game round loop.
-  \ - Factor the arena screen.
-  \ - Factor the printing of lifes.
-  \
-  \ 2016-02-18:
-  \
-  \ - Fix record init.
-  \ - Fix access to invaders' data.
-  \ - Factor status bar.
-  \ - Simplify printing of lifes (number and icons).
-  \ - Simplify selecting the font.
-  \ - Fix the phase incrementer.
-  \
-  \ 2016-02-19:
-  \
-  \ - Factor the calculation of the last invader type.
-  \ - Factor the calculation of the invaders' direction.
-  \ - Factor and fix the ending condition in the combat loop.
-  \ - Fix the invaders' data.
-  \ - Fix the reading of movement keys.
-  \ - Fix and improve the phase update.
-  \ - Fix the initial position of the building and the
-  \   invaders.
-  \ - Standardize the pauses.
-  \ - Add the invaders' direction to the data table.
-  \ - Fix the movement of invaders.
-  \ - Improve access to both coordinates of current invader.
-  \
-  \ 2016-02-20:
-  \
-  \ - Improve the keyboard reading.
-  \ - Make the keyboard controls configurable.
-  \ - Fix the storage of invaders' coordinates as a double
-  \ number.
-  \ - Fix and improve the calculation of the building size.
-  \ - Fix the increasing of the level.
-  \ - Fix the printing of lifes.
-  \ - Fix the OCR init.
-  \ - Add level 1.
-  \
-  \ 2016-02-21:
-  \
-  \ - Fix the printing of score.
-  \ - Fix shooting and impacting.
-  \
-  \ 2016-02-22:
-  \
-  \ - Change the graphic codes.
-  \ - Change the layout of controls' menu.
-  \
-  \ 2016-02-23:
-  \
-  \ - Factor the explosion of invaders.
-  \ - Make the usage of UDG codes automatic.
-  \
-  \ 2016-02-24:
-  \
-  \ - Add color.
-  \ - Fix calculation of maximum number of controls.
-  \ - Add broken walls effect.
-  \ - Use 4 frames per invader instead of 2.
-  \ - Set initial position of invaders at the margins of the
-  \ screen.
-  \ - Set initial position of the tank at the center of its
-  \ row.
-  \ - Add broken container effect.
-  \ - Fix the color of the number of lifes.
-  \
-  \ 2016-03-25:
-  \
-  \ - Update to the new organization of the Solo Forth library.
-  \ - Fix the status bar.
-  \ - Modify the printing of lifes.
-  \ - Fix the count of controls.
-  \
-  \ 2016-03-30:
-  \
-  \ - Make the status bar ruler instantaneous.
-  \
-  \ 2016-05-07:
-  \
-  \ - Update to the changes in Solo Forth.
-  \
-  \ 2016-05-13:
-  \
-  \ - Converted to plain text format, without block headers.
 
   \ vim: filetype=soloforth
