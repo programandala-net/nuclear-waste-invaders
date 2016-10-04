@@ -1,5 +1,5 @@
 = Nuclear Invaders
-:revdate: 2016-02-15
+:revdate: 2016-10-04
 
 // This document is written in AsciiDoc/Asciidoctor format.
 // See: <http://asciidoctor.org>.
@@ -14,3 +14,18 @@ http://programandala.net/en.program.solo_forth.html[Solo Forth]),
 under development, of
 http://www.zonadepruebas.com/viewtopic.php?t=4231[Jupiter ACE's
 Nuclear Invaders] (by Dancresp, 2013).
+
+== How to compile and run
+
+1. Make sure the required programs, listed in the header of the
+   <Makefile> file, are installed on your system.
+2. Type `make` in the project directory to build the
+   <disk_2_nuclear_invaders.mgt> disk image.
+2. Start a ZX Spectrum 128 emulator with the Plus D interface.
+3. Enter 128 BASIC.
+4. Insert the <disk_1_solo_forth.mgt> disk image into drive 1.
+5. Insert the <disk_2_nuclear_invaders.mgt> disk image into drive 2.
+6. Type `run` to load G+DOS and autoload Solo Forth.
+7. Type `1 load` to compile the game from block 1 of drive 2.
+8. Type `run` to start the game.
+9. Save a SZX snapshot with your emulator.
