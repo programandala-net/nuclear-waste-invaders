@@ -7,7 +7,9 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.2.0+201608011944
+\ Version 0.3.0+201610112007
+\
+\ Last modified 201610112007
 
 \ Description
 
@@ -46,6 +48,7 @@ need rows      need ocr     need ms           need s+
 need 2value    need row     need char>string  need s\"
 need alias     need plot    need adraw        need inverse
 need overprint need column  need color        need color!
+need udg-row[
 
 need black  need blue    need red    need magenta  need green
 need cyan   need yellow  need white
@@ -59,7 +62,10 @@ need kk-ports  need kk-1#   need pressed?     need kk-chars
 
 need defer
 need :noname  need benched    need ~~   13 ~~key !
+need [if]
   \ XXX TMP -- during the development
+
+true constant [big-tank] immediate  \ XXX TMP --
 
   \ ===========================================================
   \ Debug
@@ -196,8 +202,7 @@ max-controls 1- constant last-control
 : set-controls  ( n -- )
   >controls     dup c@  dup to kk-left#   #>kk 2to kk-left
              1+ dup c@  dup to kk-right#  #>kk 2to kk-right
-             1+     c@  dup to kk-fire#   #>kk 2to kk-fire
-             ;
+             1+     c@  dup to kk-fire#   #>kk 2to kk-fire  ;
   \ Make controls number _n_ (item of the `controls` table) the
   \ current controls.
 
@@ -249,8 +254,6 @@ variable used-udgs  used-udgs off
 : ?free-udg  ( n -- )
   used-udgs +!  used-udgs @ udgs > abort" Too many UDGs"  ;
   \ Abort if there is not free space for _n_ UDGs?
-  \ This is a check done during the interpretation of the
-  \ source file.
 
   \ ===========================================================
   \ Font
@@ -392,7 +395,7 @@ variable latest-sprite-udg
 : 1x1sprite  ( n0..n7 "name" -- )
   1 free-udg dup constant (1x1sprite!)  ;
 
- ' emit alias .1x1sprite   ( c -- )
+' emit alias .1x1sprite   ( c -- )
 ' emits alias .1x1sprites  ( c n -- )
 
 : (2x1sprite!)  ( n0..n7 c -- )
@@ -434,8 +437,7 @@ binary
 0000110110110000
 0011000000001100
 
-2x1sprite invader-1
-sprite-string invader-1$  ( -- ca len )
+2x1sprite invader-1  sprite-string invader-1$  ( -- ca len )
 
   \ invader 1, frame 2
 0000001111000000
@@ -483,8 +485,7 @@ sprite-string invader-1$  ( -- ca len )
 0010100000101000
 0000011011000000
 
-2x1sprite invader-2
-sprite-string invader-2$  ( -- ca len )
+2x1sprite invader-2  sprite-string invader-2$  ( -- ca len )
 
 binary
 
@@ -534,8 +535,7 @@ binary
 0000010110100000
 0000101001010000
 
-2x1sprite invader-3
-sprite-string invader-3$  ( -- ca len )
+2x1sprite invader-3  sprite-string invader-3$  ( -- ca len )
 
   \ invader 3, frame 2
 0000000110000000
@@ -583,8 +583,7 @@ sprite-string invader-3$  ( -- ca len )
 0011100110011100
 0001000000001000
 
-2x1sprite ufo
-sprite-string ufo$  ( -- ca len )
+2x1sprite ufo  sprite-string ufo$  ( -- ca len )
 
   \ ufo, frame 2
 0000000000000000
@@ -665,20 +664,37 @@ sprite-string ufo$  ( -- ca len )
 
 1x1sprite broken-bottom-brick
 
-2 constant udg/tank
+  \ XXX TODO -- second frame of the tank
 
-  \ XXX TODO -- second frame
+  [big-tank] [if]  \ XXX NEW
 
-0000000100000000
-0000001110000000
-0000001110000000
-0111111111111100
-1111111111111110
-1111111111111110
-1111111111111110
-1111111111111110
+  \ XXX TODO --
 
-2x1sprite!
+#3 constant udg/tank  #3 free-udg udg-row[
+
+000000000001100000000000
+000000000001100000000000
+000000000001100000000000
+001111111111111111111100
+011111111111111111111110
+111111111111111111111111
+111111111111111111111111
+111111111111111111111111
+]udg-row  udg/tank 1 latest-sprite-size!
+
+  [else]  \ XXX OLD
+
+  2 constant udg/tank
+
+  0000000100000000
+  0000001110000000
+  0000001110000000
+  0111111111111100
+  1111111111111110
+  1111111111111110
+  1111111111111110
+  1111111111111110  2x1sprite!  [then]
+
 sprite-string tank$  ( -- ca len )
 
 0000010001000000
@@ -690,8 +706,22 @@ sprite-string tank$  ( -- ca len )
 0001001010010000
 0010010001001000
 
-2x1sprite!
-sprite-string invader-explosion$  ( -- ca len )
+  \ cr latest .name  \ XXX INFORMER
+2x1sprite!  sprite-string invader-explosion$  ( -- ca len )
+  \ cr latest .name key drop  \ XXX INFORMER
+
+  [big-tank] [if]  \ XXX NEW
+
+00011000
+00011000
+00011000
+00011000
+00011000
+00011000
+00011000
+00000000
+
+  [else]  \ XXX OLD
 
 00000000
 00000001
@@ -701,6 +731,8 @@ sprite-string invader-explosion$  ( -- ca len )
 00000001
 00000000
 00000000
+
+  [then]
 
 1x1sprite projectile
 
@@ -713,8 +745,7 @@ sprite-string invader-explosion$  ( -- ca len )
 1000011111000100
 0010001100010010
 
-2x1sprite!
-sprite-string ufo-explosion$  ( -- ca len )
+2x1sprite!  sprite-string ufo-explosion$  ( -- ca len )
 
 0000001111100000
 0001110000011100
@@ -898,6 +929,7 @@ decimal
   type text-color ."  = " type  ;
   \ Print an item of the score table, with sprite string _ca2
   \ len2_ and description _ca1 len1_
+
 9 constant score-table-x
 
 : .score-table  ( -- )
@@ -976,7 +1008,7 @@ need pixel-addr
 
 : .lifes  ( -- )
   at-lifes life-color
-  lifes @ 0 ?do  tank$ type  loop  ."   "  ;
+  lifes @ 0 ?do  tank$ type  loop  udg/tank spaces  ;
   \ Print one icon for each remaining life.
 
 : status-bar  ( -- )  ruler .lifes  ;
@@ -988,7 +1020,7 @@ need pixel-addr
                     0 constant invaders-min-x
 columns udg/invader - constant invaders-max-x
 
-  \ Invaders data is stored in a table.
+  \ Invaders data are stored in a table,
   \ which has the following structure:
   \
   \ +0 = units (0..3)
@@ -1175,7 +1207,7 @@ columns udg/tank - 1- constant tank-max-x
 
 : at-tank  ( -- )  tank-x @ tank-y at-xy  ;
 : tank-ready  ( -- )  at-tank .tank  ;
-: -tank  ( -- )  at-tank text-color 2 spaces  ;
+: -tank  ( -- )  at-tank text-color udg/tank spaces  ;
 
 : move-tank  ( -1|1 -- )
   tank-x @ + tank-range dup tank-x ! tank-y at-xy  ;
@@ -1510,7 +1542,7 @@ variable delay  50 delay !  \ ms
   \ XXX TODO --
 
 : fire  ( -- )
-  tank-x @ projectile-x !
+  tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
   [ tank-y 1- ] literal projectile-y !  fire-sound  ;
   \ The tank fires.
   \ XXX TODO -- several projectiles at the same time;
@@ -1610,4 +1642,4 @@ init-level
 
 end-app
 
-  \ vim: filetype=soloforth
+  \ vim: filetype=soloforth:colorcolumn=64
