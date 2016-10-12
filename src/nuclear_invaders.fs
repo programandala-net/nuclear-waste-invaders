@@ -7,9 +7,9 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.3.0+201610112007
+\ Version 0.4.0+201610121327
 \
-\ Last modified 201610112007
+\ Last modified 201610121327
 
 \ Description
 
@@ -30,8 +30,6 @@
 \ retain the copyright/authorship/acknowledgment/credit
 \ notice(s) and this license in all redistributed copies and
 \ derived works.  There is no warranty.
-
-  \ History: see at the end of the file.
 
   \ ===========================================================
   \ Requisites from the library of Solo Forth
@@ -126,8 +124,6 @@ tank-y constant arena-bottom-y
   \ Variables
 
 variable tank-x        \ column
-variable projectile-x  \ column
-variable projectile-y  \ row (0 if no shoot)
 variable ufo-x         \ column
 variable lifes         \ counter (0..3)
 variable level         \ counter (1..5)
@@ -225,8 +221,10 @@ current-controls @ set-controls
   \ ===========================================================
   \ UDG
 
-        $80 constant first-udg  \ first UDG code in Solo Forth
-        $FF constant last-udg   \ last UDG code in Solo Forth
+[defined] first-udg ?\ $80 constant first-udg
+  \ first UDG code in Solo Forth
+                       $FF constant last-udg
+  \ last UDG code in Solo Forth
 
         128 constant udgs       \ number of UDGs \ XXX TMP --
           8 constant /udg       \ bytes per UDG
@@ -1043,16 +1041,17 @@ create default-invaders-data
 here
 
   \ units   active? y    x                 sprite       x inc
-    3 ,     0 ,      5 , invaders-min-x ,  invader-3 ,   1 ,
-    3 ,     0 ,      7 , invaders-min-x ,  invader-2 ,   1 ,
-    3 ,     0 ,      9 , invaders-min-x ,  invader-2 ,   1 ,
-    3 ,     0 ,     11 , invaders-min-x ,  invader-1 ,   1 ,
-    3 ,     0 ,     13 , invaders-min-x ,  invader-1 ,   1 ,
-    3 ,     0 ,      5 , invaders-max-x ,  invader-3 ,  -1 ,
-    3 ,     0 ,      7 , invaders-max-x ,  invader-2 ,  -1 ,
-    3 ,     0 ,      9 , invaders-max-x ,  invader-2 ,  -1 ,
-    3 ,     0 ,     11 , invaders-max-x ,  invader-1 ,  -1 ,
-    3 ,     0 ,     13 , invaders-max-x ,  invader-1 ,  -1 ,
+    1 ,     0 ,      5 , invaders-min-x ,  invader-3 ,   1 ,
+    1 ,     0 ,      7 , invaders-min-x ,  invader-2 ,   1 ,
+    1 ,     0 ,      9 , invaders-min-x ,  invader-2 ,   1 ,
+    1 ,     0 ,     11 , invaders-min-x ,  invader-1 ,   1 ,
+    1 ,     0 ,     13 , invaders-min-x ,  invader-1 ,   1 ,
+    1 ,     0 ,      5 , invaders-max-x ,  invader-3 ,  -1 ,
+    1 ,     0 ,      7 , invaders-max-x ,  invader-2 ,  -1 ,
+    1 ,     0 ,      9 , invaders-max-x ,  invader-2 ,  -1 ,
+    1 ,     0 ,     11 , invaders-max-x ,  invader-1 ,  -1 ,
+    1 ,     0 ,     13 , invaders-max-x ,  invader-1 ,  -1 ,
+    \ XXX TMP -- 1 unit per type instead of 3
 
 here swap - constant /invaders-data
   \ Space occupied by the invaders data.
@@ -1219,6 +1218,55 @@ columns udg/tank - 1- constant tank-max-x
   \ XXX FIXME -- don't delete the whole tank
 
   \ ==========================================================
+  \ Projectile
+
+false constant [single-projectile] immediate
+  \ XXX UNDER DEVELOPMENT
+
+[single-projectile] [if]
+
+  \ XXX OLD -- one single projectile on the screen
+
+variable projectile-x  \ column
+variable projectile-y  \ row (0 if no shoot)
+
+: init-projectiles  ( -- )  projectile-y off  ;
+
+[else]
+
+  \ XXX NEW -- 4 projectiles on the screen
+  \ XXX FIXME --
+
+%11 constant max-projectile#
+  \ Bitmask for the projectile counter (0..3).
+
+max-projectile# 1+ constant #projectiles
+  \ Maximum number of projectiles.
+
+variable projectile#  projectile# off
+  \ Number of the current projectile (0..3).
+
+#projectiles cells constant /projectiles
+  \ Bytes used by the projectiles' tables.
+
+create 'projectile-x /projectiles allot
+create 'projectile-y /projectiles allot
+  \ Tables for the coordinates of all projectiles.
+
+: >projectile  ( -- n )  projectile# @ cells  ;
+  \ Current projectile offset _n_ in the projectiles' tables.
+
+: projectile-x  ( -- a )  >projectile 'projectile-x +  ;
+: projectile-y  ( -- a )  >projectile 'projectile-y +  ;
+  \ Fake variables for the coordinates of the current
+  \ projectile.
+
+: init-projectiles  ( -- )
+  'projectile-y /projectiles erase  ;
+
+[then]
+
+  \ ==========================================================
   \ Init
 
 : init-game  ( -- )
@@ -1240,9 +1288,7 @@ columns udg/tank - 1- constant tank-max-x
   init-invaders-data  invader-type off
   total-invaders invaders !  ;
 
-: init-tank  ( -- )
-  columns udg/tank - 2/ tank-x !  \ middle of the screen
-  projectile-y off  ;
+: init-tank  ( -- )  columns udg/tank - 2/ tank-x !  ;
 
 : parade  ( -- )
   invader-color
@@ -1262,8 +1308,8 @@ columns udg/tank - 1- constant tank-max-x
 : show-level  ( -- )  level-message message  ;
 
 : init-combat  ( -- )
-  catastrophe off init-invaders init-ufo init-tank init-arena
-  show-level show-player  ;
+  catastrophe off  init-invaders init-ufo init-tank init-arena
+  init-projectiles show-level show-player  ;
 
   \ ==========================================================
   \ Invasion
@@ -1538,15 +1584,17 @@ variable delay  50 delay !  \ ms
   projectile-color at-projectile projectile .1x1sprite  ;
   \ Show the projectile.
 
-: fire-sound  ( -- )  ;
+: fire-sound  ( -- )
+  \ 50 0 do  7 1 do  i border 0 border  loop  loop  
+    \ XXX INFORMER
+  ;
   \ XXX TODO --
 
 : fire  ( -- )
   tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
   [ tank-y 1- ] literal projectile-y !  fire-sound  ;
   \ The tank fires.
-  \ XXX TODO -- several projectiles at the same time;
-  \ pixels instead of characters
+  \ XXX TODO -- pixels instead of characters
 
 : -projectile  ( -- )  at-projectile text-color space  ;
   \ Delete the projectile.
@@ -1567,14 +1615,32 @@ variable delay  50 delay !  \ ms
 : fire?  ( -- f )  kk-fire pressed?  ;
   \ Is the fire key pressed?
 
+[single-projectile] [if]
+
 : shoot  ( -- )
-  shooted? if  shooted exit  then  fire? if  fire  then  ;
+  shooted? if  shooted exit  then
+  fire? if  fire  then  ;
   \ Manage the shoot.
+
+
+[else]
+
+: next-projectile  ( -- )
+  projectile# @ 1+ max-projectile# and projectile# !  ;
+  \ Point to the next current projectile.
+
+: shoot  ( -- )
+  \ projectile# @ 30 23 at-xy .  \ XXX INFORMER
+  shooted? if  shooted next-projectile  then
+  fire? if  fire next-projectile  then  ;
+  \ Manage the shoot.
+
+[then]
 
 : new-record?   ( -- f )  score @ record @ >  ;
   \ Is there a new record?
 
-: new-record    ( -- f )  score @ record !  ;
+: new-record    ( -- )  score @ record !  ;
   \ Set the new record.
 
 : check-record  ( -- )  new-record? if  new-record  then  ;
@@ -1593,6 +1659,7 @@ variable delay  50 delay !  \ ms
   \ One life lost.
 
 : defeat-tune  ( -- )  100 200 do  i 20 beep  -5 +loop  ;
+  \ XXX TODO -- improve for 128
 
 : defeat  ( -- )  defeat-tune  300 ms  dead  ;
 
@@ -1606,7 +1673,7 @@ variable delay  50 delay !  \ ms
 
 : combat  ( -- )  init-combat (combat)  ;
 
-: defeat?  ( f )  lifes @ 0=  ;
+: defeat?  ( -- f )  lifes @ 0=  ;
 
 : game  ( -- )
   init-game  begin  combat defeat?  until  game-over  ;
