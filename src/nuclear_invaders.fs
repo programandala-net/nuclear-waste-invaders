@@ -7,9 +7,9 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.4.0+201610121327
+\ Version 0.4.1+201610121700
 \
-\ Last modified 201610121327
+\ Last modified 201610121700
 
 \ Description
 
@@ -1612,27 +1612,33 @@ variable delay  50 delay !  \ ms
 : shooted?  ( -- f )  projectile-y @ 0<>  ;
   \ Has the tank already shooted?
 
+[single-projectile] [if]
+
 : fire?  ( -- f )  kk-fire pressed?  ;
   \ Is the fire key pressed?
-
-[single-projectile] [if]
 
 : shoot  ( -- )
   shooted? if  shooted exit  then
   fire? if  fire  then  ;
   \ Manage the shoot.
 
-
 [else]
+
+  \ XXX TODO -- improve
+
+: fire?  ( -- f )
+  kk-fire pressed?  shooted? 0=  and  ;
+  \ Is the fire key pressed?
 
 : next-projectile  ( -- )
   projectile# @ 1+ max-projectile# and projectile# !  ;
   \ Point to the next current projectile.
 
 : shoot  ( -- )
-  \ projectile# @ 30 23 at-xy .  \ XXX INFORMER
-  shooted? if  shooted next-projectile  then
-  fire? if  fire next-projectile  then  ;
+  projectile# @ 30 23 at-xy .  \ XXX INFORMER
+  fire? if  fire next-projectile exit  then
+  shooted? if  shooted  then
+  next-projectile  ;
   \ Manage the shoot.
 
 [then]
