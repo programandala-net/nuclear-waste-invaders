@@ -7,9 +7,7 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.4.1+201610121700
-\
-\ Last modified 201610121700
+\ Version 0.4.1+201610121938
 
 \ Description
 
@@ -1243,6 +1241,8 @@ variable projectile-y  \ row (0 if no shoot)
 max-projectile# 1+ constant #projectiles
   \ Maximum number of projectiles.
 
+variable flying-projectiles
+
 variable projectile#  projectile# off
   \ Number of the current projectile (0..3).
 
@@ -1262,7 +1262,7 @@ create 'projectile-y /projectiles allot
   \ projectile.
 
 : init-projectiles  ( -- )
-  'projectile-y /projectiles erase  ;
+  'projectile-y /projectiles erase  flying-projectiles off  ;
 
 [then]
 
@@ -1439,9 +1439,11 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Update the invader type to the next one.
 
 variable delay  50 delay !  \ ms
+  \ XXX TMP --
 
 : move-invader  ( -- )
-  delay @ ms  \ XXX TMP --
+  exit  \ XXX TMP --
+  \ delay @ ms  \ XXX TMP --
   invader-active @
   if  flying-invader damages  else  activate-invader  then  ;
   \ Move the current invader if it's active, else
@@ -1498,6 +1500,9 @@ variable delay  50 delay !  \ ms
 : ufo-bonus  ( -- )
   ufo-points dup ufo-x @ 1+ ufo-y at-xy .  update-score  ;
   \ Update the score with the UFO bonus.
+  \
+  \ XXX FIXME -- the bonus has 3 digits, and the last one
+  \ is not deleted
 
 : ufo-impacted  ( -- )  ufo-explosion ufo-bonus 200 ms -ufo  ;
 
@@ -1550,7 +1555,7 @@ variable delay  50 delay !  \ ms
 : invader-impacted  ( -- )
   invader-type @ >r  impacted-invader invader-type !
   current-invader-impacted  r> invader-type !  ;
-  \ A invader has been impacted by the projectile.
+  \ An invader has been impacted by the projectile.
   \ Calculate its type, set it the current one and manage it.
 
 : (impact)  ( -- )
@@ -1558,10 +1563,14 @@ variable delay  50 delay !  \ ms
   invader-impacted  ;
   \ Manage the impact.
 
+: destroy-projectile  ( -- )
+  projectile-y off  -1 flying-projectiles +!  ;
+
 : impact  ( -- )
   projectile-y @ building-bottom-y <
-  if  (impact)  then  projectile-y off  ;
+  if  (impact)  then  destroy-projectile  ;
   \ Manage the impact, if the projectil is high enough.
+  \ XXX TODO -- impact the building too
 
 : projectile-xy  ( -- x y )  projectile-x @ projectile-y @  ;
   \ Coordinates of the projectile.
@@ -1590,12 +1599,6 @@ variable delay  50 delay !  \ ms
   ;
   \ XXX TODO --
 
-: fire  ( -- )
-  tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
-  [ tank-y 1- ] literal projectile-y !  fire-sound  ;
-  \ The tank fires.
-  \ XXX TODO -- pixels instead of characters
-
 : -projectile  ( -- )  at-projectile text-color space  ;
   \ Delete the projectile.
 
@@ -1609,10 +1612,15 @@ variable delay  50 delay !  \ ms
   .projectile  ;
   \ Manage the projectile.
 
-: shooted?  ( -- f )  projectile-y @ 0<>  ;
-  \ Has the tank already shooted?
+: fire  ( -- )
+  tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
+  [ tank-y 1- ] literal projectile-y !  fire-sound  ;
+  \ The tank fires.
 
 [single-projectile] [if]
+
+: shooted?  ( -- f )  projectile-y @ 0<>  ;
+  \ Has the tank already shooted?
 
 : fire?  ( -- f )  kk-fire pressed?  ;
   \ Is the fire key pressed?
@@ -1626,19 +1634,39 @@ variable delay  50 delay !  \ ms
 
   \ XXX TODO -- improve
 
-: fire?  ( -- f )
-  kk-fire pressed?  shooted? 0=  and  ;
-  \ Is the fire key pressed?
+: shooted?  ( -- f )  projectile-y @ 0<>  ;
+  \ Has the current projectile been shooted?
+
+: prepare-projectile  ( -- )
+  #projectiles 0 do
+    i projectile# ! shooted? 0= if  unloop exit  then
+  loop  ;
+  \ Set the current projectile to the first free (non-used)
+  \ projectile.
+
+: usable-projectile?  ( -- f )
+  flying-projectiles @ #projectiles <  ;
+  \ Is there any projectile left?
+
+: fire?  ( -- f )  usable-projectile? kk-fire pressed? and  ;
+  \ Is there a usable projectile and is the fire key pressed?
 
 : next-projectile  ( -- )
   projectile# @ 1+ max-projectile# and projectile# !  ;
   \ Point to the next current projectile.
 
+  \ : shoot  ( -- )
+  \   projectile# @ 30 23 at-xy .  \ XXX INFORMER
+  \   shooted? if    shooted
+  \            else  fire? if  prepare-projectile fire  then
+  \            then  next-projectile  ;
+  \   \ Manage the shoot.
+
 : shoot  ( -- )
   projectile# @ 30 23 at-xy .  \ XXX INFORMER
-  fire? if  fire next-projectile exit  then
-  shooted? if  shooted  then
-  next-projectile  ;
+  fire?    if    prepare-projectile fire
+           else  shooted? if  shooted  then
+           then  next-projectile  ;
   \ Manage the shoot.
 
 [then]
