@@ -7,7 +7,7 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.5.0+201610141302
+\ Version 0.6.0+201610142026
 
 \ Description
 
@@ -189,7 +189,7 @@ here swap - /controls / constant max-controls
 max-controls 1- constant last-control
 
 : >controls  ( n -- a )  /controls * controls +  ;
-  \ Convert controls number _n_ to their address _a_.
+  \ Convert controls number _n_ to its address _a_.
 
 : #>kk  ( n -- d )  /kk * kk-ports + kk@  ;
   \ Convert keyboard key number _n_ to its data _d_ (bitmap and
@@ -223,9 +223,9 @@ current-controls @ set-controls
   \ UDG
 
 [defined] first-udg ?\ $80 constant first-udg
-  \ first UDG code in Solo Forth
+                         \ first UDG code in Solo Forth
                        $FF constant last-udg
-  \ last UDG code in Solo Forth
+                         \ last UDG code in Solo Forth
 
         128 constant udgs       \ number of UDGs \ XXX TMP --
           8 constant /udg       \ bytes per UDG
@@ -250,9 +250,14 @@ udg-set os-udg !
 variable used-udgs  used-udgs off
   \ Counter of UDGs defined.
 
-: ?free-udg  ( n -- )
-  used-udgs +!  used-udgs @ udgs > abort" Too many UDGs"  ;
-  \ Abort if there is not free space for _n_ UDGs?
+: udg-overflow?  ( -- f )  used-udgs @ udgs >  ;
+  \ Too many UDG defined?
+
+: ?udg-overflow  ( -- )  udg-overflow? abort" Too many UDGs"  ;
+  \ Abort if there are too many UDG defined.
+
+: ?free-udg  ( n -- )  used-udgs +!  ?udg-overflow  ;
+  \ Abort if there is not free space to define _n_ UDG.
 
   \ ===========================================================
   \ Font
@@ -261,11 +266,13 @@ variable used-udgs  used-udgs off
   \ Set the current charset to address _a_
   \ (the bitmap of char 0).
   \ XXX OLD
+  \ XXX TODO -- move to Solo Forth
 
 : font@  ( -- a )  os-chars @  ;
   \ Fetch the address _a_ of the current charset
   \ (the bitmap of char 0).
   \ XXX OLD
+  \ XXX TODO -- move to Solo Forth
 
 variable ocr-first-udg
 variable ocr-last-udg
@@ -665,23 +672,30 @@ binary
 
   \ XXX TODO -- second frame of the tank
 
-  [big-tank] [if]  \ XXX NEW
+[big-tank] [if]  \ XXX NEW
 
-  \ XXX TODO --
+  #3 constant udg/tank  #3 free-udg udg-row[
 
-#3 constant udg/tank  #3 free-udg udg-row[
+  \ 000000000001100000000000
+  \ 000000000001100000000000
+  \ 000000000001100000000000
+  \ 001111111111111111111100
+  \ 011111111111111111111110
+  \ 111111111111111111111111
+  \ 111111111111111111111111
+  \ 111111111111111111111111
 
-000000000001100000000000
-000000000001100000000000
-000000000001100000000000
-001111111111111111111100
-011111111111111111111110
-111111111111111111111111
-111111111111111111111111
-111111111111111111111111
-]udg-row  udg/tank 1 latest-sprite-size!
+  000000000010010000000000
+  000000000010010000000000
+  000000000110011000000000
+  001111111111111111111100
+  011111111111111111111110
+  111111111111111111111111
+  111111111111111111111111
+  011111111111111111111110
+  ]udg-row  udg/tank 1 latest-sprite-size!
 
-  [else]  \ XXX OLD
+[else]  \ XXX OLD
 
   2 constant udg/tank
 
@@ -692,7 +706,9 @@ binary
   1111111111111110
   1111111111111110
   1111111111111110
-  1111111111111110  2x1sprite!  [then]
+  1111111111111110  2x1sprite!
+
+[then]
 
 sprite-string tank$  ( -- ca len )
 
@@ -709,29 +725,38 @@ sprite-string tank$  ( -- ca len )
 2x1sprite!  sprite-string invader-explosion$  ( -- ca len )
   \ cr latest .name key drop  \ XXX INFORMER
 
-  [big-tank] [if]  \ XXX NEW
+[big-tank] [if]  \ XXX NEW
 
-00011000
-00011000
-00011000
-00011000
-00011000
-00011000
-00011000
-00000000
+  \ 00011000
+  \ 00011000
+  \ 00011000
+  \ 00011000
+  \ 00011000
+  \ 00011000
+  \ 00011000
+  \ 00000000
 
-  [else]  \ XXX OLD
+  00100000
+  00000100
+  00100000
+  00000100
+  00100000
+  00000100
+  00100000
+  00000100
 
-00000000
-00000001
-00000001
-00000001
-00000001
-00000001
-00000000
-00000000
+[else]  \ XXX OLD
 
-  [then]
+  00000000
+  00000001
+  00000001
+  00000001
+  00000001
+  00000001
+  00000000
+  00000000
+
+[then]
 
 1x1sprite projectile
 
@@ -855,7 +880,7 @@ decimal
   \ ===========================================================
   \ Type
 
-: centered  ( len -- column )  columns swap - 2/  ;
+: centered  ( len -- col )  columns swap - 2/  ;
   \ Convert a string length to the column required
   \ to print the string centered.
 
@@ -1166,7 +1191,7 @@ variable containers-left-x   variable containers-right-x
 columns udg/tank - 1- constant tank-max-x
   \ Mininum and maximin columns of the tank.
 
-: tank-range  ( column -- column' )
+: tank-range  ( col -- col' )
   tank-max-x min tank-min-x max  ;
   \ Adjust the given column to the limits of the tank.
 
