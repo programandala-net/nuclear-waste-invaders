@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.8.0+201610150047"  ;
+: version   ( -- ca len )  s" 0.9.0+201610150055"  ;
 warnings !
 
 \ Description
@@ -120,7 +120,7 @@ tank-y constant arena-bottom-y
 
 : init-colors  ( -- )
   black paper  white ink  black flash  0 bright
-  0 overprint  0 inverse  blue border  ;
+  0 overprint  0 inverse  black border  ;
   \ XXX TMP --
 
   \ ===========================================================
@@ -1477,13 +1477,21 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ may have changed.
 
 : activate-invader  ( -- )
-  32 random  26 invaders @ 5 < 16 * -  > invader-active !  ;
+
+  [ false ] [if]
+
+  32 random  26 invaders @ 5 < 16 * -  > invader-active !
   \ Activate the current invader, depending on a random
   \ calculation: If there are less than 5 invaders left, the
   \ chances of activation are 22/32, else 6/32.
-  \
-  \ XXX TODO -- Simpler and faster? Proportional to the
-  \ number of invaders?
+
+  [else]
+
+  invaders @ random 0= invader-active !
+  \ Activate the current invader randomly, depending on the
+  \ number of aliens.
+
+  [then]  ;
 
 : last-invader-type?  ( -- f )
   invader-type @ [ invader-types 1- ] literal =  ;
@@ -1793,6 +1801,8 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Show the graphics of the broken containers.
 
 init-level
+
+cr cr .( Type RUN to start) cr
 
 end-app
 

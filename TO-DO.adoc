@@ -17,3 +17,8 @@ Fix: the trigger is too sensitive. Make it impossible to launch more than one
 projectile at the same time.
 
 Improve: blinking projectile, with XORed graphic.
+
+2016-10-15:
+
+Show an icon of the free projectiles: A graphic with 0..3 bars, or
+0..3 graphics.
