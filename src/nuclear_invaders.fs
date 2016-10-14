@@ -7,7 +7,7 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.4.1+201610121938
+\ Version 0.5.0+201610141302
 
 \ Description
 
@@ -45,6 +45,9 @@ need 2value    need row     need char>string  need s\"
 need alias     need plot    need adraw        need inverse
 need overprint need column  need color        need color!
 need udg-row[
+
+need allot-xstack  need xdepth  need >x  need x>  need xclear
+need .x  \ XXX TMP --
 
 need black  need blue    need red    need magenta  need green
 need cyan   need yellow  need white
@@ -167,18 +170,18 @@ record off
   \ Bytes per item in the `controls` table.
 
 create controls  here
-  \ left      right     fire
-    kk-5# c,  kk-8# c,  kk-en# c,   \ cursor with Enter
-    kk-r# c,  kk-t# c,  kk-en# c,   \ Spanish Dvorak keyboard
-    kk-z# c,  kk-x# c,  kk-en# c,   \ from the original game
-    kk-5# c,  kk-8# c,  kk-0#  c,   \ cursor joystick
-    kk-5# c,  kk-8# c,  kk-sp# c,   \ cursor with Space
-    kk-1# c,  kk-2# c,  kk-5#  c,   \ Sinclair joystick 1
-    kk-6# c,  kk-7# c,  kk-0#  c,   \ Sinclair joystick 2
-    kk-o# c,  kk-p# c,  kk-q#  c,   \ QWERTY
-    kk-n# c,  kk-m# c,  kk-q#  c,   \ QWERTY
-    kk-q# c,  kk-w# c,  kk-p#  c,   \ QWERTY
-    kk-z# c,  kk-x# c,  kk-p#  c,   \ QWERTY
+  \ left    right     fire
+  kk-5# c,  kk-8# c,  kk-en# c,  \ cursor: 5-8-Enter
+  kk-r# c,  kk-t# c,  kk-en# c,  \ Spanish Dvorak: R-T-Enter
+  kk-z# c,  kk-x# c,  kk-en# c,  \ QWERTY: Z-X-Enter
+  kk-5# c,  kk-8# c,  kk-0#  c,  \ cursor joystick: 5-8-0
+  kk-5# c,  kk-8# c,  kk-sp# c,  \ cursor: 5-8-Space
+  kk-1# c,  kk-2# c,  kk-5#  c,  \ Sinclair joystick 1: 1-2-5
+  kk-6# c,  kk-7# c,  kk-0#  c,  \ Sinclair joystick 2: 6-7-0
+  kk-o# c,  kk-p# c,  kk-q#  c,  \ QWERTY: O-P-Q
+  kk-n# c,  kk-m# c,  kk-q#  c,  \ QWERTY: N-M-Q
+  kk-q# c,  kk-w# c,  kk-p#  c,  \ QWERTY: Q-W-P
+  kk-z# c,  kk-x# c,  kk-p#  c,  \ QWERTY: Z-X-P
 
 here swap - /controls / constant max-controls
   \ Number of controls stored in `controls`.
@@ -1228,12 +1231,18 @@ false constant [single-projectile] immediate
 variable projectile-x  \ column
 variable projectile-y  \ row (0 if no shoot)
 
-: init-projectiles  ( -- )  projectile-y off  ;
+: destroy-projectile  ( -- )  projectile-y off  ;
+
+: init-projectiles  ( -- )  destroy-projectile  ;
 
 [else]
 
   \ XXX NEW -- 4 projectiles on the screen
   \ XXX FIXME --
+
+  \ XXX TODO -- Store coordinates in bytes; this will make some
+  \ calculations faster. E.g. `projectile#` can be used as
+  \ offset.
 
 %11 constant max-projectile#
   \ Bitmask for the projectile counter (0..3).
@@ -1241,9 +1250,10 @@ variable projectile-y  \ row (0 if no shoot)
 max-projectile# 1+ constant #projectiles
   \ Maximum number of projectiles.
 
-variable flying-projectiles
+#projectiles allot-xstack free-projectiles free-projectiles
+  \ Create and activate an stack to store the free projectiles.
 
-variable projectile#  projectile# off
+0 value projectile#
   \ Number of the current projectile (0..3).
 
 #projectiles cells constant /projectiles
@@ -1253,7 +1263,7 @@ create 'projectile-x /projectiles allot
 create 'projectile-y /projectiles allot
   \ Tables for the coordinates of all projectiles.
 
-: >projectile  ( -- n )  projectile# @ cells  ;
+: >projectile  ( -- n )  projectile# cells  ;
   \ Current projectile offset _n_ in the projectiles' tables.
 
 : projectile-x  ( -- a )  >projectile 'projectile-x +  ;
@@ -1261,8 +1271,20 @@ create 'projectile-y /projectiles allot
   \ Fake variables for the coordinates of the current
   \ projectile.
 
+  \ : .debug-data  ( -- )
+  \   15 23 at-xy .x 3 spaces
+  \   projectile# 30 23 at-xy .  ;
+    \ XXX INFORMER
+
+: .debug-data  ( -- )  ; immediate
+  \ XXX TMP --
+
+: destroy-projectile  ( -- )
+  projectile-y off  projectile# >x  .debug-data  ;
+
 : init-projectiles  ( -- )
-  'projectile-y /projectiles erase  flying-projectiles off  ;
+  'projectile-y /projectiles erase
+  xclear #projectiles 0 do  i >x  loop  ;
 
 [then]
 
@@ -1438,12 +1460,11 @@ red papery c,  here  red c,  constant broken-brick-colors
   if  invader-type off  else  1 invader-type +!  then  ;
   \ Update the invader type to the next one.
 
-variable delay  50 delay !  \ ms
+0 value delay  \ ms
   \ XXX TMP --
 
 : move-invader  ( -- )
-  exit  \ XXX TMP --
-  \ delay @ ms  \ XXX TMP --
+  delay ms  \ XXX TMP --
   invader-active @
   if  flying-invader damages  else  activate-invader  then  ;
   \ Move the current invader if it's active, else
@@ -1563,9 +1584,6 @@ variable delay  50 delay !  \ ms
   invader-impacted  ;
   \ Manage the impact.
 
-: destroy-projectile  ( -- )
-  projectile-y off  -1 flying-projectiles +!  ;
-
 : impact  ( -- )
   projectile-y @ building-bottom-y <
   if  (impact)  then  destroy-projectile  ;
@@ -1594,7 +1612,7 @@ variable delay  50 delay !  \ ms
   \ Show the projectile.
 
 : fire-sound  ( -- )
-  \ 50 0 do  7 1 do  i border 0 border  loop  loop  
+  \ 50 0 do  7 1 do  i border 0 border  loop  loop
     \ XXX INFORMER
   ;
   \ XXX TODO --
@@ -1606,18 +1624,18 @@ variable delay  50 delay !  \ ms
   projectile-y @ building-top-y <  ;
   \ Is the projectile lost?
 
+[single-projectile] [if]
+
 : shooted  ( -- )
-  -projectile  projectile-lost? if  projectile-y off exit  then
-  -1 projectile-y +! impact? ?exit
-  .projectile  ;
+  -projectile
+  projectile-lost? if  destroy-projectile exit  then
+  -1 projectile-y +! impact? ?exit  .projectile  ;
   \ Manage the projectile.
 
 : fire  ( -- )
   tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
   [ tank-y 1- ] literal projectile-y !  fire-sound  ;
   \ The tank fires.
-
-[single-projectile] [if]
 
 : shooted?  ( -- f )  projectile-y @ 0<>  ;
   \ Has the tank already shooted?
@@ -1634,39 +1652,35 @@ variable delay  50 delay !  \ ms
 
   \ XXX TODO -- improve
 
+: shooted  ( -- )
+  -projectile
+  projectile-lost? if  destroy-projectile exit  then
+  -1 projectile-y +! impact? ?exit  .projectile  ;
+  \ Manage the projectile.
+
+: fire  ( -- )
+  x> to projectile#  .debug-data
+  tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
+  [ tank-y 1- ] literal projectile-y !  fire-sound  ;
+  \ The tank fires.
+
 : shooted?  ( -- f )  projectile-y @ 0<>  ;
   \ Has the current projectile been shooted?
 
-: prepare-projectile  ( -- )
-  #projectiles 0 do
-    i projectile# ! shooted? 0= if  unloop exit  then
-  loop  ;
-  \ Set the current projectile to the first free (non-used)
-  \ projectile.
-
-: usable-projectile?  ( -- f )
-  flying-projectiles @ #projectiles <  ;
+: projectile-left?  ( -- f )  xdepth 0<>  ;
   \ Is there any projectile left?
 
-: fire?  ( -- f )  usable-projectile? kk-fire pressed? and  ;
-  \ Is there a usable projectile and is the fire key pressed?
+: fire?  ( -- f )  kk-fire pressed?  ;
+  \ Is the fire key pressed?
 
 : next-projectile  ( -- )
-  projectile# @ 1+ max-projectile# and projectile# !  ;
+  projectile# 1+ max-projectile# and to projectile#  ;
   \ Point to the next current projectile.
 
-  \ : shoot  ( -- )
-  \   projectile# @ 30 23 at-xy .  \ XXX INFORMER
-  \   shooted? if    shooted
-  \            else  fire? if  prepare-projectile fire  then
-  \            then  next-projectile  ;
-  \   \ Manage the shoot.
-
 : shoot  ( -- )
-  projectile# @ 30 23 at-xy .  \ XXX INFORMER
-  fire?    if    prepare-projectile fire
-           else  shooted? if  shooted  then
-           then  next-projectile  ;
+  .debug-data  \ XXX INFORMER
+  projectile-left? if  fire? if  fire  then  then
+  shooted? if  shooted  then  next-projectile  ;
   \ Manage the shoot.
 
 [then]
@@ -1701,7 +1715,12 @@ variable delay  50 delay !  \ ms
 
 : (combat)  ( -- )
   begin   victory? if  next-level init-combat  then
-          break-key? if  quit  then  \ XXX TMP
+
+          \ 2 border
+          break-key? if  quit  then
+          \ 0 border
+          \ XXX TMP
+
           drive shoot move-ufo invasion  catastrophe @
   until   defeat  ;
 
