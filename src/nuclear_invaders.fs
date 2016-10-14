@@ -7,7 +7,11 @@
 
   \ XXX UNDER DEVELOPMENT
 
-: version   ( -- ca len )  s" 0.7.0+201610142033"  ;
+only forth definitions
+
+warnings @ warnings off
+: version   ( -- ca len )  s" 0.8.0+201610150047"  ;
+warnings !
 
 \ Description
 
@@ -32,10 +36,8 @@
   \ ===========================================================
   \ Requisites from the library of Solo Forth
 
-only forth definitions
-
 blk @ 1- last-locatable !
-  \ don't search this source for requisites, just in case
+  \ Don't search this source for requisites, just in case.
 
 need roll      need inkey   need bleep        need beep>bleep
 need os-chars  need os-udg  need 2/           need abort"
@@ -1297,13 +1299,10 @@ create 'projectile-y /projectiles allot
   \ Fake variables for the coordinates of the current
   \ projectile.
 
-  \ : .debug-data  ( -- )
-  \   15 23 at-xy .x 3 spaces
-  \   projectile# 30 23 at-xy .  ;
-    \ XXX INFORMER
-
-: .debug-data  ( -- )  ; immediate
-  \ XXX TMP --
+: .debug-data  ( -- )
+  15 23 at-xy .x 3 spaces
+  projectile# 30 23 at-xy .  ;
+  \ XXX INFORMER
 
 : destroy-projectile  ( -- )
   projectile-y off  projectile# >x  .debug-data  ;
@@ -1462,10 +1461,18 @@ red papery c,  here  red c,  constant broken-brick-colors
                         then  catastrophe !  ;
   \ Manage the possible damages caused by the current invader.
 
+: left-flying-invader  ( -- )
+  -1 invader-x +! at-invader .invader ?space  ;
+  \ Move the current invader, which is flying to the left.
+  \ XXX TODO -- why `?space`?
+
+: right-flying-invader  ( -- )
+  at-invader text-color space .invader 1 invader-x +!  ;
+  \ Move the current invader, which is flying to the right.
+
 : flying-invader  ( -- )
-  invader-x-inc@ dup 0>  \ flying to the right?
-  if    at-invader text-color space .invader invader-x +!
-  else  invader-x +! at-invader .invader ?space  then  ;
+  flying-to-the-right?
+  if  right-flying-invader  else  left-flying-invader  then  ;
   \ Note: `text-color` is needed because the paper color
   \ may have changed.
 
@@ -1474,6 +1481,7 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Activate the current invader, depending on a random
   \ calculation: If there are less than 5 invaders left, the
   \ chances of activation are 22/32, else 6/32.
+  \
   \ XXX TODO -- Simpler and faster? Proportional to the
   \ number of invaders?
 
@@ -1486,11 +1494,11 @@ red papery c,  here  red c,  constant broken-brick-colors
   if  invader-type off  else  1 invader-type +!  then  ;
   \ Update the invader type to the next one.
 
-0 value delay  \ ms
+  \ 0 value delay  \ ms
   \ XXX TMP --
 
 : move-invader  ( -- )
-  delay ms  \ XXX TMP --
+  \ delay ms  \ XXX TMP --
   invader-active @
   if  flying-invader damages  else  activate-invader  then  ;
   \ Move the current invader if it's active, else
@@ -1705,7 +1713,7 @@ red papery c,  here  red c,  constant broken-brick-colors
 
 : shoot  ( -- )
   .debug-data  \ XXX INFORMER
-  projectile-left? if  fire? if  fire  then  then
+  fire? if  projectile-left? if  fire  then  then
   shooted? if  shooted  then  next-projectile  ;
   \ Manage the shoot.
 
