@@ -7,7 +7,7 @@
 
   \ XXX UNDER DEVELOPMENT
 
-\ Version 0.6.0+201610142026
+: version   ( -- ca len )  s" 0.7.0+201610142033"  ;
 
 \ Description
 
@@ -907,7 +907,9 @@ decimal
   \ ===========================================================
   \ Instructions
 
-: title  ( -- )  s" NUCLEAR INVADERS" 0 center-type  ;
+: title  ( -- )
+  s" NUCLEAR INVADERS" 0 center-type
+  version 1 center-type  ;
 
 : (c)  ( -- )  127 emit  ;
   \ Print the copyright symbol.
@@ -941,13 +943,12 @@ decimal
   \ XXX TODO -- rewrite
 
 : .controls  ( -- )
-  s" [Space] to change controls:" row dup >r center-type
-  fire-button$ r@ 2+ center-type
+  \ s" [Space] to change controls:" row dup >r center-type
+  row >r fire-button$ r@ 2+ center-type
   0 r@ 3 + at-xy columns spaces
   controls$ r> 3 + center-type  ;
   \ Print controls at the current row.
   \ XXX TMP --
-  \ XXX FIXME -- these UDG become corrupted after the game
 
 : .score-table-item  ( ca1 len1 ca2 len2 -- )
   type text-color ."  = " type  ;
@@ -982,9 +983,9 @@ decimal
 
 : instructions  ( -- )
   text-color  cls  title
-  0 3 at-xy .score-table
+  0 4 at-xy .score-table
   show-controls
-  s" [Enter] to start" 18 center-type
+  s" SPACE: change - ENTER: start" 18 center-type
   0 21 at-xy .copyright
   menu  ;
 
