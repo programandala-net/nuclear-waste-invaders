@@ -1,6 +1,6 @@
 = Nuclear Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2016-10-14
+:revdate: 2016-10-16
 
 2016-08-01:
 
@@ -12,9 +12,6 @@ table.
 Use pixels instead of characters as projectiles.
 
 2016-10-14:
-
-Fix: the trigger is too sensitive. Make it impossible to launch more than one
-projectile at the same time.
 
 Improve: blinking projectile, with XORed graphic.
 

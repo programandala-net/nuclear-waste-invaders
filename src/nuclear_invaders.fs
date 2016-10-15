@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.9.0+201610150055"  ;
+: version   ( -- ca len )  s" 0.10.0+201610160038"  ;
 warnings !
 
 \ Description
@@ -34,22 +34,48 @@ warnings !
 \ derived works.  There is no warranty.
 
   \ ===========================================================
+  \ Options
+
+  \ Flags for conditional compilation of new features under
+  \ development.
+
+true constant [big-tank] immediate
+  \ 3-UDG wide char (new) instead of 2-UDG wide (old)?
+
+true constant [multiple-projectiles] immediate
+  \ Multiple projectiles (new) instead of one projectile (old)?
+
+false constant [pixel-projectile] immediate
+  \ Pixel projectiles (new) instead of UDG projectiles (old)?
+  \ XXX TODO --
+
+  \ ===========================================================
   \ Requisites from the library of Solo Forth
 
 blk @ 1- last-locatable !
   \ Don't search this source for requisites, just in case.
 
+need defer  need ~~ 13 ~~key !  need [if]
+  \ XXX TMP -- during the development
+
 need roll      need inkey   need bleep        need beep>bleep
 need os-chars  need os-udg  need 2/           need abort"
 need value     need case    need random       need columns
-need rows      need ocr     need ms           need s+
+need rows      need ms      need s+
 need 2value    need row     need char>string  need s\"
-need alias     need plot    need adraw        need inverse
+need alias     need inverse need pixel-addr
 need overprint need column  need color        need color!
-need udg-row[
 
-need allot-xstack  need xdepth  need >x  need x>  need xclear
-need .x  \ XXX TMP --
+[big-tank] [if]  need udg-row[  [then]
+
+[pixel-projectile]
+[if]    need set-pixel  need reset-pixel  need pixel-attr-addr
+[else]  need ocr  [then]
+
+[multiple-projectiles] [if]
+  need allot-xstack  need xdepth  need >x  need x>  need xclear
+  need .x  \ XXX TMP --
+[then]
 
 need black  need blue    need red    need magenta  need green
 need cyan   need yellow  need white
@@ -60,13 +86,6 @@ need papery  need brighty  need flashy
 need kk-ports  need kk-1#   need pressed?     need kk-chars
 
 [defined] binary  ?\ : binary  ( -- )  2 base !  ;
-
-need defer
-need :noname  need benched    need ~~   13 ~~key !
-need [if]
-  \ XXX TMP -- during the development
-
-true constant [big-tank] immediate  \ XXX TMP --
 
   \ ===========================================================
   \ Debug
@@ -108,15 +127,19 @@ tank-y constant arena-bottom-y
   \ ===========================================================
   \ Colors
 
-              white color text-color
-              black color arena-color
- white papery red + color brick-color
-       blue brighty color tank-color
-               blue color life-color
-              green color invader-color
-     yellow brighty color container-color
-             yellow color projectile-color
-            magenta color ufo-color
+             green constant invader-color#
+           magenta constant ufo-color#
+black papery red + constant arena-color#
+
+              white color in-text-color
+       arena-color# color in-arena-color
+ white papery red + color in-brick-color
+       blue brighty color in-tank-color
+               blue color in-life-color
+     invader-color# color in-invader-color
+     yellow brighty color in-container-color
+             yellow color in-projectile-color
+         ufo-color# color in-ufo-color
 
 : init-colors  ( -- )
   black paper  white ink  black flash  0 bright
@@ -276,6 +299,8 @@ variable used-udgs  used-udgs off
   \ XXX OLD
   \ XXX TODO -- move to Solo Forth
 
+[pixel-projectile] 0= [if]
+
 variable ocr-first-udg
 variable ocr-last-udg
   \ Char codes of the first and last UDG to be examined
@@ -292,6 +317,8 @@ variable ocr-last-udg
   \ examined, its char code and the number of examined chars.
   \ XXX TODO -- range: only chars that may be detected: brick
   \ and invaders.
+
+[then]
 
 : rom-font  ( -- )  15360 font!  ;
   \ Set ROM font for chars 0..127
@@ -339,7 +366,7 @@ variable player   1 player !   \ XXX TODO -- not used yet
   \ Column of the score of the current player.
 
 : (.score)  ( n x y -- )
-  at-xy s>d <# # # # # #> text-color type  ;
+  at-xy s>d <# # # # # #> in-text-color type  ;
   \ Print score _n_ at coordinates _x y_.
 
 : score-xy  ( -- x y )  score-x score-y  ;
@@ -429,9 +456,11 @@ variable latest-sprite-udg
 
 2 constant udg/invader
 
->udg @ ocr-first-udg !
-  \ The first UDG examined by `ocr` must be the first one of
-  \ the next sprite.
+[pixel-projectile] 0= [if]
+  >udg @ ocr-first-udg !
+    \ The first UDG examined by `ocr` must be the first one of
+    \ the next sprite.
+[then]
 
 binary
 
@@ -640,9 +669,11 @@ binary
 
 1x1sprite brick
 
->udg @ 1- ocr-last-udg !
-  \ The last UDG examined by `ocr` must be the last one
-  \ of the latest sprite.
+[pixel-projectile] 0= [if]
+  >udg @ 1- ocr-last-udg !
+    \ The last UDG examined by `ocr` must be the last one
+    \ of the latest sprite.
+[then]
 
   \ This UDG is used with reversed colors, depending on
   \ the side of the building:
@@ -727,6 +758,8 @@ sprite-string tank$  ( -- ca len )
 2x1sprite!  sprite-string invader-explosion$  ( -- ca len )
   \ cr latest .name key drop  \ XXX INFORMER
 
+[pixel-projectile] 0= [if]
+
 [big-tank] [if]  \ XXX NEW
 
   \ 00011000
@@ -761,6 +794,8 @@ sprite-string tank$  ( -- ca len )
 [then]
 
 1x1sprite projectile
+
+[then]
 
 0000000000000010
 0010000001100100
@@ -902,7 +937,7 @@ decimal
 17 constant message-y  \ row for game messages
 
 : message  ( ca len -- )
-  2dup message-y text-color center-type  1500 ms
+  2dup message-y in-text-color center-type  1500 ms
        message-y center-type-blank  ;
   \ Print a game message _ca len_.
 
@@ -953,7 +988,7 @@ decimal
   \ XXX TMP --
 
 : .score-table-item  ( ca1 len1 ca2 len2 -- )
-  type text-color ."  = " type  ;
+  type in-text-color ."  = " type  ;
   \ Print an item of the score table, with sprite string _ca2
   \ len2_ and description _ca1 len1_
 
@@ -962,13 +997,13 @@ decimal
 : .score-table  ( -- )
   score-table-x row
   2dup     at-xy s" 10 points"
-           invader-color invader-1$ .score-table-item
+           in-invader-color invader-1$ .score-table-item
   2dup 2+  at-xy s" 20 points"
-           invader-color invader-2$ .score-table-item
+           in-invader-color invader-2$ .score-table-item
   2dup 4 + at-xy s" 30 points"
-           invader-color invader-3$ .score-table-item
+           in-invader-color invader-3$ .score-table-item
        6 + at-xy s" bonus"
-           ufo-color ufo$ .score-table-item  ;
+           in-ufo-color ufo$ .score-table-item  ;
    \ Print the score table at the current row.
 
 : at-controls  ( -- )  0 12 at-xy  ;
@@ -984,7 +1019,7 @@ decimal
   again  ;
 
 : instructions  ( -- )
-  text-color  cls  title
+  in-text-color  cls  title
   0 4 at-xy .score-table
   show-controls
   s" SPACE: change - ENTER: start" 18 center-type
@@ -1010,7 +1045,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
   \ XXX FIXME -- this deletes the bar
 
 : score-bar$  ( -- ca len )
-  text-color s"  SCORE<1>    RECORD    SCORE<2>"  ;
+  in-text-color s"  SCORE<1>    RECORD    SCORE<2>"  ;
 
 : score-bar  ( -- )
   home score-bar$ type .score .record  ;
@@ -1020,10 +1055,13 @@ arena-top-y columns * attributes + constant arena-top-attribute
   10 0 do  at-score 4 spaces 64 ms  .score 64 ms  loop  ;
   \ Show the current player by making its score blink.
 
-need pixel-addr
+: col>pixel  ( n1 -- n2 )  8 *  ;
+  \ Convert a row (0..31) to a pixel y coordinate (0..256).
+  \ XXX TODO -- Move to Solo Forth and rewrite in Z80
 
 : row>pixel  ( n1 -- n2 )  8 * 191 swap -  ;
   \ Convert a row (0..23) to a pixel y coordinate (0..191).
+  \ XXX TODO -- Move to Solo Forth and rewrite in Z80
 
 : ruler  ( -- )
   [ 0 tank-y row>pixel 8 - pixel-addr nip ] literal
@@ -1034,7 +1072,7 @@ need pixel-addr
   \ Set the cursor position to the position of the life icons.
 
 : .lifes  ( -- )
-  at-lifes life-color
+  at-lifes in-life-color
   lifes @ 0 ?do  tank$ type  loop  udg/tank spaces  ;
   \ Print one icon for each remaining life.
 
@@ -1060,7 +1098,7 @@ columns udg/invader - constant invaders-max-x
   \ invader in the table.
 
      10 constant invader-types
-6 cells constant /invader-type
+7 cells constant /invader-type
 
 create default-invaders-data
   \ Default invaders data table.
@@ -1069,17 +1107,17 @@ create default-invaders-data
 
 here
 
-  \ units   active? y    x                 sprite       x inc
-    1 ,     0 ,      5 , invaders-min-x ,  invader-3 ,   1 ,
-    1 ,     0 ,      7 , invaders-min-x ,  invader-2 ,   1 ,
-    1 ,     0 ,      9 , invaders-min-x ,  invader-2 ,   1 ,
-    1 ,     0 ,     11 , invaders-min-x ,  invader-1 ,   1 ,
-    1 ,     0 ,     13 , invaders-min-x ,  invader-1 ,   1 ,
-    1 ,     0 ,      5 , invaders-max-x ,  invader-3 ,  -1 ,
-    1 ,     0 ,      7 , invaders-max-x ,  invader-2 ,  -1 ,
-    1 ,     0 ,      9 , invaders-max-x ,  invader-2 ,  -1 ,
-    1 ,     0 ,     11 , invaders-max-x ,  invader-1 ,  -1 ,
-    1 ,     0 ,     13 , invaders-max-x ,  invader-1 ,  -1 ,
+  \ units active? y   x                sprite      x inc points
+    1 ,   0 ,     5 , invaders-min-x , invader-3 ,  1 ,  30 ,
+    1 ,   0 ,     7 , invaders-min-x , invader-2 ,  1 ,  20 ,
+    1 ,   0 ,     9 , invaders-min-x , invader-2 ,  1 ,  20 ,
+    1 ,   0 ,    11 , invaders-min-x , invader-1 ,  1 ,  10 ,
+    1 ,   0 ,    13 , invaders-min-x , invader-1 ,  1 ,  10 ,
+    1 ,   0 ,     5 , invaders-max-x , invader-3 , -1 ,  30 ,
+    1 ,   0 ,     7 , invaders-max-x , invader-2 , -1 ,  20 ,
+    1 ,   0 ,     9 , invaders-max-x , invader-2 , -1 ,  20 ,
+    1 ,   0 ,    11 , invaders-max-x , invader-1 , -1 ,  10 ,
+    1 ,   0 ,    13 , invaders-max-x , invader-1 , -1 ,  10 ,
     \ XXX TMP -- 1 unit per type instead of 3
 
 here swap - constant /invaders-data
@@ -1110,6 +1148,9 @@ create invaders-data  /invaders-data allot
 
 : invader-x-inc@  ( -- n )  'invader [ 5 cells ] literal + @  ;
 
+: invader-points@  ( -- n )
+  'invader [ 6 cells ] literal + @  ;
+
 : invader-default-x@    ( -- x y )
   'default-invader [ 3 cells ] literal + @  ;
 
@@ -1136,9 +1177,9 @@ variable containers-left-x   variable containers-right-x
 : increase-level  ( -- )  level @ 1+ max-level min level !  ;
   \ Increase the level number.
 
-: update-level  ( -- )  increase-level set-building-size  ;
+: next-level  ( -- )  increase-level set-building-size  ;
 
-: init-level  ( -- )  level off  update-level  ;
+: init-level  ( -- )  level off  next-level  ;
   \ Init the level number and the related variables
   \ (the size of the bulding).
 
@@ -1147,7 +1188,7 @@ variable containers-left-x   variable containers-right-x
 
 : floor  ( y -- )
   building-left-x @ swap at-xy
-  brick-color brick building-width @ .1x1sprites  ;
+  in-brick-color brick building-width @ .1x1sprites  ;
   \ Draw a floor of the building at row _y_.
 
 : building-top  ( -- )  building-top-y floor  ;
@@ -1166,16 +1207,16 @@ variable containers-left-x   variable containers-right-x
   \ their first char.
 
 : containers-bottom  ( n -- )
-  container-color
+  in-container-color
   0 ?do  container-bottom .2x1sprite  loop  ;
   \ Draw a row of _n_ bottom parts of containers.
 
 : containers-top  ( n -- )
-  container-color
+  in-container-color
   0 ?do  container-top .2x1sprite  loop  ;
   \ Draw a row of _n_ top parts of containers.
 
-: .brick  ( -- )  brick-color brick .1x1sprite  ;
+: .brick  ( -- )  in-brick-color brick .1x1sprite  ;
   \ Draw a brick.
 
 : building  ( -- )
@@ -1198,14 +1239,15 @@ columns udg/tank - 1- constant tank-max-x
   tank-max-x min tank-min-x max  ;
   \ Adjust the given column to the limits of the tank.
 
-: ?space   ( -- )  column if  text-color space  then  ;
+  \ : ?space   ( -- )  column if  in-text-color space  then  ;
   \ Print a space, if current column is not zero.
+  \ XXX OLD
 
   \ : drive  ( -- )
   \   tank-x @ kk-left  pressed? +
   \            kk-right pressed? abs +
   \   tank-range dup tank-x !  tank-y
-  \   at-xy tank-color ?space tank$ type ?space  ;
+  \   at-xy in-tank-color ?space tank$ type ?space  ;
   \ Move the tank depending on the key pressed.
   \ XXX OLD
   \ XXX FIXME -- trails
@@ -1215,7 +1257,7 @@ columns udg/tank - 1- constant tank-max-x
   \   ;
   \ : drive-right  ( -- )  ;
   \   tank-range dup tank-x !  1- tank-y
-  \   at-xy tank-color ?space tank$ type ?space
+  \   at-xy in-tank-color ?space tank$ type ?space
 
   \ : drive  ( -- )
   \   kk-left  pressed? if  drive-left  exit then
@@ -1226,7 +1268,7 @@ columns udg/tank - 1- constant tank-max-x
   kk-left pressed? kk-right pressed? abs +  ;
   \ Does the tank move? Return its x increment.
 
-: .tank  ( -- )  tank-color tank$ type  ;
+: .tank  ( -- )  in-tank-color tank$ type  ;
   \ Print the tank at the current cursor position.
   \ XXX FIXME -- spaces depend on the direction,
   \ thus this can't work in x range 0..31.
@@ -1235,7 +1277,7 @@ columns udg/tank - 1- constant tank-max-x
 
 : at-tank  ( -- )  tank-x @ tank-y at-xy  ;
 : tank-ready  ( -- )  at-tank .tank  ;
-: -tank  ( -- )  at-tank text-color udg/tank spaces  ;
+: -tank  ( -- )  at-tank in-arena-color udg/tank spaces  ;
 
 : move-tank  ( -1|1 -- )
   tank-x @ + tank-range dup tank-x ! tank-y at-xy  ;
@@ -1249,21 +1291,7 @@ columns udg/tank - 1- constant tank-max-x
   \ ==========================================================
   \ Projectile
 
-false constant [single-projectile] immediate
-  \ XXX UNDER DEVELOPMENT
-
-[single-projectile] [if]
-
-  \ XXX OLD -- one single projectile on the screen
-
-variable projectile-x  \ column
-variable projectile-y  \ row (0 if no shoot)
-
-: destroy-projectile  ( -- )  projectile-y off  ;
-
-: init-projectiles  ( -- )  destroy-projectile  ;
-
-[else]
+[multiple-projectiles] [if]
 
   \ XXX NEW -- 4 projectiles on the screen
   \ XXX FIXME --
@@ -1272,8 +1300,8 @@ variable projectile-y  \ row (0 if no shoot)
   \ calculations faster. E.g. `projectile#` can be used as
   \ offset.
 
-%11 constant max-projectile#
-  \ Bitmask for the projectile counter (0..3).
+%111 value max-projectile#
+  \ Bitmask for the projectile counter (0..7).
 
 max-projectile# 1+ constant #projectiles
   \ Maximum number of projectiles.
@@ -1299,10 +1327,15 @@ create 'projectile-y /projectiles allot
   \ Fake variables for the coordinates of the current
   \ projectile.
 
+false [if]
+
 : .debug-data  ( -- )
-  15 23 at-xy .x 3 spaces
-  projectile# 30 23 at-xy .  ;
+  9 23 at-xy ." Ammo:" xdepth .
+             ." Depth:" depth .
+             ." Curr.:" projectile# .  ;
   \ XXX INFORMER
+
+[else]  : .debug-data ; immediate  [then]
 
 : destroy-projectile  ( -- )
   projectile-y off  projectile# >x  .debug-data  ;
@@ -1311,13 +1344,30 @@ create 'projectile-y /projectiles allot
   'projectile-y /projectiles erase
   xclear #projectiles 0 do  i >x  loop  ;
 
+[else]
+
+  \ XXX OLD -- one single projectile on the screen
+
+variable projectile-x  \ column
+variable projectile-y  \ row (0 if no shoot)
+
+: destroy-projectile  ( -- )  projectile-y off  ;
+
+: init-projectiles  ( -- )  destroy-projectile  ;
+
 [then]
+
+: projectile-coords  ( -- x y )
+  projectile-x @ projectile-y @  ;
+  \ Coordinates of the projectile.
+  \ XXX TODO -- use double cells for speed
 
   \ ==========================================================
   \ Init
 
 : init-game  ( -- )
-  init-ocr  3 lifes !  init-level  score off  game-screen  ;
+  [pixel-projectile] [ 0= ] [if]  init-ocr  [then]
+  3 lifes !  init-level  score off  game-screen  ;
 
 : init-invaders-data  ( -- )
   default-invaders-data invaders-data /invaders-data move  ;
@@ -1338,7 +1388,7 @@ create 'projectile-y /projectiles allot
 : init-tank  ( -- )  columns udg/tank - 2/ tank-x !  ;
 
 : parade  ( -- )
-  invader-color
+  in-invader-color
   invader-1 dup invader-2 dup invader-3
   building-bottom-y [ building-top-y 1+ ] literal
   do
@@ -1350,7 +1400,7 @@ create 'projectile-y /projectiles allot
 : init-arena  ( -- )   -arena building tank-ready parade  ;
 
 : level-message  ( -- ca len )
-  text-color s" LEVEL " level @ s>d <# # #> s+  ;
+  in-text-color s" LEVEL " level @ s>d <# # #> s+  ;
 
 : show-level  ( -- )  level-message message  ;
 
@@ -1374,7 +1424,8 @@ create 'projectile-y /projectiles allot
   invader-char@ invader-x @ sprite>frame  ;
   \ Frame of the invader, calculated from its column _x_.
 
-: .invader  ( -- )  invader-color invader-frame .2x1sprite  ;
+: .invader  ( -- )
+  in-invader-color invader-frame .2x1sprite  ;
   \ Print the current invader.
 
   \ ============================================================
@@ -1444,7 +1495,7 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Broke the container on its right side.
 
 : broken-container  ( -- )
-  container-color
+  in-container-color
   flying-to-the-right?  if    broken-left-container
                         else  broken-right-container  then  ;
   \ Broke the container.
@@ -1462,19 +1513,16 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Manage the possible damages caused by the current invader.
 
 : left-flying-invader  ( -- )
-  -1 invader-x +! at-invader .invader ?space  ;
+  -1 invader-x +! at-invader .invader space  ;
   \ Move the current invader, which is flying to the left.
-  \ XXX TODO -- why `?space`?
 
 : right-flying-invader  ( -- )
-  at-invader text-color space .invader 1 invader-x +!  ;
+  at-invader in-arena-color space .invader 1 invader-x +!  ;
   \ Move the current invader, which is flying to the right.
 
 : flying-invader  ( -- )
   flying-to-the-right?
   if  right-flying-invader  else  left-flying-invader  then  ;
-  \ Note: `text-color` is needed because the paper color
-  \ may have changed.
 
 : activate-invader  ( -- )
 
@@ -1484,12 +1532,14 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Activate the current invader, depending on a random
   \ calculation: If there are less than 5 invaders left, the
   \ chances of activation are 22/32, else 6/32.
+  \ XXX OLD
 
   [else]
 
   invaders @ random 0= invader-active !
   \ Activate the current invader randomly, depending on the
   \ number of aliens.
+  \ XXX NEW
 
   [then]  ;
 
@@ -1502,11 +1552,7 @@ red papery c,  here  red c,  constant broken-brick-colors
   if  invader-type off  else  1 invader-type +!  then  ;
   \ Update the invader type to the next one.
 
-  \ 0 value delay  \ ms
-  \ XXX TMP --
-
 : move-invader  ( -- )
-  \ delay ms  \ XXX TMP --
   invader-active @
   if  flying-invader damages  else  activate-invader  then  ;
   \ Move the current invader if it's active, else
@@ -1538,7 +1584,7 @@ red papery c,  here  red c,  constant broken-brick-colors
 : ufo-frame  ( -- c )  ufo ufo-x @ sprite>frame  ;
 
 : flying-ufo  ( -- )
-  1 ufo-x +! at-ufo ufo-color space ufo-frame .2x1sprite  ;
+  1 ufo-x +! at-ufo in-ufo-color space ufo-frame .2x1sprite  ;
   \ Update the position of the UFO and show it.
 
 : (move-ufo)  ( -- )
@@ -1548,6 +1594,9 @@ red papery c,  here  red c,  constant broken-brick-colors
 : move-ufo  ( -- )
   ufo-invisible? if  1 ufo-x +!  else  (move-ufo)  then  ;
   \ Manage the UFO, if it's visible.
+
+  \ ==========================================================
+  \ Impact
 
 : ufo-bang  ( -- )  18 12 do  i 15 beep  loop  ;
   \ XXX TODO -- explosion sound
@@ -1569,20 +1618,11 @@ red papery c,  here  red c,  constant broken-brick-colors
 
 : ufo-impacted  ( -- )  ufo-explosion ufo-bonus 200 ms -ufo  ;
 
-: invader-points  ( -- n )
-  projectile-y @ 3 - 2/          \ depending on the row
-  \ projectile-x @ 15 > abs 5 * +  \ add 5 when x>15  -- XXX why?
-  projectile-y @
-  dup 5 = if  drop 30
-          else  10 > 10 * 20 +  then  ;
-  \ Points for impacting an invader.
-  \ XXX TODO -- simplify
-
-: invader-bonus  ( -- )  invader-points  update-score  ;
+: invader-bonus  ( -- )  invader-points@  update-score  ;
   \ Update the score with the invader bonus.
 
 : invader-bang  ( -- ca len )  10 100 beep  ;
-  \ XXX TODO -- explosion sound
+  \ XXX TODO -- explosion 128 sound
 
 : invader-on-fire  ( -- )
   at-invader invader-explosion$ type  ;
@@ -1596,16 +1636,17 @@ red papery c,  here  red c,  constant broken-brick-colors
 : impacted-invader  ( -- n )
   projectile-y @ [ building-top-y 1+ ] literal - 2/
   projectile-x @ [ columns 2/ ] literal > abs 5 * +  ;
-  \ Invader type impacted calculated from the projectile
-  \ coordinates: Invader types 0 and 5 are at the top, one row
-  \ below the top of the building, types 1 and 6 are two lines
-  \ below and so on. Types 0..4 are at the left of the
-  \ screen; types 5..9 are at the right.
+  \ Return the type _n_ (0..9) of the impacted invader,
+  \ calculated from the projectile coordinates: Invader types 0
+  \ and 5 are at the top, one row below the top of the
+  \ building; types 1 and 6 are two rows below and so on.
+  \ Types 0..4 are at the left of the screen; types 5..9 are at
+  \ the right.
 
 : replace-invader  ( -- )
   invader-active off
   invader-default-x@ invader-x !  at-invader
-  invader-color invader-char@ .2x1sprite  ;
+  in-invader-color invader-char@ .2x1sprite  ;
   \ Replace the current invader with its next unit.
   \ Set it inactive at its start position.
 
@@ -1621,21 +1662,31 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ An invader has been impacted by the projectile.
   \ Calculate its type, set it the current one and manage it.
 
+: ufo-impacted?  ( -- f )
+  [pixel-projectile]
+  [if]    projectile-coords pixel-attr-addr c@ ufo-color# =
+  [else]  projectile-y @ ufo-y =
+  [then]  ;
+
 : (impact)  ( -- )
-  projectile-y @ ufo-y = if  ufo-impacted exit  then
+  ufo-impacted? if  ufo-impacted exit  then
   invader-impacted  ;
   \ Manage the impact.
 
 : impact  ( -- )
-  projectile-y @ building-bottom-y <
-  if  (impact)  then  destroy-projectile  ;
+  projectile-y @
+  [pixel-projectile]
+  [if]    [ building-bottom-y row>pixel ] literal >
+  [else]  building-bottom-y <
+  [then]  if  (impact)  then  destroy-projectile  ;
   \ Manage the impact, if the projectil is high enough.
   \ XXX TODO -- impact the building too
 
-: projectile-xy  ( -- x y )  projectile-x @ projectile-y @  ;
-  \ Coordinates of the projectile.
-
-: hit?  ( -- f )  projectile-xy ocr 0<>  ;
+: hit?  ( -- f )
+  projectile-coords  [pixel-projectile]
+  [if]    pixel-attr-addr c@ invader-color# =
+  [else]  ocr 0<>
+  [then]  ;
   \ Did the projectile hit the target?
 
 : impact?  ( -- f )  hit? dup if  impact  then  ;
@@ -1645,72 +1696,88 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ ==========================================================
   \ Shoot
 
-: at-projectile  ( -- )  projectile-xy at-xy  ;
+[pixel-projectile] 0= [if]
+
+: at-projectile  ( -- )  projectile-coords at-xy  ;
   \ Set the cursor position at the coordinates of the
   \ projectile.
 
+[then]
+
 : .projectile  ( -- )
-  projectile-color at-projectile projectile .1x1sprite  ;
+  [pixel-projectile]
+  [if]    projectile-coords set-pixel
+  [else]  in-projectile-color
+          at-projectile projectile .1x1sprite
+  [then]  ;
   \ Show the projectile.
 
 : fire-sound  ( -- )
   \ 50 0 do  7 1 do  i border 0 border  loop  loop
     \ XXX INFORMER
   ;
-  \ XXX TODO --
+  \ XXX TODO -- 128 sound
 
-: -projectile  ( -- )  at-projectile text-color space  ;
+: -projectile  ( -- )
+  [pixel-projectile]
+  [if]    projectile-coords reset-pixel
+  [else]  at-projectile in-arena-color space
+  [then]  ;
   \ Delete the projectile.
 
 : projectile-lost?  ( -- f )
-  projectile-y @ building-top-y <  ;
+  [pixel-projectile]
+  [if]    projectile-y @ [ building-top-y row>pixel ] literal >
+  [else]  projectile-y @ building-top-y <
+  [then]  ;
   \ Is the projectile lost?
 
-[single-projectile] [if]
-
-: shooted  ( -- )
-  -projectile
-  projectile-lost? if  destroy-projectile exit  then
-  -1 projectile-y +! impact? ?exit  .projectile  ;
-  \ Manage the projectile.
-
-: fire  ( -- )
-  tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
-  [ tank-y 1- ] literal projectile-y !  fire-sound  ;
-  \ The tank fires.
-
-: shooted?  ( -- f )  projectile-y @ 0<>  ;
-  \ Has the tank already shooted?
-
-: fire?  ( -- f )  kk-fire pressed?  ;
-  \ Is the fire key pressed?
-
-: shoot  ( -- )
-  shooted? if  shooted exit  then
-  fire? if  fire  then  ;
-  \ Manage the shoot.
-
-[else]
+[multiple-projectiles] [if]
 
   \ XXX TODO -- improve
 
-: shooted  ( -- )
+: move-projectile  ( -- )
   -projectile
   projectile-lost? if  destroy-projectile exit  then
-  -1 projectile-y +! impact? ?exit  .projectile  ;
+  [pixel-projectile] [if]    7
+                     [else]  -1
+                     [then]  projectile-y +!
+  impact? ?exit  .projectile  ;
   \ Manage the projectile.
+
+variable trigger-delay-counter  trigger-delay-counter off
+
+[pixel-projectile] [if]    8
+                   [else]  6
+                   [then]  value trigger-delay
+
+: delay-trigger  ( -- )
+  trigger-delay trigger-delay-counter !  ;
 
 : fire  ( -- )
   x> to projectile#  .debug-data
-  tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
-  [ tank-y 1- ] literal projectile-y !  fire-sound  ;
+  [pixel-projectile] [if]
+    tank-x @ col>pixel
+    [ udg/tank 8 * 2/ ] literal + projectile-x !
+    [ tank-y row>pixel 1+ ] literal projectile-y !
+  [else]
+    tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
+    [ tank-y 1- ] literal projectile-y !
+  [then]  fire-sound  delay-trigger  ;
   \ The tank fires.
 
-: shooted?  ( -- f )  projectile-y @ 0<>  ;
-  \ Has the current projectile been shooted?
+: flying-projectile?  ( -- f )  projectile-y @ 0<>  ;
+  \ Is the current projectile flying?
 
 : projectile-left?  ( -- f )  xdepth 0<>  ;
   \ Is there any projectile left?
+
+: update-trigger  ( -- )
+  trigger-delay-counter @ 1- 0 max trigger-delay-counter !  ;
+  \ Decrement the trigger delay. The minimum is zero.
+
+: trigger-ready?  ( -- f )  trigger-delay-counter @ 0=  ;
+  \ Is the trigger ready?
 
 : fire?  ( -- f )  kk-fire pressed?  ;
   \ Is the fire key pressed?
@@ -1719,10 +1786,42 @@ red papery c,  here  red c,  constant broken-brick-colors
   projectile# 1+ max-projectile# and to projectile#  ;
   \ Point to the next current projectile.
 
-: shoot  ( -- )
+: fly-projectile  ( -- )
   .debug-data  \ XXX INFORMER
-  fire? if  projectile-left? if  fire  then  then
-  shooted? if  shooted  then  next-projectile  ;
+  flying-projectile? if  move-projectile  then
+  next-projectile  ;
+  \ Manage the shoot.
+
+: shoot  ( -- )
+  fire? if  trigger-ready? if  projectile-left? if  fire
+        then  then  then  update-trigger  ;
+
+[else]
+
+: move-projectile  ( -- )
+  -projectile
+  projectile-lost? if  destroy-projectile exit  then
+  [pixel-projectile] [if]    7
+                     [else]  -1
+                     [then]  projectile-y +!
+  impact? ?exit  .projectile  ;
+  \ Manage the projectile.
+
+: fire  ( -- )
+  tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
+  [ tank-y 1- ] literal projectile-y !  fire-sound  ;
+  \ The tank fires.
+
+: flying-projectile?  ( -- f )  projectile-y @ 0<>  ;
+  \ Is the projectile flying?
+
+: fire?  ( -- f )  kk-fire pressed?  ;
+  \ Is the fire key pressed?
+
+: fly-projectile  ( -- )
+  flying-projectile? if  move-projectile exit  then  ;
+
+: shoot  ( -- )  fire? if  fire  then  ;
   \ Manage the shoot.
 
 [then]
@@ -1734,7 +1833,7 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Set the new record.
 
 : check-record  ( -- )  new-record? if  new-record  then  ;
-  \ Check if there's a new record, and set it.
+  \ Set the new record, if needed.
 
   \ ==========================================================
   \ Main
@@ -1743,13 +1842,11 @@ red papery c,  here  red c,  constant broken-brick-colors
 
 : game-over  ( -- )  .game-over check-record  ;
 
-: next-level  ( -- )  update-level show-level  ;
-
 : dead  ( -- )  -1 lifes +!  .lifes  ;
   \ One life lost.
 
 : defeat-tune  ( -- )  100 200 do  i 20 beep  -5 +loop  ;
-  \ XXX TODO -- improve for 128
+  \ XXX TODO -- 128 sound
 
 : defeat  ( -- )  defeat-tune  300 ms  dead  ;
 
@@ -1763,7 +1860,11 @@ red papery c,  here  red c,  constant broken-brick-colors
           \ 0 border
           \ XXX TMP
 
-          drive shoot move-ufo invasion  catastrophe @
+          fly-projectile drive
+          fly-projectile shoot
+          fly-projectile move-ufo
+          fly-projectile invasion
+          fly-projectile catastrophe @
   until   defeat  ;
 
 : combat  ( -- )  init-combat (combat)  ;
