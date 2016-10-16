@@ -19,3 +19,7 @@ Improve: blinking projectile, with XORed graphic.
 
 Show an icon of the free projectiles: A graphic with 0..3 bars, or
 0..3 graphics.
+
+2016-10-16:
+
+Effect: the invaders eats the container.

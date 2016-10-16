@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.10.0+201610160038"  ;
+: version   ( -- ca len )  s" 0.11.0+201610161129"  ;
 warnings !
 
 \ Description
@@ -39,7 +39,7 @@ warnings !
   \ Flags for conditional compilation of new features under
   \ development.
 
-true constant [big-tank] immediate
+false constant [big-tank] immediate
   \ 3-UDG wide char (new) instead of 2-UDG wide (old)?
 
 true constant [multiple-projectiles] immediate
@@ -63,7 +63,7 @@ need os-chars  need os-udg  need 2/           need abort"
 need value     need case    need random       need columns
 need rows      need ms      need s+
 need 2value    need row     need char>string  need s\"
-need alias     need inverse need pixel-addr
+need alias     need inverse need pixel-addr   need between
 need overprint need column  need color        need color!
 
 [big-tank] [if]  need udg-row[  [then]
@@ -1229,11 +1229,30 @@ variable containers-left-x   variable containers-right-x
   -2 +loop  2drop  building-top  ;
   \ Draw the building and the nuclear containers.
 
-  \ ( drive )   \ XXX TODO -- try
+  \ ==========================================================
+  \ Tank
 
                     1 constant tank-min-x
 columns udg/tank - 1- constant tank-max-x
   \ Mininum and maximin columns of the tank.
+
+: new-projectile-x  ( -- col|x )
+  [pixel-projectile]
+  [if]    tank-x @ col>pixel [ udg/tank 8 * 2/ ] literal +
+  [else]  tank-x @  [big-tank] [if]  1+  [then]
+  [then]  ;
+  \ Return the column _col_ or graphic coordinate _x_ for the
+  \ new projectile, depending (at compile time) on the type of
+  \ projectile and (at runtime) the position of the tank.
+
+: gun-below-building?  ( -- f )
+  new-projectile-x
+  [pixel-projectile] [if]
+    building-left-x @ col>pixel building-right-x @ col>pixel
+  [else]
+    building-left-x @ building-right-x @
+  [then]  between  ;
+  \ Is the tank's gun below the building?
 
 : tank-range  ( col -- col' )
   tank-max-x min tank-min-x max  ;
@@ -1255,46 +1274,66 @@ columns udg/tank - 1- constant tank-max-x
   \ : drive-left  ( -- )
   \   tank-x @ if  -1 tank-@
   \   ;
+  \ XXX OLD
+
   \ : drive-right  ( -- )  ;
   \   tank-range dup tank-x !  1- tank-y
   \   at-xy in-tank-color ?space tank$ type ?space
+  \ XXX OLD
 
   \ : drive  ( -- )
   \   kk-left  pressed? if  drive-left  exit then
   \   kk-right pressed? if  drive-right      then  ;
   \   \ Move the tank depending on the key pressed.
+  \ XXX OLD
+
+variable transmission-delay-counter
+
+transmission-delay-counter off
+
+8 value transmission-delay
+
+: update-transmission  ( -- )
+  transmission-delay-counter @ 1- 0 max
+  transmission-delay-counter !  ;
+  \ Decrement the transmission delay. The minimum is zero.
+
+: transmission-ready?  ( -- f )
+  transmission-delay-counter @ 0=  ;
+  \ Is the transmission ready?
 
 : moving-tank?  ( -- -1|0|1 )
-  kk-left pressed? kk-right pressed? abs +  ;
+  kk-left pressed? kk-right pressed? abs +
+  transmission-ready? and  ;
   \ Does the tank move? Return its x increment.
 
 : .tank  ( -- )  in-tank-color tank$ type  ;
   \ Print the tank at the current cursor position.
-  \ XXX FIXME -- spaces depend on the direction,
-  \ thus this can't work in x range 0..31.
-
-  \ ( drive )   \ XXX TODO -- try
 
 : at-tank  ( -- )  tank-x @ tank-y at-xy  ;
+
 : tank-ready  ( -- )  at-tank .tank  ;
+
 : -tank  ( -- )  at-tank in-arena-color udg/tank spaces  ;
 
 : move-tank  ( -1|1 -- )
   tank-x @ + tank-range dup tank-x ! tank-y at-xy  ;
-  \ Set the cursor position to the coordinates of the tank,
-  \ after incrementing its column with the given value.
+  \ Increment the column of the tank with the given value, then
+  \ set the cursor position to the coordinates of the tank.
 
 : drive  ( -- )
+  update-transmission
   moving-tank? ?dup 0= ?exit  -tank move-tank .tank  ;
-  \ XXX FIXME -- don't delete the whole tank
+
+  \ XXX TODO -- don't delete the whole tank every time, but
+  \ only the character not overwritten by the new position
 
   \ ==========================================================
   \ Projectile
 
 [multiple-projectiles] [if]
 
-  \ XXX NEW -- 4 projectiles on the screen
-  \ XXX FIXME --
+  \ XXX NEW -- several projectiles on the screen
 
   \ XXX TODO -- Store coordinates in bytes; this will make some
   \ calculations faster. E.g. `projectile#` can be used as
@@ -1304,7 +1343,7 @@ columns udg/tank - 1- constant tank-max-x
   \ Bitmask for the projectile counter (0..7).
 
 max-projectile# 1+ constant #projectiles
-  \ Maximum number of projectiles.
+  \ Maximum number of simultaneous projectiles.
 
 #projectiles allot-xstack free-projectiles free-projectiles
   \ Create and activate an stack to store the free projectiles.
@@ -1327,15 +1366,20 @@ create 'projectile-y /projectiles allot
   \ Fake variables for the coordinates of the current
   \ projectile.
 
-false [if]
+[pixel-projectile] [if]
+
+defer debug-data-pause  ( -- )
+
+' wait ' debug-data-pause defer!
 
 : .debug-data  ( -- )
   9 23 at-xy ." Ammo:" xdepth .
              ." Depth:" depth .
-             ." Curr.:" projectile# .  ;
+             ." Curr.:" projectile# .
+             debug-data-pause  ;
   \ XXX INFORMER
 
-[else]  : .debug-data ; immediate  [then]
+[else]  : .debug-data  ( -- )  ; immediate  [then]
 
 : destroy-projectile  ( -- )
   projectile-y off  projectile# >x  .debug-data  ;
@@ -1352,8 +1396,10 @@ variable projectile-x  \ column
 variable projectile-y  \ row (0 if no shoot)
 
 : destroy-projectile  ( -- )  projectile-y off  ;
+  \ Destroy the projectile.
 
 : init-projectiles  ( -- )  destroy-projectile  ;
+  \ Init the projectiles.
 
 [then]
 
@@ -1365,27 +1411,39 @@ variable projectile-y  \ row (0 if no shoot)
   \ ==========================================================
   \ Init
 
+3 value max-lifes
+  \ XXX TMP -- constant, but value for debugging
+
+: init-lifes  ( -- )  max-lifes lifes !  ;
+
 : init-game  ( -- )
   [pixel-projectile] [ 0= ] [if]  init-ocr  [then]
-  3 lifes !  init-level  score off  game-screen  ;
+  init-lifes  init-level  score off  game-screen  ;
+  \ Init the game.
 
 : init-invaders-data  ( -- )
   default-invaders-data invaders-data /invaders-data move  ;
 
-: init-ufo  ( -- )  -200 ufo-x !  ;
+-200 constant ufo-initial-x
+  \ Initial column of the UFO, out of the screen.
+
+: init-ufo  ( -- )  ufo-initial-x ufo-x !  ;
+  \ Init the UFO.
 
 : total-invaders  ( -- n )
-  0   invader-types 0 do
-        i invader-type ! invader-units @ +
-      loop  ;
+  0  invader-types 0 do
+       i invader-type ! invader-units @ +
+     loop  ;
   \ Total number of invaders (sum of units of all invader
   \ types).
 
 : init-invaders  ( -- )
   init-invaders-data  invader-type off
   total-invaders invaders !  ;
+  \ Init the invaders.
 
 : init-tank  ( -- )  columns udg/tank - 2/ tank-x !  ;
+  \ Init the tank.
 
 : parade  ( -- )
   in-invader-color
@@ -1416,13 +1474,14 @@ variable projectile-y  \ row (0 if no shoot)
 
 4 constant frames/invader
 
-: sprite>frame  ( c1 x -- c2 )
+: sprite>frame  ( c1 col -- c2 )
   frames/invader mod udg/invader * +  ;
-  \ Frame _c2_ of sprite _c1_, calculated from its column _x_.
+  \ Frame _c2_ of sprite _c1_, calculated from its column
+  \ _col_.
 
 : invader-frame  ( -- c )
   invader-char@ invader-x @ sprite>frame  ;
-  \ Frame of the invader, calculated from its column _x_.
+  \ Frame of the invader, calculated from its column.
 
 : .invader  ( -- )
   in-invader-color invader-frame .2x1sprite  ;
@@ -1582,14 +1641,18 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Is the UFO lost?
 
 : ufo-frame  ( -- c )  ufo ufo-x @ sprite>frame  ;
+  \ Current frame _c_ of the UFO.
 
 : flying-ufo  ( -- )
   1 ufo-x +! at-ufo in-ufo-color space ufo-frame .2x1sprite  ;
   \ Update the position of the UFO and show it.
+  \ XXX TODO -- rename `visible-ufo`?
+  \ XXX TODO -- factor `1 ufo-x +!`
 
 : (move-ufo)  ( -- )
   ufo-lost?  if  -ufo  else  flying-ufo  then  ;
   \ Manage the UFO.
+  \ XXX TODO -- rename
 
 : move-ufo  ( -- )
   ufo-invisible? if  1 ufo-x +!  else  (move-ufo)  then  ;
@@ -1756,13 +1819,10 @@ variable trigger-delay-counter  trigger-delay-counter off
 
 : fire  ( -- )
   x> to projectile#  .debug-data
-  [pixel-projectile] [if]
-    tank-x @ col>pixel
-    [ udg/tank 8 * 2/ ] literal + projectile-x !
-    [ tank-y row>pixel 1+ ] literal projectile-y !
-  [else]
-    tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
-    [ tank-y 1- ] literal projectile-y !
+  new-projectile-x projectile-x !
+  [pixel-projectile]
+  [if]    [ tank-y row>pixel 1+ ] literal projectile-y !
+  [else]  [ tank-y 1- ] literal projectile-y !
   [then]  fire-sound  delay-trigger  ;
   \ The tank fires.
 
@@ -1779,7 +1839,7 @@ variable trigger-delay-counter  trigger-delay-counter off
 : trigger-ready?  ( -- f )  trigger-delay-counter @ 0=  ;
   \ Is the trigger ready?
 
-: fire?  ( -- f )  kk-fire pressed?  ;
+: trigger-pressed?  ( -- f )  kk-fire pressed?  ;
   \ Is the fire key pressed?
 
 : next-projectile  ( -- )
@@ -1793,8 +1853,15 @@ variable trigger-delay-counter  trigger-delay-counter off
   \ Manage the shoot.
 
 : shoot  ( -- )
-  fire? if  trigger-ready? if  projectile-left? if  fire
-        then  then  then  update-trigger  ;
+  trigger-pressed? if
+    trigger-ready? if
+      projectile-left? if
+        gun-below-building? 0= if
+          fire  then  then  then  then  update-trigger  ;
+  \ Manage the shoot.
+  \
+  \ XXX TODO -- use `?exit` and `0exit` instead of conditionals
+  \ and move `update-trigger` to the start.
 
 [else]
 
@@ -1815,13 +1882,16 @@ variable trigger-delay-counter  trigger-delay-counter off
 : flying-projectile?  ( -- f )  projectile-y @ 0<>  ;
   \ Is the projectile flying?
 
-: fire?  ( -- f )  kk-fire pressed?  ;
+: trigger-pressed?  ( -- f )  kk-fire pressed?  ;
   \ Is the fire key pressed?
 
 : fly-projectile  ( -- )
   flying-projectile? if  move-projectile exit  then  ;
 
-: shoot  ( -- )  fire? if  fire  then  ;
+: shoot  ( -- )
+  trigger-pressed? if
+    gun-below-building? 0= if
+     fire  then  ;
   \ Manage the shoot.
 
 [then]
