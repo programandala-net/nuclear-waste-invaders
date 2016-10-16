@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.12.0+201610161155"  ;
+: version   ( -- ca len )  s" 0.13.0+201610161323"  ;
 warnings !
 
 \ Description
@@ -62,6 +62,7 @@ need rows      need ms      need s+           need udg-row[
 need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
 need overprint need column  need color        need color!
+need c+!
 
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
@@ -1286,6 +1287,7 @@ transmission-delay-counter off
 
 %111 value max-projectile#
   \ Bitmask for the projectile counter (0..7).
+  \ XXX TODO -- try %1111 and %11111
 
 max-projectile# 1+ constant #projectiles
   \ Maximum number of simultaneous projectiles.
@@ -1294,22 +1296,17 @@ max-projectile# 1+ constant #projectiles
   \ Create and activate an stack to store the free projectiles.
 
 0 value projectile#
-  \ Number of the current projectile (0..3).
+  \ Number of the current projectile.
 
-#projectiles cells constant /projectiles
-  \ Bytes used by the projectiles' tables.
-
-create 'projectile-x /projectiles allot
-create 'projectile-y /projectiles allot
+create 'projectile-x #projectiles allot
+create 'projectile-y #projectiles allot
   \ Tables for the coordinates of all projectiles.
 
-: >projectile  ( -- n )  projectile# cells  ;
-  \ Current projectile offset _n_ in the projectiles' tables.
+: projectile-x  ( -- a )  'projectile-x projectile# +  ;
+  \ Address of the x coordinate of the current projectile.
 
-: projectile-x  ( -- a )  >projectile 'projectile-x +  ;
-: projectile-y  ( -- a )  >projectile 'projectile-y +  ;
-  \ Fake variables for the coordinates of the current
-  \ projectile.
+: projectile-y  ( -- a )  'projectile-y projectile# +  ;
+  \ Address of the y coordinate of the current projectile.
 
 [pixel-projectile] [if]
 
@@ -1327,20 +1324,20 @@ defer debug-data-pause  ( -- )
 [else]  : .debug-data  ( -- )  ; immediate  [then]
 
 : destroy-projectile  ( -- )
-  projectile-y off  projectile# >x  .debug-data  ;
+  0 projectile-y c!  projectile# >x  .debug-data  ;
 
 : init-projectiles  ( -- )
-  'projectile-y /projectiles erase
+  'projectile-y #projectiles erase
   xclear #projectiles 0 do  i >x  loop  ;
 
 [else]
 
   \ XXX OLD -- one single projectile on the screen
 
-variable projectile-x  \ column
-variable projectile-y  \ row (0 if no shoot)
+cvariable projectile-x  \ column
+cvariable projectile-y  \ row (0 if no shoot)
 
-: destroy-projectile  ( -- )  projectile-y off  ;
+: destroy-projectile  ( -- )  0 projectile-y c!  ;
   \ Destroy the projectile.
 
 : init-projectiles  ( -- )  destroy-projectile  ;
@@ -1349,15 +1346,14 @@ variable projectile-y  \ row (0 if no shoot)
 [then]
 
 : projectile-coords  ( -- x y )
-  projectile-x @ projectile-y @  ;
+  projectile-x c@ projectile-y c@  ;
   \ Coordinates of the projectile.
-  \ XXX TODO -- use double cells for speed
 
   \ ==========================================================
   \ Init
 
-3 value max-lifes
-  \ XXX TMP -- constant, but value for debugging
+3 constant max-lifes
+  \ Maximum number of lifes, including the first one.
 
 : init-lifes  ( -- )  max-lifes lifes !  ;
 
@@ -1642,8 +1638,8 @@ red papery c,  here  red c,  constant broken-brick-colors
   invader-on-fire invader-bang -invader  ;
 
 : impacted-invader  ( -- n )
-  projectile-y @ [ building-top-y 1+ ] literal - 2/
-  projectile-x @ [ columns 2/ ] literal > abs 5 * +  ;
+  projectile-y c@ [ building-top-y 1+ ] literal - 2/
+  projectile-x c@ [ columns 2/ ] literal > abs 5 * +  ;
   \ Return the type _n_ (0..9) of the impacted invader,
   \ calculated from the projectile coordinates: Invader types 0
   \ and 5 are at the top, one row below the top of the
@@ -1673,7 +1669,7 @@ red papery c,  here  red c,  constant broken-brick-colors
 : ufo-impacted?  ( -- f )
   [pixel-projectile]
   [if]    projectile-coords pixel-attr-addr c@ ufo-color# =
-  [else]  projectile-y @ ufo-y =
+  [else]  projectile-y c@ ufo-y =
   [then]  ;
 
 : (impact)  ( -- )
@@ -1682,7 +1678,7 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Manage the impact.
 
 : impact  ( -- )
-  projectile-y @
+  projectile-y c@
   [pixel-projectile]
   [if]    [ building-bottom-y row>pixel ] literal >
   [else]  building-bottom-y <
@@ -1735,8 +1731,8 @@ red papery c,  here  red c,  constant broken-brick-colors
 
 : projectile-lost?  ( -- f )
   [pixel-projectile]
-  [if]    projectile-y @ [ building-top-y row>pixel ] literal >
-  [else]  projectile-y @ building-top-y <
+  [if]    projectile-y c@ [ building-top-y row>pixel ] literal >
+  [else]  projectile-y c@ building-top-y <
   [then]  ;
   \ Is the projectile lost?
 
@@ -1749,7 +1745,7 @@ red papery c,  here  red c,  constant broken-brick-colors
   projectile-lost? if  destroy-projectile exit  then
   [pixel-projectile] [if]    7
                      [else]  -1
-                     [then]  projectile-y +!
+                     [then]  projectile-y c+!
   impact? ?exit  .projectile  ;
   \ Manage the projectile.
 
@@ -1764,14 +1760,14 @@ variable trigger-delay-counter  trigger-delay-counter off
 
 : fire  ( -- )
   x> to projectile#  .debug-data
-  new-projectile-x projectile-x !
+  new-projectile-x projectile-x c!
   [pixel-projectile]
-  [if]    [ tank-y row>pixel 1+ ] literal projectile-y !
-  [else]  [ tank-y 1- ] literal projectile-y !
+  [if]    [ tank-y row>pixel 1+ ] literal projectile-y c!
+  [else]  [ tank-y 1- ] literal projectile-y c!
   [then]  fire-sound  delay-trigger  ;
   \ The tank fires.
 
-: flying-projectile?  ( -- f )  projectile-y @ 0<>  ;
+: flying-projectile?  ( -- f )  projectile-y c@ 0<>  ;
   \ Is the current projectile flying?
 
 : projectile-left?  ( -- f )  xdepth 0<>  ;
@@ -1815,16 +1811,16 @@ variable trigger-delay-counter  trigger-delay-counter off
   projectile-lost? if  destroy-projectile exit  then
   [pixel-projectile] [if]    7
                      [else]  -1
-                     [then]  projectile-y +!
+                     [then]  projectile-y c+!
   impact? ?exit  .projectile  ;
   \ Manage the projectile.
 
 : fire  ( -- )
-  new-projectile-x projectile-x !
-  [ tank-y 1- ] literal projectile-y !  fire-sound  ;
+  new-projectile-x projectile-x c!
+  [ tank-y 1- ] literal projectile-y c!  fire-sound  ;
   \ The tank fires.
 
-: flying-projectile?  ( -- f )  projectile-y @ 0<>  ;
+: flying-projectile?  ( -- f )  projectile-y c@ 0<>  ;
   \ Is the projectile flying?
 
 : trigger-pressed?  ( -- f )  kk-fire pressed?  ;
