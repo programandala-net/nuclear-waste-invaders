@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.15.0+201610161528"  ;
+: version   ( -- ca len )  s" 0.16.0+201610161745"  ;
 warnings !
 
 \ Description
@@ -1670,6 +1670,7 @@ red papery c,  here  red c,  constant broken-brick-colors
 
 : ufo-frame  ( -- c )  ufo ufo-x @ sprite>frame  ;
   \ Current frame _c_ of the UFO.
+  \ XXX TODO -- make it faster
 
 : flying-ufo  ( -- )
   1 ufo-x +! at-ufo in-ufo-color space ufo-frame .2x1sprite  ;
@@ -1690,27 +1691,22 @@ red papery c,  here  red c,  constant broken-brick-colors
   \ Impact
 
 : ufo-bang  ( -- )  18 12 do  i 15 beep  loop  ;
-  \ XXX TODO -- explosion sound
+  \ XXX TODO -- 128 sound
 
 : ufo-on-fire  ( -- )
   ufo-x @ 1+ ufo-y at-xy ufo-explosion$ type  ;
 
-: ufo-explosion  ( -- )  ufo-on-fire ufo-bang  ;
+: ufo-explosion  ( -- )  ufo-on-fire ufo-bang -ufo  ;
 
-: ufo-points  ( -- n )  32 random 12 / 1+ 50 *  ;
+: ufo-points  ( -- n )
+  \ 32 random 12 / 1+ 50 *  ;  \ XXX OLD
+  5 random 1+ 10 * 50 +  ;  \ XXX NEW
   \ Random points for impacting the UFO.
 
-: ufo-bonus  ( -- )
-  ufo-points dup ufo-x @ 1+ ufo-y at-xy .  update-score  ;
+: ufo-bonus  ( -- )  ufo-points update-score  ;
   \ Update the score with the UFO bonus.
-  \
-  \ XXX FIXME -- the bonus has 3 digits, and the last one
-  \ is not deleted
-  \
-  \ XXX FIXME -- showing the bonus slows down the game for a
-  \ moment
 
-: ufo-impacted  ( -- )  ufo-explosion ufo-bonus 200 ms -ufo  ;
+: ufo-impacted  ( -- )  ufo-explosion ufo-bonus  ;
 
 : invader-bonus  ( -- )  invader-points@  update-score  ;
   \ Update the score with the invader bonus.
@@ -1960,16 +1956,13 @@ variable trigger-delay-counter  trigger-delay-counter off
 : (combat)  ( -- )
   begin   victory? if  next-level init-combat  then
 
-          \ 2 border
-          break-key? if  quit  then
-          \ 0 border
-          \ XXX TMP
+          break-key? if  quit  then  \ XXX TMP
 
-          fly-projectile drive
-          fly-projectile shoot
-          fly-projectile move-ufo
-          fly-projectile invasion
-          fly-projectile catastrophe @
+          fly-projectile  drive
+          fly-projectile  shoot
+          fly-projectile  move-ufo
+          fly-projectile  invasion
+          fly-projectile  catastrophe @
   until   defeat  ;
 
 : combat  ( -- )  init-combat (combat)  ;
