@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.14.0+201610161419"  ;
+: version   ( -- ca len )  s" 0.15.0+201610161528"  ;
 warnings !
 
 \ Description
@@ -44,7 +44,8 @@ true constant [multiple-projectiles] immediate
 
 false constant [pixel-projectile] immediate
   \ Pixel projectiles (new) instead of UDG projectiles (old)?
-  \ XXX TODO --
+  \ XXX TODO -- finish
+  \ XXX FIXME --
 
   \ ===========================================================
   \ Requisites from the library of Solo Forth
@@ -730,16 +731,99 @@ sprite-string tank$  ( -- ca len )
 
 [pixel-projectile] 0= [if]
 
-  00100000
-  00000100
-  00100000
-  00000100
-  00100000
-  00000100
-  00100000
-  00000100
+  >udg @  \ next free UDG
 
-1x1sprite projectile
+  00100000
+  00000100
+  00100000
+  00000100
+  00100000
+  00000100
+  00100000
+  00000100  1x1sprite projectile-frame-0
+
+  00000100
+  00100000
+  00000100
+  00100000
+  00000100
+  00100000
+  00000100
+  00100000 1x1sprite!
+
+  00100000
+  00100100
+  00000100
+  00100000
+  00100100
+  00000100
+  00100000
+  00100100 1x1sprite!
+
+  00000100
+  00100100
+  00100000
+  00000100
+  00100100
+  00100000
+  00000100
+  00100100 1x1sprite!
+
+  00100000
+  00000000
+  00100100
+  00000000
+  00000100
+  00100000
+  00000000
+  00100100 1x1sprite!
+
+  00000100
+  00000000
+  00100100
+  00000000
+  00100000
+  00000100
+  00000000
+  00100100 1x1sprite!
+
+  00100100
+  00000100
+  00100000
+  00000000
+  00100100
+  00000100
+  00100000
+  00000000 1x1sprite!
+
+  00100100
+  00100000
+  00000100
+  00000000
+  00100100
+  00100000
+  00000100
+  00000000 1x1sprite!
+
+  00100000
+  00100100
+  00000000
+  00100100
+  00100000
+  00000100
+  00100000
+  00100100 1x1sprite!
+
+  00000100
+  00100100
+  00000000
+  00100100
+  00000100
+  00100000
+  00000100
+  00100100 1x1sprite!
+
+  >udg @ swap - constant frames/projectile
 
 [then]
 
@@ -1622,6 +1706,9 @@ red papery c,  here  red c,  constant broken-brick-colors
   \
   \ XXX FIXME -- the bonus has 3 digits, and the last one
   \ is not deleted
+  \
+  \ XXX FIXME -- showing the bonus slows down the game for a
+  \ moment
 
 : ufo-impacted  ( -- )  ufo-explosion ufo-bonus 200 ms -ufo  ;
 
@@ -1708,6 +1795,10 @@ red papery c,  here  red c,  constant broken-brick-colors
 : at-projectile  ( -- )  projectile-coords at-xy  ;
   \ Set the cursor position at the coordinates of the
   \ projectile.
+
+: projectile  ( -- c )
+  projectile-frame-0 frames/projectile random +  ;
+  \ Return the UDG _c_ of a random frame of the projectile.
 
 [then]
 
