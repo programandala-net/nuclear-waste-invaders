@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.11.0+201610161129"  ;
+: version   ( -- ca len )  s" 0.12.0+201610161155"  ;
 warnings !
 
 \ Description
@@ -39,9 +39,6 @@ warnings !
   \ Flags for conditional compilation of new features under
   \ development.
 
-false constant [big-tank] immediate
-  \ 3-UDG wide char (new) instead of 2-UDG wide (old)?
-
 true constant [multiple-projectiles] immediate
   \ Multiple projectiles (new) instead of one projectile (old)?
 
@@ -61,12 +58,10 @@ need defer  need ~~ 13 ~~key !  need [if]
 need roll      need inkey   need bleep        need beep>bleep
 need os-chars  need os-udg  need 2/           need abort"
 need value     need case    need random       need columns
-need rows      need ms      need s+
+need rows      need ms      need s+           need udg-row[
 need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
 need overprint need column  need color        need color!
-
-[big-tank] [if]  need udg-row[  [then]
 
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
@@ -705,18 +700,7 @@ binary
 
   \ XXX TODO -- second frame of the tank
 
-[big-tank] [if]  \ XXX NEW
-
   #3 constant udg/tank  #3 free-udg udg-row[
-
-  \ 000000000001100000000000
-  \ 000000000001100000000000
-  \ 000000000001100000000000
-  \ 001111111111111111111100
-  \ 011111111111111111111110
-  \ 111111111111111111111111
-  \ 111111111111111111111111
-  \ 111111111111111111111111
 
   000000000010010000000000
   000000000010010000000000
@@ -727,21 +711,6 @@ binary
   111111111111111111111111
   011111111111111111111110
   ]udg-row  udg/tank 1 latest-sprite-size!
-
-[else]  \ XXX OLD
-
-  2 constant udg/tank
-
-  0000000100000000
-  0000001110000000
-  0000001110000000
-  0111111111111100
-  1111111111111110
-  1111111111111110
-  1111111111111110
-  1111111111111110  2x1sprite!
-
-[then]
 
 sprite-string tank$  ( -- ca len )
 
@@ -760,17 +729,6 @@ sprite-string tank$  ( -- ca len )
 
 [pixel-projectile] 0= [if]
 
-[big-tank] [if]  \ XXX NEW
-
-  \ 00011000
-  \ 00011000
-  \ 00011000
-  \ 00011000
-  \ 00011000
-  \ 00011000
-  \ 00011000
-  \ 00000000
-
   00100000
   00000100
   00100000
@@ -779,19 +737,6 @@ sprite-string tank$  ( -- ca len )
   00000100
   00100000
   00000100
-
-[else]  \ XXX OLD
-
-  00000000
-  00000001
-  00000001
-  00000001
-  00000001
-  00000001
-  00000000
-  00000000
-
-[then]
 
 1x1sprite projectile
 
@@ -1239,7 +1184,7 @@ columns udg/tank - 1- constant tank-max-x
 : new-projectile-x  ( -- col|x )
   [pixel-projectile]
   [if]    tank-x @ col>pixel [ udg/tank 8 * 2/ ] literal +
-  [else]  tank-x @  [big-tank] [if]  1+  [then]
+  [else]  tank-x @ 1+
   [then]  ;
   \ Return the column _col_ or graphic coordinate _x_ for the
   \ new projectile, depending (at compile time) on the type of
@@ -1875,7 +1820,7 @@ variable trigger-delay-counter  trigger-delay-counter off
   \ Manage the projectile.
 
 : fire  ( -- )
-  tank-x @  [big-tank] [if]  1+  [then]  projectile-x !
+  new-projectile-x projectile-x !
   [ tank-y 1- ] literal projectile-y !  fire-sound  ;
   \ The tank fires.
 
