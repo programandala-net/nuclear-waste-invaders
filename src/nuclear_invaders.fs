@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.13.0+201610161323"  ;
+: version   ( -- ca len )  s" 0.14.0+201610161419"  ;
 warnings !
 
 \ Description
@@ -147,7 +147,7 @@ black papery red + constant arena-color#
 
 variable tank-x        \ column
 variable ufo-x         \ column
-variable lifes         \ counter (0..3)
+variable lifes         \ counter (0..4)
 variable level         \ counter (1..5)
 variable score         \ counter
 variable record        \ max score
@@ -1017,10 +1017,13 @@ arena-top-y columns * attributes + constant arena-top-attribute
 : at-lifes  ( -- )  0 status-bar-y at-xy  ;
   \ Set the cursor position to the position of the life icons.
 
+: spare-lifes  ( -- n )  lifes @ 1- 0 max  ;
+  \ Number of spare lifes.
+
 : .lifes  ( -- )
   at-lifes in-life-color
-  lifes @ 0 ?do  tank$ type  loop  udg/tank spaces  ;
-  \ Print one icon for each remaining life.
+  spare-lifes 0 ?do  tank$ type  loop  udg/tank spaces  ;
+  \ Print one icon for each spare life.
 
 : status-bar  ( -- )  ruler .lifes  ;
   \ Draw the status bar.
@@ -1352,7 +1355,7 @@ cvariable projectile-y  \ row (0 if no shoot)
   \ ==========================================================
   \ Init
 
-3 constant max-lifes
+4 constant max-lifes
   \ Maximum number of lifes, including the first one.
 
 : init-lifes  ( -- )  max-lifes lifes !  ;
