@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.16.0+201610161745"  ;
+: version   ( -- ca len )  s" 0.16.0+201610181638"  ;
 warnings !
 
 \ Description
@@ -181,8 +181,8 @@ record off
 : kk#>string  ( n -- ca len )
   case  kk-en# of  s" Enter"         endof
         kk-sp# of  s" Space"         endof
-  \      kk-cs# of  s" Caps Shift"    endof  \ XXX OLD
-  \      kk-ss# of  s" Symbol Shift"  endof  \ XXX OLD
+        kk-cs# of  s" Caps Shift"    endof
+        kk-ss# of  s" Symbol Shift"  endof
         dup kk#>c upper char>string rot  \ default
   endcase  ;
 
@@ -287,13 +287,19 @@ variable used-udgs  used-udgs off
 : font!  ( a -- )  os-chars !  ;
   \ Set the current charset to address _a_
   \ (the bitmap of char 0).
-  \ XXX OLD
+  \ XXX TODO -- not used yet
   \ XXX TODO -- move to Solo Forth
 
 : font@  ( -- a )  os-chars @  ;
   \ Fetch the address _a_ of the current charset
   \ (the bitmap of char 0).
-  \ XXX OLD
+  \ XXX TODO -- not used yet
+  \ XXX TODO -- move to Solo Forth
+
+: rom-font  ( -- )  15360 font!  ;
+  \ Set ROM font for chars 0..127
+  \ (in Solo Forth chars 128..255 are UDG).
+  \ XXX TODO -- not used yet
   \ XXX TODO -- move to Solo Forth
 
 [pixel-projectile] 0= [if]
@@ -316,12 +322,6 @@ variable ocr-last-udg
   \ and invaders.
 
 [then]
-
-: rom-font  ( -- )  15360 font!  ;
-  \ Set ROM font for chars 0..127
-  \ (in Solo Forth chars 128..255 are UDG).
-  \ XXX OLD
-  \ XXX TODO -- move to Solo Forth
 
   \ ===========================================================
   \ Debug
@@ -904,8 +904,6 @@ sprite-string tank$  ( -- ca len )
 
 1x1sprite broken-bottom-right-container
 
-  \ XXX OLD
-
 0000000000000000
 0000000000001000
 0000000000001100
@@ -983,12 +981,11 @@ decimal
 
 : .copyright  ( -- )
   row
-  1 over    at-xy (c) ."  2013 Scainet Soft"
-  1 over 1+ at-xy (c) ."  2016 Marcos Cruz"
-  8 swap 2+ at-xy           ." (programandala.net)"  ;
+  1 over    at-xy (c) ."  2016 Marcos Cruz"
+  8 swap 1+ at-xy           ." (programandala.net)"  ;
   \ Print the copyright notice at the current row.
 
-  \ XXX OLD
+  \ XXX OLD -- maybe useful in a future version
   \ : .control  ( n -- )  ."  = " .kk# 4 spaces  ;
   \ : .controls  ( -- )
   \   row dup s" [Space] to change controls:" rot center-type
@@ -1072,7 +1069,6 @@ arena-top-y columns * attributes + constant arena-top-attribute
   \ XXX TODO -- wipe attributes first
 
 : -arena  ( -- )  black-arena wipe-arena  ;
-  \ XXX FIXME -- this deletes the bar
 
 : score-bar$  ( -- ca len )
   in-text-color s"  SCORE<1>    RECORD    SCORE<2>"  ;
@@ -1230,15 +1226,6 @@ variable containers-left-x   variable containers-right-x
 : building-bottom  ( -- )  building-bottom-y  floor  ;
   \ Draw the bottom of the building.
 
-  \ XXX OLD
-  \ here 1+ s\" \x95\x97\x98\x97\x98\x97\x98\x97\x98\x97\x98" s,
-  \ constant containers-top
-  \ here 1+ s\" \x95\x99\x9A\x99\x9A\x99\x9A\x99\x9A\x99\x9A" s,
-  \ constant containers-bottom
-  \ Compile strings which hold a brick followed by nuclear
-  \ containers (top and bottom parts) and save the addresses of
-  \ their first char.
-
 : containers-bottom  ( n -- )
   in-container-color
   0 ?do  container-bottom .2x1sprite  loop  ;
@@ -1290,35 +1277,6 @@ columns udg/tank - 1- constant tank-max-x
 : tank-range  ( col -- col' )
   tank-max-x min tank-min-x max  ;
   \ Adjust the given column to the limits of the tank.
-
-  \ : ?space   ( -- )  column if  in-text-color space  then  ;
-  \ Print a space, if current column is not zero.
-  \ XXX OLD
-
-  \ : drive  ( -- )
-  \   tank-x @ kk-left  pressed? +
-  \            kk-right pressed? abs +
-  \   tank-range dup tank-x !  tank-y
-  \   at-xy in-tank-color ?space tank$ type ?space  ;
-  \ Move the tank depending on the key pressed.
-  \ XXX OLD
-  \ XXX FIXME -- trails
-
-  \ : drive-left  ( -- )
-  \   tank-x @ if  -1 tank-@
-  \   ;
-  \ XXX OLD
-
-  \ : drive-right  ( -- )  ;
-  \   tank-range dup tank-x !  1- tank-y
-  \   at-xy in-tank-color ?space tank$ type ?space
-  \ XXX OLD
-
-  \ : drive  ( -- )
-  \   kk-left  pressed? if  drive-left  exit then
-  \   kk-right pressed? if  drive-right      then  ;
-  \   \ Move the tank depending on the key pressed.
-  \ XXX OLD
 
 variable transmission-delay-counter
 
@@ -1612,23 +1570,9 @@ red papery c,  here  red c,  constant broken-brick-colors
   if  right-flying-invader  else  left-flying-invader  then  ;
 
 : activate-invader  ( -- )
-
-  [ false ] [if]
-
-  32 random  26 invaders @ 5 < 16 * -  > invader-active !
-  \ Activate the current invader, depending on a random
-  \ calculation: If there are less than 5 invaders left, the
-  \ chances of activation are 22/32, else 6/32.
-  \ XXX OLD
-
-  [else]
-
-  invaders @ random 0= invader-active !
+  invaders @ random 0= invader-active !  ;
   \ Activate the current invader randomly, depending on the
   \ number of aliens.
-  \ XXX NEW
-
-  [then]  ;
 
 : last-invader-type?  ( -- f )
   invader-type @ [ invader-types 1- ] literal =  ;
@@ -1698,9 +1642,7 @@ red papery c,  here  red c,  constant broken-brick-colors
 
 : ufo-explosion  ( -- )  ufo-on-fire ufo-bang -ufo  ;
 
-: ufo-points  ( -- n )
-  \ 32 random 12 / 1+ 50 *  ;  \ XXX OLD
-  5 random 1+ 10 * 50 +  ;  \ XXX NEW
+: ufo-points  ( -- n )  5 random 1+ 10 * 50 +  ;
   \ Random points for impacting the UFO.
 
 : ufo-bonus  ( -- )  ufo-points update-score  ;
