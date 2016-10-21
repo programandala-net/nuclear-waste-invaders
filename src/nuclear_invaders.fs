@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.16.0+201610181638"  ;
+: version   ( -- ca len )  s" 0.17.0+201610212042"  ;
 warnings !
 
 \ Description
@@ -63,7 +63,7 @@ need rows      need ms      need s+           need udg-row[
 need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
 need overprint need column  need color        need color!
-need c+!
+need c+!       need fade    need cvariable
 
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
@@ -127,6 +127,8 @@ tank-y constant arena-bottom-y
              green constant invader-color#
            magenta constant ufo-color#
 black papery red + constant arena-color#
+    yellow brighty constant radiation-color#
+             white constant ruler-color#
 
               white color in-text-color
        arena-color# color in-arena-color
@@ -141,7 +143,6 @@ black papery red + constant arena-color#
 : init-colors  ( -- )
   black paper  white ink  black flash  0 bright
   0 overprint  0 inverse  black border  ;
-  \ XXX TMP --
 
   \ ===========================================================
   \ Variables
@@ -1046,7 +1047,7 @@ decimal
   again  ;
 
 : instructions  ( -- )
-  in-text-color  cls  title
+  init-colors in-text-color cls title
   0 4 at-xy .score-table
   show-controls
   s" SPACE: change - ENTER: start" 18 center-type
@@ -1070,11 +1071,11 @@ arena-top-y columns * attributes + constant arena-top-attribute
 
 : -arena  ( -- )  black-arena wipe-arena  ;
 
-: score-bar$  ( -- ca len )
-  in-text-color s"  SCORE<1>    RECORD    SCORE<2>"  ;
+: score-titles$  ( -- ca len )
+  s"  SCORE<1>    RECORD    SCORE<2>"  ;
 
-: score-bar  ( -- )
-  home score-bar$ type .score .record  ;
+: top-status-bar  ( -- )
+  home in-text-color score-titles$ type .score .record  ;
   \ XXX TODO -- support player 2
 
 : show-player  ( -- )
@@ -1089,9 +1090,13 @@ arena-top-y columns * attributes + constant arena-top-attribute
   \ Convert a row (0..23) to a pixel y coordinate (0..191).
   \ XXX TODO -- Move to Solo Forth and rewrite in Z80
 
+: color-ruler  ( -- )
+  [ attributes rows 2- columns * + ] literal
+  columns ruler-color# fill  ;
+
 : ruler  ( -- )
   [ 0 tank-y row>pixel 8 - pixel-addr nip ] literal
-  columns $FF fill  ;
+  columns $FF fill  color-ruler  ;
   \ Draw the ruler of the status bar.
 
 : at-lifes  ( -- )  0 status-bar-y at-xy  ;
@@ -1105,11 +1110,11 @@ arena-top-y columns * attributes + constant arena-top-attribute
   spare-lifes 0 ?do  tank$ type  loop  udg/tank spaces  ;
   \ Print one icon for each spare life.
 
-: status-bar  ( -- )  ruler .lifes  ;
+: bottom-status-bar  ( -- )  ruler .lifes  ;
   \ Draw the status bar.
 
-: game-screen  ( -- )  init-colors cls score-bar status-bar  ;
-  \ Draw the game screen.
+: status-bars  ( -- )  top-status-bar bottom-status-bar  ;
+  \ Show the data bars.
 
                     0 constant invaders-min-x
 columns udg/invader - constant invaders-max-x
@@ -1206,7 +1211,16 @@ variable containers-left-x   variable containers-right-x
 : increase-level  ( -- )  level @ 1+ max-level min level !  ;
   \ Increase the level number.
 
-: next-level  ( -- )  increase-level set-building-size  ;
+variable used-projectiles
+  \ Counter.
+
+: level-bonus  ( -- n )
+  level @ 100 *  used-projectiles @ - 0 max  ;
+  \ Return bonus _n_ after finishing a level.
+
+: next-level  ( -- )
+  level-bonus update-score
+  increase-level set-building-size  ;
 
 : init-level  ( -- )  level off  next-level  ;
   \ Init the level number and the related variables
@@ -1326,10 +1340,6 @@ transmission-delay-counter off
 
   \ XXX NEW -- several projectiles on the screen
 
-  \ XXX TODO -- Store coordinates in bytes; this will make some
-  \ calculations faster. E.g. `projectile#` can be used as
-  \ offset.
-
 %111 value max-projectile#
   \ Bitmask for the projectile counter (0..7).
   \ XXX TODO -- try %1111 and %11111
@@ -1372,6 +1382,7 @@ defer debug-data-pause  ( -- )
   0 projectile-y c!  projectile# >x  .debug-data  ;
 
 : init-projectiles  ( -- )
+  used-projectiles off
   'projectile-y #projectiles erase
   xclear #projectiles 0 do  i >x  loop  ;
 
@@ -1385,7 +1396,8 @@ cvariable projectile-y  \ row (0 if no shoot)
 : destroy-projectile  ( -- )  0 projectile-y c!  ;
   \ Destroy the projectile.
 
-: init-projectiles  ( -- )  destroy-projectile  ;
+: init-projectiles  ( -- )
+  used-projectiles off  destroy-projectile  ;
   \ Init the projectiles.
 
 [then]
@@ -1404,7 +1416,8 @@ cvariable projectile-y  \ row (0 if no shoot)
 
 : init-game  ( -- )
   [pixel-projectile] [ 0= ] [if]  init-ocr  [then]
-  init-lifes  init-level  score off  game-screen  ;
+  init-lifes  init-level  score off
+  cls status-bars  ;
   \ Init the game.
 
 : init-invaders-data  ( -- )
@@ -1791,6 +1804,7 @@ variable trigger-delay-counter  trigger-delay-counter off
   trigger-delay trigger-delay-counter !  ;
 
 : fire  ( -- )
+  1 used-projectiles +!
   x> to projectile#  .debug-data
   new-projectile-x projectile-x c!
   [pixel-projectile]
@@ -1848,6 +1862,7 @@ variable trigger-delay-counter  trigger-delay-counter off
   \ Manage the projectile.
 
 : fire  ( -- )
+  1 used-projectiles +!
   new-projectile-x projectile-x c!
   [ tank-y 1- ] literal projectile-y c!  fire-sound  ;
   \ The tank fires.
@@ -1864,7 +1879,7 @@ variable trigger-delay-counter  trigger-delay-counter off
 : shoot  ( -- )
   trigger-pressed? if
     gun-below-building? 0= if
-     fire  then  ;
+      fire  then  then  ;
   \ Manage the shoot.
 
 [then]
@@ -1891,7 +1906,24 @@ variable trigger-delay-counter  trigger-delay-counter off
 : defeat-tune  ( -- )  100 200 do  i 20 beep  -5 +loop  ;
   \ XXX TODO -- 128 sound
 
-: defeat  ( -- )  defeat-tune  300 ms  dead  ;
+create attributes-backup /attributes allot
+
+: save-attributes  ( -- )
+  attributes attributes-backup /attributes cmove  ;
+
+: restore-attributes  ( -- )
+  attributes-backup attributes /attributes cmove  ;
+
+: radiation  ( -- )
+  [ attributes columns 2 * + ] literal
+  [ /attributes columns 4 * - ] literal
+  radiation-color# fill  ;
+
+: defeat  ( -- )
+  save-attributes
+  radiation defeat-tune  2000 ms  fade dead
+  restore-attributes  ;
+  \ XXX TODO -- finish
 
 : victory?  ( -- f )  invaders @ 0=  ;
 
@@ -1940,8 +1972,6 @@ variable trigger-delay-counter  trigger-delay-counter off
   container-bottom .2x1sprite 8 emit
   broken-bottom-right-container .1x1sprite cr  ;
   \ Show the graphics of the broken containers.
-
-init-level
 
 cr cr .( Type RUN to start) cr
 

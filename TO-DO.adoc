@@ -1,6 +1,6 @@
 = Nuclear Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2016-10-16
+:revdate: 2016-10-21
 
 2016-08-01:
 
@@ -25,9 +25,12 @@ Idea: Don't repair the building when using a new life...
 Keep moving the projectiles and the invaders after the invasion,
 during the future final effect.
 
-Improve the scoring: add points per new level, add points for spare
-lifes, substract the used bullets...
+Improve the scoring: add points for spare lifes to the level bonus.
 
 Change the color of explosions.
 
 Animate the explosions with several frames.
+
+2016-10-18:
+
+Make the speed of the invaders regular, no matter the number of them.
