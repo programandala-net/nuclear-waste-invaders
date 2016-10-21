@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.17.0+201610212042"  ;
+: version   ( -- ca len )  s" 0.18.0+201610212044"  ;
 warnings !
 
 \ Description
@@ -39,9 +39,6 @@ warnings !
   \ Flags for conditional compilation of new features under
   \ development.
 
-true constant [multiple-projectiles] immediate
-  \ Multiple projectiles (new) instead of one projectile (old)?
-
 false constant [pixel-projectile] immediate
   \ Pixel projectiles (new) instead of UDG projectiles (old)?
   \ XXX TODO -- finish
@@ -69,10 +66,8 @@ need c+!       need fade    need cvariable
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
 [else]  need ocr  [then]
 
-[multiple-projectiles] [if]
-  need allot-xstack  need xdepth  need >x  need x>  need xclear
-  need .x  \ XXX TMP --
-[then]
+need allot-xstack  need xdepth  need >x  need x>  need xclear
+need .x  \ XXX TMP --
 
 need black  need blue    need red    need magenta  need green
 need cyan   need yellow  need white
@@ -1334,11 +1329,7 @@ transmission-delay-counter off
   \ only the character not overwritten by the new position
 
   \ ==========================================================
-  \ Projectile
-
-[multiple-projectiles] [if]
-
-  \ XXX NEW -- several projectiles on the screen
+  \ Projectiles
 
 %111 value max-projectile#
   \ Bitmask for the projectile counter (0..7).
@@ -1385,22 +1376,6 @@ defer debug-data-pause  ( -- )
   used-projectiles off
   'projectile-y #projectiles erase
   xclear #projectiles 0 do  i >x  loop  ;
-
-[else]
-
-  \ XXX OLD -- one single projectile on the screen
-
-cvariable projectile-x  \ column
-cvariable projectile-y  \ row (0 if no shoot)
-
-: destroy-projectile  ( -- )  0 projectile-y c!  ;
-  \ Destroy the projectile.
-
-: init-projectiles  ( -- )
-  used-projectiles off  destroy-projectile  ;
-  \ Init the projectiles.
-
-[then]
 
 : projectile-coords  ( -- x y )
   projectile-x c@ projectile-y c@  ;
@@ -1781,10 +1756,6 @@ red papery c,  here  red c,  constant broken-brick-colors
   [then]  ;
   \ Is the projectile lost?
 
-[multiple-projectiles] [if]
-
-  \ XXX TODO -- improve
-
 : move-projectile  ( -- )
   -projectile
   projectile-lost? if  destroy-projectile exit  then
@@ -1849,40 +1820,6 @@ variable trigger-delay-counter  trigger-delay-counter off
   \
   \ XXX TODO -- use `?exit` and `0exit` instead of conditionals
   \ and move `update-trigger` to the start.
-
-[else]
-
-: move-projectile  ( -- )
-  -projectile
-  projectile-lost? if  destroy-projectile exit  then
-  [pixel-projectile] [if]    7
-                     [else]  -1
-                     [then]  projectile-y c+!
-  impact? ?exit  .projectile  ;
-  \ Manage the projectile.
-
-: fire  ( -- )
-  1 used-projectiles +!
-  new-projectile-x projectile-x c!
-  [ tank-y 1- ] literal projectile-y c!  fire-sound  ;
-  \ The tank fires.
-
-: flying-projectile?  ( -- f )  projectile-y c@ 0<>  ;
-  \ Is the projectile flying?
-
-: trigger-pressed?  ( -- f )  kk-fire pressed?  ;
-  \ Is the fire key pressed?
-
-: fly-projectile  ( -- )
-  flying-projectile? if  move-projectile exit  then  ;
-
-: shoot  ( -- )
-  trigger-pressed? if
-    gun-below-building? 0= if
-      fire  then  then  ;
-  \ Manage the shoot.
-
-[then]
 
 : new-record?   ( -- f )  score @ record @ >  ;
   \ Is there a new record?
