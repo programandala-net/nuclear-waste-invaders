@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.18.0+201610212044"  ;
+: version   ( -- ca len )  s" 0.19.0+201610221057"  ;
 warnings !
 
 \ Description
@@ -1210,7 +1210,7 @@ variable used-projectiles
   \ Counter.
 
 : level-bonus  ( -- n )
-  level @ 100 *  used-projectiles @ - 0 max  ;
+  level @ 100 *  lifes @ 10 * +  used-projectiles @ -  0 max  ;
   \ Return bonus _n_ after finishing a level.
 
 : next-level  ( -- )
