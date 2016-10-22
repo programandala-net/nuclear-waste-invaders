@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.19.0+201610221057"  ;
+: version   ( -- ca len )  s" 0.19.1+201610221123"  ;
 warnings !
 
 \ Description
@@ -1206,7 +1206,7 @@ variable containers-left-x   variable containers-right-x
 : increase-level  ( -- )  level @ 1+ max-level min level !  ;
   \ Increase the level number.
 
-variable used-projectiles
+variable used-projectiles  used-projectiles off
   \ Counter.
 
 : level-bonus  ( -- n )
@@ -1215,11 +1215,11 @@ variable used-projectiles
 
 : next-level  ( -- )
   level-bonus update-score
-  increase-level set-building-size  ;
+  increase-level  set-building-size  ;
+  \ Change to the next level.
 
 : init-level  ( -- )  level off  next-level  ;
-  \ Init the level number and the related variables
-  \ (the size of the bulding).
+  \ Init the level number and the related variables.
 
   \ ==========================================================
   \ Building
@@ -1641,7 +1641,7 @@ red papery c,  here  red c,  constant broken-brick-colors
 : invader-bonus  ( -- )  invader-points@  update-score  ;
   \ Update the score with the invader bonus.
 
-: invader-bang  ( -- ca len )  10 100 beep  ;
+: invader-bang  ( -- ca len )  10 100 beep  2000 ms  ;
   \ XXX TODO -- explosion 128 sound
 
 : invader-on-fire  ( -- )
