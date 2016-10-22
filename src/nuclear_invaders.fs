@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.19.1+201610221123"  ;
+: version   ( -- ca len )  s" 0.20.0+201610221149"  ;
 warnings !
 
 \ Description
@@ -128,6 +128,7 @@ black papery red + constant arena-color#
               white color in-text-color
        arena-color# color in-arena-color
  white papery red + color in-brick-color
+                red color in-broken-wall-color
        blue brighty color in-tank-color
                blue color in-life-color
      invader-color# color in-invader-color
@@ -668,8 +669,27 @@ binary
     \ of the latest sprite.
 [then]
 
-  \ This UDG is used with reversed colors, depending on
-  \ the side of the building:
+11111111
+01111111
+01011111
+00011011
+00000011
+00000111
+00000010
+00000000
+
+1x1sprite broken-top-left-brick
+
+00000000
+00000000
+00000111
+00000011
+00011011
+01111111
+11111111
+11111111
+
+1x1sprite broken-bottom-left-brick
 
 11111111
 11111111
@@ -680,10 +700,7 @@ binary
 00000000
 00000000
 
-1x1sprite broken-top-brick
-
-  \ This UDG is used with reversed colors, depending on
-  \ the side of the building:
+1x1sprite broken-top-right-brick
 
 00000000
 10000000
@@ -694,7 +711,7 @@ binary
 11111101
 11111111
 
-1x1sprite broken-bottom-brick
+1x1sprite broken-bottom-right-brick
 
   \ XXX TODO -- second frame of the tank
 
@@ -1470,41 +1487,31 @@ variable broken-wall-x
 : flying-to-the-right?  ( -- f )  invader-x-inc@ 0>  ;
   \ Is the current invader flying to the right?
 
-red papery c,  here  red c,  constant broken-brick-colors
-  \ Address of the broken brick color used for the right
-  \ side of the building; the address before contains
-  \ the color used for the left side of the building.
-  \ This is faster than pointing to a list of two colors,
-  \ because a flag (0|-1) can be used as index.
-
-: broken-wall-color  ( -- )
-  broken-brick-colors flying-to-the-right? + c@ color!  ;
-  \ Set the color of the broken wall.  It depends on the side
-  \ of the building, because the same two UDGs are used for
-  \ both sides, with inverted colors.
-
 : broken-bricks-coordinates  ( -- x1 y1 x2 y2 )
   broken-wall-x @ invader-y @ 1+  2dup 2-  ;
   \ Coordinates of the broken brick above the invader, _x2 y2_,
   \ and below it, _x1 y1_.
 
-: broken-left-wall  ( -- )
-  broken-bricks-coordinates
-  at-xy broken-bottom-brick .1x1sprite
-  at-xy broken-top-brick  .1x1sprite  ;
+: broken-left-wall  ( x1 y1 x2 y2 -- )
+  at-xy broken-top-left-brick .1x1sprite
+  at-xy broken-bottom-left-brick  .1x1sprite  ;
+  \ Print the broken left wall at the given coordinates of the
+  \ broken brick above the invader, _x2 y2_, and below it, _x1
+  \ y1_.
 
-: broken-right-wall  ( -- )
-  broken-bricks-coordinates
-  at-xy broken-top-brick .1x1sprite
-  at-xy broken-bottom-brick .1x1sprite  ;
-
-  \ XXX TODO -- detect if the wall is already broken, and
-  \ change the graphic accordingly.
+: broken-right-wall  ( x1 y1 x2 y2 -- )
+  at-xy broken-top-right-brick .1x1sprite
+  at-xy broken-bottom-right-brick .1x1sprite  ;
+  \ Print the broken right wall at the given coordinates of the
+  \ broken brick above the invader, _x2 y2_, and below it, _x1
+  \ y1_.
 
 : broken-wall  ( -- )
-  broken-wall-color flying-to-the-right?
-  if  broken-left-wall  else  broken-right-wall  then  ;
-  \ Show the broken wall of the building, hit by the current invader.
+  in-broken-wall-color  broken-bricks-coordinates
+  flying-to-the-right? if    broken-left-wall
+                       else  broken-right-wall  then  ;
+  \ Show the broken wall of the building, hit by the current
+  \ invader.
 
 : broken-wall?  ( -- f )
   invader-x @ flying-to-the-right?
@@ -1641,7 +1648,7 @@ red papery c,  here  red c,  constant broken-brick-colors
 : invader-bonus  ( -- )  invader-points@  update-score  ;
   \ Update the score with the invader bonus.
 
-: invader-bang  ( -- ca len )  10 100 beep  2000 ms  ;
+: invader-bang  ( -- ca len )  10 100 beep  ;
   \ XXX TODO -- explosion 128 sound
 
 : invader-on-fire  ( -- )
@@ -1783,6 +1790,7 @@ variable trigger-delay-counter  trigger-delay-counter off
   [else]  [ tank-y 1- ] literal projectile-y c!
   [then]  fire-sound  delay-trigger  ;
   \ The tank fires.
+  \ XXX TODO -- confirm `tank-y 1-`
 
 : flying-projectile?  ( -- f )  projectile-y c@ 0<>  ;
   \ Is the current projectile flying?
