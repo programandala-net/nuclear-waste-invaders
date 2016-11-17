@@ -10,7 +10,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.20.0+201610221149"  ;
+: version   ( -- ca len )  s" 0.21.0+201610221238"  ;
 warnings !
 
 \ Description
@@ -59,7 +59,7 @@ need value     need case    need random       need columns
 need rows      need ms      need s+           need udg-row[
 need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
-need overprint need column  need color        need color!
+need overprint need color   need color!
 need c+!       need fade    need cvariable
 
 [pixel-projectile]
@@ -353,8 +353,10 @@ warnings !
  1 constant score-y
 14 constant record-x
 
-variable players  1 players !  \ XXX TODO -- not used yet
-variable player   1 player !   \ XXX TODO -- not used yet
+2 constant max-player
+
+variable players  1 players !  \ 1..max-player
+variable player   1 player !   \ 1..max-player
 
 : score-x  ( -- x )  3 player @ 1- 22 * +  ;
   \ Column of the score of the current player.
@@ -996,7 +998,9 @@ decimal
   row
   1 over    at-xy (c) ."  2016 Marcos Cruz"
   8 swap 1+ at-xy           ." (programandala.net)"  ;
-  \ Print the copyright notice at the current row.
+  \ Print the copyright notice at the current coordinates.
+
+: show-copyright  ( -- )  0 22 at-xy .copyright  ;
 
   \ XXX OLD -- maybe useful in a future version
   \ : .control  ( n -- )  ."  = " .kk# 4 spaces  ;
@@ -1032,38 +1036,44 @@ decimal
   \ Print an item of the score table, with sprite string _ca2
   \ len2_ and description _ca1 len1_
 
-9 constant score-table-x
-
 : .score-table  ( -- )
-  score-table-x row
-  2dup     at-xy s" 10 points"
+  xy 2dup  at-xy s" 10 points"
            in-invader-color invader-1$ .score-table-item
-  2dup 2+  at-xy s" 20 points"
+  2dup 1+  at-xy s" 20 points"
            in-invader-color invader-2$ .score-table-item
-  2dup 4 + at-xy s" 30 points"
+  2dup 2+  at-xy s" 30 points"
            in-invader-color invader-3$ .score-table-item
-       6 + at-xy s" bonus"
+       3 + at-xy s" bonus"
            in-ufo-color ufo$ .score-table-item  ;
-   \ Print the score table at the current row.
+   \ Print the score table at the current coordinates.
 
-: at-controls  ( -- )  0 12 at-xy  ;
+: show-score-table  ( -- )  9 4 at-xy .score-table  ;
 
-: show-controls  ( -- )  at-controls .controls  ;
+: change-players  ( -- )
+  players @ 1+ dup max-player > if  drop 1  then  players !  ;
+
+: .players  ( -- )  ." [P]layers " players ?  ;
+   \ Print the number of players at the current coordinates.
+
+: show-players  ( -- )  0 8 at-xy .players  ;
+
+: show-controls  ( -- )
+  0 12 at-xy .controls
+  s" SPACE: change - ENTER: start" 18 center-type  ;
 
 : menu  ( -- )
   begin
     break-key? if  quit  then  \ XXX TMP
     key
     dup enter-key = if  drop exit  then
-               bl = if  next-controls show-controls  then
+    dup bl = if  next-controls show-controls  then
+        'p' = if  change-players show-players  then
   again  ;
+  \ XXX TODO -- use `case`
 
 : instructions  ( -- )
   init-colors in-text-color cls title
-  0 4 at-xy .score-table
-  show-controls
-  s" SPACE: change - ENTER: start" 18 center-type
-  0 21 at-xy .copyright
+  show-score-table show-players show-controls show-copyright
   menu  ;
 
   \ ===========================================================
@@ -1477,9 +1487,6 @@ defer debug-data-pause  ( -- )
 : .invader  ( -- )
   in-invader-color invader-frame .2x1sprite  ;
   \ Print the current invader.
-
-  \ ============================================================
-  \ Invasion
 
 variable broken-wall-x
   \ Column of the wall broken by the current alien.
