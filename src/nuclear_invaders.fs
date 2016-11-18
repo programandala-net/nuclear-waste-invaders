@@ -1,3 +1,4 @@
+
   \ nuclear_invaders.fs
   \
   \ This file is part of Nuclear Invaders
@@ -10,7 +11,7 @@
 only forth definitions
 
 warnings @ warnings off
-: version   ( -- ca len )  s" 0.21.0+201610221238"  ;
+: version   ( -- ca len )  s" 0.21.0+201611171413"  ;
 warnings !
 
 \ Description
@@ -59,8 +60,9 @@ need value     need case    need random       need columns
 need rows      need ms      need s+           need udg-row[
 need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
-need overprint need color   need color!
-need c+!       need fade    need cvariable
+need overprint need color   need color!       need frames@
+need c+!       need fade    need cvariable    need 2const
+need d<
 
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
@@ -1591,10 +1593,39 @@ variable broken-wall-x
   \ Move the current invader if it's active, else
   \ just try to activate it.
 
-: invasion  ( -- )
+: (invasion)  ( -- )
   invader-units @ if  move-invader  then  next-invader  ;
   \ Move the current invader, if there are units left of it,
   \ and then choose the next one.
+
+  \ 10. 2const invasion-delay-ms \ XXX TODO --
+2 constant invader-time
+
+defer invasion  \ XXX TMP --
+
+: invasion-wait  ( -- )
+  frames@ invader-time s>d d+ (invasion)
+  begin  frames@ 2over d< 0=  until  2drop  ;
+  \ Move the current invader, if there are units left of it,
+  \ and then choose the next one.
+  \ XXX REMARK --
+  \ invader-time = 4 -- works, but too slow
+  \ invader-time = 3 -- works a bit, but too slow
+  \ invader-time = 2 -- no effect
+
+  \ XXX TODO -- alternative to
+  \ make sure the action takes always a fixed time:
+  \ do `frames@ invader-interval dmod ?exit` at the start.
+
+: invasion-check  ( -- )
+  frames@ invader-time um/mod drop ?exit (invasion)  ;
+  \ XXX REMARK --
+  \ invader-time = 10 -- they hardly move
+  \ invader-time = 4 -- they move few times
+  \ invader-time = 3 -- they dont move
+  \ invader-time = 2 -- they dont move
+
+' invasion-wait ' invasion defer!  \ XXX TMP --
 
   \ ==========================================================
   \ UFO
