@@ -1,14 +1,14 @@
-  \ tool.decode.fsb
+  \ tool.see.fsb
   \
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201611171903
+  \ Last modified: 201611250001
 
   \ -----------------------------------------------------------
   \ Description
 
-  \ The `decode` utility.
+  \ The `see` utility.
 
   \ -----------------------------------------------------------
   \ Author
@@ -18,12 +18,13 @@
   \ -----------------------------------------------------------
   \ Credit
 
-  \ This code was adapted and improved from Afera (2015), by
-  \ the same author.  The Afera version was adapted and deeply
-  \ modified from: Z80 CP/M fig-Forth 1.1g (adaptative version
-  \ by EHR), modified by Dennis L. Wilson.  The original code
-  \ was written by Robert Dudley Ackerman, published on Forth
-  \ Dimensions (volume 4, number 2, page 28, 1982-07).
+  \ This code was adapted and improved from Afera's `decode`
+  \ (2015), by the same author.  The Afera version was adapted
+  \ and deeply modified from: Z80 CP/M fig-Forth 1.1g
+  \ (adaptative version by EHR), modified by Dennis L. Wilson.
+  \ The original code was written by Robert Dudley Ackerman,
+  \ published on Forth Dimensions (volume 4, number 2, page 28,
+  \ 1982-07).
 
   \ -----------------------------------------------------------
   \ License
@@ -74,121 +75,196 @@
   \ checking the word.
   \
   \ 2016-11-17: Remove unused `need [if]`.
+  \
+  \ 2016-11-23: Rename `decode` to `see`; rename all words and
+  \ the module accordingly. Compact the code, saving one block.
+  \ Document the interface words. 
+  \
+  \ 2016-11-24: Add `see-xt` and `see-body-from`. Make them
+  \ individually accessible for `need`.
 
-( decode )
-
-  \ Variables, indentation and pause control
+( see )
 
 forth definitions decimal
 
 need body>name  need name>body  need case
 need recurse  need >body  need body>
 
-variable decode-level  decode-level off \ depth of nesting
-variable decode-address  \ in the word being decoded
+variable see-level  see-level off \ depth of nesting
+variable see-address  \ in the word being decoded
 
-: indent  ( -- )
-  cr decode-address @ u. decode-level @ 2* spaces  ;
+: indent  ( -- )  cr see-address @ u. see-level @ 2* spaces  ;
 
-: indent+  ( -- )  1 decode-level +! indent  ;
+: indent+  ( -- )  1 see-level +! indent  ;
 
--->
+: see-branch    ( a1 -- a2 )  cell+ dup @ u.  ;
 
-( decode )
+: see-literal   ( a1 -- a2 )  cell+ dup @ .  ;
 
-  \ Special cases
+: see-2literal   ( a1 -- a2 )  cell+ dup 2@ d. cell+  ;
 
-: decode-branch    ( a1 -- a2 )  cell+ dup @ u.  ;
+: see-cliteral  ( a1 -- a2 )  cell+ dup c@ . 1-  ;
 
-: decode-literal   ( a1 -- a2 )  cell+ dup @ .  ;
-
-: decode-2literal   ( a1 -- a2 )  cell+ dup 2@ d. cell+  ;
-
-: decode-cliteral  ( a1 -- a2 )  cell+ dup c@ . 1-  ;
-
-: decode-sliteral  ( a1 -- a2 )
+: see-sliteral  ( a1 -- a2 )
   cell+ dup count type  dup c@ + 1-  ;
 
-: decode-compile   ( a1 -- a2 )  cell+ dup @ >name .name  ;
+: see-compile   ( a1 -- a2 )  cell+ dup @ >name .name  ;  -->
 
--->
+( see )
 
-( decode )
-
-  \ Special cases dispatcher
-
-: decode-special  ( a1 -- a1 | a2 )  dup @ case
-    ['] compile   of  decode-compile    endof
-    ['] lit       of  decode-literal    endof
-    ['] 2lit      of  decode-2literal   endof
-    ['] clit      of  decode-cliteral   endof
-    ['] slit      of  decode-sliteral   endof
-    ['] branch    of  decode-branch     endof
-    ['] 0branch   of  decode-branch     endof
-    ['] ?branch   of  decode-branch     endof
-    ['] (do)      of  decode-branch     endof
-    ['] (?do)     of  decode-branch     endof
-    ['] (.")      of  decode-sliteral   endof
-    [undefined] cslit   ?\ ['] cslit   of decode-sliteral endof
-    [undefined] -branch ?\ ['] -branch of decode-branch   endof
+: see-special  ( a1 -- a1 | a2 )  dup @ case
+    ['] compile   of  see-compile    endof
+    ['] lit       of  see-literal    endof
+    ['] 2lit      of  see-2literal   endof
+    ['] clit      of  see-cliteral   endof
+    ['] slit      of  see-sliteral   endof
+    ['] branch    of  see-branch     endof
+    ['] 0branch   of  see-branch     endof
+    ['] ?branch   of  see-branch     endof
+    ['] (do)      of  see-branch     endof
+    ['] (?do)     of  see-branch     endof
+    ['] (.")      of  see-sliteral   endof
+    [undefined] cslit   ?\ ['] cslit   of see-sliteral endof
+    [undefined] -branch ?\ ['] -branch of see-branch   endof
   endcase  ;  -->
 
-( decode )
+( see )
 
-  \ Checks of the main code
-
-: decode-end?  ( xt -- f )
+: colon-end?  ( xt -- f )
   dup  ['] exit =  swap ['] (;code) =  or  ;
-  \ Is the given xt the end of a definition?
+  \ Is _xt_ the end of colon definition?
 
-: colon-cfa?  ( cfa -- f )
+: colon-xt?  ( xt -- f )
   dup c@ $CD = swap 1+ @ docolon = and  ;
-  \ Is _cfa_ a colon definition?
+  \ Is _xt_ a colon definition?
   \ First, its first byte must be $CD (the Z80 call opcode);
   \ second, its jump address must be the colon interpreter.
 
-: colon-pfa?  ( pfa -- f )  body> colon-cfa?  ;
-  \ Is _pfa_ a colon definition?
+defer colon-body?  ( pfa -- f )
 
--->
+: (colon-body?)  ( pfa -- f )  body> colon-xt?  ;
+  \ Is _a_ the body of a colon definition?
 
-( decode )
+defer .see-body-name  ( pfa -- )
 
-  \ Main code
+: (.see-body-name)  ( pfa -- )
+  indent  ." : " body>name .name  ;
 
-  \ XXX TODO -- pause with `nuf?`
+: be-see-body  ( -- )
+  ['] (colon-body?) ['] colon-body? defer!
+  ['] (.see-body-name) ['] .see-body-name defer!  ; be-see-body
 
-: (decode)  ( pfa -- )
+: no-colon-check  ( pfa -- true )  drop true  ;  -->
 
-  \ Decode the definition at the given pfa.
+  \ : variable-xt?  ( xt -- f )
+  \   dup c@ $CD = swap 1+ @ docreate = and  ;
+  \   \ Does _xt_ belongs to a variable definition?
+  \   \ First, its first byte must be $CD (the Z80 call opcode);
+  \   \ second, its jump address must be the variable interpreter.
+  \ XXX TODO --
 
-  dup colon-pfa? if
-    dup body> decode-address ! indent
-    ." : " dup body>name .name
-    begin   ( pfa+n ) dup decode-address !
-            dup @  ( pfa+n xt ) dup decode-end? 0=
+  \ : variable-body?  ( a -- f )  body> variable-xt?  ;  -->
+  \   \ Is _a_ the body of a variable definition?
+  \ XXX TODO --
+
+( see )
+
+: see-body  ( pfa -- )
+  dup colon-body?  if
+    dup body> see-address ! dup .see-body-name  be-see-body
+    begin   ( pfa+n ) dup see-address !
+            dup @  ( pfa+n xt ) dup colon-end? 0=
     while  \ high level & not end of colon definition
       \ ( pfa+n xt )
       >body ( pfa+n pfa' ) dup indent+  body>name .name
       key case  'q' of  sp0 @ sp! quit  endof
                 bl  of  drop            endof
                 swap recurse  \ default
-          endcase  decode-special  cell+  -1 decode-level +!
+          endcase  see-special  cell+  -1 see-level +!
     repeat  indent >name .name
             \ show the last word
-  else  ." Not a colon definition."  then  drop  ;  -->
+  else  ." Not a colon definition."  then drop  ;  -->
 
-( decode )
+  \ doc{
+  \
+  \ see-body  ( pfa -- )
+  \
+  \ Decode the colon word's definition whose body is _pfa_.
+  \ This word is a factor of `see`.
+  \
+  \ See: `see-body-from`, `see`, `see-xt`.
+  \
+  \ }doc
 
-  \ Interface
+( see )
 
-: decode-usage  ( -- )
+: see-usage  ( -- )
      \  <------------------------------>
   cr ." Keys: space=more, q=quit, other=deeper." cr  ;
 
-: decode  ( "name" -- )
-  defined  ( nt | 0 )  dup 0= -13 ?throw
-  decode-usage
-  name>body  decode-level off  (decode)  ;
+: see  ( "name" -- )
+  defined  ( nt | 0 )  dup 0= -13 ?throw  see-usage
+  name>body  see-level off  see-body  ;
+
+  \ doc{
+  \
+  \ see  ( "name" -- )
+  \
+  \ Decode the word's definition _name_.
+  \ At the moment this word works only with colon definitions.
+  \
+  \ Origin: Forth-94 (TOOLS), Forth-2012 (TOOLS).
+  \
+  \ See: `see-xt`, `see-body`, `see-body-from`.
+  \
+  \ }doc
+
+( see-body-from see-xt )
+
+need ?(  [unneeded] see-body-from ?(  need see
+
+: see-body-from  ( a -- )  
+  ['] drop ['] .see-body-name defer!
+  ['] no-colon-check ['] colon-body? defer!  see-body  ; ?)
+
+  \ doc{
+  \
+  \ see-body-from  ( a -- )
+  \
+  \ Decode the colon word's definition from _a_, which is part
+  \ of its body. This word is useful to decode words that use
+  \ `exit` in the midle of the definition, because `see` stops
+  \ at the first `exit` found.
+  \
+  \ See: `see-body`, `see`, `see-xt`.
+  \
+  \ }doc
+
+[unneeded] see-xt ?(  need see  need nuf?
+
+: see-xt  ( xt -- )  dup colon-xt?  if  see-level off
+    dup see-address ! indent  ." : " dup >name .name >body
+    begin   ( pfa+n ) dup see-address !
+            dup @  ( pfa+n xt ) dup colon-end? 0=  nuf? 0= and
+    while   >body ( pfa+n pfa' ) indent+ body>name .name
+            see-special  cell+  -1 see-level +!
+    repeat  indent >name .name
+  else  ." Not a colon definition."  then drop  ; ?)
+
+  \ XXX TODO -- factor with `see-body`
+
+  \ doc{
+  \
+  \ see-xt  ( xt -- )
+  \
+  \ Decode the word's definition _xt_.
+  \ At the moment this word works only with colon definitions.
+  \
+  \ The listing can be paused with the space bar, then stopped
+  \ with the return key or resumed with any other key.
+  \
+  \ See: `see`, `see-body`, `see-body-from`.
+  \
+  \ }doc
 
   \ vim: filetype=soloforth
