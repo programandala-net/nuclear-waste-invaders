@@ -9,10 +9,9 @@
   \ XXX UNDER DEVELOPMENT
 
 only forth definitions
+wordlist dup constant nuclear-wordlist dup >order set-current
 
-warnings @ warnings off
-: version   ( -- ca len )  s" 0.21.0+201611171413"  ;
-warnings !
+: version   ( -- ca len )  s" 0.22.0+201611270145"  ;
 
 \ Description
 
@@ -51,8 +50,12 @@ false constant [pixel-projectile] immediate
 blk @ 1- last-locatable !
   \ Don't search this source for requisites, just in case.
 
-need defer  need ~~ 13 ~~key !  need [if]
+forth-wordlist set-current
+
+need defer  need ~~ 'q' ~~quit-key !  need [if]
   \ XXX TMP -- during the development
+
+need warn.message
 
 need roll      need inkey   need bleep        need beep>bleep
 need os-chars  need os-udg  need 2/           need abort"
@@ -80,6 +83,8 @@ need papery  need brighty  need flashy
 need kk-ports  need kk-1#   need pressed?     need kk-chars
 
 [defined] binary  ?\ : binary  ( -- )  2 base !  ;
+
+nuclear-wordlist set-current
 
   \ ===========================================================
   \ Debug
@@ -110,6 +115,11 @@ defer (debug-point)  ' noop ' (debug-point) defer!
 22528 constant attributes  768 constant /attributes
   \ Address and size of the screen attributes.
   \ XXX TODO -- not used yet
+
+  \ : :
+  \   cr blk @ . latest .name ." ..."
+  \   s" attributes drop " evaluate : ;
+  \ XXX TMP -- for debugging
 
      2 constant arena-top-y
     21 constant tank-y
@@ -148,7 +158,7 @@ black papery red + constant arena-color#
 variable tank-x        \ column
 variable ufo-x         \ column
 variable lifes         \ counter (0..4)
-variable level         \ counter (1..5)
+variable level         \ counter (1..max-level)
 variable score         \ counter
 variable record        \ max score
 variable invaders      \ counter (all units of every type)
@@ -325,12 +335,6 @@ variable ocr-last-udg
   \ ===========================================================
   \ Debug
 
-  \ Configure the debugging tool `~~`, in order to activate the
-  \ ROM font before printing the debug information, and restore
-  \ the previous font at the end.
-
-warnings @  warnings off
-
 variable ~~base
 
 : ~~(  ( -- )  base @ ~~base ! decimal  ;
@@ -339,13 +343,13 @@ variable ~~base
 
 : ~~  ( -- )
   postpone ~~(  postpone ~~  postpone ~~)  ; immediate
+  \ New version of `~~`, which saves and restores the current
+  \ radix.
 
-~~? off
-
-warnings !
+~~? on
 
 : XXX  ( -- )
-  ~~? on
+  ~~? @ 0= ?exit
   base @ >r decimal latest .name .s r> base !
   key drop ;
 
@@ -1230,7 +1234,7 @@ variable containers-left-x   variable containers-right-x
        1+ + building-right-x !  ;
   \ Set the size of the building after the current level.
 
-5 constant max-level
+9 constant max-level
 
 : increase-level  ( -- )  level @ 1+ max-level min level !  ;
   \ Increase the level number.
@@ -1599,7 +1603,7 @@ variable broken-wall-x
   \ and then choose the next one.
 
   \ 10. 2const invasion-delay-ms \ XXX TODO --
-2 constant invader-time
+8 constant invader-time
 
 defer invasion  \ XXX TMP --
 
@@ -1608,6 +1612,7 @@ defer invasion  \ XXX TMP --
   begin  frames@ 2over d< 0=  until  2drop  ;
   \ Move the current invader, if there are units left of it,
   \ and then choose the next one.
+  \ XXX TMP --
   \ XXX REMARK --
   \ invader-time = 4 -- works, but too slow
   \ invader-time = 3 -- works a bit, but too slow
@@ -1618,14 +1623,15 @@ defer invasion  \ XXX TMP --
   \ do `frames@ invader-interval dmod ?exit` at the start.
 
 : invasion-check  ( -- )
-  frames@ invader-time um/mod drop ?exit (invasion)  ;
+  os-frames c@ invader-time mod ?exit (invasion)  ;
+  \ XXX TMP --
   \ XXX REMARK --
   \ invader-time = 10 -- they hardly move
-  \ invader-time = 4 -- they move few times
+  \ invader-time = 4 -- they move very slowly
   \ invader-time = 3 -- they dont move
   \ invader-time = 2 -- they dont move
 
-' invasion-wait ' invasion defer!  \ XXX TMP --
+' (invasion) ' invasion defer!  \ XXX TMP --
 
   \ ==========================================================
   \ UFO
@@ -1877,6 +1883,11 @@ variable trigger-delay-counter  trigger-delay-counter off
   \ Set the new record, if needed.
 
   \ ==========================================================
+  \ Players config
+
+
+
+  \ ==========================================================
   \ Main
 
 : .game-over  ( -- )  s" GAME OVER" message  ;
@@ -1888,6 +1899,9 @@ variable trigger-delay-counter  trigger-delay-counter off
 
 : defeat-tune  ( -- )  100 200 do  i 20 beep  -5 +loop  ;
   \ XXX TODO -- 128 sound
+
+  \ attributes drop XXX  \ XXX FIXME -- not found
+  \ XXX INFORMER
 
 create attributes-backup /attributes allot
 
