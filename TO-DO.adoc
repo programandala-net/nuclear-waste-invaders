@@ -42,3 +42,8 @@ accordingly.
 
 When an invader is shoot, make it return to the border of the arena,
 and then start over.
+
+2016-11-27:
+
+Count the times every invader is hit and change its color accordingly.
+Make the explosion random calculation depend on the count.

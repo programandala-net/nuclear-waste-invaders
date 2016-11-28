@@ -11,7 +11,9 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version   ( -- ca len )  s" 0.22.0+201611270145"  ;
+: version  ( -- ca len )  s" 0.23.0-pre.1+201611271344"  ;
+
+cr cr .( Nuclear Invaders ) cr version type cr
 
 \ Description
 
@@ -34,7 +36,7 @@ wordlist dup constant nuclear-wordlist dup >order set-current
 \ derived works.  There is no warranty.
 
   \ ===========================================================
-  \ Options
+  cr .( Options)
 
   \ Flags for conditional compilation of new features under
   \ development.
@@ -45,7 +47,22 @@ false constant [pixel-projectile] immediate
   \ XXX FIXME --
 
   \ ===========================================================
-  \ Requisites from the library of Solo Forth
+  cr .( Debug)
+
+defer (debug-point)  ' noop ' (debug-point) defer!
+
+: debug-point  ( -- )
+  (debug-point)
+  depth 0= ?exit
+  cr ." block:" blk ?  ." latest:" latest .name ." hp:" hp@ u.
+  \ depth if  cr .s  #-258 throw  then \ stack imbalance
+  \ key drop
+  ;
+  \ Abort if the stack is not empty.
+  \ XXX TMP -- for debugging
+
+  \ ===========================================================
+  cr .( Library)  debug-point
 
 blk @ 1- last-locatable !
   \ Don't search this source for requisites, just in case.
@@ -87,25 +104,7 @@ need kk-ports  need kk-1#   need pressed?     need kk-chars
 nuclear-wordlist set-current
 
   \ ===========================================================
-  \ Debug
-
-defer (debug-point)  ' noop ' (debug-point) defer!
-
-: debug-point  ( -- )
-  (debug-point)
-  cr ." block: " blk ?  ." latest word: " latest .name
-  depth if
-    \ cr ." Latest word: " latest .name
-    cr .s  #-258 throw \ stack imbalance
-  then
-  \ key drop
-  ;
-  \ Abort if the stack is not empty.
-  \ XXX TMP -- for debugging
-
-
-  \ ===========================================================
-  \ Constants
+  cr .( Constants)  debug-point
 
 16384 constant sys-screen  6912 constant /sys-screen
                            6144 constant /sys-screen-bitmap
@@ -129,9 +128,15 @@ tank-y constant arena-bottom-y
   \ XXX TODO --
 
   \ ===========================================================
-  \ Colors
+  cr .( Colors)  debug-point
 
              green constant invader-color#
+
+             green constant sane-invader-color#
+            yellow constant wounded-invader-color#
+               red constant dying-invader-color#
+                   \ XXX TODO -- not used yet
+
            magenta constant ufo-color#
 black papery red + constant arena-color#
     yellow brighty constant radiation-color#
@@ -153,22 +158,22 @@ black papery red + constant arena-color#
   0 overprint  0 inverse  black border  ;
 
   \ ===========================================================
-  \ Variables
+  cr .( Variables)  debug-point
 
-variable tank-x        \ column
-variable ufo-x         \ column
-variable lifes         \ counter (0..4)
-variable level         \ counter (1..max-level)
-variable score         \ counter
-variable record        \ max score
-variable invaders      \ counter (all units of every type)
-variable invader-type  \ element of table  (0..9)
-variable catastrophe   \ flag (game end condition)
+variable tank-x          \ column
+variable ufo-x           \ column
+variable lifes           \ counter (0..4)
+variable level           \ counter (1..max-level)
+variable score           \ counter
+variable record          \ max score
+variable invaders        \ counter (all units of every type)
+variable current-invader \ element of table  (0..9)
+variable catastrophe     \ flag (game end condition)
 
 record off
 
   \ ===========================================================
-  \ Keyboard
+  cr .( Keyboard)  debug-point
 
 13 constant enter-key
 
@@ -251,7 +256,7 @@ current-controls @ set-controls
   \ XXX TODO -- adapt the original beeps
 
   \ ===========================================================
-  \ UDG
+  cr .( UDG)  debug-point
 
 [defined] first-udg ?\ $80 constant first-udg
                          \ first UDG code in Solo Forth
@@ -291,7 +296,7 @@ variable used-udgs  used-udgs off
   \ Abort if there is not free space to define _n_ UDG.
 
   \ ===========================================================
-  \ Font
+  cr .( Font)  debug-point
 
 : font!  ( a -- )  os-chars !  ;
   \ Set the current charset to address _a_
@@ -333,7 +338,7 @@ variable ocr-last-udg
 [then]
 
   \ ===========================================================
-  \ Debug
+  cr .( Debug)  debug-point
 
 variable ~~base
 
@@ -354,7 +359,7 @@ variable ~~base
   key drop ;
 
   \ ===========================================================
-  \ Score
+  cr .( Score)  debug-point
 
  1 constant score-y
 14 constant record-x
@@ -386,7 +391,7 @@ variable player   1 player !   \ 1..max-player
 : update-score  ( n -- )  score +! .score  ;
 
   \ ===========================================================
-  \ Graphics
+  cr .( Graphics)  debug-point
 
     variable >udg  first-udg >udg !  \ next free UDG
 
@@ -964,7 +969,7 @@ sprite-string fire-button$  ( -- ca len )
 decimal
 
   \ ===========================================================
-  \ Type
+  cr .( Type)  debug-point
 
 : centered  ( len -- col )  columns swap - 2/  ;
   \ Convert a string length to the column required
@@ -991,7 +996,7 @@ decimal
   \ Print a game message _ca len_.
 
   \ ===========================================================
-  \ Instructions
+  cr .( Instructions)  debug-point
 
 : title  ( -- )
   s" NUCLEAR INVADERS" 0 center-type
@@ -1083,7 +1088,7 @@ decimal
   menu  ;
 
   \ ===========================================================
-  \ Game screen
+  cr .( Game screen)  debug-point
 
 arena-bottom-y arena-top-y - 1+ columns * constant /arena
   \ Number of characters and attributes of the arena.
@@ -1160,7 +1165,7 @@ columns udg/invader - constant invaders-max-x
   \ invader in the table.
 
      10 constant invader-types
-7 cells constant /invader-type
+9 cells constant /invader-type
 
 create default-invaders-data
   \ Default invaders data table.
@@ -1169,18 +1174,27 @@ create default-invaders-data
 
 here
 
-  \ units active? y   x                sprite      x inc points
-    1 ,   0 ,     5 , invaders-min-x , invader-3 ,  1 ,  30 ,
-    1 ,   0 ,     7 , invaders-min-x , invader-2 ,  1 ,  20 ,
-    1 ,   0 ,     9 , invaders-min-x , invader-2 ,  1 ,  20 ,
-    1 ,   0 ,    11 , invaders-min-x , invader-1 ,  1 ,  10 ,
-    1 ,   0 ,    13 , invaders-min-x , invader-1 ,  1 ,  10 ,
-    1 ,   0 ,     5 , invaders-max-x , invader-3 , -1 ,  30 ,
-    1 ,   0 ,     7 , invaders-max-x , invader-2 , -1 ,  20 ,
-    1 ,   0 ,     9 , invaders-max-x , invader-2 , -1 ,  20 ,
-    1 ,   0 ,    11 , invaders-max-x , invader-1 , -1 ,  10 ,
-    1 ,   0 ,    13 , invaders-max-x , invader-1 , -1 ,  10 ,
-    \ XXX TMP -- 1 unit per type instead of 3
+\ +0  +1   +2               +3          +4   +5   +6  +7  +8
+   1 , 0 ,  5 , invaders-min-x , invader-3 ,  1 , 30 , 3 , 0 ,
+   1 , 0 ,  7 , invaders-min-x , invader-2 ,  1 , 20 , 2 , 0 ,
+   1 , 0 ,  9 , invaders-min-x , invader-2 ,  1 , 20 , 2 , 0 ,
+   1 , 0 , 11 , invaders-min-x , invader-1 ,  1 , 10 , 1 , 0 ,
+   1 , 0 , 13 , invaders-min-x , invader-1 ,  1 , 10 , 1 , 0 ,
+   1 , 0 ,  5 , invaders-max-x , invader-3 , -1 , 30 , 3 , 0 ,
+   1 , 0 ,  7 , invaders-max-x , invader-2 , -1 , 20 , 2 , 0 ,
+   1 , 0 ,  9 , invaders-max-x , invader-2 , -1 , 20 , 2 , 0 ,
+   1 , 0 , 11 , invaders-max-x , invader-1 , -1 , 10 , 1 , 0 ,
+   1 , 0 , 13 , invaders-max-x , invader-1 , -1 , 10 , 1 , 0 ,
+  \ Legend:
+  \ +0: units \ XXX TMP -- 1 unit per type instead of 3
+  \ +1: active?
+  \ +2: y
+  \ +3: x
+  \ +4: sprite
+  \ +5: x inc
+  \ +6: points for destroy
+  \ +7: points for retreat
+  \ +8: impacts
 
 here swap - constant /invaders-data
   \ Space occupied by the invaders data.
@@ -1190,7 +1204,7 @@ here swap - constant /invaders-data
 create invaders-data  /invaders-data allot
   \ Current invaders data.
 
-: >invader   ( -- n )  invader-type @ /invader-type *  ;
+: >invader   ( -- n )  current-invader @ /invader-type *  ;
   \ Pointer of current invader type in a data table.
 
 : 'invader   ( -- a )  >invader invaders-data +  ;
@@ -1208,13 +1222,30 @@ create invaders-data  /invaders-data allot
 : invader-xy@    ( -- x y )  invader-y 2@  ;
 : invader-char@  ( -- c )  'invader [ 4 cells ] literal + @  ;
 
-: invader-x-inc@  ( -- n )  'invader [ 5 cells ] literal + @  ;
+: invader-x-inc  ( -- n )  'invader [ 5 cells ] literal +  ;
 
-: invader-points@  ( -- n )
+: invader-destroy-points@  ( -- n )
   'invader [ 6 cells ] literal + @  ;
 
-: invader-default-x@    ( -- x y )
+: invader-retreat-points@  ( -- n )
+  'invader [ 7 cells ] literal + @  ;
+
+: invader-impacts  ( -- n )  'invader [ 8 cells ] literal +  ;
+
+: invader-default-x@    ( -- x )
   'default-invader [ 3 cells ] literal + @  ;
+
+2 constant max-hit
+
+create invader-colors  ( -- a )
+  sane-invader-color#     c,
+  wounded-invader-color#  c,
+  dying-invader-color#    c,
+  \ Table to index the impacts to the proper color.
+
+: invader-proper-color  ( -- n )
+  invader-impacts @ max-hit min invader-colors + c@  ;
+  \ Invader proper color for its impacts.
 
  4 constant building-top-y
 15 constant building-bottom-y
@@ -1255,7 +1286,7 @@ variable used-projectiles  used-projectiles off
   \ Init the level number and the related variables.
 
   \ ==========================================================
-  \ Building
+  cr .( Building)  debug-point
 
 : floor  ( y -- )
   building-left-x @ swap at-xy
@@ -1292,7 +1323,7 @@ variable used-projectiles  used-projectiles off
   \ Draw the building and the nuclear containers.
 
   \ ==========================================================
-  \ Tank
+  cr .( Tank)  debug-point
 
                     1 constant tank-min-x
 columns udg/tank - 1- constant tank-max-x
@@ -1362,7 +1393,7 @@ transmission-delay-counter off
   \ only the character not overwritten by the new position
 
   \ ==========================================================
-  \ Projectiles
+  cr .( Projectiles)  debug-point
 
 %111 value max-projectile#
   \ Bitmask for the projectile counter (0..7).
@@ -1415,7 +1446,7 @@ defer debug-data-pause  ( -- )
   \ Coordinates of the projectile.
 
   \ ==========================================================
-  \ Init
+  cr .( Init)  debug-point
 
 4 constant max-lifes
   \ Maximum number of lifes, including the first one.
@@ -1439,13 +1470,13 @@ defer debug-data-pause  ( -- )
 
 : total-invaders  ( -- n )
   0  invader-types 0 do
-       i invader-type ! invader-units @ +
+       i current-invader ! invader-units @ +
      loop  ;
   \ Total number of invaders (sum of units of all invader
   \ types).
 
 : init-invaders  ( -- )
-  init-invaders-data  invader-type off
+  init-invaders-data  current-invader off
   total-invaders invaders !  ;
   \ Init the invaders.
 
@@ -1474,7 +1505,7 @@ defer debug-data-pause  ( -- )
   init-projectiles show-level show-player  ;
 
   \ ==========================================================
-  \ Invasion
+  cr .( Invasion)  debug-point
 
 : at-invader  ( -- )  invader-xy@ at-xy  ;
   \ Set the cursor position at the coordinates of the invader.
@@ -1497,8 +1528,25 @@ defer debug-data-pause  ( -- )
 variable broken-wall-x
   \ Column of the wall broken by the current alien.
 
-: flying-to-the-right?  ( -- f )  invader-x-inc@ 0>  ;
+: at-the-right?  ( -- f )
+  invader-x @ [ columns 2/ ] literal >  ;
+  \ Is the current invader at the right of the building?
+
+: at-the-left?  ( -- f )
+  invader-x @ [ columns 2/ ] literal <  ;
+  \ Is the current invader at the left of the building?
+
+: flying-to-the-right?  ( -- f )  invader-x-inc @ 0>  ;
   \ Is the current invader flying to the right?
+
+: flying-to-the-left?  ( -- f )  invader-x-inc @ 0<  ;
+  \ Is the current invader flying to the left?
+
+: attacking-invader?  ( -- f )
+  at-the-right? flying-to-the-left? and
+  at-the-left? flying-to-the-right? and or  ;
+  \ Is the current invader attacking?
+  \ XXX TODO -- don't calculate, use a stored flag instead
 
 : broken-bricks-coordinates  ( -- x1 y1 x2 y2 )
   broken-wall-x @ invader-y @ 1+  2dup 2-  ;
@@ -1565,6 +1613,18 @@ variable broken-wall-x
                         then  catastrophe !  ;
   \ Manage the possible damages caused by the current invader.
 
+: back-home?  ( -- f )
+  invader-x @
+  flying-to-the-right? [ columns udg/invader - ] literal and
+  = ;
+  \ Is the retreating invader back home?
+
+: turn-back  ( -- )  invader-x-inc @ negate invader-x-inc !  ;
+  \ Make the current invader turn back.
+
+: back-home  ( -- )  back-home? if  turn-back  then   ;
+  \ If the current invader has reached its home, turn it back.
+
 : left-flying-invader  ( -- )
   -1 invader-x +! at-invader .invader space  ;
   \ Move the current invader, which is flying to the left.
@@ -1574,26 +1634,28 @@ variable broken-wall-x
   \ Move the current invader, which is flying to the right.
 
 : flying-invader  ( -- )
-  flying-to-the-right?
-  if  right-flying-invader  else  left-flying-invader  then  ;
+  flying-to-the-right? if    right-flying-invader
+                       else  left-flying-invader  then
+  attacking-invader?   if    damages
+                       else  back-home  then  ;
 
 : activate-invader  ( -- )
   invaders @ random 0= invader-active !  ;
   \ Activate the current invader randomly, depending on the
-  \ number of aliens.
+  \ number of invaders.
 
 : last-invader-type?  ( -- f )
-  invader-type @ [ invader-types 1- ] literal =  ;
+  current-invader @ [ invader-types 1- ] literal =  ;
   \ Is the current invader type the last one?
 
 : next-invader  ( -- )
   last-invader-type?
-  if  invader-type off  else  1 invader-type +!  then  ;
+  if  current-invader off  else  1 current-invader +!  then  ;
   \ Update the invader type to the next one.
 
 : move-invader  ( -- )
   invader-active @
-  if  flying-invader damages  else  activate-invader  then  ;
+  if  flying-invader  else  activate-invader  then  ;
   \ Move the current invader if it's active, else
   \ just try to activate it.
 
@@ -1634,7 +1696,7 @@ defer invasion  \ XXX TMP --
 ' (invasion) ' invasion defer!  \ XXX TMP --
 
   \ ==========================================================
-  \ UFO
+  cr .( UFO)  debug-point
 
  3 constant ufo-y       \ row
 27 constant ufo-max-x   \ column
@@ -1671,7 +1733,7 @@ defer invasion  \ XXX TMP --
   \ Manage the UFO, if it's visible.
 
   \ ==========================================================
-  \ Impact
+  cr .( Impact)  debug-point
 
 : ufo-bang  ( -- )  18 12 do  i 15 beep  loop  ;
   \ XXX TODO -- 128 sound
@@ -1688,9 +1750,6 @@ defer invasion  \ XXX TMP --
   \ Update the score with the UFO bonus.
 
 : ufo-impacted  ( -- )  ufo-explosion ufo-bonus  ;
-
-: invader-bonus  ( -- )  invader-points@  update-score  ;
-  \ Update the score with the invader bonus.
 
 : invader-bang  ( -- ca len )  10 100 beep  ;
   \ XXX TODO -- explosion 128 sound
@@ -1721,15 +1780,35 @@ defer invasion  \ XXX TMP --
   \ Replace the current invader with its next unit.
   \ Set it inactive at its start position.
 
-: current-invader-impacted  ( -- )
-  invader-bonus invader-explosion
+: invader-explodes  ( -- )
+  invader-destroy-points@  update-score  invader-explosion
   -1 invaders +!  -1 invader-units +!
   invader-units @ if  replace-invader  then  ;
+
+: invader-retreats  ( -- )
+  invader-retreat-points@ update-score  turn-back  ;
+
+: increase-impacts  ( -- )
+  invader-impacts @ 1+ max-hit min invader-impacts !  ;
+  \ Increase the impacts of the current invader.
+
+: mortal-impact?  ( -- f )
+  [ max-hit 1+ ] literal invader-impacts @ - random 0=  ;
+  \ Is it a mortal impact?  The random calculation depends on
+  \ the number of previous impacts. The more impacts, the more
+  \ chances.
+
+: current-invader-impacted  ( -- )
+  0=  mortal-impact? if    invader-explodes
+                     else  invader-retreats
+                     then  increase-impacts  ;
   \ The current invader has been impacted by the projectile.
+  \ It explodes or retreats, depending on a random calculation
+  \ based on the number of previous impacts.
 
 : invader-impacted  ( -- )
-  invader-type @ >r  impacted-invader invader-type !
-  current-invader-impacted  r> invader-type !  ;
+  current-invader @ >r  impacted-invader current-invader !
+  current-invader-impacted  r> current-invader !  ;
   \ An invader has been impacted by the projectile.
   \ Calculate its type, set it the current one and manage it.
 
@@ -1760,12 +1839,12 @@ defer invasion  \ XXX TMP --
   [then]  ;
   \ Did the projectile hit the target?
 
-: impact?  ( -- f )  hit? dup if  impact  then  ;
+: impacted?  ( -- f )  hit? dup if  impact  then  ;
   \ Did the projectil impacted?
   \ If so, do manage the impact.
 
   \ ==========================================================
-  \ Shoot
+  cr .( Shoot)  debug-point
 
 [pixel-projectile] 0= [if]
 
@@ -1813,7 +1892,7 @@ defer invasion  \ XXX TMP --
   [pixel-projectile] [if]    7
                      [else]  -1
                      [then]  projectile-y c+!
-  impact? ?exit  .projectile  ;
+  impacted? ?exit  .projectile  ;
   \ Manage the projectile.
 
 variable trigger-delay-counter  trigger-delay-counter off
@@ -1883,12 +1962,12 @@ variable trigger-delay-counter  trigger-delay-counter off
   \ Set the new record, if needed.
 
   \ ==========================================================
-  \ Players config
+  cr .( Players config)  debug-point
 
 
 
   \ ==========================================================
-  \ Main
+  cr .( Main)  debug-point
 
 : .game-over  ( -- )  s" GAME OVER" message  ;
 
@@ -1946,7 +2025,7 @@ create attributes-backup /attributes allot
 : run  ( -- )  begin  instructions game  again  ;
 
   \ ============================================================
-  \ Debugging tools
+  cr .( Debugging tools)  debug-point
 
 : .udgs  ( -- )  cr udgs 0 do  i 128 + emit  loop  ;
   \ Print all game UDGs.
