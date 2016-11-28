@@ -11,7 +11,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.23.0-pre.1+201611271344"  ;
+: version  ( -- ca len )  s" 0.23.0-pre.2+201611271344"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -82,7 +82,7 @@ need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
 need overprint need color   need color!       need frames@
 need c+!       need fade    need cvariable    need 2const
-need d<
+need d<        need field:  need +field-opt-0
 
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
@@ -166,7 +166,7 @@ variable lifes           \ counter (0..4)
 variable level           \ counter (1..max-level)
 variable score           \ counter
 variable record          \ max score
-variable invaders        \ counter (all units of every type)
+variable invaders        \ counter
 variable current-invader \ element of table  (0..9)
 variable catastrophe     \ flag (game end condition)
 
@@ -1116,7 +1116,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
   \ Show the current player by making its score blink.
 
 : col>pixel  ( n1 -- n2 )  8 *  ;
-  \ Convert a row (0..31) to a pixel y coordinate (0..256).
+  \ Convert a row (0..31) to a pixel y coordinate (0..255).
   \ XXX TODO -- Move to Solo Forth and rewrite in Z80
 
 : row>pixel  ( n1 -- n2 )  8 * 191 swap -  ;
@@ -1164,76 +1164,64 @@ columns udg/invader - constant invaders-max-x
   \ The `invader` variable points to the data of the current
   \ invader in the table.
 
-     10 constant invader-types
-9 cells constant /invader-type
+10 constant max-invaders
 
-create default-invaders-data
-  \ Default invaders data table.
-  \ This is used to restore the actual data table
-  \ before a new game.
+0
+  \ XXX TODO -- reorder for speed: most used at +0, +1, +2, +4
+  \ XXX TODO -- use `cfield:`
+  field: >active
+  field: >y
+  field: >x
+  field: >sprite
+  field: >x-inc
+  field: >destroy-points
+  field: >retreat-points
+  field: >impacts
+constant /invader
 
-here
+max-invaders /invader * constant /invaders
 
-\ +0  +1   +2               +3          +4   +5   +6  +7  +8
-   1 , 0 ,  5 , invaders-min-x , invader-3 ,  1 , 30 , 3 , 0 ,
-   1 , 0 ,  7 , invaders-min-x , invader-2 ,  1 , 20 , 2 , 0 ,
-   1 , 0 ,  9 , invaders-min-x , invader-2 ,  1 , 20 , 2 , 0 ,
-   1 , 0 , 11 , invaders-min-x , invader-1 ,  1 , 10 , 1 , 0 ,
-   1 , 0 , 13 , invaders-min-x , invader-1 ,  1 , 10 , 1 , 0 ,
-   1 , 0 ,  5 , invaders-max-x , invader-3 , -1 , 30 , 3 , 0 ,
-   1 , 0 ,  7 , invaders-max-x , invader-2 , -1 , 20 , 2 , 0 ,
-   1 , 0 ,  9 , invaders-max-x , invader-2 , -1 , 20 , 2 , 0 ,
-   1 , 0 , 11 , invaders-max-x , invader-1 , -1 , 10 , 1 , 0 ,
-   1 , 0 , 13 , invaders-max-x , invader-1 , -1 , 10 , 1 , 0 ,
-  \ Legend:
-  \ +0: units \ XXX TMP -- 1 unit per type instead of 3
-  \ +1: active?
-  \ +2: y
-  \ +3: x
-  \ +4: sprite
-  \ +5: x inc
-  \ +6: points for destroy
-  \ +7: points for retreat
-  \ +8: impacts
+create invaders-data /invaders allot
+  \ Invaders data table.
 
-here swap - constant /invaders-data
-  \ Space occupied by the invaders data.
+: 'invader   ( -- a )
+  current-invader @ /invader * invaders-data +  ;
+  \ Address _a_ of the current invader data.
 
-  \ XXX TODO -- convert tables to standard structures
-
-create invaders-data  /invaders-data allot
-  \ Current invaders data.
-
-: >invader   ( -- n )  current-invader @ /invader-type *  ;
-  \ Pointer of current invader type in a data table.
-
-: 'invader   ( -- a )  >invader invaders-data +  ;
-  \ Data address _a_ of the current invader type.
-
-: 'default-invader   ( -- a )
-  >invader default-invaders-data +  ;
-  \ Default data address _a_ of the current invader type.
-
-: invader-units   ( -- a )  'invader            ;
-: invader-active  ( -- a )  'invader cell+      ;
-: invader-y       ( -- a )  'invader [ 2 cells ] literal +  ;
-: invader-x       ( -- a )  'invader [ 3 cells ] literal +  ;
+: invader-active  ( -- a )  'invader >active  ;
+: invader-char  ( -- a )  'invader >sprite  ;
+: invader-destroy-points  ( -- a )  'invader >destroy-points  ;
+: invader-impacts  ( -- a )  'invader >impacts  ;
+: invader-retreat-points  ( -- a )  'invader >retreat-points  ;
+: invader-x       ( -- a )  'invader >x  ;
+: invader-x-inc  ( -- a )  'invader >x-inc  ;
+: invader-y       ( -- a )  'invader >y  ;
 
 : invader-xy@    ( -- x y )  invader-y 2@  ;
-: invader-char@  ( -- c )  'invader [ 4 cells ] literal + @  ;
 
-: invader-x-inc  ( -- n )  'invader [ 5 cells ] literal +  ;
+: init-invader-data  ( n1..n6 n0 -- )
+  current-invader !
+  invader-retreat-points !
+  invader-destroy-points !
+  invader-x-inc !  invader-char !  invader-x !  invader-y !  ;
+  \ Init data of invader_n0_ with default values=_n1_=y;
+  \ _n2_=x; _n3_=sprite; _n4_=x inc; _n5_=points for destroy;
+  \ _n6_=points for retreat. Other fields don't need
+  \ initialization, because they contain zero.
 
-: invader-destroy-points@  ( -- n )
-  'invader [ 6 cells ] literal + @  ;
-
-: invader-retreat-points@  ( -- n )
-  'invader [ 7 cells ] literal + @  ;
-
-: invader-impacts  ( -- n )  'invader [ 8 cells ] literal +  ;
-
-: invader-default-x@    ( -- x )
-  'default-invader [ 3 cells ] literal + @  ;
+: init-invaders-data  ( -- )
+  invaders-data /invaders erase
+  13 invaders-max-x invader-1 -1 10 1  \ 9
+  11 invaders-max-x invader-1 -1 10 1  \ 8
+   9 invaders-max-x invader-2 -1 20 2  \ 7
+   7 invaders-max-x invader-2 -1 20 2  \ 6
+   5 invaders-max-x invader-3 -1 30 3  \ 5
+  13 invaders-min-x invader-1  1 10 1  \ 4
+  11 invaders-min-x invader-1  1 10 1  \ 3
+   9 invaders-min-x invader-2  1 20 2  \ 2
+   7 invaders-min-x invader-2  1 20 2  \ 1
+   5 invaders-min-x invader-3  1 30 3  \ 0
+  max-invaders 0 ?do  i init-invader-data  loop  ;
 
 2 constant max-hit
 
@@ -1459,25 +1447,15 @@ defer debug-data-pause  ( -- )
   cls status-bars  ;
   \ Init the game.
 
-: init-invaders-data  ( -- )
-  default-invaders-data invaders-data /invaders-data move  ;
-
 -200 constant ufo-initial-x
   \ Initial column of the UFO, out of the screen.
 
 : init-ufo  ( -- )  ufo-initial-x ufo-x !  ;
   \ Init the UFO.
 
-: total-invaders  ( -- n )
-  0  invader-types 0 do
-       i current-invader ! invader-units @ +
-     loop  ;
-  \ Total number of invaders (sum of units of all invader
-  \ types).
-
 : init-invaders  ( -- )
   init-invaders-data  current-invader off
-  total-invaders invaders !  ;
+  max-invaders invaders !  ;
   \ Init the invaders.
 
 : init-tank  ( -- )  columns udg/tank - 2/ tank-x !  ;
@@ -1518,7 +1496,7 @@ defer debug-data-pause  ( -- )
   \ _col_.
 
 : invader-frame  ( -- c )
-  invader-char@ invader-x @ sprite>frame  ;
+  invader-char @ invader-x @ sprite>frame  ;
   \ Frame of the invader, calculated from its column.
 
 : .invader  ( -- )
@@ -1644,23 +1622,22 @@ variable broken-wall-x
   \ Activate the current invader randomly, depending on the
   \ number of invaders.
 
-: last-invader-type?  ( -- f )
-  current-invader @ [ invader-types 1- ] literal =  ;
-  \ Is the current invader type the last one?
+: last-invader?  ( -- f )
+  current-invader @ [ max-invaders 1- ] literal =  ;
+  \ Is the current invader the last one?
 
 : next-invader  ( -- )
-  last-invader-type?
-  if  current-invader off  else  1 current-invader +!  then  ;
-  \ Update the invader type to the next one.
+  last-invader? if    current-invader off   exit
+                then  1 current-invader +!  ;
+  \ Update the invader to the next one.
 
 : move-invader  ( -- )
-  invader-active @
-  if  flying-invader  else  activate-invader  then  ;
+  invader-active @ if    flying-invader    exit
+                   then  activate-invader  ;
   \ Move the current invader if it's active, else
   \ just try to activate it.
 
-: (invasion)  ( -- )
-  invader-units @ if  move-invader  then  next-invader  ;
+: (invasion)  ( -- )  move-invader  next-invader  ;
   \ Move the current invader, if there are units left of it,
   \ and then choose the next one.
 
@@ -1766,27 +1743,18 @@ defer invasion  \ XXX TMP --
 : impacted-invader  ( -- n )
   projectile-y c@ [ building-top-y 1+ ] literal - 2/
   projectile-x c@ [ columns 2/ ] literal > abs 5 * +  ;
-  \ Return the type _n_ (0..9) of the impacted invader,
-  \ calculated from the projectile coordinates: Invader types 0
-  \ and 5 are at the top, one row below the top of the
-  \ building; types 1 and 6 are two rows below and so on.
-  \ Types 0..4 are at the left of the screen; types 5..9 are at
-  \ the right.
-
-: replace-invader  ( -- )
-  invader-active off
-  invader-default-x@ invader-x !  at-invader
-  in-invader-color invader-char@ .2x1sprite  ;
-  \ Replace the current invader with its next unit.
-  \ Set it inactive at its start position.
+  \ Return the impacted invader (0..9), calculated from the
+  \ projectile coordinates: Invaders 0 and 5 are at the top,
+  \ one row below the top of the building; 1 and 6 are two rows
+  \ below and so on.  0..4 are at the left of the screen; 5..9
+  \ are at the right.
 
 : invader-explodes  ( -- )
-  invader-destroy-points@  update-score  invader-explosion
-  -1 invaders +!  -1 invader-units +!
-  invader-units @ if  replace-invader  then  ;
+  invader-destroy-points @  update-score  invader-explosion
+  -1 invaders +!  invader-active off  ;
 
 : invader-retreats  ( -- )
-  invader-retreat-points@ update-score  turn-back  ;
+  invader-retreat-points @ update-score  turn-back  ;
 
 : increase-impacts  ( -- )
   invader-impacts @ 1+ max-hit min invader-impacts !  ;
@@ -1810,7 +1778,7 @@ defer invasion  \ XXX TMP --
   current-invader @ >r  impacted-invader current-invader !
   current-invader-impacted  r> current-invader !  ;
   \ An invader has been impacted by the projectile.
-  \ Calculate its type, set it the current one and manage it.
+  \ Make it the current one and manage it.
 
 : ufo-impacted?  ( -- f )
   [pixel-projectile]
@@ -1881,7 +1849,8 @@ defer invasion  \ XXX TMP --
 
 : projectile-lost?  ( -- f )
   [pixel-projectile]
-  [if]    projectile-y c@ [ building-top-y row>pixel ] literal >
+  [if]    projectile-y c@
+          [ building-top-y row>pixel ] literal >
   [else]  projectile-y c@ building-top-y <
   [then]  ;
   \ Is the projectile lost?
