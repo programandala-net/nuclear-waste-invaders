@@ -11,7 +11,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.23.0-pre.2+201611271344"  ;
+: version  ( -- ca len )  s" 0.23.0-pre.3+201611282153"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -1169,14 +1169,14 @@ columns udg/invader - constant invaders-max-x
 0
   \ XXX TODO -- reorder for speed: most used at +0, +1, +2, +4
   \ XXX TODO -- use `cfield:`
-  field: >active
-  field: >y
-  field: >x
-  field: >sprite
-  field: >x-inc
-  field: >destroy-points
-  field: >retreat-points
-  field: >impacts
+  field: ~active
+  field: ~y
+  field: ~x
+  field: ~sprite
+  field: ~x-inc
+  field: ~destroy-points
+  field: ~retreat-points
+  field: ~impacts
 constant /invader
 
 max-invaders /invader * constant /invaders
@@ -1188,14 +1188,14 @@ create invaders-data /invaders allot
   current-invader @ /invader * invaders-data +  ;
   \ Address _a_ of the current invader data.
 
-: invader-active  ( -- a )  'invader >active  ;
-: invader-char  ( -- a )  'invader >sprite  ;
-: invader-destroy-points  ( -- a )  'invader >destroy-points  ;
-: invader-impacts  ( -- a )  'invader >impacts  ;
-: invader-retreat-points  ( -- a )  'invader >retreat-points  ;
-: invader-x       ( -- a )  'invader >x  ;
-: invader-x-inc  ( -- a )  'invader >x-inc  ;
-: invader-y       ( -- a )  'invader >y  ;
+: invader-active  ( -- a )  'invader ~active  ;
+: invader-char  ( -- a )  'invader ~sprite  ;
+: invader-destroy-points  ( -- a )  'invader ~destroy-points  ;
+: invader-impacts  ( -- a )  'invader ~impacts  ;
+: invader-retreat-points  ( -- a )  'invader ~retreat-points  ;
+: invader-x       ( -- a )  'invader ~x  ;
+: invader-x-inc  ( -- a )  'invader ~x-inc  ;
+: invader-y       ( -- a )  'invader ~y  ;
 
 : invader-xy@    ( -- x y )  invader-y 2@  ;
 
