@@ -11,7 +11,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.23.0-pre.3+201611282153"  ;
+: version  ( -- ca len )  s" 0.23.0-pre.10+201611291137"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -69,7 +69,8 @@ blk @ 1- last-locatable !
 
 forth-wordlist set-current
 
-need defer  need ~~ 'q' ~~quit-key !  need [if]
+need defer  need [if]
+need ~~  'q' ~~quit-key !  bl ~~resume-key !  22 ~~y !
   \ XXX TMP -- during the development
 
 need warn.message
@@ -82,7 +83,7 @@ need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
 need overprint need color   need color!       need frames@
 need c+!       need fade    need cvariable    need 2const
-need d<        need field:  need +field-opt-0
+need d<        need 0exit   need field:  need +field-opt-0
 
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
@@ -1070,15 +1071,19 @@ decimal
 
 : show-controls  ( -- )
   0 12 at-xy .controls
-  s" SPACE: change - ENTER: start" 18 center-type  ;
+  \ s" SPACE: change - ENTER: start" 18 center-type  ; XXX TMP
+  s" ENTER: start" 18 center-type  ;
+  \ XXX TMP --
 
 : menu  ( -- )
   begin
     break-key? if  quit  then  \ XXX TMP
     key
-    dup enter-key = if  drop exit  then
-    dup bl = if  next-controls show-controls  then
-        'p' = if  change-players show-players  then
+    enter-key = if  drop exit  then  \ XXX TMP --
+    \ dup enter-key = if  drop exit  then
+    \ dup bl = if  next-controls show-controls  then
+    \     'p' = if  change-players show-players  then
+    \ XXX TMP --
   again  ;
   \ XXX TODO -- use `case`
 
@@ -1406,23 +1411,21 @@ create 'projectile-y #projectiles allot
 : projectile-y  ( -- a )  'projectile-y projectile# +  ;
   \ Address of the y coordinate of the current projectile.
 
-[pixel-projectile] [if]
-
+defer .debug-data  ( -- )
+' noop ' .debug-data defer!
 defer debug-data-pause  ( -- )
-
 ' wait ' debug-data-pause defer!
 
-: .debug-data  ( -- )
+: (.debug-data)  ( -- )
   9 23 at-xy ." Ammo:" xdepth .
              ." Depth:" depth .
              ." Curr.:" projectile# .
              debug-data-pause  ;
   \ XXX INFORMER
 
-[else]  : .debug-data  ( -- )  ; immediate  [then]
-
 : destroy-projectile  ( -- )
-  0 projectile-y c!  projectile# >x  .debug-data  ;
+  0 projectile-y c!  projectile# >x
+  .debug-data  ;
 
 : init-projectiles  ( -- )
   used-projectiles off
@@ -1766,17 +1769,17 @@ defer invasion  \ XXX TMP --
   \ the number of previous impacts. The more impacts, the more
   \ chances.
 
-: current-invader-impacted  ( -- )
-  0=  mortal-impact? if    invader-explodes
-                     else  invader-retreats
-                     then  increase-impacts  ;
+: (invader-impacted)  ( -- )
+  mortal-impact? if    invader-explodes
+                 else  invader-retreats
+                 then  increase-impacts  ;
   \ The current invader has been impacted by the projectile.
   \ It explodes or retreats, depending on a random calculation
   \ based on the number of previous impacts.
 
 : invader-impacted  ( -- )
   current-invader @ >r  impacted-invader current-invader !
-  current-invader-impacted  r> current-invader !  ;
+  (invader-impacted)  r> current-invader !  ;
   \ An invader has been impacted by the projectile.
   \ Make it the current one and manage it.
 
@@ -1786,28 +1789,21 @@ defer invasion  \ XXX TMP --
   [else]  projectile-y c@ ufo-y =
   [then]  ;
 
-: (impact)  ( -- )
-  ufo-impacted? if  ufo-impacted exit  then
-  invader-impacted  ;
-  \ Manage the impact.
-
 : impact  ( -- )
-  projectile-y c@
-  [pixel-projectile]
-  [if]    [ building-bottom-y row>pixel ] literal >
-  [else]  building-bottom-y <
-  [then]  if  (impact)  then  destroy-projectile  ;
-  \ Manage the impact, if the projectil is high enough.
-  \ XXX TODO -- impact the building too
+  ufo-impacted? if    ufo-impacted
+                else  invader-impacted
+                then  destroy-projectile  ;
 
-: hit?  ( -- f )
+: hit-something?  ( -- f )
   projectile-coords  [pixel-projectile]
-  [if]    pixel-attr-addr c@ invader-color# =
+  [if]    pixel-attr-addr c@ arena-color# <>
   [else]  ocr 0<>
   [then]  ;
-  \ Did the projectile hit the target?
+  \ Did the projectile hit the something?
 
-: impacted?  ( -- f )  hit? dup if  impact  then  ;
+: impacted?  ( -- f )  ~~ hit-something?  ~~
+                          dup if  impact  then
+                          ~~  ;
   \ Did the projectil impacted?
   \ If so, do manage the impact.
 
@@ -1848,10 +1844,10 @@ defer invasion  \ XXX TMP --
   \ Delete the projectile.
 
 : projectile-lost?  ( -- f )
+  projectile-y c@
   [pixel-projectile]
-  [if]    projectile-y c@
-          [ building-top-y row>pixel ] literal >
-  [else]  projectile-y c@ building-top-y <
+  [if]    [ building-top-y row>pixel ] cliteral >
+  [else]  [ building-top-y 1- ] cliteral <
   [then]  ;
   \ Is the projectile lost?
 
@@ -1861,7 +1857,9 @@ defer invasion  \ XXX TMP --
   [pixel-projectile] [if]    7
                      [else]  -1
                      [then]  projectile-y c+!
-  impacted? ?exit  .projectile  ;
+  impacted? ~~ ?exit
+    \ XXX FIXME -- why the flag is always false?
+  ~~ .projectile  ;
   \ Manage the projectile.
 
 variable trigger-delay-counter  trigger-delay-counter off
@@ -1911,15 +1909,12 @@ variable trigger-delay-counter  trigger-delay-counter off
   \ Manage the shoot.
 
 : shoot  ( -- )
-  trigger-pressed? if
-    trigger-ready? if
-      projectile-left? if
-        gun-below-building? 0= if
-          fire  then  then  then  then  update-trigger  ;
+  update-trigger
+  trigger-pressed? 0exit
+  trigger-ready? 0exit
+  projectile-left? 0exit
+  gun-below-building? ?exit  fire  ;
   \ Manage the shoot.
-  \
-  \ XXX TODO -- use `?exit` and `0exit` instead of conditionals
-  \ and move `update-trigger` to the start.
 
 : new-record?   ( -- f )  score @ record @ >  ;
   \ Is there a new record?
@@ -2018,7 +2013,10 @@ create attributes-backup /attributes allot
   broken-bottom-right-container .1x1sprite cr  ;
   \ Show the graphics of the broken containers.
 
-cr cr .( Type RUN to start) cr
+cr cr .( Nuclear Invaders)
+   cr version type
+   cr .( Ready)
+   cr .( Type RUN to start) cr
 
 end-app
 
