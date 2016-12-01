@@ -11,7 +11,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.23.0-pre.10+201611291137"  ;
+: version  ( -- ca len )  s" 0.23.0-pre.14+201612010133"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -43,26 +43,10 @@ cr cr .( Nuclear Invaders ) cr version type cr
 
 false constant [pixel-projectile] immediate
   \ Pixel projectiles (new) instead of UDG projectiles (old)?
-  \ XXX TODO -- finish
-  \ XXX FIXME --
+  \ XXX TODO -- finish support for pixel projectiles
 
   \ ===========================================================
-  cr .( Debug)
-
-defer (debug-point)  ' noop ' (debug-point) defer!
-
-: debug-point  ( -- )
-  (debug-point)
-  depth 0= ?exit
-  cr ." block:" blk ?  ." latest:" latest .name ." hp:" hp@ u.
-  \ depth if  cr .s  #-258 throw  then \ stack imbalance
-  \ key drop
-  ;
-  \ Abort if the stack is not empty.
-  \ XXX TMP -- for debugging
-
-  \ ===========================================================
-  cr .( Library)  debug-point
+  cr .( Library)
 
 blk @ 1- last-locatable !
   \ Don't search this source for requisites, just in case.
@@ -70,7 +54,7 @@ blk @ 1- last-locatable !
 forth-wordlist set-current
 
 need defer  need [if]
-need ~~  'q' ~~quit-key !  bl ~~resume-key !  22 ~~y !
+need ~~  'q' ~~quit-key !  ~~resume-key on  22 ~~y !
   \ XXX TMP -- during the development
 
 need warn.message
@@ -105,6 +89,26 @@ need kk-ports  need kk-1#   need pressed?     need kk-chars
 nuclear-wordlist set-current
 
   \ ===========================================================
+  cr .( Debug)
+
+defer (debug-point)  ' noop ' (debug-point) defer!
+
+: debug-point  ( -- )
+  (debug-point)
+  depth 0= ?exit
+  cr ." block:" blk ?  ." latest:" latest .name ." hp:" hp@ u.
+  \ depth if  cr .s  #-258 throw  then \ stack imbalance
+  \ key drop
+  ;
+  \ Abort if the stack is not empty.
+  \ XXX TMP -- for debugging
+
+  \ : :
+  \   cr blk @ . latest .name ." ..."
+  \   s" attributes drop " evaluate : ;
+  \ XXX TMP -- for debugging
+
+  \ ===========================================================
   cr .( Constants)  debug-point
 
 16384 constant sys-screen  6912 constant /sys-screen
@@ -114,12 +118,6 @@ nuclear-wordlist set-current
 
 22528 constant attributes  768 constant /attributes
   \ Address and size of the screen attributes.
-  \ XXX TODO -- not used yet
-
-  \ : :
-  \   cr blk @ . latest .name ." ..."
-  \   s" attributes drop " evaluate : ;
-  \ XXX TMP -- for debugging
 
      2 constant arena-top-y
     21 constant tank-y
@@ -987,7 +985,8 @@ decimal
 
 : center-type-blank  ( ca len row -- )
   over centered-at type-blank ;
-  \ Overwrite string _ca len_ with blanks, centered on the given row.
+  \ Overwrite string _ca len_ with blanks, centered on the
+  \ given row.
 
 17 constant message-y  \ row for game messages
 
@@ -1067,7 +1066,9 @@ decimal
 : .players  ( -- )  ." [P]layers " players ?  ;
    \ Print the number of players at the current coordinates.
 
-: show-players  ( -- )  0 8 at-xy .players  ;
+: show-players  ( -- )
+  exit  \ XXX TMP --
+  0 8 at-xy .players  ;
 
 : show-controls  ( -- )
   0 12 at-xy .controls
@@ -1182,6 +1183,7 @@ columns udg/invader - constant invaders-max-x
   field: ~destroy-points
   field: ~retreat-points
   field: ~impacts
+  field: ~retreating
 constant /invader
 
 max-invaders /invader * constant /invaders
@@ -1198,6 +1200,7 @@ create invaders-data /invaders allot
 : invader-destroy-points  ( -- a )  'invader ~destroy-points  ;
 : invader-impacts  ( -- a )  'invader ~impacts  ;
 : invader-retreat-points  ( -- a )  'invader ~retreat-points  ;
+: invader-retreating  ( -- a )  'invader ~retreating  ;
 : invader-x       ( -- a )  'invader ~x  ;
 : invader-x-inc  ( -- a )  'invader ~x-inc  ;
 : invader-y       ( -- a )  'invader ~y  ;
@@ -1278,7 +1281,7 @@ variable used-projectiles  used-projectiles off
 : init-level  ( -- )  level off  next-level  ;
   \ Init the level number and the related variables.
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( Building)  debug-point
 
 : floor  ( y -- )
@@ -1315,7 +1318,7 @@ variable used-projectiles  used-projectiles off
   -2 +loop  2drop  building-top  ;
   \ Draw the building and the nuclear containers.
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( Tank)  debug-point
 
                     1 constant tank-min-x
@@ -1385,7 +1388,7 @@ transmission-delay-counter off
   \ XXX TODO -- don't delete the whole tank every time, but
   \ only the character not overwritten by the new position
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( Projectiles)  debug-point
 
 %111 value max-projectile#
@@ -1436,7 +1439,7 @@ defer debug-data-pause  ( -- )
   projectile-x c@ projectile-y c@  ;
   \ Coordinates of the projectile.
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( Init)  debug-point
 
 4 constant max-lifes
@@ -1485,7 +1488,7 @@ defer debug-data-pause  ( -- )
   catastrophe off  init-invaders init-ufo init-tank init-arena
   init-projectiles show-level show-player  ;
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( Invasion)  debug-point
 
 : at-invader  ( -- )  invader-xy@ at-xy  ;
@@ -1509,25 +1512,11 @@ defer debug-data-pause  ( -- )
 variable broken-wall-x
   \ Column of the wall broken by the current alien.
 
-: at-the-right?  ( -- f )
-  invader-x @ [ columns 2/ ] literal >  ;
-  \ Is the current invader at the right of the building?
-
-: at-the-left?  ( -- f )
-  invader-x @ [ columns 2/ ] literal <  ;
-  \ Is the current invader at the left of the building?
-
 : flying-to-the-right?  ( -- f )  invader-x-inc @ 0>  ;
   \ Is the current invader flying to the right?
 
-: flying-to-the-left?  ( -- f )  invader-x-inc @ 0<  ;
-  \ Is the current invader flying to the left?
-
-: attacking-invader?  ( -- f )
-  at-the-right? flying-to-the-left? and
-  at-the-left? flying-to-the-right? and or  ;
+: attacking?  ( -- f )  invader-retreating @ 0=  ;
   \ Is the current invader attacking?
-  \ XXX TODO -- don't calculate, use a stored flag instead
 
 : broken-bricks-coordinates  ( -- x1 y1 x2 y2 )
   broken-wall-x @ invader-y @ 1+  2dup 2-  ;
@@ -1596,18 +1585,23 @@ variable broken-wall-x
 
 : back-home?  ( -- f )
   invader-x @
-  flying-to-the-right? [ columns udg/invader - ] literal and
-  = ;
+  [ columns udg/invader - ] literal flying-to-the-right? and
+  =  ;
   \ Is the retreating invader back home?
 
-: turn-back  ( -- )  invader-x-inc @ negate invader-x-inc !  ;
+: turn-back  ( -- )
+  invader-x-inc @ negate invader-x-inc !
+  invader-retreating @ invert invader-retreating !  ;
   \ Make the current invader turn back.
+  \ XXX TODO -- write `negate!` in Z80 in Solo Forth's lib
 
-: back-home  ( -- )  back-home? if  turn-back  then   ;
-  \ If the current invader has reached its home, turn it back.
+: reattack  ( -- )  back-home? if  turn-back  then   ;
+  \ If the current invader (which is is supposed to
+  \ be retreating) has reached its home, the make it attack.
 
 : left-flying-invader  ( -- )
-  -1 invader-x +! at-invader .invader space  ;
+  -1 invader-x +! ~~ at-invader
+  ~~ .invader space  ;
   \ Move the current invader, which is flying to the left.
 
 : right-flying-invader  ( -- )
@@ -1617,8 +1611,8 @@ variable broken-wall-x
 : flying-invader  ( -- )
   flying-to-the-right? if    right-flying-invader
                        else  left-flying-invader  then
-  attacking-invader?   if    damages
-                       else  back-home  then  ;
+            attacking? if    damages
+                       else  reattack  then  ;
 
 : activate-invader  ( -- )
   invaders @ random 0= invader-active !  ;
@@ -1675,7 +1669,7 @@ defer invasion  \ XXX TMP --
 
 ' (invasion) ' invasion defer!  \ XXX TMP --
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( UFO)  debug-point
 
  3 constant ufo-y       \ row
@@ -1712,16 +1706,19 @@ defer invasion  \ XXX TMP --
   ufo-invisible? if  1 ufo-x +!  else  (move-ufo)  then  ;
   \ Manage the UFO, if it's visible.
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( Impact)  debug-point
 
 : ufo-bang  ( -- )  18 12 do  i 15 beep  loop  ;
+  \ Make the explosion sound of the UFO.
   \ XXX TODO -- 128 sound
 
 : ufo-on-fire  ( -- )
   ufo-x @ 1+ ufo-y at-xy ufo-explosion$ type  ;
+  \ Show the UFO on fire.
 
 : ufo-explosion  ( -- )  ufo-on-fire ufo-bang -ufo  ;
+  \ Show the explosion of the UFO.
 
 : ufo-points  ( -- n )  5 random 1+ 10 * 50 +  ;
   \ Random points for impacting the UFO.
@@ -1730,18 +1727,22 @@ defer invasion  \ XXX TMP --
   \ Update the score with the UFO bonus.
 
 : ufo-impacted  ( -- )  ufo-explosion ufo-bonus  ;
+  \ The UFO has been impacted.
 
 : invader-bang  ( -- ca len )  10 100 beep  ;
+  \ Make the explosion sound of the current invader.
   \ XXX TODO -- explosion 128 sound
 
 : invader-on-fire  ( -- )
   at-invader invader-explosion$ type  ;
+  \ Show the current invader on fire.
 
 : -invader  ( -- )  at-invader 2 spaces  ;
   \ Delete the current invader.
 
 : invader-explosion  ( -- )
   invader-on-fire invader-bang -invader  ;
+  \ Show the explosion of the current invader.
 
 : impacted-invader  ( -- n )
   projectile-y c@ [ building-top-y 1+ ] literal - 2/
@@ -1755,9 +1756,11 @@ defer invasion  \ XXX TMP --
 : invader-explodes  ( -- )
   invader-destroy-points @  update-score  invader-explosion
   -1 invaders +!  invader-active off  ;
+  \ The current invader explodes.
 
 : invader-retreats  ( -- )
   invader-retreat-points @ update-score  turn-back  ;
+  \ The current invader retreats.
 
 : increase-impacts  ( -- )
   invader-impacts @ 1+ max-hit min invader-impacts !  ;
@@ -1771,11 +1774,11 @@ defer invasion  \ XXX TMP --
 
 : (invader-impacted)  ( -- )
   mortal-impact? if    invader-explodes
-                 else  invader-retreats
+                 else  attacking? if  invader-retreats  then
                  then  increase-impacts  ;
   \ The current invader has been impacted by the projectile.
-  \ It explodes or retreats, depending on a random calculation
-  \ based on the number of previous impacts.
+  \ It explodes or, if attacking, retreats, depending on a
+  \ random calculation based on the number of previous impacts.
 
 : invader-impacted  ( -- )
   current-invader @ >r  impacted-invader current-invader !
@@ -1801,13 +1804,11 @@ defer invasion  \ XXX TMP --
   [then]  ;
   \ Did the projectile hit the something?
 
-: impacted?  ( -- f )  ~~ hit-something?  ~~
-                          dup if  impact  then
-                          ~~  ;
+: impacted?  ( -- f )  hit-something? dup if  impact  then  ;
   \ Did the projectil impacted?
   \ If so, do manage the impact.
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( Shoot)  debug-point
 
 [pixel-projectile] 0= [if]
@@ -1857,9 +1858,7 @@ defer invasion  \ XXX TMP --
   [pixel-projectile] [if]    7
                      [else]  -1
                      [then]  projectile-y c+!
-  impacted? ~~ ?exit
-    \ XXX FIXME -- why the flag is always false?
-  ~~ .projectile  ;
+  impacted? ?exit .projectile  ;
   \ Manage the projectile.
 
 variable trigger-delay-counter  trigger-delay-counter off
@@ -1925,12 +1924,12 @@ variable trigger-delay-counter  trigger-delay-counter off
 : check-record  ( -- )  new-record? if  new-record  then  ;
   \ Set the new record, if needed.
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( Players config)  debug-point
 
 
 
-  \ ==========================================================
+  \ ===========================================================
   cr .( Main)  debug-point
 
 : .game-over  ( -- )  s" GAME OVER" message  ;
@@ -1942,9 +1941,6 @@ variable trigger-delay-counter  trigger-delay-counter off
 
 : defeat-tune  ( -- )  100 200 do  i 20 beep  -5 +loop  ;
   \ XXX TODO -- 128 sound
-
-  \ attributes drop XXX  \ XXX FIXME -- not found
-  \ XXX INFORMER
 
 create attributes-backup /attributes allot
 
@@ -1988,7 +1984,7 @@ create attributes-backup /attributes allot
 
 : run  ( -- )  begin  instructions game  again  ;
 
-  \ ============================================================
+  \ ===========================================================
   cr .( Debugging tools)  debug-point
 
 : .udgs  ( -- )  cr udgs 0 do  i 128 + emit  loop  ;

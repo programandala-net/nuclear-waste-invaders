@@ -38,12 +38,13 @@ Make the speed of the invaders regular, no matter the number of them.
 Detect if a wall is already broken, and change the graphic
 accordingly.
 
-2016-11-17:
-
-When an invader is shoot, make it return to the border of the arena,
-and then start over.
-
 2016-11-27:
 
 Count the times every invader is hit and change its color accordingly.
 Make the explosion random calculation depend on the count.
+
+2016-11-29:
+
+Fix: when a retreating invader is hit, it turns back.
+
+Fix: some times an invader doesn't detect the wall.
