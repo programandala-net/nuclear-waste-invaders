@@ -11,7 +11,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.23.0-pre.14+201612010133"  ;
+: version  ( -- ca len )  s" 0.23.0+201612010147"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -1600,8 +1600,8 @@ variable broken-wall-x
   \ be retreating) has reached its home, the make it attack.
 
 : left-flying-invader  ( -- )
-  -1 invader-x +! ~~ at-invader
-  ~~ .invader space  ;
+  -1 invader-x +! at-invader
+  .invader space  ;
   \ Move the current invader, which is flying to the left.
 
 : right-flying-invader  ( -- )

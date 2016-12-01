@@ -1,6 +1,6 @@
 = Nuclear Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2016-11-17
+:revdate: 2016-12-01
 
 2016-08-01:
 
@@ -45,6 +45,8 @@ Make the explosion random calculation depend on the count.
 
 2016-11-29:
 
-Fix: when a retreating invader is hit, it turns back.
-
 Fix: some times an invader doesn't detect the wall.
+
+2016-12-01:
+
+Fix: some times, an invader that attacks back appears suddenly at the wall.
