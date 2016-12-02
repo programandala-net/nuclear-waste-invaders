@@ -1,6 +1,6 @@
 = Nuclear Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2016-12-01
+:revdate: 2016-12-02
 
 2016-08-01:
 
@@ -38,15 +38,6 @@ Make the speed of the invaders regular, no matter the number of them.
 Detect if a wall is already broken, and change the graphic
 accordingly.
 
-2016-11-27:
+2016-12-02:
 
-Count the times every invader is hit and change its color accordingly.
-Make the explosion random calculation depend on the count.
-
-2016-11-29:
-
-Fix: some times an invader doesn't detect the wall.
-
-2016-12-01:
-
-Fix: some times, an invader that attacks back appears suddenly at the wall.
+Fix: sometimes the projectile erases half of the invader.

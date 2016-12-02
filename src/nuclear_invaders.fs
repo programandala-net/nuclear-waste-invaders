@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.25.0+201612022010"  ;
+: version  ( -- ca len )  s" 0.26.0+2016120222233"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -66,7 +66,7 @@ need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
 need overprint need color   need color!       need frames@
 need c+!       need fade    need cvariable    need 2const
-need d<        need 0exit   need field:  need +field-opt-0
+need d<        need 0exit   need field:       need +field-opt-0
 
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
@@ -1174,6 +1174,11 @@ columns udg/invader - constant invaders-max-x
 10 constant max-invaders
 10 constant actual-invaders  \ XXX TMP -- for debugging
 
+: half  ( -- )
+  [ max-invaders 2/ ] literal !> actual-invaders  ;
+  \ Reduce the actual invaders to the left half.
+  \ XXX TMP -- for debugging and testing
+
 0
   \ XXX TODO -- reorder for speed: most used at +0, +1, +2, +4
   \ XXX TODO -- use `cfield:`
@@ -1622,10 +1627,23 @@ variable broken-wall-x
             attacking? if    possible-damages
                        else  maybe-retreated  then  ;
 
+variable cure-factor  20 cure-factor
+  \ XXX TMP -- for testing
+
+: difficult-cure?  ( -- f )
+  max-stamina invader-stamina @ -
+  cure-factor @  \ XXX TMP -- for testing
+  * random 0<>  ;
+  \ Is it a difficult cure? Random calculation based on the
+  \ stamina: The less stamina, the more chances to be a
+  \ difficult cure. This is used to delay the cure.
+
 : cure  ( -- )
+  difficult-cure? ?exit
   invader-stamina @ 1+ max-stamina min invader-stamina !
   at-invader .invader  ;
-  \ Cure the current invader, increasing its stamina.
+  \ If the cure is not difficult, cure the current invader,
+  \ increasing its stamina.
 
 : healthy?  ( -- f )  invader-stamina @ max-stamina =  ;
   \ Is the current invader healthy? Has it maximum stamina?
