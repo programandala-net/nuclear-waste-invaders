@@ -1,4 +1,3 @@
-
   \ nuclear_invaders.fs
   \
   \ This file is part of Nuclear Invaders
@@ -11,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.23.1+201612021658"  ;
+: version  ( -- ca len )  s" 0.24.0+2016120211852"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -91,10 +90,12 @@ nuclear-wordlist set-current
   \ ===========================================================
   cr .( Debug)
 
-defer (debug-point)  ' noop ' (debug-point) defer!
+defer debug-point  ' noop ' debug-point defer!
 
-: debug-point  ( -- )
-  (debug-point)
+defer ((debug-point))  ' noop ' ((debug-point)) defer!
+
+: (debug-point)  ( -- )
+  ((debug-point))
   depth 0= ?exit
   cr ." block:" blk ?  ." latest:" latest .name ." hp:" hp@ u.
   \ depth if  cr .s  #-258 throw  then \ stack imbalance
@@ -452,8 +453,8 @@ variable latest-sprite-udg
 : 2x1sprite!  ( n0..n7 -- )
   2 free-udg (2x1sprite!)  ;
   \ Store a 2x1 UDG sprite into the next two available UDGs.
-  \ Scans _n0..n7_ are 16-bit: high part is char _c_, and low
-  \ part is _c_+1.
+  \ Scans _n0..n7_ are 16-bit: their high parts form the first
+  \ available UDG, and their low parts form the next one.
 
 : 2x1sprite  ( n0..n7 "name" -- )
   2 free-udg dup constant (2x1sprite!)  ;
@@ -604,7 +605,7 @@ binary
 
 2x1sprite!
 
-  \ invader 3, frame 2
+  \ invader 3, frame 4
 0000000110000000
 0000001111000000
 0000011111100000
@@ -1200,8 +1201,6 @@ create invaders-data /invaders allot
 : invader-active  ( -- a )  'invader ~active  ;
 : invader-char  ( -- a )  'invader ~sprite  ;
 : invader-destroy-points  ( -- a )  'invader ~destroy-points  ;
-   \ : invader-impacts  ( -- a )  'invader ~impacts  ;
-   \ XXX OLD
 : invader-stamina  ( -- a )  'invader ~stamina  ;
 : invader-retreat-points  ( -- a )  'invader ~retreat-points  ;
 : invader-retreating  ( -- a )  'invader ~retreating  ;
@@ -1237,18 +1236,15 @@ create invaders-data /invaders allot
    5 invaders-min-x invader-3  1 30 3  \ 0
   max-invaders 0 ?do  i init-invader-data  loop  ;
 
-2 constant max-hit
-
 create invader-colors  ( -- a )
   dying-invader-color#    c,
   wounded-invader-color#  c,
   sane-invader-color#     c,
-  \ Table to index the impacts to the proper color.
+  \ Table to index the invader stamina to its proper color.
 
 : invader-proper-color  ( -- n )
-  invader-stamina @ ( 1..3 )
-  [ invader-colors 1- ] literal + c@  ;
-  \ Invader proper color for its impacts.
+  invader-stamina @ [ invader-colors 1- ] literal + c@  ;
+  \ Invader proper color for its stamina.
 
  4 constant building-top-y
 15 constant building-bottom-y
@@ -1280,9 +1276,8 @@ variable used-projectiles  used-projectiles off
   level @ 100 *  lifes @ 10 * +  used-projectiles @ -  0 max  ;
   \ Return bonus _n_ after finishing a level.
 
-: next-level  ( -- )
-  level-bonus update-score
-  increase-level  set-building-size  ;
+: next-level  ( -- )  level-bonus update-score
+                      increase-level  set-building-size  ;
   \ Change to the next level.
 
 : init-level  ( -- )  level off  next-level  ;
@@ -1513,7 +1508,7 @@ defer debug-data-pause  ( -- )
   \ Frame of the invader, calculated from its column.
 
 : .invader  ( -- )
-  in-invader-color invader-frame .2x1sprite  ;
+  invader-proper-color color! invader-frame .2x1sprite  ;
   \ Print the current invader.
 
 variable broken-wall-x
@@ -1611,8 +1606,7 @@ variable broken-wall-x
   \ be retreating) has reached its home, then make it attack.
 
 : left-flying-invader  ( -- )
-  -1 invader-x +! at-invader
-  .invader space  ;
+  -1 invader-x +! at-invader .invader space  ;
   \ Move the current invader, which is flying to the left.
 
 : right-flying-invader  ( -- )
@@ -1627,11 +1621,13 @@ variable broken-wall-x
 
 : activate-invader  ( -- )
   invaders @ random 0= invader-active !  ;
-  \ Activate the current invader randomly,
+  \ Activate the current inactive invader randomly,
   \ depending on the number of invaders.
 
 : last-invader?  ( -- f )
-  current-invader @ [ actual-invaders 1- ] literal =  ;
+  \ current-invader @ [ actual-invaders 1- ] literal =  ;
+  current-invader @ actual-invaders 1- =  ;
+  \ XXX TMP -- for debugging, calculate at run-time
   \ Is the current invader the last one?
 
 : next-invader  ( -- )
@@ -1772,34 +1768,21 @@ defer invasion  \ XXX TMP --
   invader-retreat-points @ update-score  turn-back  ;
   \ The current invader retreats.
 
-  \ : increase-impacts  ( -- )
-  \   invader-impacts @ 1+ max-hit min invader-impacts !  ;
-  \ Increase the impacts of the current invader.
-  \ XXX OLD
-
-: wounded  ( -- )
-  invader-stamina @ 1- 0 max invader-stamina !  ;
+: wounded  ( -- )  invader-stamina @ 1- invader-stamina !  ;
   \ Reduce the invader's stamina after being shoot.
 
-: mortal-impact?  ( -- f )
-  \ [ max-hit 1+ ] literal invader-impacts @ - random 0=  ;
-  \ XXX OLD
-  \ Is it a mortal impact?  The random calculation depends on
-  \ the number of previous impacts. The more impacts, the more
-  \ chances.
-  invader-stamina @ 2* random 0=  ;
-  \ XXX NEW
-  \ Is it a mortal impact?  The random calculation depends on
-  \ the stamina of the invader. The more stamina, the less
-  \ chances.
+: mortal?  ( -- f )  invader-stamina @ 2* random 0=  ;
+  \ Is it a mortal impact?  _f_ depends on a random calculation
+  \ based on the stamina: The more stamina, the less chances to
+  \ be true.  If stamina is zero, _f_ is always true.
 
 : (invader-impacted)  ( -- )
-  mortal-impact? if    invader-explodes
-                 else  attacking? if  invader-retreats  then
-                 then  wounded  ;
+  wounded mortal? if    invader-explodes
+                  else  attacking? if  invader-retreats  then
+                  then  ;
   \ The current invader has been impacted by the projectile.
   \ It explodes or, if attacking, retreats, depending on a
-  \ random calculation based on the number of previous impacts.
+  \ random calculation based on its stamina.
 
 : invader-impacted  ( -- )
   current-invader @ >r  impacted-invader current-invader !
