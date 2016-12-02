@@ -11,7 +11,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.23.0+201612010147"  ;
+: version  ( -- ca len )  s" 0.23.1+201612021658"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -1171,6 +1171,7 @@ columns udg/invader - constant invaders-max-x
   \ invader in the table.
 
 10 constant max-invaders
+10 constant actual-invaders  \ XXX TMP -- for debugging
 
 0
   \ XXX TODO -- reorder for speed: most used at +0, +1, +2, +4
@@ -1182,7 +1183,8 @@ columns udg/invader - constant invaders-max-x
   field: ~x-inc
   field: ~destroy-points
   field: ~retreat-points
-  field: ~impacts
+  \ field: ~impacts  \ XXX OLD
+  field: ~stamina  \ XXX NEW
   field: ~retreating
 constant /invader
 
@@ -1198,7 +1200,9 @@ create invaders-data /invaders allot
 : invader-active  ( -- a )  'invader ~active  ;
 : invader-char  ( -- a )  'invader ~sprite  ;
 : invader-destroy-points  ( -- a )  'invader ~destroy-points  ;
-: invader-impacts  ( -- a )  'invader ~impacts  ;
+   \ : invader-impacts  ( -- a )  'invader ~impacts  ;
+   \ XXX OLD
+: invader-stamina  ( -- a )  'invader ~stamina  ;
 : invader-retreat-points  ( -- a )  'invader ~retreat-points  ;
 : invader-retreating  ( -- a )  'invader ~retreating  ;
 : invader-x       ( -- a )  'invader ~x  ;
@@ -1207,15 +1211,17 @@ create invaders-data /invaders allot
 
 : invader-xy@    ( -- x y )  invader-y 2@  ;
 
+3 constant max-stamina
+
 : init-invader-data  ( n1..n6 n0 -- )
-  current-invader !
-  invader-retreat-points !
-  invader-destroy-points !
+  current-invader !  max-stamina invader-stamina !
+  invader-retreat-points !  invader-destroy-points !
   invader-x-inc !  invader-char !  invader-x !  invader-y !  ;
   \ Init data of invader_n0_ with default values=_n1_=y;
   \ _n2_=x; _n3_=sprite; _n4_=x inc; _n5_=points for destroy;
   \ _n6_=points for retreat. Other fields don't need
-  \ initialization, because they contain zero.
+  \ initialization, because they contain zero (default) or a
+  \ constant.
 
 : init-invaders-data  ( -- )
   invaders-data /invaders erase
@@ -1234,13 +1240,14 @@ create invaders-data /invaders allot
 2 constant max-hit
 
 create invader-colors  ( -- a )
-  sane-invader-color#     c,
-  wounded-invader-color#  c,
   dying-invader-color#    c,
+  wounded-invader-color#  c,
+  sane-invader-color#     c,
   \ Table to index the impacts to the proper color.
 
 : invader-proper-color  ( -- n )
-  invader-impacts @ max-hit min invader-colors + c@  ;
+  invader-stamina @ ( 1..3 )
+  [ invader-colors 1- ] literal + c@  ;
   \ Invader proper color for its impacts.
 
  4 constant building-top-y
@@ -1461,7 +1468,7 @@ defer debug-data-pause  ( -- )
 
 : init-invaders  ( -- )
   init-invaders-data  current-invader off
-  max-invaders invaders !  ;
+  actual-invaders invaders !  ;
   \ Init the invaders.
 
 : init-tank  ( -- )  columns udg/tank - 2/ tank-x !  ;
@@ -1588,16 +1595,20 @@ variable broken-wall-x
   [ columns udg/invader - ] literal flying-to-the-right? and
   =  ;
   \ Is the retreating invader back home?
+  \
+  \ XXX TODO -- use a data field, not a calculation
 
 : turn-back  ( -- )
   invader-x-inc @ negate invader-x-inc !
   invader-retreating @ invert invader-retreating !  ;
   \ Make the current invader turn back.
-  \ XXX TODO -- write `negate!` in Z80 in Solo Forth's lib
+  \
+  \ XXX TODO -- write `negate!` and `invert!` in Z80 in Solo
+  \ Forth's library
 
 : reattack  ( -- )  back-home? if  turn-back  then   ;
   \ If the current invader (which is is supposed to
-  \ be retreating) has reached its home, the make it attack.
+  \ be retreating) has reached its home, then make it attack.
 
 : left-flying-invader  ( -- )
   -1 invader-x +! at-invader
@@ -1616,11 +1627,11 @@ variable broken-wall-x
 
 : activate-invader  ( -- )
   invaders @ random 0= invader-active !  ;
-  \ Activate the current invader randomly, depending on the
-  \ number of invaders.
+  \ Activate the current invader randomly,
+  \ depending on the number of invaders.
 
 : last-invader?  ( -- f )
-  current-invader @ [ max-invaders 1- ] literal =  ;
+  current-invader @ [ actual-invaders 1- ] literal =  ;
   \ Is the current invader the last one?
 
 : next-invader  ( -- )
@@ -1629,14 +1640,13 @@ variable broken-wall-x
   \ Update the invader to the next one.
 
 : move-invader  ( -- )
-  invader-active @ if    flying-invader    exit
-                   then  activate-invader  ;
-  \ Move the current invader if it's active, else
-  \ just try to activate it.
+   invader-active @ if  flying-invader exit  then
+  invader-stamina @ if  activate-invader     then  ;
+  \ Move the current invader if it's active; else
+  \ just try to activate it, if it's alive.
 
 : (invasion)  ( -- )  move-invader  next-invader  ;
-  \ Move the current invader, if there are units left of it,
-  \ and then choose the next one.
+  \ Move the current invader, then choose the next one.
 
   \ 10. 2const invasion-delay-ms \ XXX TODO --
 8 constant invader-time
@@ -1755,27 +1765,38 @@ defer invasion  \ XXX TMP --
 
 : invader-explodes  ( -- )
   invader-destroy-points @  update-score  invader-explosion
-  -1 invaders +!  invader-active off  ;
+  -1 invaders +!  invader-stamina off  invader-active off  ;
   \ The current invader explodes.
 
 : invader-retreats  ( -- )
   invader-retreat-points @ update-score  turn-back  ;
   \ The current invader retreats.
 
-: increase-impacts  ( -- )
-  invader-impacts @ 1+ max-hit min invader-impacts !  ;
+  \ : increase-impacts  ( -- )
+  \   invader-impacts @ 1+ max-hit min invader-impacts !  ;
   \ Increase the impacts of the current invader.
+  \ XXX OLD
+
+: wounded  ( -- )
+  invader-stamina @ 1- 0 max invader-stamina !  ;
+  \ Reduce the invader's stamina after being shoot.
 
 : mortal-impact?  ( -- f )
-  [ max-hit 1+ ] literal invader-impacts @ - random 0=  ;
+  \ [ max-hit 1+ ] literal invader-impacts @ - random 0=  ;
+  \ XXX OLD
   \ Is it a mortal impact?  The random calculation depends on
   \ the number of previous impacts. The more impacts, the more
+  \ chances.
+  invader-stamina @ 2* random 0=  ;
+  \ XXX NEW
+  \ Is it a mortal impact?  The random calculation depends on
+  \ the stamina of the invader. The more stamina, the less
   \ chances.
 
 : (invader-impacted)  ( -- )
   mortal-impact? if    invader-explodes
                  else  attacking? if  invader-retreats  then
-                 then  increase-impacts  ;
+                 then  wounded  ;
   \ The current invader has been impacted by the projectile.
   \ It explodes or, if attacking, retreats, depending on a
   \ random calculation based on the number of previous impacts.
@@ -1875,9 +1896,9 @@ variable trigger-delay-counter  trigger-delay-counter off
   x> to projectile#  .debug-data
   new-projectile-x projectile-x c!
   [pixel-projectile]
-  [if]    [ tank-y row>pixel 1+ ] literal projectile-y c!
-  [else]  [ tank-y 1- ] literal projectile-y c!
-  [then]  fire-sound  delay-trigger  ;
+  [if]    [ tank-y row>pixel 1+ ] literal
+  [else]  [ tank-y 1- ] literal
+  [then]  projectile-y c!  fire-sound  delay-trigger  ;
   \ The tank fires.
   \ XXX TODO -- confirm `tank-y 1-`
 
@@ -1963,6 +1984,8 @@ create attributes-backup /attributes allot
 
 : victory?  ( -- f )  invaders @ 0=  ;
 
+variable invasion-delay  8 invasion-delay !
+
 : (combat)  ( -- )
   begin   victory? if  next-level init-combat  then
 
@@ -1971,7 +1994,9 @@ create attributes-backup /attributes allot
           fly-projectile  drive
           fly-projectile  shoot
           fly-projectile  move-ufo
-          fly-projectile  invasion
+          fly-projectile
+          invasion-delay @ random if  invasion  then
+            \ XXX TMP -- debugging
           fly-projectile  catastrophe @
   until   defeat  ;
 
