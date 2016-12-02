@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.24.0+2016120211852"  ;
+: version  ( -- ca len )  s" 0.25.0+201612022010"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -1579,17 +1579,17 @@ variable broken-wall-x
   else     containers-right-x  then  @ =  ;
   \ Has the current invader broken a container?
 
-: damages  ( -- )
+: possible-damages  ( -- )
   broken-wall? if  broken-wall exit  then
   broken-container? dup if    broken-container
                         then  catastrophe !  ;
   \ Manage the possible damages caused by the current invader.
 
-: back-home?  ( -- f )
+: retreated?  ( -- f )
   invader-x @
   [ columns udg/invader - ] literal flying-to-the-right? and
   =  ;
-  \ Is the retreating invader back home?
+  \ Is the current invader retreated, i.e. back home?
   \
   \ XXX TODO -- use a data field, not a calculation
 
@@ -1601,9 +1601,12 @@ variable broken-wall-x
   \ XXX TODO -- write `negate!` and `invert!` in Z80 in Solo
   \ Forth's library
 
-: reattack  ( -- )  back-home? if  turn-back  then   ;
-  \ If the current invader (which is is supposed to
-  \ be retreating) has reached its home, then make it attack.
+: start-cure  ( -- )  invader-active off  turn-back  ;
+  \ Start the cure of the current invader: deactivate it and
+  \ then turn it back in order to be ready for the attack.
+
+: maybe-retreated  ( -- )  retreated? if  start-cure  then   ;
+  \ If the current invader is retreated, start its cure.
 
 : left-flying-invader  ( -- )
   -1 invader-x +! at-invader .invader space  ;
@@ -1616,13 +1619,22 @@ variable broken-wall-x
 : flying-invader  ( -- )
   flying-to-the-right? if    right-flying-invader
                        else  left-flying-invader  then
-            attacking? if    damages
-                       else  reattack  then  ;
+            attacking? if    possible-damages
+                       else  maybe-retreated  then  ;
+
+: cure  ( -- )
+  invader-stamina @ 1+ max-stamina min invader-stamina !
+  at-invader .invader  ;
+  \ Cure the current invader, increasing its stamina.
+
+: healthy?  ( -- f )  invader-stamina @ max-stamina =  ;
+  \ Is the current invader healthy? Has it maximum stamina?
 
 : activate-invader  ( -- )
-  invaders @ random 0= invader-active !  ;
-  \ Activate the current inactive invader randomly,
-  \ depending on the number of invaders.
+  healthy? if    invaders @ random 0= invader-active !
+           else  cure  then  ;
+  \ If the current invader is healthy, activate it randomly,
+  \ depending on the number of invaders. Else cure it.
 
 : last-invader?  ( -- f )
   \ current-invader @ [ actual-invaders 1- ] literal =  ;
