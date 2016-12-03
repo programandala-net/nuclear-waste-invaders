@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.26.0+2016120222233"  ;
+: version  ( -- ca len )  s" 0.27.0-pre.1+201612030124"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -162,6 +162,7 @@ black papery red + constant arena-color#
 
 variable tank-x          \ column
 variable ufo-x           \ column
+variable ufo-frame       \ counter (0..3)
 variable lifes           \ counter (0..4)
 variable level           \ counter (1..max-level)
 variable score           \ counter
@@ -462,6 +463,7 @@ variable latest-sprite-udg
 : .2x1sprite  ( c -- )  dup emit 1+ emit  ;
 
 2 constant udg/invader
+2 constant udg/ufo
 
 [pixel-projectile] 0= [if]
   >udg @ ocr-first-udg !
@@ -1180,17 +1182,21 @@ columns udg/invader - constant invaders-max-x
   \ XXX TMP -- for debugging and testing
 
 0
-  \ XXX TODO -- reorder for speed: most used at +0, +1, +2, +4
-  \ XXX TODO -- use `cfield:`
+
+  \ XXX TODO -- reorder for speed: most used at cell offsets
+  \ +0, +1, +2, +4
+
+  \ XXX TODO -- use `cfield:` for speed
+
   field: ~active
   field: ~y
   field: ~x
   field: ~sprite
+  field: ~frame
   field: ~x-inc
   field: ~destroy-points
   field: ~retreat-points
-  \ field: ~impacts  \ XXX OLD
-  field: ~stamina  \ XXX NEW
+  field: ~stamina
   field: ~retreating
 constant /invader
 
@@ -1203,15 +1209,16 @@ create invaders-data /invaders allot
   current-invader @ /invader * invaders-data +  ;
   \ Address _a_ of the current invader data.
 
-: invader-active  ( -- a )  'invader ~active  ;
-: invader-char  ( -- a )  'invader ~sprite  ;
+: invader-active          ( -- a )  'invader ~active  ;
+: invader-sprite          ( -- a )  'invader ~sprite  ;
+: invader-frame           ( -- a )  'invader ~frame  ;
 : invader-destroy-points  ( -- a )  'invader ~destroy-points  ;
-: invader-stamina  ( -- a )  'invader ~stamina  ;
+: invader-stamina         ( -- a )  'invader ~stamina  ;
 : invader-retreat-points  ( -- a )  'invader ~retreat-points  ;
-: invader-retreating  ( -- a )  'invader ~retreating  ;
-: invader-x       ( -- a )  'invader ~x  ;
-: invader-x-inc  ( -- a )  'invader ~x-inc  ;
-: invader-y       ( -- a )  'invader ~y  ;
+: invader-retreating      ( -- a )  'invader ~retreating  ;
+: invader-x               ( -- a )  'invader ~x  ;
+: invader-x-inc           ( -- a )  'invader ~x-inc  ;
+: invader-y               ( -- a )  'invader ~y  ;
 
 : invader-xy@    ( -- x y )  invader-y 2@  ;
 
@@ -1220,12 +1227,17 @@ create invaders-data /invaders allot
 : init-invader-data  ( n1..n6 n0 -- )
   current-invader !  max-stamina invader-stamina !
   invader-retreat-points !  invader-destroy-points !
-  invader-x-inc !  invader-char !  invader-x !  invader-y !  ;
-  \ Init data of invader_n0_ with default values=_n1_=y;
-  \ _n2_=x; _n3_=sprite; _n4_=x inc; _n5_=points for destroy;
-  \ _n6_=points for retreat. Other fields don't need
-  \ initialization, because they contain zero (default) or a
-  \ constant.
+  invader-x-inc !  invader-sprite !
+  invader-x !  invader-y !  ;
+  \ Init data of invader_n0_ with default values:
+  \   _n1_ = y;
+  \   _n2_ = x;
+  \   _n3_ = sprite;
+  \   _n4_ = x inc;
+  \   _n5_ = points for destroy;
+  \   _n6_ = points for retreat.
+  \ Other fields don't need initialization, because they
+  \ contain zero (default) or a constant.
 
 : init-invaders-data  ( -- )
   invaders-data /invaders erase
@@ -1240,6 +1252,7 @@ create invaders-data /invaders allot
    7 invaders-min-x invader-2  1 20 2  \ 1
    5 invaders-min-x invader-3  1 30 3  \ 0
   max-invaders 0 ?do  i init-invader-data  loop  ;
+  \ Init the data of all invaders.
 
 create invader-colors  ( -- a )
   dying-invader-color#    c,
@@ -1501,19 +1514,19 @@ defer debug-data-pause  ( -- )
 : at-invader  ( -- )  invader-xy@ at-xy  ;
   \ Set the cursor position at the coordinates of the invader.
 
-4 constant frames/invader
+%11 constant frame-mask
 
-: sprite>frame  ( c1 col -- c2 )
-  frames/invader mod udg/invader * +  ;
-  \ Frame _c2_ of sprite _c1_, calculated from its column
-  \ _col_.
+: next-frame  ( n1 -- n2 )  1+ frame-mask and  ;
+  \ Increase frame _n1_ (0..3), resulting frame _n2_ (0..3).
 
-: invader-frame  ( -- c )
-  invader-char @ invader-x @ sprite>frame  ;
-  \ Frame of the invader, calculated from its column.
+: invader-udg  ( -- c )
+  invader-frame @ dup next-frame invader-frame !
+  [ udg/invader 2 = ] [if]  2*  [else]  udg/invader *  [then]
+  invader-sprite @ +  ;
+  \ UDG _c_ of the current invader.
 
 : .invader  ( -- )
-  invader-proper-color color! invader-frame .2x1sprite  ;
+  invader-proper-color color! invader-udg .2x1sprite  ;
   \ Print the current invader.
 
 variable broken-wall-x
@@ -1591,9 +1604,7 @@ variable broken-wall-x
   \ Manage the possible damages caused by the current invader.
 
 : retreated?  ( -- f )
-  invader-x @
-  [ columns udg/invader - ] literal flying-to-the-right? and
-  =  ;
+  invader-x @ invaders-max-x flying-to-the-right? and =  ;
   \ Is the current invader retreated, i.e. back home?
   \
   \ XXX TODO -- use a data field, not a calculation
@@ -1646,13 +1657,16 @@ variable cure-factor  20 cure-factor
   \ increasing its stamina.
 
 : healthy?  ( -- f )  invader-stamina @ max-stamina =  ;
-  \ Is the current invader healthy? Has it maximum stamina?
+  \ Is the current invader healthy? Has it got maximum stamina?
 
 : activate-invader  ( -- )
-  healthy? if    invaders @ random 0= invader-active !
-           else  cure  then  ;
-  \ If the current invader is healthy, activate it randomly,
-  \ depending on the number of invaders. Else cure it.
+  invaders @ random 0= invader-active !  ;
+  \ Activate the current invader randomly, depending on the
+  \ number of invaders.
+
+: require-invader  ( -- )
+  healthy? if  activate-invader  else  cure  then  ;
+  \ Require the current invader, either inactive or wounded.
 
 : last-invader?  ( -- f )
   \ current-invader @ [ actual-invaders 1- ] literal =  ;
@@ -1667,7 +1681,7 @@ variable cure-factor  20 cure-factor
 
 : move-invader  ( -- )
    invader-active @ if  flying-invader exit  then
-  invader-stamina @ if  activate-invader     then  ;
+  invader-stamina @ if  require-invader      then  ;
   \ Move the current invader if it's active; else
   \ just try to activate it, if it's alive.
 
@@ -1723,15 +1737,18 @@ defer invasion  \ XXX TMP --
 : ufo-lost?  ( -- f )  ufo-x @ ufo-max-x >  ;
   \ Is the UFO lost?
 
-: ufo-frame  ( -- c )  ufo ufo-x @ sprite>frame  ;
-  \ Current frame _c_ of the UFO.
-  \ XXX TODO -- make it faster
+: ufo-udg  ( -- c )
+  ufo-frame @ dup next-frame ufo-frame !
+  [ udg/ufo 2 = ] [if]  2*  [else]  udg/ufo *  [then]
+  ufo +  ;
+  \ UDG _c_ of the UFO.
+
+: advance-ufo  ( -- )  1 ufo-x +!  ;
 
 : flying-ufo  ( -- )
-  1 ufo-x +! at-ufo in-ufo-color space ufo-frame .2x1sprite  ;
+  advance-ufo at-ufo in-ufo-color space ufo-udg .2x1sprite  ;
   \ Update the position of the UFO and show it.
   \ XXX TODO -- rename `visible-ufo`?
-  \ XXX TODO -- factor `1 ufo-x +!`
 
 : (move-ufo)  ( -- )
   ufo-lost?  if  -ufo  else  flying-ufo  then  ;
@@ -1739,7 +1756,7 @@ defer invasion  \ XXX TMP --
   \ XXX TODO -- rename
 
 : move-ufo  ( -- )
-  ufo-invisible? if  1 ufo-x +!  else  (move-ufo)  then  ;
+  ufo-invisible? if  advance-ufo  else  (move-ufo)  then  ;
   \ Manage the UFO, if it's visible.
 
   \ ===========================================================
