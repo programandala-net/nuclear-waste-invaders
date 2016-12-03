@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.27.0+201612031953"  ;
+: version  ( -- ca len )  s" 0.28.0-pre.2+201612032218"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -1202,6 +1202,7 @@ columns udg/invader - constant invaders-max-x
   field: ~initial-x
   field: ~sprite
   field: ~frame
+  field: ~frames
   field: ~x-inc
   field: ~initial-x-inc
   field: ~destroy-points
@@ -1222,6 +1223,7 @@ create invaders-data /invaders allot
 : invader-active          ( -- a )  'invader ~active  ;
 : invader-sprite          ( -- a )  'invader ~sprite  ;
 : invader-frame           ( -- a )  'invader ~frame  ;
+: invader-frames          ( -- a )  'invader ~frames  ;
 : invader-destroy-points  ( -- a )  'invader ~destroy-points  ;
 : invader-stamina         ( -- a )  'invader ~stamina  ;
 : invader-retreat-points  ( -- a )  'invader ~retreat-points  ;
@@ -1235,12 +1237,15 @@ create invaders-data /invaders allot
 : invader-xy@    ( -- x y )  invader-y 2@  ;
 
 3 constant max-stamina
+4 constant undocked-invader-frames
+2 constant docked-invader-frames
 
 : init-invader-data  ( n1..n6 n0 -- )
   current-invader !  max-stamina invader-stamina !
   invader-retreat-points !  invader-destroy-points !
   invader-initial-x-inc !  invader-sprite !
-  dup invader-initial-x !  invader-x !  invader-y !  ;
+  dup invader-initial-x !  invader-x !  invader-y !
+  docked-invader-frames invader-frames !  ;
   \ Init data of invader_n0_ with default values:
   \   _n1_ = y;
   \   _n2_ = x = initial x;
@@ -1526,10 +1531,14 @@ defer debug-data-pause  ( -- )
 : at-invader  ( -- )  invader-xy@ at-xy  ;
   \ Set the cursor position at the coordinates of the invader.
 
-%11 constant frame-mask
+: frame-mask  ( -- n )  invader-frames @ 1-  ;
+  \ Binary mask to limit the number of the sprite frame.
+  \ The maximum number of frames per invader sprite can
+  \ be 4 (when flying) and 2 (when docked), so their respective
+  \ masks are %11 and %01.
 
 : next-frame  ( n1 -- n2 )  1+ frame-mask and  ;
-  \ Increase frame _n1_ (0..3), resulting frame _n2_ (0..3).
+  \ Increase frame _n1_ resulting frame _n2_.
 
 : invader-udg  ( -- c )
   invader-frame @ dup next-frame invader-frame !
@@ -1547,7 +1556,10 @@ variable broken-wall-x
 : flying-to-the-right?  ( -- f )  invader-x-inc @ 0>  ;
   \ Is the current invader flying to the right?
 
-: attacking?  ( -- f )  invader-retreating @ 0=  ;
+: retreating?  ( -- f )  invader-retreating @  ;
+  \ Is the current invader retreating?
+
+: attacking?  ( -- f )  retreating? 0=  ;
   \ Is the current invader attacking?
 
 : broken-bricks-coordinates  ( -- x1 y1 x2 y2 )
@@ -1580,7 +1592,7 @@ variable broken-wall-x
   invader-x @ flying-to-the-right?
   if    1+ building-left-x
   else  building-right-x
-  then  @ dup broken-wall-x ! =  ;
+  then  @ dup broken-wall-x ! =  ~~  ;
   \ Has the current invader broken the wall of the building?
 
 : broken-left-container  ( -- )
@@ -1609,9 +1621,11 @@ variable broken-wall-x
   else     containers-right-x  then  @ =  ;
   \ Has the current invader broken a container?
 
-: possible-damages  ( -- ) ~~
+: ?damages  ( -- )
   broken-wall? if  broken-wall exit  then
   broken-container? dup if    broken-container
+                              invader-stamina off
+                                \ XXX TMP -- for debugging
                         then  catastrophe !  ;
   \ Manage the possible damages caused by the current invader.
 
@@ -1626,11 +1640,14 @@ variable broken-wall-x
   \ XXX TODO -- write `negate!` and `invert!` in Z80 in Solo
   \ Forth's library
 
-: dock  ( -- )  ~~ invader-active off  invader-x-inc off  ;
+: dock  ( -- )  ~~
+  invader-active off  invader-x-inc off
+  docked-invader-frames invader-frames !  ;
   \ Dock the current invader.
 
 : undock  ( -- ) ~~
-  invader-active on  invader-initial-x-inc @ invader-x-inc !  ;
+  invader-active on  invader-initial-x-inc @ invader-x-inc !
+  undocked-invader-frames invader-frames !  ;
   \ Undock the current invader.
 
 : ?dock  ( -- )  at-home? 0exit dock  ;
@@ -1647,8 +1664,8 @@ variable broken-wall-x
 : flying-invader  ( -- )
   flying-to-the-right? if    right-flying-invader
                        else  left-flying-invader  then
-            attacking? if    possible-damages
-                       else  ?dock  then  ;
+           retreating? if    ?dock
+                       else  ?damages  then  ;
 
 variable cure-factor  20 cure-factor !
   \ XXX TMP -- for testing
@@ -1657,9 +1674,10 @@ variable cure-factor  20 cure-factor !
   max-stamina invader-stamina @ -
   cure-factor @  \ XXX TMP -- for testing
   * random 0<>  ;
-  \ Is it a difficult cure? Random calculation based on the
-  \ stamina: The less stamina, the more chances to be a
-  \ difficult cure. This is used to delay the cure.
+  \ Is it a difficult cure? The flag _f_ is calculated
+  \ randombly, based on the stamina: The less stamina, the more
+  \ chances to be a difficult cure. This is used to delay the
+  \ cure.
 
 : cure  ( -- )
   invader-stamina @ 1+ max-stamina min invader-stamina !  ;
@@ -1667,17 +1685,17 @@ variable cure-factor  20 cure-factor !
 
 : ?cure  ( -- )
   at-invader .invader  difficult-cure? ?exit cure  ;
-  \ Cure the current invader, depending on a delay.
+  \ Cure the current invader, depending on its status.
 
 : healthy?  ( -- f )  invader-stamina @ max-stamina =  ;
   \ Is the current invader healthy? Has it got maximum stamina?
 
-: ?activate-invader  ( -- )  invaders @ random ?exit undock  ;
-  \ Activate the current invader randomly, depending on the
+: ?undock  ( -- )  invaders @ random ?exit undock  ;
+  \ Undock the current invader randomly, depending on the
   \ number of invaders.
 
 : require-invader  ( -- ) ~~
-  healthy? if  ?activate-invader  else  ?cure  then  ;
+  healthy? if  ?undock  else  ?cure  then  ;
   \ Require the current invader, either inactive or wounded.
 
 : last-invader?  ( -- f )
@@ -1819,12 +1837,12 @@ defer invasion  \ XXX TMP --
   \ below and so on.  0..4 are at the left of the screen; 5..9
   \ are at the right.
 
-: invader-explodes  ( -- )
+: explode  ( -- )
   invader-destroy-points @  update-score  invader-explosion
   -1 invaders +!  invader-stamina off  invader-active off  ;
   \ The current invader explodes.
 
-: invader-retreats  ( -- )
+: retreat  ( -- )
   invader-retreat-points @ update-score  turn-back  ;
   \ The current invader retreats.
 
@@ -1837,12 +1855,11 @@ defer invasion  \ XXX TMP --
   \ be true.  If stamina is zero, _f_ is always true.
 
 : (invader-impacted)  ( -- )
-  wounded mortal? if    invader-explodes
-                  else  attacking? if  invader-retreats  then
-                  then  ;
+  wounded mortal? if    explode
+                  else  attacking? if  retreat  then  then  ;
   \ The current invader has been impacted by the projectile.
-  \ It explodes or, if attacking, retreats, depending on a
-  \ random calculation based on its stamina.
+  \ If the wound is mortal, it explodes; else, if attacking, it
+  \ retreats.
 
 : invader-impacted  ( -- )
   current-invader @ >r  impacted-invader current-invader !
@@ -1853,8 +1870,7 @@ defer invasion  \ XXX TMP --
 : ufo-impacted?  ( -- f )
   [pixel-projectile]
   [if]    projectile-coords pixel-attr-addr c@ ufo-color# =
-  [else]  projectile-y c@ ufo-y =
-  [then]  ;
+  [else]  projectile-y c@ ufo-y =  [then]  ;
 
 : impact  ( -- )
   ufo-impacted? if    ufo-impacted
@@ -1866,7 +1882,7 @@ defer invasion  \ XXX TMP --
   [if]    pixel-attr-addr c@ arena-color# <>
   [else]  ocr 0<>
   [then]  ;
-  \ Did the projectile hit the something?
+  \ Did the projectile hit something?
 
 : impacted?  ( -- f )  hit-something? dup if  impact  then  ;
   \ Did the projectil impacted?
@@ -2042,6 +2058,8 @@ variable invasion-delay  8 invasion-delay !
             invasion
           \ then \ XXX TMP -- debugging
           fly-projectile  catastrophe @
+          drop false
+            \ XXX TMP -- for debugging
   until   defeat  ;
 
 : combat  ( -- )  init-combat (combat)  ;
