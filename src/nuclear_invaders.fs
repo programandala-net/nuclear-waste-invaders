@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.27.0-pre.1+201612030124"  ;
+: version  ( -- ca len )  s" 0.27.0+201612031953"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -66,14 +66,17 @@ need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
 need overprint need color   need color!       need frames@
 need c+!       need fade    need cvariable    need 2const
-need d<        need 0exit   need field:       need +field-opt-0
+need d<        need 0exit   need field:
+need +field-opt-0124
+
+need order  \ XXX TMP -- for debugging
 
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
 [else]  need ocr  [then]
 
 need allot-xstack  need xdepth  need >x  need x>  need xclear
-need .x  \ XXX TMP --
+need .x  \ XXX TMP -- for debuging
 
 need black  need blue    need red    need magenta  need green
 need cyan   need yellow  need white
@@ -90,18 +93,23 @@ nuclear-wordlist set-current
   \ ===========================================================
   cr .( Debug)
 
-defer debug-point  ' noop ' debug-point defer!
+defer debug-point
 
 defer ((debug-point))  ' noop ' ((debug-point)) defer!
 
 : (debug-point)  ( -- )
-  ((debug-point))
-  depth 0= ?exit
-  cr ." block:" blk ?  ." latest:" latest .name ." hp:" hp@ u.
-  \ depth if  cr .s  #-258 throw  then \ stack imbalance
+  cr ((debug-point))
+  \ depth 0= ?exit
+  ." block:" blk ?  ." latest:" latest .name ." hp:" hp@ u.
+  depth if  cr .s #-258 throw  then  \ stack imbalance
   \ key drop
   ;
   \ Abort if the stack is not empty.
+  \ XXX TMP -- for debugging
+
+  ' noop
+  \ ' (debug-point)
+  ' debug-point defer!
   \ XXX TMP -- for debugging
 
   \ : :
@@ -1183,17 +1191,19 @@ columns udg/invader - constant invaders-max-x
 
 0
 
-  \ XXX TODO -- reorder for speed: most used at cell offsets
-  \ +0, +1, +2, +4
+  \ XXX TODO -- reorder for speed: place the most used fields
+  \ at cell offsets +0, +1, +2, +4
 
   \ XXX TODO -- use `cfield:` for speed
 
   field: ~active
   field: ~y
   field: ~x
+  field: ~initial-x
   field: ~sprite
   field: ~frame
   field: ~x-inc
+  field: ~initial-x-inc
   field: ~destroy-points
   field: ~retreat-points
   field: ~stamina
@@ -1217,7 +1227,9 @@ create invaders-data /invaders allot
 : invader-retreat-points  ( -- a )  'invader ~retreat-points  ;
 : invader-retreating      ( -- a )  'invader ~retreating  ;
 : invader-x               ( -- a )  'invader ~x  ;
+: invader-initial-x       ( -- a )  'invader ~initial-x  ;
 : invader-x-inc           ( -- a )  'invader ~x-inc  ;
+: invader-initial-x-inc   ( -- a )  'invader ~initial-x-inc  ;
 : invader-y               ( -- a )  'invader ~y  ;
 
 : invader-xy@    ( -- x y )  invader-y 2@  ;
@@ -1227,13 +1239,13 @@ create invaders-data /invaders allot
 : init-invader-data  ( n1..n6 n0 -- )
   current-invader !  max-stamina invader-stamina !
   invader-retreat-points !  invader-destroy-points !
-  invader-x-inc !  invader-sprite !
-  invader-x !  invader-y !  ;
+  invader-initial-x-inc !  invader-sprite !
+  dup invader-initial-x !  invader-x !  invader-y !  ;
   \ Init data of invader_n0_ with default values:
   \   _n1_ = y;
-  \   _n2_ = x;
+  \   _n2_ = x = initial x;
   \   _n3_ = sprite;
-  \   _n4_ = x inc;
+  \   _n4_ = initial x inc;
   \   _n5_ = points for destroy;
   \   _n6_ = points for retreat.
   \ Other fields don't need initialization, because they
@@ -1597,17 +1609,14 @@ variable broken-wall-x
   else     containers-right-x  then  @ =  ;
   \ Has the current invader broken a container?
 
-: possible-damages  ( -- )
+: possible-damages  ( -- ) ~~
   broken-wall? if  broken-wall exit  then
   broken-container? dup if    broken-container
                         then  catastrophe !  ;
   \ Manage the possible damages caused by the current invader.
 
-: retreated?  ( -- f )
-  invader-x @ invaders-max-x flying-to-the-right? and =  ;
-  \ Is the current invader retreated, i.e. back home?
-  \
-  \ XXX TODO -- use a data field, not a calculation
+: at-home?  ( -- f )  invader-x @ invader-initial-x @ =  ;
+  \ Is the current invader at its start position?
 
 : turn-back  ( -- )
   invader-x-inc @ negate invader-x-inc !
@@ -1617,12 +1626,15 @@ variable broken-wall-x
   \ XXX TODO -- write `negate!` and `invert!` in Z80 in Solo
   \ Forth's library
 
-: start-cure  ( -- )  invader-active off  turn-back  ;
-  \ Start the cure of the current invader: deactivate it and
-  \ then turn it back in order to be ready for the attack.
+: dock  ( -- )  ~~ invader-active off  invader-x-inc off  ;
+  \ Dock the current invader.
 
-: maybe-retreated  ( -- )  retreated? if  start-cure  then   ;
-  \ If the current invader is retreated, start its cure.
+: undock  ( -- ) ~~
+  invader-active on  invader-initial-x-inc @ invader-x-inc !  ;
+  \ Undock the current invader.
+
+: ?dock  ( -- )  at-home? 0exit dock  ;
+  \ If the current invader is at home, dock it.
 
 : left-flying-invader  ( -- )
   -1 invader-x +! at-invader .invader space  ;
@@ -1636,9 +1648,9 @@ variable broken-wall-x
   flying-to-the-right? if    right-flying-invader
                        else  left-flying-invader  then
             attacking? if    possible-damages
-                       else  maybe-retreated  then  ;
+                       else  ?dock  then  ;
 
-variable cure-factor  20 cure-factor
+variable cure-factor  20 cure-factor !
   \ XXX TMP -- for testing
 
 : difficult-cure?  ( -- f )
@@ -1650,22 +1662,22 @@ variable cure-factor  20 cure-factor
   \ difficult cure. This is used to delay the cure.
 
 : cure  ( -- )
-  difficult-cure? ?exit
-  invader-stamina @ 1+ max-stamina min invader-stamina !
-  at-invader .invader  ;
-  \ If the cure is not difficult, cure the current invader,
-  \ increasing its stamina.
+  invader-stamina @ 1+ max-stamina min invader-stamina !  ;
+  \ Cure the current invader, increasing its stamina.
+
+: ?cure  ( -- )
+  at-invader .invader  difficult-cure? ?exit cure  ;
+  \ Cure the current invader, depending on a delay.
 
 : healthy?  ( -- f )  invader-stamina @ max-stamina =  ;
   \ Is the current invader healthy? Has it got maximum stamina?
 
-: activate-invader  ( -- )
-  invaders @ random 0= invader-active !  ;
+: ?activate-invader  ( -- )  invaders @ random ?exit undock  ;
   \ Activate the current invader randomly, depending on the
   \ number of invaders.
 
-: require-invader  ( -- )
-  healthy? if  activate-invader  else  cure  then  ;
+: require-invader  ( -- ) ~~
+  healthy? if  ?activate-invader  else  ?cure  then  ;
   \ Require the current invader, either inactive or wounded.
 
 : last-invader?  ( -- f )
@@ -1679,7 +1691,7 @@ variable cure-factor  20 cure-factor
                 then  1 current-invader +!  ;
   \ Update the invader to the next one.
 
-: move-invader  ( -- )
+: move-invader  ( -- ) ~~
    invader-active @ if  flying-invader exit  then
   invader-stamina @ if  require-invader      then  ;
   \ Move the current invader if it's active; else
@@ -1723,6 +1735,7 @@ defer invasion  \ XXX TMP --
   cr .( UFO)  debug-point
 
  3 constant ufo-y       \ row
+
 27 constant ufo-max-x   \ column
 
 : ufo-invisible?  ( -- f )  ufo-x @ 0<  ;
@@ -1979,7 +1992,6 @@ variable trigger-delay-counter  trigger-delay-counter off
   cr .( Players config)  debug-point
 
 
-
   \ ===========================================================
   cr .( Main)  debug-point
 
@@ -2015,6 +2027,7 @@ create attributes-backup /attributes allot
 : victory?  ( -- f )  invaders @ 0=  ;
 
 variable invasion-delay  8 invasion-delay !
+  \ XXX TMP -- debugging
 
 : (combat)  ( -- )
   begin   victory? if  next-level init-combat  then
@@ -2025,8 +2038,9 @@ variable invasion-delay  8 invasion-delay !
           fly-projectile  shoot
           fly-projectile  move-ufo
           fly-projectile
-          invasion-delay @ random if  invasion  then
-            \ XXX TMP -- debugging
+          \ invasion-delay @ random if \ XXX TMP -- debugging
+            invasion
+          \ then \ XXX TMP -- debugging
           fly-projectile  catastrophe @
   until   defeat  ;
 
