@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.30.0-pre.4+201612041732"  ;
+: version  ( -- ca len )  s" 0.30.0-pre.5+201612041744"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -119,20 +119,6 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
   ~~? @ 0= ?exit
   base @ >r decimal latest .name .s r> base !
   key drop ;
-
-defer custom~~  ' noop ' custom~~ defer!
-
-variable ~~base
-
-: ~~(  ( -- )  base @ ~~base ! decimal  ;
-
-: ~~)  ( -- )  ~~base @ base !  ;
-
-: ~~  ( -- )
-  postpone ~~(  ~~? if  postpone custom~~  then  postpone ~~
-  postpone ~~)  ; immediate
-  \ New version of `~~`, which saves and restores the current
-  \ radix, and calls configurable code.
 
 ~~? off
 
@@ -1235,13 +1221,13 @@ create invaders-data /invaders allot
 : .y/n  ( f -- )  if  ." Y"  else  ." N"  then  space  ;
   \ XXX TMP -- for debugging
 
-: .invader-status  ( -- )
+: (~~app-info)  ( -- )
   home current-invader @ 2 .r
   ." Ret.:" invader-retreating @ .y/n
   ." Sta.:" invader-stamina @ .  ;
   \ XXX TMP -- for debugging
 
-  \ ' .invader-status ' custom~~ defer!
+  \ ' (~~app-info) ' ~~app-info defer!
   \ XXX TMP -- for debugging
 
 3 cconstant max-stamina
