@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.28.0-pre.2+201612032218"  ;
+: version  ( -- ca len )  s" 0.28.0-pre.3+201612040116"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -69,8 +69,6 @@ need c+!       need fade    need cvariable    need 2const
 need d<        need 0exit   need field:
 need +field-opt-0124
 
-need order  \ XXX TMP -- for debugging
-
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
 [else]  need ocr  [then]
@@ -116,6 +114,27 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
   \   cr blk @ . latest .name ." ..."
   \   s" attributes drop " evaluate : ;
   \ XXX TMP -- for debugging
+
+: XXX  ( -- )
+  ~~? @ 0= ?exit
+  base @ >r decimal latest .name .s r> base !
+  key drop ;
+
+defer custom~~  ' noop ' custom~~ defer!
+
+variable ~~base
+
+: ~~(  ( -- )  base @ ~~base ! decimal  ;
+
+: ~~)  ( -- )  ~~base @ base !  ;
+
+: ~~  ( -- )
+  postpone ~~(  postpone custom~~  postpone ~~
+  postpone ~~)  ; immediate
+  \ New version of `~~`, which saves and restores the current
+  \ radix, and calls configurable code.
+
+~~? off
 
   \ ===========================================================
   cr .( Constants)  debug-point
@@ -345,27 +364,6 @@ variable ocr-last-udg
   \ and invaders.
 
 [then]
-
-  \ ===========================================================
-  cr .( Debug)  debug-point
-
-variable ~~base
-
-: ~~(  ( -- )  base @ ~~base ! decimal  ;
-
-: ~~)  ( -- )  ~~base @ base !  ;
-
-: ~~  ( -- )
-  postpone ~~(  postpone ~~  postpone ~~)  ; immediate
-  \ New version of `~~`, which saves and restores the current
-  \ radix.
-
-~~? on
-
-: XXX  ( -- )
-  ~~? @ 0= ?exit
-  base @ >r decimal latest .name .s r> base !
-  key drop ;
 
   \ ===========================================================
   cr .( Score)  debug-point
@@ -1196,7 +1194,7 @@ columns udg/invader - constant invaders-max-x
 
   \ XXX TODO -- use `cfield:` for speed
 
-  field: ~active
+  field: ~active  \ XXX TODO -- use `~stamina` instead
   field: ~y
   field: ~x
   field: ~initial-x
@@ -1235,6 +1233,18 @@ create invaders-data /invaders allot
 : invader-y               ( -- a )  'invader ~y  ;
 
 : invader-xy@    ( -- x y )  invader-y 2@  ;
+
+: .y/n  ( f -- )  if  ." Y"  else  ." N"  then  space  ;
+  \ XXX TMP -- for debugging
+
+: .invader-status  ( -- )
+  home current-invader @ 2 .r
+  ." Ret.:" invader-retreating @ .y/n
+  ." Sta.:" invader-stamina @ .  ;
+  \ XXX TMP -- for debugging
+
+' .invader-status ' custom~~ defer!
+  \ XXX TMP -- for debugging
 
 3 constant max-stamina
 4 constant undocked-invader-frames
@@ -1624,7 +1634,9 @@ variable broken-wall-x
 : ?damages  ( -- )
   broken-wall? if  broken-wall exit  then
   broken-container? dup if    broken-container
-                              invader-stamina off
+                              \ invader-stamina off
+                                \ XXX TMP -- for debugging
+                              \ invader-active off
                                 \ XXX TMP -- for debugging
                         then  catastrophe !  ;
   \ Manage the possible damages caused by the current invader.
@@ -1641,7 +1653,7 @@ variable broken-wall-x
   \ Forth's library
 
 : dock  ( -- )  ~~
-  invader-active off  invader-x-inc off
+  invader-active off  invader-x-inc off  invader-retreating off
   docked-invader-frames invader-frames !  ;
   \ Dock the current invader.
 
@@ -2058,7 +2070,7 @@ variable invasion-delay  8 invasion-delay !
             invasion
           \ then \ XXX TMP -- debugging
           fly-projectile  catastrophe @
-          drop false
+          \ drop false
             \ XXX TMP -- for debugging
   until   defeat  ;
 
