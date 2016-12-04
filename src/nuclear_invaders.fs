@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.30.0-pre.2+201612041623"  ;
+: version  ( -- ca len )  s" 0.30.0-pre.3+201612041718"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -534,6 +534,18 @@ sprite-string flying-invader-1$  ( -- ca len )
 0000001111000000
 0001111111111000
 0011111111111100
+0011100110011100
+0011111111111100
+0000011001100000
+0000110110110000
+0011000000001100
+
+2x1sprite!
+
+  \ docked invader 1, frame 3
+0000001111000000
+0001111111111000
+0011111111111100
 0011110011001100
 0011111111111100
 0000011001100000
@@ -609,6 +621,18 @@ binary
 0000100000100000
 0000010001000000
 0000111111100000
+0001101110110000
+0011111111111000
+0011111111111000
+0010100000101000
+0000011011000000
+
+2x1sprite!
+
+  \ docked invader 2, frame 3
+0000100000100000
+0000010001000000
+0000111111100000
 0001110111010000
 0011111111111000
 0011111111111000
@@ -677,6 +701,18 @@ sprite-string flying-invader-3$  ( -- ca len )
 0000101001010000
 
 2x1sprite docked-invader-3
+
+  \ docked invader 3, frame 2
+0000000110000000
+0000001111000000
+0000011111100000
+0000110110110000
+0000111111110000
+0000001001000000
+0000010110100000
+0000101001010000
+
+2x1sprite!
 
   \ docked invader 3, frame 2
 0000000110000000
@@ -1210,7 +1246,7 @@ create invaders-data /invaders allot
 
 3 cconstant max-stamina
 4 cconstant undocked-invader-frames
-2 cconstant docked-invader-frames
+3 cconstant docked-invader-frames
 
 : init-invader-data  ( n1 n2 n3 c4 c5 n6 n7 n0 -- )
   current-invader !  max-stamina invader-stamina !
