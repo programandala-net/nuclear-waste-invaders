@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.30.0-pre.1+201612041552"  ;
+: version  ( -- ca len )  s" 0.30.0-pre.2+201612041623"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -536,9 +536,9 @@ sprite-string flying-invader-1$  ( -- ca len )
 0011111111111100
 0011110011001100
 0011111111111100
-0000111001110000
-0001100110011000
-0001100000011000
+0000011001100000
+0000110110110000
+0011000000001100
 
 2x1sprite!
 
@@ -1677,7 +1677,7 @@ variable invaders  \ counter
 : invader-udg  ( -- c )
   invader-frame @ dup next-frame invader-frame !
   [ udg/invader 2 = ] [if]  2*  [else]  udg/invader *  [then]
-  invader-flying-sprite @ +  ;
+  invader-sprite @ +  ;
   \ UDG _c_ of the current invader.
 
 : .invader  ( -- )
@@ -1777,14 +1777,18 @@ variable broken-wall-x
   \ Forth's library
 
 : dock  ( -- )  ~~
-  invader-active off  invader-x-inc off  invader-retreating off
-  invader-docked-sprite invader-sprite !
+  invader-active off
+  invader-x-inc off  invader-retreating off
+  invader-docked-sprite @ invader-sprite !
+  invader-frame off
   docked-invader-frames invader-frames !  ;
   \ Dock the current invader.
 
 : undock  ( -- ) ~~
-  invader-active on  invader-initial-x-inc @ invader-x-inc !
-  invader-flying-sprite invader-sprite !
+  invader-active on
+  invader-initial-x-inc @ invader-x-inc !
+  invader-flying-sprite @ invader-sprite !
+  invader-frame off
   undocked-invader-frames invader-frames !  ;
   \ Undock the current invader.
 
