@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.29.0+201612041349"  ;
+: version  ( -- ca len )  s" 0.30.0-pre.1+201612041552"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -469,7 +469,7 @@ variable latest-sprite-udg
 
 binary
 
-  \ invader 1, frame 1
+  \ flying invader 1, frame 1
 0000001111000000
 0001111111111000
 0011111111111100
@@ -479,9 +479,10 @@ binary
 0000110110110000
 0011000000001100
 
-2x1sprite invader-1  sprite-string invader-1$  ( -- ca len )
+2x1sprite flying-invader-1
+sprite-string flying-invader-1$  ( -- ca len )
 
-  \ invader 1, frame 2
+  \ flying invader 1, frame 2
 0000001111000000
 0001111111111000
 0011111111111100
@@ -493,7 +494,7 @@ binary
 
 2x1sprite!
 
-  \ invader 1, frame 3
+  \ flying invader 1, frame 3
 0000001111000000
 0001111111111000
 0011111111111100
@@ -505,7 +506,7 @@ binary
 
 2x1sprite!
 
-  \ invader 1, frame 4
+  \ flying invader 1, frame 4
 0000001111000000
 0001111111111000
 0011111111111100
@@ -517,7 +518,31 @@ binary
 
 2x1sprite!
 
-  \ invader 2, frame 1
+  \ docked invader 1, frame 1
+0000001111000000
+0001111111111000
+0011111111111100
+0011001100111100
+0011111111111100
+0000011001100000
+0000110110110000
+0011000000001100
+
+2x1sprite docked-invader-1
+
+  \ docked invader 1, frame 2
+0000001111000000
+0001111111111000
+0011111111111100
+0011110011001100
+0011111111111100
+0000111001110000
+0001100110011000
+0001100000011000
+
+2x1sprite!
+
+  \ flying invader 2, frame 1
 0000100000100000
 0000010001000000
 0000111111100000
@@ -527,11 +552,12 @@ binary
 0010100000101000
 0000011011000000
 
-2x1sprite invader-2  sprite-string invader-2$  ( -- ca len )
+2x1sprite flying-invader-2 
+sprite-string flying-invader-2$  ( -- ca len )
 
 binary
 
-  \ invader 2 , frame 2
+  \ flying invader 2 , frame 2
 0000100000100000
 0000010001000000
 0000111111100000
@@ -543,7 +569,7 @@ binary
 
 2x1sprite!
 
-  \ invader 2 , frame 3
+  \ flying invader 2 , frame 3
 0000100000100000
 0010010001001000
 0010111111101000
@@ -555,7 +581,7 @@ binary
 
 2x1sprite!
 
-  \ invader 2 , frame 4
+  \ flying invader 2 , frame 4
 0000100000100000
 0000010001000000
 0000111111100000
@@ -567,7 +593,31 @@ binary
 
 2x1sprite!
 
-  \ invader 3, frame 1
+  \ docked invader 2, frame 1
+0000100000100000
+0000010001000000
+0000111111100000
+0001011101110000
+0011111111111000
+0011111111111000
+0010100000101000
+0000011011000000
+
+2x1sprite docked-invader-2
+
+  \ docked invader 2, frame 2
+0000100000100000
+0000010001000000
+0000111111100000
+0001110111010000
+0011111111111000
+0011111111111000
+0010100000101000
+0000011011000000
+
+2x1sprite!
+
+  \ flying invader 3, frame 1
 0000000110000000
 0000001111000000
 0000011111100000
@@ -577,9 +627,10 @@ binary
 0000010110100000
 0000101001010000
 
-2x1sprite invader-3  sprite-string invader-3$  ( -- ca len )
+2x1sprite flying-invader-3
+sprite-string flying-invader-3$  ( -- ca len )
 
-  \ invader 3, frame 2
+  \ flying invader 3, frame 2
 0000000110000000
 0000001111000000
 0000011111100000
@@ -591,7 +642,7 @@ binary
 
 2x1sprite!
 
-  \ invader 3, frame 3
+  \ flying invader 3, frame 3
 0000000110000000
 0000001111000000
 0000011111100000
@@ -603,7 +654,7 @@ binary
 
 2x1sprite!
 
-  \ invader 3, frame 4
+  \ flying invader 3, frame 4
 0000000110000000
 0000001111000000
 0000011111100000
@@ -612,6 +663,30 @@ binary
 0000010110100000
 0000100000010000
 0000100000010000
+
+2x1sprite!
+
+  \ docked invader 3, frame 1
+0000000110000000
+0000001111000000
+0000011111100000
+0000101101110000
+0000111111110000
+0000001001000000
+0000010110100000
+0000101001010000
+
+2x1sprite docked-invader-3
+
+  \ docked invader 3, frame 2
+0000000110000000
+0000001111000000
+0000011111100000
+0000111011010000
+0000111111110000
+0000001001000000
+0000010110100000
+0000101001010000
 
 2x1sprite!
 
@@ -995,104 +1070,6 @@ decimal
   \ Print a game message _ca len_.
 
   \ ===========================================================
-  cr .( Instructions)  debug-point
-
-: title  ( -- )
-  s" NUCLEAR INVADERS" 0 center-type
-  version 1 center-type  ;
-
-: (c)  ( -- )  127 emit  ;
-  \ Print the copyright symbol.
-
-: .copyright  ( -- )
-  row
-  1 over    at-xy (c) ."  2016 Marcos Cruz"
-  8 swap 1+ at-xy           ." (programandala.net)"  ;
-  \ Print the copyright notice at the current coordinates.
-
-: show-copyright  ( -- )  0 22 at-xy .copyright  ;
-
-  \ XXX OLD -- maybe useful in a future version
-  \ : .control  ( n -- )  ."  = " .kk# 4 spaces  ;
-  \ : .controls  ( -- )
-  \   row dup s" [Space] to change controls:" rot center-type
-  \   9 over 2+  at-xy ." Left " kk-left#  .control
-  \   9 over 3 + at-xy ." Right" kk-right# .control
-  \   9 swap 4 + at-xy ." Fire " kk-fire#  .control  ;
-  \   \ Print controls at the current row.
-
-: left-key$   ( -- ca len )  kk-left# kk#>string  ;
-: right-key$  ( -- ca len )  kk-right# kk#>string  ;
-: fire-key$   ( -- ca len )  kk-fire# kk#>string  ;
-
-: controls$  ( -- ca len )
-  left-arrow$ left-key$ s+
-  s"   " s+ fire-key$ s+ s"   " s+
-  right-key$ s+ right-arrow$ s+  ;
-  \ String containing the description of the current controls.
-  \ XXX TMP --
-  \ XXX TODO -- rewrite
-
-: .controls  ( -- )
-  \ s" [Space] to change controls:" row dup >r center-type
-  row >r fire-button$ r@ 2+ center-type
-  0 r@ 3 + at-xy columns spaces
-  controls$ r> 3 + center-type  ;
-  \ Print controls at the current row.
-  \ XXX TMP --
-
-: .score-table-item  ( ca1 len1 ca2 len2 -- )
-  type in-text-color ."  = " type  ;
-  \ Print an item of the score table, with sprite string _ca2
-  \ len2_ and description _ca1 len1_
-
-: .score-table  ( -- )
-  xy 2dup  at-xy s" 10 points"
-           in-invader-color invader-1$ .score-table-item
-  2dup 1+  at-xy s" 20 points"
-           in-invader-color invader-2$ .score-table-item
-  2dup 2+  at-xy s" 30 points"
-           in-invader-color invader-3$ .score-table-item
-       3 + at-xy s" bonus"
-           in-ufo-color ufo$ .score-table-item  ;
-   \ Print the score table at the current coordinates.
-
-: show-score-table  ( -- )  9 4 at-xy .score-table  ;
-
-: change-players  ( -- )
-  players @ 1+ dup max-player > if  drop 1  then  players !  ;
-
-: .players  ( -- )  ." [P]layers " players ?  ;
-   \ Print the number of players at the current coordinates.
-
-: show-players  ( -- )
-  exit  \ XXX TMP --
-  0 8 at-xy .players  ;
-
-: show-controls  ( -- )
-  0 12 at-xy .controls
-  \ s" SPACE: change - ENTER: start" 18 center-type  ; XXX TMP
-  s" ENTER: start" 18 center-type  ;
-  \ XXX TMP --
-
-: menu  ( -- )
-  begin
-    break-key? if  quit  then  \ XXX TMP
-    key
-    enter-key = if  drop exit  then  \ XXX TMP --
-    \ dup enter-key = if  drop exit  then
-    \ dup bl = if  next-controls show-controls  then
-    \     'p' = if  change-players show-players  then
-    \ XXX TMP --
-  again  ;
-  \ XXX TODO -- use `case`
-
-: instructions  ( -- )
-  init-colors in-text-color cls title
-  show-score-table show-players show-controls show-copyright
-  menu  ;
-
-  \ ===========================================================
   cr .( Game screen)  debug-point
 
 arena-bottom-y arena-top-y - 1+ columns * constant /arena
@@ -1180,6 +1157,8 @@ columns udg/invader - cconstant invaders-max-x
   field: ~x
   field: ~initial-x
   field: ~sprite
+  field: ~flying-sprite
+  field: ~docked-sprite
   field: ~frame
   field: ~frames
   field: ~x-inc
@@ -1201,6 +1180,8 @@ create invaders-data /invaders allot
 
 : invader-active          ( -- a )  'invader ~active  ;
 : invader-sprite          ( -- a )  'invader ~sprite  ;
+: invader-flying-sprite   ( -- a )  'invader ~flying-sprite  ;
+: invader-docked-sprite   ( -- a )  'invader ~docked-sprite  ;
 : invader-frame           ( -- a )  'invader ~frame  ;
 : invader-frames          ( -- a )  'invader ~frames  ;
 : invader-destroy-points  ( -- a )  'invader ~destroy-points  ;
@@ -1231,34 +1212,60 @@ create invaders-data /invaders allot
 4 cconstant undocked-invader-frames
 2 cconstant docked-invader-frames
 
-: init-invader-data  ( n1..n6 n0 -- )
+: init-invader-data  ( n1 n2 n3 c4 c5 n6 n7 n0 -- )
   current-invader !  max-stamina invader-stamina !
   invader-retreat-points !  invader-destroy-points !
-  invader-initial-x-inc !  invader-sprite !
+  invader-flying-sprite !  invader-docked-sprite !
+  invader-initial-x-inc !
   dup invader-initial-x !  invader-x !  invader-y !
   docked-invader-frames invader-frames !  ;
   \ Init data of invader_n0_ with default values:
-  \   _n1_ = y;
-  \   _n2_ = x = initial x;
-  \   _n3_ = sprite;
-  \   _n4_ = initial x inc;
-  \   _n5_ = points for destroy;
-  \   _n6_ = points for retreat.
+  \   n1 = y;
+  \   n2 = x = initial x;
+  \   n3 = initial x inc;
+  \   c4 = docked sprite;
+  \   c5 = flying sprite;
+  \   n6 = points for destroy;
+  \   n7 = points for retreat.
   \ Other fields don't need initialization, because they
   \ contain zero (default) or a constant.
 
+: invader-1-data  ( -- c1 c2 n3 n4 )
+  docked-invader-1 flying-invader-1 10 1  ;
+  \ Data specific to invader type 1
+  \   c1 = docked sprite;
+  \   c2 = flying sprite;
+  \   n3 = points for destroy;
+  \   n4 = points for retreat.
+
+: invader-2-data  ( -- c1 c2 n3 n4 )
+  docked-invader-2 flying-invader-2 20 2  ;
+  \ Data specific to invader type 2.
+  \   c1 = docked sprite;
+  \   c2 = flying sprite;
+  \   n3 = points for destroy;
+  \   n4 = points for retreat.
+
+: invader-3-data  ( -- c1 c2 n3 n4 )
+  docked-invader-3 flying-invader-3 30 3  ;
+  \ Data specific to invader type 3.
+  \   c1 = docked sprite;
+  \   c2 = flying sprite;
+  \   n3 = points for destroy;
+  \   n4 = points for retreat.
+
 : init-invaders-data  ( -- )
   invaders-data /invaders erase
-  13 invaders-max-x invader-1 -1 10 1  \ 9
-  11 invaders-max-x invader-1 -1 10 1  \ 8
-   9 invaders-max-x invader-2 -1 20 2  \ 7
-   7 invaders-max-x invader-2 -1 20 2  \ 6
-   5 invaders-max-x invader-3 -1 30 3  \ 5
-  13 invaders-min-x invader-1  1 10 1  \ 4
-  11 invaders-min-x invader-1  1 10 1  \ 3
-   9 invaders-min-x invader-2  1 20 2  \ 2
-   7 invaders-min-x invader-2  1 20 2  \ 1
-   5 invaders-min-x invader-3  1 30 3  \ 0
+  13 invaders-max-x -1 invader-1-data
+  11 invaders-max-x -1 invader-1-data
+   9 invaders-max-x -1 invader-2-data
+   7 invaders-max-x -1 invader-2-data
+   5 invaders-max-x -1 invader-3-data
+  13 invaders-min-x  1 invader-1-data
+  11 invaders-min-x  1 invader-1-data
+   9 invaders-min-x  1 invader-2-data
+   7 invaders-min-x  1 invader-2-data
+   5 invaders-min-x  1 invader-3-data
   max-invaders 0 ?do  i init-invader-data  loop  ;
   \ Init the data of all invaders.
 
@@ -1502,7 +1509,7 @@ defer debug-data-pause  ( -- )
 
 : parade  ( -- )
   in-invader-color
-  invader-1 dup invader-2 dup invader-3
+  flying-invader-1 dup flying-invader-2 dup flying-invader-3
   building-bottom-y [ building-top-y 1+ ] literal
   do
     invaders-min-x i at-xy dup .2x1sprite
@@ -1511,6 +1518,139 @@ defer debug-data-pause  ( -- )
   \ Show the invaders at their initial positions.
 
 : init-arena  ( -- )   -arena building tank-ready parade  ;
+
+  \ ===========================================================
+  cr .( Instructions)  debug-point
+
+: title  ( -- )
+  s" NUCLEAR INVADERS" 0 center-type
+  version 1 center-type  ;
+
+: (c)  ( -- )  127 emit  ;
+  \ Print the copyright symbol.
+
+: .copyright  ( -- )
+  row
+  1 over    at-xy (c) ."  2016 Marcos Cruz"
+  8 swap 1+ at-xy           ." (programandala.net)"  ;
+  \ Print the copyright notice at the current coordinates.
+
+: show-copyright  ( -- )  0 22 at-xy .copyright  ;
+
+  \ XXX OLD -- maybe useful in a future version
+  \ : .control  ( n -- )  ."  = " .kk# 4 spaces  ;
+  \ : .controls  ( -- )
+  \   row dup s" [Space] to change controls:" rot center-type
+  \   9 over 2+  at-xy ." Left " kk-left#  .control
+  \   9 over 3 + at-xy ." Right" kk-right# .control
+  \   9 swap 4 + at-xy ." Fire " kk-fire#  .control  ;
+  \   \ Print controls at the current row.
+
+: left-key$   ( -- ca len )  kk-left# kk#>string  ;
+: right-key$  ( -- ca len )  kk-right# kk#>string  ;
+: fire-key$   ( -- ca len )  kk-fire# kk#>string  ;
+
+: controls$  ( -- ca len )
+  left-arrow$ left-key$ s+
+  s"   " s+ fire-key$ s+ s"   " s+
+  right-key$ s+ right-arrow$ s+  ;
+  \ String containing the description of the current controls.
+  \ XXX TMP --
+  \ XXX TODO -- rewrite
+
+: .controls  ( -- )
+  \ s" [Space] to change controls:" row dup >r center-type
+  row >r fire-button$ r@ 2+ center-type
+  0 r@ 3 + at-xy columns spaces
+  controls$ r> 3 + center-type  ;
+  \ Print controls at the current row.
+  \ XXX TMP --
+
+true [if]  \ XXX OLD
+
+: .score-item  ( ca1 len1 ca2 len2 -- )
+  type in-text-color ."  = " type  ;
+  \ Print an item of the score table, with sprite string _ca2
+  \ len2_ and description _ca1 len1_
+
+: .score-table  ( -- )
+  xy 2dup  at-xy s" 10 points"
+           in-invader-color flying-invader-1$ .score-item
+  2dup 1+  at-xy s" 20 points"
+           in-invader-color flying-invader-2$ .score-item
+  2dup 2+  at-xy s" 30 points"
+           in-invader-color flying-invader-3$ .score-item
+       3 + at-xy s" bonus"
+           in-ufo-color ufo$ .score-item  ;
+   \ Print the score table at the current coordinates.
+
+
+[else]  \ XXX NEW
+
+: .score-item  ( c1 c2 n3 n4 -- )
+  color! drop swap .2x1sprite
+  in-text-color ." = " . ." points" drop  ;
+  \ Print an item of the score table:
+  \   c1 = docked sprite;
+  \   c2 = flying sprite;
+  \   n3 = points for destroy;
+  \   n4 = points for retreat.
+  \   n5 = color
+
+: ufo-data  ( -- x1 c2 n3 x4 )
+  docked-invader-1 flying-invader-1 10 1  ;
+  \ Data specific to the UFO:
+  \   x1 = fake datum;
+  \   c2 = sprite;
+  \   n3 = points for destroy;
+  \   x4 = fake datum.
+  \
+  \ This is word mimics the correspondent invader words,
+  \ in order to use `.score-item` also with the UFO.
+
+: .score-table  ( -- )
+  xy 2dup  at-xy invader-1-data invader-color# .score-item
+  2dup 1+  at-xy invader-2-data invader-color# .score-item
+  2dup 2+  at-xy invader-3-data invader-color# .score-item
+       3 + at-xy ufo-data       ufo-color#     .score-item  ;
+   \ Print the score table at the current coordinates.
+
+[then]
+
+: show-score-table  ( -- )  9 4 at-xy .score-table  ;
+
+: change-players  ( -- )
+  players @ 1+ dup max-player > if  drop 1  then  players !  ;
+
+: .players  ( -- )  ." [P]layers " players ?  ;
+   \ Print the number of players at the current coordinates.
+
+: show-players  ( -- )
+  exit  \ XXX TMP --
+  0 8 at-xy .players  ;
+
+: show-controls  ( -- )
+  0 12 at-xy .controls
+  \ s" SPACE: change - ENTER: start" 18 center-type  ; XXX TMP
+  s" ENTER: start" 18 center-type  ;
+  \ XXX TMP --
+
+: menu  ( -- )
+  begin
+    break-key? if  quit  then  \ XXX TMP
+    key
+    enter-key = if  drop exit  then  \ XXX TMP --
+    \ dup enter-key = if  drop exit  then
+    \ dup bl = if  next-controls show-controls  then
+    \     'p' = if  change-players show-players  then
+    \ XXX TMP --
+  again  ;
+  \ XXX TODO -- use `case`
+
+: instructions  ( -- )
+  init-colors in-text-color cls title
+  show-score-table show-players show-controls show-copyright
+  menu  ;
 
   \ ===========================================================
   cr .( Invasion)  debug-point
@@ -1537,7 +1677,7 @@ variable invaders  \ counter
 : invader-udg  ( -- c )
   invader-frame @ dup next-frame invader-frame !
   [ udg/invader 2 = ] [if]  2*  [else]  udg/invader *  [then]
-  invader-sprite @ +  ;
+  invader-flying-sprite @ +  ;
   \ UDG _c_ of the current invader.
 
 : .invader  ( -- )
@@ -1638,11 +1778,13 @@ variable broken-wall-x
 
 : dock  ( -- )  ~~
   invader-active off  invader-x-inc off  invader-retreating off
+  invader-docked-sprite invader-sprite !
   docked-invader-frames invader-frames !  ;
   \ Dock the current invader.
 
 : undock  ( -- ) ~~
   invader-active on  invader-initial-x-inc @ invader-x-inc !
+  invader-flying-sprite invader-sprite !
   undocked-invader-frames invader-frames !  ;
   \ Undock the current invader.
 
