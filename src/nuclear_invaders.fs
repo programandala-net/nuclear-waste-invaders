@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.28.0-pre.3+201612040116"  ;
+: version  ( -- ca len )  s" 0.28.0+201612041312"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -81,8 +81,8 @@ need cyan   need yellow  need white
 
 need papery  need brighty  need flashy
 
-4 constant /kk
 need kk-ports  need kk-1#   need pressed?     need kk-chars
+need #>kk
 
 [defined] binary  ?\ : binary  ( -- )  2 base !  ;
 
@@ -129,7 +129,7 @@ variable ~~base
 : ~~)  ( -- )  ~~base @ base !  ;
 
 : ~~  ( -- )
-  postpone ~~(  postpone custom~~  postpone ~~
+  postpone ~~(  ~~? if  postpone custom~~  then  postpone ~~
   postpone ~~)  ; immediate
   \ New version of `~~`, which saves and restores the current
   \ radix, and calls configurable code.
@@ -147,27 +147,26 @@ variable ~~base
 22528 constant attributes  768 constant /attributes
   \ Address and size of the screen attributes.
 
-     2 constant arena-top-y
-    21 constant tank-y
-tank-y constant arena-bottom-y
-    23 constant status-bar-y
+     2 cconstant arena-top-y
+    21 cconstant tank-y
+tank-y cconstant arena-bottom-y
+    23 cconstant status-bar-y
   \ XXX TMP --
   \ XXX TODO --
 
   \ ===========================================================
   cr .( Colors)  debug-point
 
-             green constant invader-color#
+             green cconstant invader-color#
 
-             green constant sane-invader-color#
-            yellow constant wounded-invader-color#
-               red constant dying-invader-color#
-                   \ XXX TODO -- not used yet
+             green cconstant sane-invader-color#
+            yellow cconstant wounded-invader-color#
+               red cconstant dying-invader-color#
 
-           magenta constant ufo-color#
-black papery red + constant arena-color#
-    yellow brighty constant radiation-color#
-             white constant ruler-color#
+           magenta cconstant ufo-color#
+black papery red + cconstant arena-color#
+    yellow brighty cconstant radiation-color#
+             white cconstant ruler-color#
 
               white color in-text-color
        arena-color# color in-arena-color
@@ -203,7 +202,7 @@ record off
   \ ===========================================================
   cr .( Keyboard)  debug-point
 
-13 constant enter-key
+13 cconstant enter-key
 
 0 value kk-left#    0 value kk-right#    0 value kk-fire#
 0. 2value kk-left   0. 2value kk-right   0. 2value kk-fire
@@ -230,7 +229,7 @@ record off
 
   \ Controls
 
-3 constant /controls
+3 cconstant /controls
   \ Bytes per item in the `controls` table.
 
 create controls  here
@@ -247,18 +246,13 @@ create controls  here
   kk-q# c,  kk-w# c,  kk-p#  c,  \ QWERTY: Q-W-P
   kk-z# c,  kk-x# c,  kk-p#  c,  \ QWERTY: Z-X-P
 
-here swap - /controls / constant max-controls
+here swap - /controls / cconstant max-controls
   \ Number of controls stored in `controls`.
 
-max-controls 1- constant last-control
+max-controls 1- cconstant last-control
 
 : >controls  ( n -- a )  /controls * controls +  ;
   \ Convert controls number _n_ to its address _a_.
-
-: #>kk  ( n -- d )  /kk * kk-ports + kk@  ;
-  \ Convert keyboard key number _n_ to its data _d_ (bitmap and
-  \ port).
-  \ XXX TODO -- move to Solo Forth
 
 : set-controls  ( n -- )
   >controls     dup c@  dup to kk-left#   #>kk 2to kk-left
@@ -286,13 +280,13 @@ current-controls @ set-controls
   \ ===========================================================
   cr .( UDG)  debug-point
 
-[defined] first-udg ?\ $80 constant first-udg
+[defined] first-udg ?\ $80 cconstant first-udg
                          \ first UDG code in Solo Forth
-                       $FF constant last-udg
+                       $FF cconstant last-udg
                          \ last UDG code in Solo Forth
 
-        128 constant udgs       \ number of UDGs \ XXX TMP --
-          8 constant /udg       \ bytes per UDG
+        128 cconstant udgs       \ number of UDGs \ XXX TMP --
+          8 cconstant /udg       \ bytes per UDG
 udgs /udg * constant /udg-set   \ size of the UDG set in bytes
 
 create udg-set /udg-set allot
@@ -368,10 +362,10 @@ variable ocr-last-udg
   \ ===========================================================
   cr .( Score)  debug-point
 
- 1 constant score-y
-14 constant record-x
+ 1 cconstant score-y
+14 cconstant record-x
 
-2 constant max-player
+2 cconstant max-player
 
 variable players  1 players !  \ 1..max-player
 variable player   1 player !   \ 1..max-player
@@ -442,7 +436,7 @@ variable latest-sprite-udg
   \ Store a 1x1 UDG sprite into the next available UDG.
 
 : 1x1sprite  ( n0..n7 "name" -- )
-  1 free-udg dup constant (1x1sprite!)  ;
+  1 free-udg dup cconstant (1x1sprite!)  ;
 
 ' emit alias .1x1sprite   ( c -- )
 ' emits alias .1x1sprites  ( c n -- )
@@ -464,12 +458,12 @@ variable latest-sprite-udg
   \ available UDG, and their low parts form the next one.
 
 : 2x1sprite  ( n0..n7 "name" -- )
-  2 free-udg dup constant (2x1sprite!)  ;
+  2 free-udg dup cconstant (2x1sprite!)  ;
 
 : .2x1sprite  ( c -- )  dup emit 1+ emit  ;
 
-2 constant udg/invader
-2 constant udg/ufo
+2 cconstant udg/invader
+2 cconstant udg/ufo
 
 [pixel-projectile] 0= [if]
   >udg @ ocr-first-udg !
@@ -736,7 +730,7 @@ binary
 
   \ XXX TODO -- second frame of the tank
 
-  #3 constant udg/tank  #3 free-udg udg-row[
+  #3 cconstant udg/tank  #3 free-udg udg-row[
 
   000000000010010000000000
   000000000010010000000000
@@ -857,7 +851,7 @@ sprite-string tank$  ( -- ca len )
   00000100
   00100100 1x1sprite!
 
-  >udg @ swap - constant frames/projectile
+  >udg @ swap - cconstant frames/projectile
 
 [then]
 
@@ -997,7 +991,7 @@ decimal
   \ Overwrite string _ca len_ with blanks, centered on the
   \ given row.
 
-17 constant message-y  \ row for game messages
+17 cconstant message-y  \ row for game messages
 
 : message  ( ca len -- )
   2dup message-y in-text-color center-type  1500 ms
@@ -1164,8 +1158,8 @@ arena-top-y columns * attributes + constant arena-top-attribute
 : status-bars  ( -- )  top-status-bar bottom-status-bar  ;
   \ Show the data bars.
 
-                    0 constant invaders-min-x
-columns udg/invader - constant invaders-max-x
+                    0 cconstant invaders-min-x
+columns udg/invader - cconstant invaders-max-x
 
   \ Invaders data are stored in a table,
   \ which has the following structure:
@@ -1179,8 +1173,8 @@ columns udg/invader - constant invaders-max-x
   \ The `invader` variable points to the data of the current
   \ invader in the table.
 
-10 constant max-invaders
-10 constant actual-invaders  \ XXX TMP -- for debugging
+10 cconstant max-invaders
+10 cconstant actual-invaders  \ XXX TMP -- for debugging
 
 : half  ( -- )
   [ max-invaders 2/ ] literal !> actual-invaders  ;
@@ -1207,7 +1201,7 @@ columns udg/invader - constant invaders-max-x
   field: ~retreat-points
   field: ~stamina
   field: ~retreating
-constant /invader
+cconstant /invader
 
 max-invaders /invader * constant /invaders
 
@@ -1243,12 +1237,12 @@ create invaders-data /invaders allot
   ." Sta.:" invader-stamina @ .  ;
   \ XXX TMP -- for debugging
 
-' .invader-status ' custom~~ defer!
+  \ ' .invader-status ' custom~~ defer!
   \ XXX TMP -- for debugging
 
-3 constant max-stamina
-4 constant undocked-invader-frames
-2 constant docked-invader-frames
+3 cconstant max-stamina
+4 cconstant undocked-invader-frames
+2 cconstant docked-invader-frames
 
 : init-invader-data  ( n1..n6 n0 -- )
   current-invader !  max-stamina invader-stamina !
@@ -1291,8 +1285,8 @@ create invader-colors  ( -- a )
   invader-stamina @ [ invader-colors 1- ] literal + c@  ;
   \ Invader proper color for its stamina.
 
- 4 constant building-top-y
-15 constant building-bottom-y
+ 4 cconstant building-top-y
+15 cconstant building-bottom-y
 
 variable building-width
 
@@ -1309,7 +1303,7 @@ variable containers-left-x   variable containers-right-x
        1+ + building-right-x !  ;
   \ Set the size of the building after the current level.
 
-9 constant max-level
+9 cconstant max-level
 
 : increase-level  ( -- )  level @ 1+ max-level min level !  ;
   \ Increase the level number.
@@ -1368,8 +1362,8 @@ variable used-projectiles  used-projectiles off
   \ ===========================================================
   cr .( Tank)  debug-point
 
-                    1 constant tank-min-x
-columns udg/tank - 1- constant tank-max-x
+                    1 cconstant tank-min-x
+columns udg/tank - 1- cconstant tank-max-x
   \ Mininum and maximin columns of the tank.
 
 : new-projectile-x  ( -- col|x )
@@ -1442,7 +1436,7 @@ transmission-delay-counter off
   \ Bitmask for the projectile counter (0..7).
   \ XXX TODO -- try %1111 and %11111
 
-max-projectile# 1+ constant #projectiles
+max-projectile# 1+ cconstant #projectiles
   \ Maximum number of simultaneous projectiles.
 
 #projectiles allot-xstack free-projectiles free-projectiles
@@ -1489,7 +1483,7 @@ defer debug-data-pause  ( -- )
   \ ===========================================================
   cr .( Init)  debug-point
 
-4 constant max-lifes
+4 cconstant max-lifes
   \ Maximum number of lifes, including the first one.
 
 : init-lifes  ( -- )  max-lifes lifes !  ;
@@ -1764,9 +1758,9 @@ defer invasion  \ XXX TMP --
   \ ===========================================================
   cr .( UFO)  debug-point
 
- 3 constant ufo-y       \ row
+ 3 cconstant ufo-y       \ row
 
-27 constant ufo-max-x   \ column
+27 cconstant ufo-max-x   \ column
 
 : ufo-invisible?  ( -- f )  ufo-x @ 0<  ;
   \ Is the UFO invisible?
@@ -2090,7 +2084,7 @@ variable invasion-delay  8 invasion-delay !
   \ Print all game UDGs.
 
 : ni  ( -- )      next-invader  ;
-: m   ( -- )      move-invader broken-container? home .  ;
+: mi   ( -- )     move-invader  ;
 : in  ( -- )      init-game init-combat  ;
 
 : bc  ( -- )
@@ -2111,6 +2105,7 @@ variable invasion-delay  8 invasion-delay !
 cr cr .( Nuclear Invaders)
    cr version type
    cr .( Ready)
+   cr .unused
    cr .( Type RUN to start) cr
 
 end-app
