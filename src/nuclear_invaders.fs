@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.31.0-pre.1+201612050000"  ;
+: version  ( -- ca len )  s" 0.31.0-pre.2+201612050020"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -67,7 +67,6 @@ need alias     need inverse need pixel-addr   need between
 need overprint need color   need color!       need frames@
 need c+!       need fade    need cvariable    need 2const
 need d<        need 0exit   need within       need +perform
-need polarity
 
 need field:    need +field-opt-0124
 
@@ -1942,18 +1941,14 @@ variable ufo-frame  \ counter (0..3)
 : next-ufo-x  ( -- )  ufo-x-inc @ ufo-x +!  ;
   \ Add the x increment of the UFO to its x coordinate.
 
+1024 constant ufo-limit-distance
+
 : advance-ufo  ( -- )
-  ufo-x @ polarity                      next-ufo-x
-  ufo-x @ polarity  + ?exit  return-ufo next-ufo-x  ;
+  next-ufo-x ufo-x @ abs ufo-limit-distance > 0= ?exit
+  return-ufo ;
   \ Advance the UFO on its current direction (to the left
-  \ or to the right).  The range of the x cursor coordinate of
-  \ the UFO is -32768..32767 (but it's visible only in the
-  \ range 0..30).  If the sum of the polarities (-1, 0 or 1) of
-  \ the x coordinates before and after the increment is zero,
-  \ the limit between positive and negative integers has been
-  \ crossed, so the movement direction is reversed and the
-  \ position is incresead a second time (otherwise the limit
-  \ would be crossed would the next time, without end).
+  \ or to the right).  If the new position is beyond the limit,
+  \ change the direction.
 
 : .ufo  ( -- )  in-ufo-color ufo-udg .2x1sprite  ;
 
