@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.30.0-pre.3+201612041718"  ;
+: version  ( -- ca len )  s" 0.30.0-pre.4+201612041732"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -1701,13 +1701,7 @@ variable invaders  \ counter
 : at-invader  ( -- )  invader-xy@ at-xy  ;
   \ Set the cursor position at the coordinates of the invader.
 
-: frame-mask  ( -- n )  invader-frames @ 1-  ;
-  \ Binary mask to limit the number of the sprite frame.
-  \ The maximum number of frames per invader sprite can
-  \ be 4 (when flying) and 2 (when docked), so their respective
-  \ masks are %11 and %01.
-
-: next-frame  ( n1 -- n2 )  1+ frame-mask and  ;
+: next-frame  ( n1 -- n2 )  1+ dup invader-frames @ < and  ;
   \ Increase frame _n1_ resulting frame _n2_.
 
 : invader-udg  ( -- c )
