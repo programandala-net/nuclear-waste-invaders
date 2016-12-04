@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.30.0-pre.5+201612041744"  ;
+: version  ( -- ca len )  s" 0.30.0-201612041839"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -1237,7 +1237,8 @@ create invaders-data /invaders allot
 : init-invader-data  ( n1 n2 n3 c4 c5 n6 n7 n0 -- )
   current-invader !  max-stamina invader-stamina !
   invader-retreat-points !  invader-destroy-points !
-  invader-flying-sprite !  invader-docked-sprite !
+  invader-flying-sprite !
+  dup invader-docked-sprite !  invader-sprite !
   invader-initial-x-inc !
   dup invader-initial-x !  invader-x !  invader-y !
   docked-invader-frames invader-frames !  ;
@@ -1694,7 +1695,8 @@ variable invaders  \ counter
   invader-frame @ dup next-frame invader-frame !
   [ udg/invader 2 = ] [if]  2*  [else]  udg/invader *  [then]
   invader-sprite @ +  ;
-  \ UDG _c_ of the current invader.
+  \ UDG _c_ of the current invader, calculated from its
+  \ sprite and its frame.
 
 : .invader  ( -- )
   invader-proper-color color! invader-udg .2x1sprite  ;
@@ -1841,8 +1843,7 @@ variable cure-factor  20 cure-factor !
   invader-stamina @ 1+ max-stamina min invader-stamina !  ;
   \ Cure the current invader, increasing its stamina.
 
-: ?cure  ( -- )
-  at-invader .invader  difficult-cure? ?exit cure  ;
+: ?cure  ( -- )  difficult-cure? ?exit cure  ;
   \ Cure the current invader, depending on its status.
 
 : healthy?  ( -- f )  invader-stamina @ max-stamina =  ;
@@ -1852,8 +1853,10 @@ variable cure-factor  20 cure-factor !
   \ Undock the current invader randomly, depending on the
   \ number of invaders.
 
-: require-invader  ( -- ) ~~
-  healthy? if  ?undock  else  ?cure  then  ;
+: require-invader  ( -- )
+  healthy? if    ?undock
+           else  ?cure
+           then  at-invader .invader  ~~  ;
   \ Require the current invader, either inactive or wounded.
 
 : last-invader?  ( -- f )
