@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.30.0-201612041839"  ;
+: version  ( -- ca len )  s" 0.31.0-pre.1+201612050000"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -66,8 +66,10 @@ need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
 need overprint need color   need color!       need frames@
 need c+!       need fade    need cvariable    need 2const
-need d<        need 0exit   need field:
-need +field-opt-0124
+need d<        need 0exit   need within       need +perform
+need polarity
+
+need field:    need +field-opt-0124
 
 [pixel-projectile]
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
@@ -550,7 +552,7 @@ sprite-string flying-invader-1$  ( -- ca len )
 0010100000101000
 0000011011000000
 
-2x1sprite flying-invader-2 
+2x1sprite flying-invader-2
 sprite-string flying-invader-2$  ( -- ca len )
 
 binary
@@ -1527,9 +1529,6 @@ defer debug-data-pause  ( -- )
   cls status-bars  ;
   \ Init the game.
 
--200 constant ufo-initial-x
-  \ Initial column of the UFO, out of the screen.
-
 : parade  ( -- )
   in-invader-color
   flying-invader-1 dup flying-invader-2 dup flying-invader-3
@@ -1913,17 +1912,20 @@ defer invasion  \ XXX TMP --
   \ ===========================================================
   cr .( UFO)  debug-point
 
-3 cconstant ufo-y       \ row
-variable ufo-x          \ column
-variable ufo-frame      \ counter (0..3)
+3 cconstant ufo-y
 
-27 cconstant ufo-max-x   \ column
+variable ufo-x
+variable ufo-x-inc  1 ufo-x-inc !
+variable ufo-frame  \ counter (0..3)
 
-: init-ufo  ( -- )  ufo-initial-x ufo-x !  ;
+: return-ufo  ( -- )  ufo-x-inc @ negate ufo-x-inc !  ;
+
+: init-ufo  ( -- )  $8000 ufo-x !  return-ufo  ;
   \ Init the UFO.
 
-: ufo-invisible?  ( -- f )  ufo-x @ 0<  ;
-  \ Is the UFO invisible?
+: visible-ufo?  ( -- f )
+  ufo-x @ 0 [ columns udg/ufo - ] literal within  ;
+  \ Is the UFO visible?
 
 : at-ufo  ( -- )  ufo-x @ ufo-y at-xy  ;
   \ Set the cursor position at the coordinates of the UFO.
@@ -1931,29 +1933,49 @@ variable ufo-frame      \ counter (0..3)
 : -ufo  ( -- )  at-ufo 3 spaces init-ufo  ;
   \ Delete and init the UFO.
 
-: ufo-lost?  ( -- f )  ufo-x @ ufo-max-x >  ;
-  \ Is the UFO lost?
-
 : ufo-udg  ( -- c )
   ufo-frame @ dup next-frame ufo-frame !
   [ udg/ufo 2 = ] [if]  2*  [else]  udg/ufo *  [then]
   ufo +  ;
   \ UDG _c_ of the UFO.
 
-: advance-ufo  ( -- )  1 ufo-x +!  ;
+: next-ufo-x  ( -- )  ufo-x-inc @ ufo-x +!  ;
+  \ Add the x increment of the UFO to its x coordinate.
 
-: flying-ufo  ( -- )
-  advance-ufo at-ufo in-ufo-color space ufo-udg .2x1sprite  ;
-  \ Update the position of the UFO and show it.
-  \ XXX TODO -- rename `visible-ufo`?
+: advance-ufo  ( -- )
+  ufo-x @ polarity                      next-ufo-x
+  ufo-x @ polarity  + ?exit  return-ufo next-ufo-x  ;
+  \ Advance the UFO on its current direction (to the left
+  \ or to the right).  The range of the x cursor coordinate of
+  \ the UFO is -32768..32767 (but it's visible only in the
+  \ range 0..30).  If the sum of the polarities (-1, 0 or 1) of
+  \ the x coordinates before and after the increment is zero,
+  \ the limit between positive and negative integers has been
+  \ crossed, so the movement direction is reversed and the
+  \ position is incresead a second time (otherwise the limit
+  \ would be crossed would the next time, without end).
 
-: (move-ufo)  ( -- )
-  ufo-lost?  if  -ufo  else  flying-ufo  then  ;
-  \ Manage the UFO.
-  \ XXX TODO -- rename
+: .ufo  ( -- )  in-ufo-color ufo-udg .2x1sprite  ;
+
+: move-ufo-to-the-right  ( -- )
+  at-ufo in-arena-color space .ufo  ;
+
+: move-ufo-to-the-left  ( -- )
+  at-ufo .ufo in-arena-color space  ;
+
+      ' move-ufo-to-the-left ,
+here  ' noop ,
+      ' move-ufo-to-the-right ,
+
+constant ufo-movements  ( -- a )
+  \ Execution table to move the UFO.
+
+: fly-ufo  ( -- )  ufo-movements ufo-x-inc @ +perform  ;
+  \ Execute the proper movement.
 
 : move-ufo  ( -- )
-  ufo-invisible? if  advance-ufo  else  (move-ufo)  then  ;
+  visible-ufo? if  fly-ufo  then  advance-ufo
+  visible-ufo? ?exit -ufo  ;
   \ Manage the UFO, if it's visible.
 
   \ ===========================================================
