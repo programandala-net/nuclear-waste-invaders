@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.28.0+201612041312"  ;
+: version  ( -- ca len )  s" 0.29.0+201612041349"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -184,16 +184,12 @@ black papery red + cconstant arena-color#
   0 overprint  0 inverse  black border  ;
 
   \ ===========================================================
-  cr .( Variables)  debug-point
+  cr .( Global variables)  debug-point
 
-variable tank-x          \ column
-variable ufo-x           \ column
-variable ufo-frame       \ counter (0..3)
 variable lifes           \ counter (0..4)
 variable level           \ counter (1..max-level)
 variable score           \ counter
 variable record          \ max score
-variable invaders        \ counter
 variable current-invader \ element of table  (0..9)
 variable catastrophe     \ flag (game end condition)
 
@@ -1158,20 +1154,11 @@ arena-top-y columns * attributes + constant arena-top-attribute
 : status-bars  ( -- )  top-status-bar bottom-status-bar  ;
   \ Show the data bars.
 
+  \ ===========================================================
+  cr .( Invaders data)  debug-point
+
                     0 cconstant invaders-min-x
 columns udg/invader - cconstant invaders-max-x
-
-  \ Invaders data are stored in a table,
-  \ which has the following structure:
-  \
-  \ +0 = units (0..3)
-  \ +2 = active? (0..1)
-  \ +4 = y row
-  \ +6 = x coordinate (column)
-  \ +8 = main graphic (character)
-
-  \ The `invader` variable points to the data of the current
-  \ invader in the table.
 
 10 cconstant max-invaders
 10 cconstant actual-invaders  \ XXX TMP -- for debugging
@@ -1285,6 +1272,9 @@ create invader-colors  ( -- a )
   invader-stamina @ [ invader-colors 1- ] literal + c@  ;
   \ Invader proper color for its stamina.
 
+  \ ===========================================================
+  cr .( Building)  debug-point
+
  4 cconstant building-top-y
 15 cconstant building-bottom-y
 
@@ -1302,28 +1292,6 @@ variable containers-left-x   variable containers-right-x
   2dup    + containers-right-x !
        1+ + building-right-x !  ;
   \ Set the size of the building after the current level.
-
-9 cconstant max-level
-
-: increase-level  ( -- )  level @ 1+ max-level min level !  ;
-  \ Increase the level number.
-
-variable used-projectiles  used-projectiles off
-  \ Counter.
-
-: level-bonus  ( -- n )
-  level @ 100 *  lifes @ 10 * +  used-projectiles @ -  0 max  ;
-  \ Return bonus _n_ after finishing a level.
-
-: next-level  ( -- )  level-bonus update-score
-                      increase-level  set-building-size  ;
-  \ Change to the next level.
-
-: init-level  ( -- )  level off  next-level  ;
-  \ Init the level number and the related variables.
-
-  \ ===========================================================
-  cr .( Building)  debug-point
 
 : floor  ( y -- )
   building-left-x @ swap at-xy
@@ -1360,7 +1328,39 @@ variable used-projectiles  used-projectiles off
   \ Draw the building and the nuclear containers.
 
   \ ===========================================================
+  cr .( Levels)  debug-point
+
+9 cconstant max-level
+
+: increase-level  ( -- )  level @ 1+ max-level min level !  ;
+  \ Increase the level number.
+
+variable used-projectiles  used-projectiles off
+  \ Counter.
+
+: level-bonus  ( -- n )
+  level @ 100 *  lifes @ 10 * +  used-projectiles @ -  0 max  ;
+  \ Return bonus _n_ after finishing a level.
+
+: next-level  ( -- )  level-bonus update-score
+                      increase-level  set-building-size  ;
+  \ Change to the next level.
+
+: init-level  ( -- )  level off  next-level  ;
+  \ Init the level number and the related variables.
+
+: level-message  ( -- ca len )
+  in-text-color s" LEVEL " level @ s>d <# # #> s+  ;
+
+: show-level  ( -- )  level-message message  ;
+
+  \ ===========================================================
   cr .( Tank)  debug-point
+
+variable tank-x  \ column
+
+: init-tank  ( -- )  columns udg/tank - 2/ tank-x !  ;
+  \ Init the tank.
 
                     1 cconstant tank-min-x
 columns udg/tank - 1- cconstant tank-max-x
@@ -1412,10 +1412,13 @@ transmission-delay-counter off
   \ Print the tank at the current cursor position.
 
 : at-tank  ( -- )  tank-x @ tank-y at-xy  ;
+  \ Set the cursor position at the tank's coordinates.
 
 : tank-ready  ( -- )  at-tank .tank  ;
+  \ Print the tank at its current position.
 
 : -tank  ( -- )  at-tank in-arena-color udg/tank spaces  ;
+  \ Delete the tank.
 
 : move-tank  ( -1|1 -- )
   tank-x @ + tank-range dup tank-x ! tank-y at-xy  ;
@@ -1497,17 +1500,6 @@ defer debug-data-pause  ( -- )
 -200 constant ufo-initial-x
   \ Initial column of the UFO, out of the screen.
 
-: init-ufo  ( -- )  ufo-initial-x ufo-x !  ;
-  \ Init the UFO.
-
-: init-invaders  ( -- )
-  init-invaders-data  current-invader off
-  actual-invaders invaders !  ;
-  \ Init the invaders.
-
-: init-tank  ( -- )  columns udg/tank - 2/ tank-x !  ;
-  \ Init the tank.
-
 : parade  ( -- )
   in-invader-color
   invader-1 dup invader-2 dup invader-3
@@ -1520,17 +1512,15 @@ defer debug-data-pause  ( -- )
 
 : init-arena  ( -- )   -arena building tank-ready parade  ;
 
-: level-message  ( -- ca len )
-  in-text-color s" LEVEL " level @ s>d <# # #> s+  ;
-
-: show-level  ( -- )  level-message message  ;
-
-: init-combat  ( -- )
-  catastrophe off  init-invaders init-ufo init-tank init-arena
-  init-projectiles show-level show-player  ;
-
   \ ===========================================================
   cr .( Invasion)  debug-point
+
+variable invaders  \ counter
+
+: init-invaders  ( -- )
+  init-invaders-data  current-invader off
+  actual-invaders invaders !  ;
+  \ Init the invaders.
 
 : at-invader  ( -- )  invader-xy@ at-xy  ;
   \ Set the cursor position at the coordinates of the invader.
@@ -1758,9 +1748,14 @@ defer invasion  \ XXX TMP --
   \ ===========================================================
   cr .( UFO)  debug-point
 
- 3 cconstant ufo-y       \ row
+3 cconstant ufo-y       \ row
+variable ufo-x          \ column
+variable ufo-frame      \ counter (0..3)
 
 27 cconstant ufo-max-x   \ column
+
+: init-ufo  ( -- )  ufo-initial-x ufo-x !  ;
+  \ Init the UFO.
 
 : ufo-invisible?  ( -- f )  ufo-x @ 0<  ;
   \ Is the UFO invisible?
@@ -2050,6 +2045,10 @@ create attributes-backup /attributes allot
 
 variable invasion-delay  8 invasion-delay !
   \ XXX TMP -- debugging
+
+: init-combat  ( -- )
+  catastrophe off  init-invaders init-ufo init-tank init-arena
+  init-projectiles show-level show-player  ;
 
 : (combat)  ( -- )
   begin   victory? if  next-level init-combat  then
