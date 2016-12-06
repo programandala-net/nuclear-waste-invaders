@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.31.0-pre.2+201612050020"  ;
+: version  ( -- ca len )  s" 0.31.0-pre.3+201612050123"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -121,7 +121,7 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
   base @ >r decimal latest .name .s r> base !
   key drop ;
 
-~~? off
+~~? on
 
   \ ===========================================================
   cr .( Constants)  debug-point
@@ -1222,13 +1222,13 @@ create invaders-data /invaders allot
 : .y/n  ( f -- )  if  ." Y"  else  ." N"  then  space  ;
   \ XXX TMP -- for debugging
 
-: (~~app-info)  ( -- )
+: ~~invader-info  ( -- )
   home current-invader @ 2 .r
   ." Ret.:" invader-retreating @ .y/n
   ." Sta.:" invader-stamina @ .  ;
   \ XXX TMP -- for debugging
 
-  \ ' (~~app-info) ' ~~app-info defer!
+  \ ' ~~invader-info ' ~~app-info defer!
   \ XXX TMP -- for debugging
 
 3 cconstant max-stamina
@@ -1742,7 +1742,7 @@ variable broken-wall-x
   invader-x @ flying-to-the-right?
   if    1+ building-left-x
   else  building-right-x
-  then  @ dup broken-wall-x ! =  ~~  ;
+  then  @ dup broken-wall-x ! =  ;
   \ Has the current invader broken the wall of the building?
 
 : broken-left-container  ( -- )
@@ -1792,7 +1792,7 @@ variable broken-wall-x
   \ XXX TODO -- write `negate!` and `invert!` in Z80 in Solo
   \ Forth's library
 
-: dock  ( -- )  ~~
+: dock  ( -- ) 
   invader-active off
   invader-x-inc off  invader-retreating off
   invader-docked-sprite @ invader-sprite !
@@ -1800,7 +1800,7 @@ variable broken-wall-x
   docked-invader-frames invader-frames !  ;
   \ Dock the current invader.
 
-: undock  ( -- ) ~~
+: undock  ( -- )
   invader-active on
   invader-initial-x-inc @ invader-x-inc !
   invader-flying-sprite @ invader-sprite !
@@ -1854,7 +1854,7 @@ variable cure-factor  20 cure-factor !
 : require-invader  ( -- )
   healthy? if    ?undock
            else  ?cure
-           then  at-invader .invader  ~~  ;
+           then  at-invader .invader  ;
   \ Require the current invader, either inactive or wounded.
 
 : last-invader?  ( -- f )
@@ -1868,7 +1868,7 @@ variable cure-factor  20 cure-factor !
                 then  1 current-invader +!  ;
   \ Update the invader to the next one.
 
-: move-invader  ( -- ) ~~
+: move-invader  ( -- )
    invader-active @ if  flying-invader exit  then
   invader-stamina @ if  require-invader      then  ;
   \ Move the current invader if it's active; else
@@ -1911,26 +1911,42 @@ defer invasion  \ XXX TMP --
   \ ===========================================================
   cr .( UFO)  debug-point
 
+  \ XXX UNDER DEVELOPMENT
+  \ XXX FIXME --
+
+  \ XXX TODO -- simplify: the UFO can be always visible
+
 3 cconstant ufo-y
 
 variable ufo-x
 variable ufo-x-inc  1 ufo-x-inc !
 variable ufo-frame  \ counter (0..3)
 
-: return-ufo  ( -- )  ufo-x-inc @ negate ufo-x-inc !  ;
+: ~~ufo-info  ( -- )
+  home ." x:" ufo-y ?  ." inc.:" ufo-x-inc ?  ;
+' ~~ufo-info ' ~~app-info defer!
+  \ XXX TMP -- for debugging
 
-: init-ufo  ( -- )  $8000 ufo-x !  return-ufo  ;
+: ufo-returns  ( -- )  ufo-x-inc @ negate ufo-x-inc !  ;
+
+96 constant ufo-limit-x
+
+: init-ufo  ( -- )  ufo-limit-x ufo-x !  ufo-returns  ;
   \ Init the UFO.
 
-: visible-ufo?  ( -- f )
-  ufo-x @ 0 [ columns udg/ufo - ] literal within  ;
+       columns 1- constant ufo-max-x
+udg/ufo 1- negate constant ufo-min-x
+
+: visible-ufo?  ( -- f )  ~~
+  ufo-x @ ufo-min-x ufo-max-x within  ;
   \ Is the UFO visible?
 
-: at-ufo  ( -- )  ufo-x @ ufo-y at-xy  ;
-  \ Set the cursor position at the coordinates of the UFO.
+: at-ufo  ( -- )  ~~ ufo-x @ 0 max ufo-max-x min ufo-y at-xy  ;
+  \ Set the cursor position at the coordinates of the visible
+  \ part of the UFO.
 
-: -ufo  ( -- )  at-ufo 3 spaces init-ufo  ;
-  \ Delete and init the UFO.
+: -ufo  ( -- )  ~~ at-ufo udg/ufo spaces init-ufo  ;
+  \ Delete the visible part of the UFO and init it.
 
 : ufo-udg  ( -- c )
   ufo-frame @ dup next-frame ufo-frame !
@@ -1938,24 +1954,24 @@ variable ufo-frame  \ counter (0..3)
   ufo +  ;
   \ UDG _c_ of the UFO.
 
-: next-ufo-x  ( -- )  ufo-x-inc @ ufo-x +!  ;
+: next-ufo-x  ( -- )  ~~ ufo-x-inc @ ufo-x +!  ;
   \ Add the x increment of the UFO to its x coordinate.
 
-1024 constant ufo-limit-distance
+: ufo-in-range?  ( -- f )  ~~ ufo-limit-x ufo-x @ abs <  ;
+  \ Is the UFO in the range of its flying limit?
 
-: advance-ufo  ( -- )
-  next-ufo-x ufo-x @ abs ufo-limit-distance > 0= ?exit
-  return-ufo ;
+: advance-ufo  ( -- )  ~~
+  next-ufo-x ufo-in-range? ?exit ufo-returns  ;
   \ Advance the UFO on its current direction (to the left
   \ or to the right).  If the new position is beyond the limit,
   \ change the direction.
 
-: .ufo  ( -- )  in-ufo-color ufo-udg .2x1sprite  ;
+: .ufo  ( -- )  ~~ in-ufo-color ufo-udg .2x1sprite  ;
 
-: move-ufo-to-the-right  ( -- )
+: move-ufo-to-the-right  ( -- )  ~~
   at-ufo in-arena-color space .ufo  ;
 
-: move-ufo-to-the-left  ( -- )
+: move-ufo-to-the-left  ( -- )  ~~
   at-ufo .ufo in-arena-color space  ;
 
       ' move-ufo-to-the-left ,
@@ -1965,11 +1981,12 @@ here  ' noop ,
 constant ufo-movements  ( -- a )
   \ Execution table to move the UFO.
 
-: fly-ufo  ( -- )  ufo-movements ufo-x-inc @ +perform  ;
+: move-ufo  ( -- )  ~~ ufo-movements ufo-x-inc @ +perform  ;
   \ Execute the proper movement.
 
-: move-ufo  ( -- )
-  visible-ufo? if  fly-ufo  then  advance-ufo
+: manage-ufo  ( -- )
+  advance-ufo
+  visible-ufo? if  move-ufo  then
   visible-ufo? ?exit -ufo  ;
   \ Manage the UFO, if it's visible.
 
@@ -2239,7 +2256,7 @@ variable invasion-delay  8 invasion-delay !
 
           fly-projectile  drive
           fly-projectile  shoot
-          fly-projectile  move-ufo
+          fly-projectile  manage-ufo
           fly-projectile
           \ invasion-delay @ random if \ XXX TMP -- debugging
             invasion
