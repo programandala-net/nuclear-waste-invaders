@@ -32,19 +32,20 @@
   \ has been moved to the library.
   \
   \ 2016-12-18: Improve documentation of `escaped-wordlist`.
+  \
+  \ 2016-12-21: Rename `escaped-wordlist` to
+  \ `escaped-chars-wordlist`.
 
-( parse-escaped-string )
+( parse-escaped-string escaped-chars-wordlist )
 
-get-current  forth-wordlist set-current
-  \ Save the compilation wordlist and change it.
+get-current  forth-wordlist set-current  need parse-char
 
-need parse-char
-
-wordlist dup constant escaped-wordlist dup >order set-current
+wordlist dup constant escaped-chars-wordlist
+         dup >order set-current
 
   \ doc{
   \
-  \ escaped-wordlist  ( -- wid )
+  \ escaped-chars-wordlist  ( -- wid )
   \
   \ Identifier of the word list that contains the words whose
   \ names are characters that must be escaped after a backslash
@@ -55,9 +56,12 @@ wordlist dup constant escaped-wordlist dup >order set-current
   \ Most of the escaped chars are translated to one char, so
   \ they are defined as double constants.
   \
-  \ See: `s\"`.
+  \ See: `s\"`, `.\"`.
   \
   \ }doc
+
+escaped-chars-wordlist set-current
+  \ XXX TODO -- use `standard-escaped-chars-wordlist`
 
 7 1 2constant a  8 1 2constant b  27 1 2constant e
   \ \a = backspace
@@ -84,6 +88,7 @@ wordlist dup constant escaped-wordlist dup >order set-current
 : (x)  ( "c" -- n )
   parse-char upper 16 digit? 0= #-260 ?throw  ;
   \ Parse an hex digit and convert it to a number.
+  \ XXX TODO -- move to other word list
 
 : x  ( "cc" -- c 1 )  (x) 16 * (x) + 1  ;
   \ \x = hex character code
@@ -105,13 +110,16 @@ set-current
   \ Restore the compilation wordlist.
 
 : unescape-char  ( c -- c1..cn n )
-  dup char>string escaped-wordlist search-wordlist
+  dup char>string escaped-chars-wordlist search-wordlist
   if  nip execute  else  '\' 2  then  ;
   \ Translate a escaped char to a number of chars and their
   \ count.
   \ c1..cn = chars to make the string with
   \          (_c1_ is the last one)
   \ n = number of chars
+  \
+  \ XXX TODO -- make the word list (or a search order)
+  \ configurable
 
 : parse-escaped-string  ( "ccc<quote>"  -- ca len )
   0 0  \ dummy empty string to start with
@@ -120,10 +128,17 @@ set-current
     if    drop parse-char unescape-char
     else  1  then  chars>string s+
   repeat  drop  ;
+
+  \ doc{
+  \
+  \ parse-escaped-string  ( "ccc<quote>"  -- ca len )
+  \
   \ Parse a text string delimited by a double quote, using the
   \ translation rules described by Forth-2012's `s\"`, and
   \ returning the string _ca len_ in the circular string
   \ buffer.
+  \
+  \ }doc
 
 ( s\" .\" )
 
