@@ -10,7 +10,7 @@
 only forth definitions
 wordlist dup constant nuclear-wordlist dup >order set-current
 
-: version  ( -- ca len )  s" 0.31.0-pre.3+201612050123"  ;
+: version  ( -- ca len )  s" 0.31.0-pre.4+201612061141"  ;
 
 cr cr .( Nuclear Invaders ) cr version type cr
 
@@ -56,7 +56,8 @@ need defer  need [if]
 need ~~  'q' ~~quit-key !  ~~resume-key on  22 ~~y !
   \ XXX TMP -- during the development
 
-need warn.message
+need warn.message  need order
+  \ XXX TMP -- during the development
 
 need roll      need inkey   need bleep        need beep>bleep
 need os-chars  need os-udg  need 2/           need abort"
@@ -66,7 +67,11 @@ need 2value    need row     need char>string  need s\"
 need alias     need inverse need pixel-addr   need between
 need overprint need color   need color!       need frames@
 need c+!       need fade    need cvariable    need 2const
-need d<        need 0exit   need within       need +perform
+need d<        need 0exit   need +perform     
+
+order  \ XXX TMP --
+need -1|1
+order  \ XXX TMP --
 
 need field:    need +field-opt-0124
 
@@ -92,7 +97,7 @@ nuclear-wordlist set-current
   \ ===========================================================
   cr .( Debug)
 
-defer debug-point
+defer debug-point  defer special-debug-point
 
 defer ((debug-point))  ' noop ' ((debug-point)) defer!
 
@@ -100,15 +105,20 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
   cr ((debug-point))
   \ depth 0= ?exit
   ." block:" blk ?  ." latest:" latest .name ." hp:" hp@ u.
+  \ order
+  \ s" ' -1|1 .( -1|1 =) u." evaluate
   depth if  cr .s #-258 throw  then  \ stack imbalance
   \ key drop
   ;
   \ Abort if the stack is not empty.
   \ XXX TMP -- for debugging
 
-  ' noop
-  \ ' (debug-point)
-  ' debug-point defer!
+  ' noop ' debug-point defer!
+  \ ' (debug-point) ' debug-point defer!
+  \ XXX TMP -- for debugging
+
+  ' noop ' special-debug-point defer!
+  \ ' (debug-point) ' special-debug-point defer!
   \ XXX TMP -- for debugging
 
   \ : :
@@ -302,24 +312,6 @@ variable used-udgs  used-udgs off
 
   \ ===========================================================
   cr .( Font)  debug-point
-
-: font!  ( a -- )  os-chars !  ;
-  \ Set the current charset to address _a_
-  \ (the bitmap of char 0).
-  \ XXX TODO -- not used yet
-  \ XXX TODO -- move to Solo Forth
-
-: font@  ( -- a )  os-chars @  ;
-  \ Fetch the address _a_ of the current charset
-  \ (the bitmap of char 0).
-  \ XXX TODO -- not used yet
-  \ XXX TODO -- move to Solo Forth
-
-: rom-font  ( -- )  15360 font!  ;
-  \ Set ROM font for chars 0..127
-  \ (in Solo Forth chars 128..255 are UDG).
-  \ XXX TODO -- not used yet
-  \ XXX TODO -- move to Solo Forth
 
 [pixel-projectile] 0= [if]
 
@@ -1514,6 +1506,8 @@ defer debug-data-pause  ( -- )
   projectile-x c@ projectile-y c@  ;
   \ Coordinates of the projectile.
 
+  special-debug-point ' -1|1 cr u.  \ XXX INFORMER
+
   \ ===========================================================
   cr .( Init)  debug-point
 
@@ -1528,6 +1522,8 @@ defer debug-data-pause  ( -- )
   cls status-bars  ;
   \ Init the game.
 
+  special-debug-point ' -1|1 cr u.  \ XXX INFORMER
+
 : parade  ( -- )
   in-invader-color
   flying-invader-1 dup flying-invader-2 dup flying-invader-3
@@ -1538,23 +1534,33 @@ defer debug-data-pause  ( -- )
   2 +loop  ;
   \ Show the invaders at their initial positions.
 
+  special-debug-point ' -1|1 cr u.  \ XXX INFORMER
+
 : init-arena  ( -- )   -arena building tank-ready parade  ;
 
   \ ===========================================================
   cr .( Instructions)  debug-point
 
+  special-debug-point ' -1|1 cr u.  \ XXX INFORMER
+
 : title  ( -- )
   s" NUCLEAR INVADERS" 0 center-type
   version 1 center-type  ;
 
+  special-debug-point  \ XXX INFORMER
+
 : (c)  ( -- )  127 emit  ;
   \ Print the copyright symbol.
+
+  special-debug-point  \ XXX INFORMER
 
 : .copyright  ( -- )
   row
   1 over    at-xy (c) ."  2016 Marcos Cruz"
   8 swap 1+ at-xy           ." (programandala.net)"  ;
   \ Print the copyright notice at the current coordinates.
+
+  special-debug-point  \ XXX INFORMER
 
 : show-copyright  ( -- )  0 22 at-xy .copyright  ;
 
@@ -1567,9 +1573,19 @@ defer debug-data-pause  ( -- )
   \   9 swap 4 + at-xy ." Fire " kk-fire#  .control  ;
   \   \ Print controls at the current row.
 
+  special-debug-point  \ XXX INFORMER
+
 : left-key$   ( -- ca len )  kk-left# kk#>string  ;
+
+  special-debug-point  \ XXX INFORMER
+
 : right-key$  ( -- ca len )  kk-right# kk#>string  ;
+
+  special-debug-point  \ XXX INFORMER
+
 : fire-key$   ( -- ca len )  kk-fire# kk#>string  ;
+
+  special-debug-point  \ XXX INFORMER
 
 : controls$  ( -- ca len )
   left-arrow$ left-key$ s+
@@ -1579,6 +1595,8 @@ defer debug-data-pause  ( -- )
   \ XXX TMP --
   \ XXX TODO -- rewrite
 
+  special-debug-point  \ XXX INFORMER
+
 : .controls  ( -- )
   \ s" [Space] to change controls:" row dup >r center-type
   row >r fire-button$ r@ 2+ center-type
@@ -1587,12 +1605,16 @@ defer debug-data-pause  ( -- )
   \ Print controls at the current row.
   \ XXX TMP --
 
+  special-debug-point  \ XXX INFORMER
+
 true [if]  \ XXX OLD
 
 : .score-item  ( ca1 len1 ca2 len2 -- )
   type in-text-color ."  = " type  ;
   \ Print an item of the score table, with sprite string _ca2
   \ len2_ and description _ca1 len1_
+
+  special-debug-point  \ XXX INFORMER
 
 : .score-table  ( -- )
   xy 2dup  at-xy s" 10 points"
@@ -1605,6 +1627,7 @@ true [if]  \ XXX OLD
            in-ufo-color ufo$ .score-item  ;
    \ Print the score table at the current coordinates.
 
+  special-debug-point  \ XXX INFORMER
 
 [else]  \ XXX NEW
 
@@ -1637,6 +1660,8 @@ true [if]  \ XXX OLD
    \ Print the score table at the current coordinates.
 
 [then]
+
+  special-debug-point  \ XXX INFORMER
 
 : show-score-table  ( -- )  9 4 at-xy .score-table  ;
 
@@ -1919,7 +1944,7 @@ defer invasion  \ XXX TMP --
 3 cconstant ufo-y
 
 variable ufo-x
-variable ufo-x-inc  1 ufo-x-inc !
+variable ufo-x-inc  order -1|1 ufo-x-inc !
 variable ufo-frame  \ counter (0..3)
 
 : ~~ufo-info  ( -- )
@@ -1930,23 +1955,24 @@ variable ufo-frame  \ counter (0..3)
 : ufo-returns  ( -- )  ufo-x-inc @ negate ufo-x-inc !  ;
 
 96 constant ufo-limit-x
+  \ Limit of the x coordinate of the UFO in either direction.
 
-: init-ufo  ( -- )  ufo-limit-x ufo-x !  ufo-returns  ;
+: init-ufo  ( -- )  ufo-limit-x ufo-x !  ;
   \ Init the UFO.
 
-       columns 1- constant ufo-max-x
-udg/ufo 1- negate constant ufo-min-x
+columns udg/ufo - constant ufo-max-x
+                0 constant ufo-min-x
 
-: visible-ufo?  ( -- f )  ~~
-  ufo-x @ ufo-min-x ufo-max-x within  ;
+: visible-ufo?  ( -- f )
+  ufo-x @ ufo-min-x ufo-max-x between  ;
   \ Is the UFO visible?
 
 : at-ufo  ( -- )  ~~ ufo-x @ 0 max ufo-max-x min ufo-y at-xy  ;
   \ Set the cursor position at the coordinates of the visible
   \ part of the UFO.
 
-: -ufo  ( -- )  ~~ at-ufo udg/ufo spaces init-ufo  ;
-  \ Delete the visible part of the UFO and init it.
+: -ufo  ( -- )  ~~ at-ufo udg/ufo spaces  ;
+  \ Delete the visible part of the UFO.
 
 : ufo-udg  ( -- c )
   ufo-frame @ dup next-frame ufo-frame !
@@ -1954,19 +1980,16 @@ udg/ufo 1- negate constant ufo-min-x
   ufo +  ;
   \ UDG _c_ of the UFO.
 
-: next-ufo-x  ( -- )  ~~ ufo-x-inc @ ufo-x +!  ;
-  \ Add the x increment of the UFO to its x coordinate.
+: advance-ufo  ( -- )  ~~ ufo-x-inc @ ufo-x +!  ;
+  \ Advance the UFO on its current direction,
+  \ adding its x increment to its x coordinate.
 
 : ufo-in-range?  ( -- f )  ~~ ufo-limit-x ufo-x @ abs <  ;
   \ Is the UFO in the range of its flying limit?
 
-: advance-ufo  ( -- )  ~~
-  next-ufo-x ufo-in-range? ?exit ufo-returns  ;
-  \ Advance the UFO on its current direction (to the left
-  \ or to the right).  If the new position is beyond the limit,
-  \ change the direction.
-
 : .ufo  ( -- )  ~~ in-ufo-color ufo-udg .2x1sprite  ;
+
+0 [if]  \ XXX OLD
 
 : move-ufo-to-the-right  ( -- )  ~~
   at-ufo in-arena-color space .ufo  ;
@@ -1984,11 +2007,22 @@ constant ufo-movements  ( -- a )
 : move-ufo  ( -- )  ~~ ufo-movements ufo-x-inc @ +perform  ;
   \ Execute the proper movement.
 
+[then]
+
+: manage-visible-ufo  ( -- )
+  -ufo advance-ufo visible-ufo? 0= ?exit .ufo  ;
+  \ Manage the UFO, when it's visible.
+  \ XXX TODO -- improve: don't delete the whole UFO
+
+: manage-invisible-ufo  ( -- )
+  advance-ufo visible-ufo? if  .ufo exit  then
+  ufo-in-range? ?exit ufo-returns  ;
+  \ Manage the UFO, when it's invisible.
+
 : manage-ufo  ( -- )
-  advance-ufo
-  visible-ufo? if  move-ufo  then
-  visible-ufo? ?exit -ufo  ;
-  \ Manage the UFO, if it's visible.
+  visible-ufo? if  manage-visible-ufo    exit  then
+                   manage-invisible-ufo  ;
+  \ Manage the UFO.
 
   \ ===========================================================
   cr .( Impact)  debug-point
