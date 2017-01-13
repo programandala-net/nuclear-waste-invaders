@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version  ( -- ca len )  s" 0.31.0-pre.4+201701131827"  ;
+: version  ( -- ca len )  s" 0.31.0-pre.5+201701131915"  ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -125,6 +125,8 @@ need cyan   need yellow  need white
 
 need papery  need brighty  need flashy
 
+need attr
+
   \ --------------------------------------------
   cr .(   -Keyboard)  \ {{{2
 
@@ -218,9 +220,10 @@ tank-y cconstant arena-bottom-y
                red cconstant dying-invader-color#
 
            magenta cconstant ufo-color#
-black papery red + cconstant arena-color#
+             black cconstant arena-color#
     yellow brighty cconstant radiation-color#
              white cconstant ruler-color#
+            yellow cconstant projectile-color#
 
               white color in-text-color
        arena-color# color in-arena-color
@@ -230,7 +233,7 @@ black papery red + cconstant arena-color#
                blue color in-life-color
      invader-color# color in-invader-color
      yellow brighty color in-container-color
-             yellow color in-projectile-color
+  projectile-color# color in-projectile-color
          ufo-color# color in-ufo-color
 
 : init-colors  ( -- )
@@ -2114,7 +2117,7 @@ constant ufo-movements  ( -- a )
   at-invader invader-explosion$ type  ;
   \ Show the current invader on fire.
 
-: -invader  ( -- )  at-invader 2 spaces  ;
+: -invader  ( -- )  in-arena-color at-invader 2 spaces  ;
   \ Delete the current invader.
 
 : invader-explosion  ( -- )
@@ -2214,7 +2217,8 @@ constant ufo-movements  ( -- a )
 : -projectile  ( -- )
   [pixel-projectile]
   [if]    projectile-coords reset-pixel
-  [else]  at-projectile in-arena-color space
+  [else]  projectile-coords attr projectile-color# <> ?exit
+          at-projectile in-arena-color space
   [then]  ;
   \ Delete the projectile.
 
