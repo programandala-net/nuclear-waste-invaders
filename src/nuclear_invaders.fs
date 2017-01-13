@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version  ( -- ca len )  s" 0.31.0-pre.4+201701131109"  ;
+: version  ( -- ca len )  s" 0.31.0-pre.4+201701131827"  ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -383,7 +383,7 @@ variable ocr-last-udg
   ocr-first-udg @ ocr-first !
     \ Its char code in the UDG set.
   ocr-last-udg @ ocr-first-udg @ - 1+ ocr-chars !  ;  \ chars
-  \ Set the UDGs `ocr` will examine te detect collisions.
+  \ Set the UDGs `ocr` will examine to detect collisions.
   \ Set the address of the first char bitmap to be
   \ examined, its char code and the number of examined chars.
   \ XXX TODO -- range: only chars that may be detected: brick
@@ -2177,7 +2177,8 @@ constant ufo-movements  ( -- a )
   [then]  ;
   \ Did the projectile hit something?
 
-: impacted?  ( -- f )  hit-something? dup if  impact  then  ;
+: impacted?  ( -- f )
+  hit-something? dup if  impact  then  ;
   \ Did the projectil impacted?
   \ If so, do manage the impact.
 
@@ -2250,8 +2251,8 @@ variable trigger-delay-counter  trigger-delay-counter off
   [pixel-projectile]
   [if]    [ tank-y row>pixel 1+ ] literal
   [else]  [ tank-y 1- ] literal
-  [then]  projectile-y c! fire-sound delay-trigger
-  ;
+  [then]  projectile-y c!
+  .projectile fire-sound delay-trigger  ;
   \ The tank fires.
   \ XXX TODO -- confirm `tank-y 1-`
 
@@ -2352,7 +2353,7 @@ variable invasion-delay  8 invasion-delay !
           fly-projectile  drive
           fly-projectile  shoot
           fly-projectile
-          \ manage-ufo  \ XXX TMP --
+          manage-ufo  \ XXX TMP --
           fly-projectile
           \ invasion-delay @ random if \ XXX TMP -- debugging
           invasion
@@ -2397,7 +2398,7 @@ variable invasion-delay  8 invasion-delay !
   \ Show the graphics of the broken containers.
 
 cr cr .( Nuclear Invaders)
-   \ cr version type  \ XXX FIXME --
+   cr version type  \ XXX FIXME --
    cr .( Ready)
    cr .unused
    cr .( Type RUN to start) cr

@@ -2,6 +2,10 @@
 :author: Marcos Cruz (programandala.net)
 :revdate: 2017-01-13
 
+.2017-01-13:
+
+Improve the visibility of the projectile right above the tank.
+
 .2016-08-01:
 
 Several players, say 1..4. Simply, save their controls number and score in a
@@ -45,4 +49,4 @@ Fix: sometimes the projectile erases half of the invader.
 .2016-12-04:
 
 Rename UFO to mothership.
-Make the it woundable like the invaders: same levels of stamina.
+Make the UFO woundable like the invaders: same levels of stamina.
