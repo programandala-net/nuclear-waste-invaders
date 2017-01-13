@@ -1,22 +1,22 @@
 = Nuclear Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2016-12-04
+:revdate: 2017-01-13
 
-2016-08-01:
+.2016-08-01:
 
 Several players, say 1..4. Simply, save their controls number and score in a
 table.
 
-2016-10-12:
+.2016-10-12:
 
 Use pixels instead of characters as projectiles.
 
-2016-10-15:
+.2016-10-15:
 
 Show an icon of the free projectiles: A graphic with 0..3 bars, or
 0..3 graphics.
 
-2016-10-16:
+.2016-10-16:
 
 Effect: the invaders eat the containers.
 
@@ -29,20 +29,20 @@ Change the color of explosions.
 
 Animate the explosions with several frames.
 
-2016-10-18:
+.2016-10-18:
 
 Make the speed of the invaders regular, no matter the number of them.
 
-2016-10-22:
+.2016-10-22:
 
 Detect if a wall is already broken, and change the graphic
 accordingly.
 
-2016-12-02:
+.2016-12-02:
 
 Fix: sometimes the projectile erases half of the invader.
 
-2016-12-04:
+.2016-12-04:
 
 Rename UFO to mothership.
 Make the it woundable like the invaders: same levels of stamina.
