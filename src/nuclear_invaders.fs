@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version  ( -- ca len )  s" 0.31.0-pre.5+201701131915"  ;
+: version  ( -- ca len )  s" 0.31.0-pre.6+201701131946"  ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -141,7 +141,8 @@ need frames@  need ms
   \ --------------------------------------------
   cr .(   -Sound)  \ {{{2
 
-need bleep        need beep>bleep
+need bleep  need beep>bleep
+need shoot  need whip  need  metalic
 
   \ --------------------------------------------
 
@@ -2109,9 +2110,9 @@ constant ufo-movements  ( -- a )
 : ufo-impacted  ( -- )  ufo-explosion ufo-bonus  ;
   \ The UFO has been impacted.
 
-: invader-bang  ( -- ca len )  10 100 beep  ;
-  \ Make the explosion sound of the current invader.
-  \ XXX TODO -- explosion 128 sound
+' whip alias invader-bang  ( -- )
+  \ XXX TMP --
+  \ XXX TODO -- look for a better sound
 
 : invader-on-fire  ( -- )
   at-invader invader-explosion$ type  ;
@@ -2138,7 +2139,12 @@ constant ufo-movements  ( -- a )
   -1 invaders +!  invader-stamina off  invader-active off  ;
   \ The current invader explodes.
 
+' metalic alias retreat-sound
+  \ XXX TMP --
+  \ XXX TODO -- look for a proper sound
+
 : retreat  ( -- )
+  retreat-sound
   invader-retreat-points @ update-score  turn-back  ;
   \ The current invader retreats.
 
@@ -2208,11 +2214,7 @@ constant ufo-movements  ( -- a )
   [then]  ;
   \ Show the projectile.
 
-: fire-sound  ( -- )
-  \ 50 0 do  7 1 do  i border 0 border  loop  loop
-    \ XXX INFORMER
-  ;
-  \ XXX TODO -- 128 sound
+' shoot alias fire-sound  ( -- )
 
 : -projectile  ( -- )
   [pixel-projectile]
