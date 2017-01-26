@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201701182343
+  \ Last modified: 201701200131
 
   \ -----------------------------------------------------------
   \ Description
@@ -51,6 +51,14 @@
   \
   \ 2017-01-18: Remove `exit` at the end of conditional
   \ interpretation.
+  \
+  \ 2017-01-19: Remove remaining `exit` at the end of
+  \ conditional interpretation, after `immediate` or
+  \ `compile-only`.
+  \
+  \ 2017-01-20: Fix `error>ordinal`: error code #-286 was added
+  \ some days ago, making #-300 the new highest code available
+  \ for system error codes, but `error>ordinal` wasn't updated.
 
 ( ?compiling ?executing abort" warning" )
 
@@ -92,9 +100,9 @@ need ?(  [unneeded] abort" ?(
   r> count rot if  abort-message 2! -2 throw  then + >r  ;
 
 : abort"  ( Compilation: "ccc<quote>" -- )
-  postpone (abort") ,"  ; immediate compile-only  exit  ?)
+  postpone (abort") ,"  ; immediate compile-only  ?)
 
-need string-parameter
+[unneeded] warning?( ?(  need string-parameter
 
 : (warning")  ( f -- )
   string-parameter rot if  type  else  2drop  then  ;
@@ -110,7 +118,7 @@ need string-parameter
 
 : warning"  \ Compilation: ( "ccc<quote>" -- )
             \ Execution:   ( f -- )
-  postpone (warning") ,"  ; immediate compile-only
+  postpone (warning") ,"  ; immediate compile-only ?)
 
   \ doc{
   \
@@ -132,11 +140,11 @@ need string-parameter
 : error>ordinal  ( -n1 -- +n2 )
   abs dup 256 < ?exit  \ standard
       dup 1000 < if  [ 256 91 - ] literal - exit  then  \
-      [ 1000 286 - 256 91 - + ] literal -   ;
+      [ 1000 300 - 256 91 - + ] literal -   ;
   \ Legend:
   \   -90 = lowest error defined
   \         in the standard range (-255..-1)
-  \  -285 = lowest error reserved for the Forth system
+  \  -300 = lowest error reserved for the Forth system
   \         (not including the DOS)
   \         in the standard range (-4095..-256)
   \ -1000 = first (highest) error reserved for the DOS
@@ -151,7 +159,7 @@ need string-parameter
 
   \ ----
   \ -n1 =  -90..-1        \ Standard error codes
-  \        -285..-256     \ Solo Forth error codes
+  \        -300..-256     \ Solo Forth error codes
   \        -1024..-1000   \ G+DOS error codes
   \ +n2 =  1..146
   \ ----

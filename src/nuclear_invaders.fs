@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version  ( -- ca len )  s" 0.31.0-pre.6+201701131946"  ;
+: version  ( -- ca len )  s" 0.31.0+201701260049"  ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -62,7 +62,8 @@ need [if]
 
 need ~~
 
-need warn.message  need order  need see  need rdepth
+need warn.message  need order  need see  need rdepth 
+need where
 
   \ --------------------------------------------
   cr .(   -Definers)  \ {{{2
@@ -99,8 +100,9 @@ need roll
 
 need field:    need +field-opt-0124
 
-need allot-xstack  need xdepth  need >x  need x>  need xclear
-need .x  \ XXX TMP -- for debuging
+need xstack  need allot-xstack
+need xdepth  need >x  need x>  need xclear
+need .xs  \ XXX TMP -- for debuging
 
   \ --------------------------------------------
   cr .(   -Graphics)  \ {{{2
@@ -117,8 +119,8 @@ need fade
 [if]    need set-pixel  need reset-pixel  need pixel-attr-addr
 [else]  need ocr  [then]
 
-need inverse  need overprint
-need color   need color!
+need inverse-off  need overprint-off
+need attr-setter   need attr!
 
 need black  need blue    need red    need magenta  need green
 need cyan   need yellow  need white
@@ -141,7 +143,7 @@ need frames@  need ms
   \ --------------------------------------------
   cr .(   -Sound)  \ {{{2
 
-need bleep  need beep>bleep
+need beep
 need shoot  need whip  need  metalic
 
   \ --------------------------------------------
@@ -214,32 +216,32 @@ tank-y cconstant arena-bottom-y
   \ ===========================================================
   cr .( Colors)  debug-point  \ {{{1
 
-             green cconstant invader-color#
+             green cconstant invader-attr
 
-             green cconstant sane-invader-color#
-            yellow cconstant wounded-invader-color#
-               red cconstant dying-invader-color#
+             green cconstant sane-invader-attr
+            yellow cconstant wounded-invader-attr
+               red cconstant dying-invader-attr
 
-           magenta cconstant ufo-color#
-             black cconstant arena-color#
-    yellow brighty cconstant radiation-color#
-             white cconstant ruler-color#
-            yellow cconstant projectile-color#
+           magenta cconstant ufo-attr
+             black cconstant arena-attr
+    yellow brighty cconstant radiation-attr
+             white cconstant ruler-attr
+            yellow cconstant projectile-attr
 
-              white color in-text-color
-       arena-color# color in-arena-color
- white papery red + color in-brick-color
-                red color in-broken-wall-color
-       blue brighty color in-tank-color
-               blue color in-life-color
-     invader-color# color in-invader-color
-     yellow brighty color in-container-color
-  projectile-color# color in-projectile-color
-         ufo-color# color in-ufo-color
+              white attr-setter in-text-attr
+         arena-attr attr-setter in-arena-attr
+ white papery red + attr-setter in-brick-attr
+                red attr-setter in-broken-wall-attr
+       blue brighty attr-setter in-tank-attr
+               blue attr-setter in-life-attr
+       invader-attr attr-setter in-invader-attr
+     yellow brighty attr-setter in-container-attr
+    projectile-attr attr-setter in-projectile-attr
+           ufo-attr attr-setter in-ufo-attr
 
 : init-colors  ( -- )
   black paper  white ink  black flash  0 bright
-  0 overprint  0 inverse  black border  ;
+  overprint-off  inverse-off  black border  ;
 
   \ ===========================================================
   cr .( Global variables)  debug-point  \ {{{1
@@ -327,10 +329,6 @@ current-controls @ set-controls
   dup current-controls !  set-controls  ;
   \ Change the current controls.
 
-: beep  ( n1 n2 -- )  beep>bleep bleep  ;
-  \ XXX TMP -- compatibility layer for the original code
-  \ XXX TODO -- adapt the original beeps
-
   \ ===========================================================
   cr .( UDG)  debug-point  \ {{{1
 
@@ -410,7 +408,7 @@ variable player   1 player !   \ 1..max-player
   \ Column of the score of the current player.
 
 : (.score)  ( n x y -- )
-  at-xy s>d <# # # # # #> in-text-color type  ;
+  at-xy s>d <# # # # # #> in-text-attr type  ;
   \ Print score _n_ at coordinates _x y_.
 
 : score-xy  ( -- x y )  score-x score-y  ;
@@ -1141,7 +1139,7 @@ decimal
 17 cconstant message-y  \ row for game messages
 
 : message  ( ca len -- )
-  2dup message-y in-text-color center-type  1500 ms
+  2dup message-y in-text-attr center-type  1500 ms
        message-y center-type-blank  ;
   \ Print a game message _ca len_.
 
@@ -1166,7 +1164,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
   s"  SCORE<1>    RECORD    SCORE<2>"  ;
 
 : top-status-bar  ( -- )
-  home in-text-color score-titles$ type .score .record  ;
+  home in-text-attr score-titles$ type .score .record  ;
   \ XXX TODO -- support player 2
 
 : show-player  ( -- )
@@ -1183,7 +1181,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
 
 : color-ruler  ( -- )
   [ attributes rows 2- columns * + ] literal
-  columns ruler-color# fill  ;
+  columns ruler-attr fill  ;
 
 : ruler  ( -- )
   [ 0 tank-y row>pixel 8 - pixel-addr nip ] literal
@@ -1197,7 +1195,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
   \ Number of spare lifes.
 
 : .lifes  ( -- )
-  at-lifes in-life-color
+  at-lifes in-life-attr
   spare-lifes 0 ?do  tank$ type  loop  udg/tank spaces  ;
   \ Print one icon for each spare life.
 
@@ -1347,9 +1345,9 @@ create invaders-data /invaders allot
   \ Init the data of all invaders.
 
 create invader-colors  ( -- a )
-  dying-invader-color#    c,
-  wounded-invader-color#  c,
-  sane-invader-color#     c,
+  dying-invader-attr    c,
+  wounded-invader-attr  c,
+  sane-invader-attr     c,
   \ Table to index the invader stamina to its proper color.
 
 : invader-proper-color  ( -- n )
@@ -1379,7 +1377,7 @@ variable containers-left-x   variable containers-right-x
 
 : floor  ( y -- )
   building-left-x @ swap at-xy
-  in-brick-color brick building-width @ .1x1sprites  ;
+  in-brick-attr brick building-width @ .1x1sprites  ;
   \ Draw a floor of the building at row _y_.
 
 : building-top  ( -- )  building-top-y floor  ;
@@ -1389,16 +1387,16 @@ variable containers-left-x   variable containers-right-x
   \ Draw the bottom of the building.
 
 : containers-bottom  ( n -- )
-  in-container-color
+  in-container-attr
   0 ?do  container-bottom .2x1sprite  loop  ;
   \ Draw a row of _n_ bottom parts of containers.
 
 : containers-top  ( n -- )
-  in-container-color
+  in-container-attr
   0 ?do  container-top .2x1sprite  loop  ;
   \ Draw a row of _n_ top parts of containers.
 
-: .brick  ( -- )  in-brick-color brick .1x1sprite  ;
+: .brick  ( -- )  in-brick-attr brick .1x1sprite  ;
   \ Draw a brick.
 
 : building  ( -- )
@@ -1434,7 +1432,7 @@ variable used-projectiles  used-projectiles off
   \ Init the level number and the related variables.
 
 : level-message  ( -- ca len )
-  in-text-color s" LEVEL " level @ s>d <# # #> s+  ;
+  in-text-attr s" LEVEL " level @ s>d <# # #> s+  ;
 
 : show-level  ( -- )  level-message message  ;
 
@@ -1492,7 +1490,7 @@ transmission-delay-counter off
   transmission-ready? and  ;
   \ Does the tank move? Return its x increment.
 
-: .tank  ( -- )  in-tank-color tank$ type  ;
+: .tank  ( -- )  in-tank-attr tank$ type  ;
   \ Print the tank at the current cursor position.
 
 : at-tank  ( -- )  tank-x @ tank-y at-xy  ;
@@ -1501,7 +1499,7 @@ transmission-delay-counter off
 : tank-ready  ( -- )  at-tank .tank  ;
   \ Print the tank at its current position.
 
-: -tank  ( -- )  at-tank in-arena-color udg/tank spaces  ;
+: -tank  ( -- )  at-tank in-arena-attr udg/tank spaces  ;
   \ Delete the tank.
 
 : move-tank  ( -1|1 -- )
@@ -1526,8 +1524,9 @@ transmission-delay-counter off
 max-projectile# 1+ cconstant #projectiles
   \ Maximum number of simultaneous projectiles.
 
-#projectiles allot-xstack free-projectiles free-projectiles
-  \ Create and activate an stack to store the free projectiles.
+#projectiles allot-xstack xstack
+  \ Create and activate an extra stack to store the free
+  \ projectiles.
 
 0 value projectile#
   \ Number of the current projectile.
@@ -1586,7 +1585,7 @@ defer debug-data-pause  ( -- )
   special-debug-point \ ' -1|1 cr u.  \ XXX INFORMER
 
 : parade  ( -- )
-  in-invader-color
+  in-invader-attr
   flying-invader-1 dup flying-invader-2 dup flying-invader-3
   building-bottom-y [ building-top-y 1+ ] literal
   do
@@ -1674,7 +1673,7 @@ defer debug-data-pause  ( -- )
 true [if]  \ XXX OLD
 
 : .score-item  ( ca1 len1 ca2 len2 -- )
-  type in-text-color ."  = " type  ;
+  type in-text-attr ."  = " type  ;
   \ Print an item of the score table, with sprite string _ca2
   \ len2_ and description _ca1 len1_
 
@@ -1682,13 +1681,13 @@ true [if]  \ XXX OLD
 
 : .score-table  ( -- )
   xy 2dup  at-xy s" 10 points"
-           in-invader-color flying-invader-1$ .score-item
+           in-invader-attr flying-invader-1$ .score-item
   2dup 1+  at-xy s" 20 points"
-           in-invader-color flying-invader-2$ .score-item
+           in-invader-attr flying-invader-2$ .score-item
   2dup 2+  at-xy s" 30 points"
-           in-invader-color flying-invader-3$ .score-item
+           in-invader-attr flying-invader-3$ .score-item
        3 + at-xy s" bonus"
-           in-ufo-color ufo$ .score-item  ;
+           in-ufo-attr ufo$ .score-item  ;
    \ Print the score table at the current coordinates.
 
   special-debug-point  \ XXX INFORMER
@@ -1696,8 +1695,8 @@ true [if]  \ XXX OLD
 [else]  \ XXX NEW
 
 : .score-item  ( c1 c2 n3 n4 -- )
-  color! drop swap .2x1sprite
-  in-text-color ." = " . ." points" drop  ;
+  attr! drop swap .2x1sprite
+  in-text-attr ." = " . ." points" drop  ;
   \ Print an item of the score table:
   \   c1 = docked sprite;
   \   c2 = flying sprite;
@@ -1717,10 +1716,10 @@ true [if]  \ XXX OLD
   \ in order to use `.score-item` also with the UFO.
 
 : .score-table  ( -- )
-  xy 2dup  at-xy invader-1-data invader-color# .score-item
-  2dup 1+  at-xy invader-2-data invader-color# .score-item
-  2dup 2+  at-xy invader-3-data invader-color# .score-item
-       3 + at-xy ufo-data       ufo-color#     .score-item  ;
+  xy 2dup  at-xy invader-1-data invader-attr .score-item
+  2dup 1+  at-xy invader-2-data invader-attr .score-item
+  2dup 2+  at-xy invader-3-data invader-attr .score-item
+       3 + at-xy ufo-data       ufo-attr     .score-item  ;
    \ Print the score table at the current coordinates.
 
 [then]
@@ -1757,7 +1756,7 @@ true [if]  \ XXX OLD
   again  ;
 
 : instructions  ( -- )
-  init-colors in-text-color cls title
+  init-colors in-text-attr cls title
   show-score-table show-players show-controls show-copyright
   menu  ;
 
@@ -1785,7 +1784,7 @@ variable invaders  \ counter
   \ sprite and its frame.
 
 : .invader  ( -- )
-  invader-proper-color color! invader-udg .2x1sprite  ;
+  invader-proper-color attr! invader-udg .2x1sprite  ;
   \ Print the current invader.
 
 variable broken-wall-x
@@ -1820,7 +1819,7 @@ variable broken-wall-x
   \ y1_.
 
 : broken-wall  ( -- )
-  in-broken-wall-color  broken-bricks-coordinates
+  in-broken-wall-attr  broken-bricks-coordinates
   flying-to-the-right? if    broken-left-wall
                        else  broken-right-wall  then  ;
   \ Show the broken wall of the building, hit by the current
@@ -1848,7 +1847,7 @@ variable broken-wall-x
   \ Broke the container on its right side.
 
 : broken-container  ( -- )
-  in-container-color
+  in-container-attr
   flying-to-the-right?  if    broken-left-container
                         else  broken-right-container  then  ;
   \ Broke the container.
@@ -1904,7 +1903,7 @@ variable broken-wall-x
   \ Move the current invader, which is flying to the left.
 
 : right-flying-invader  ( -- )
-  at-invader in-arena-color space .invader 1 invader-x +!  ;
+  at-invader in-arena-attr space .invader 1 invader-x +!  ;
   \ Move the current invader, which is flying to the right.
 
 : flying-invader  ( -- )
@@ -2050,15 +2049,15 @@ columns udg/ufo - constant ufo-max-x
 : ufo-in-range?  ( -- f )  ufo-limit-x ufo-x @ abs <  ;
   \ Is the UFO in the range of its flying limit?
 
-: .ufo  ( -- )  in-ufo-color ufo-udg .2x1sprite  ;
+: .ufo  ( -- )  in-ufo-attr ufo-udg .2x1sprite  ;
 
 0 [if]  \ XXX OLD
 
 : move-ufo-to-the-right  ( -- )
-  at-ufo in-arena-color space .ufo  ;
+  at-ufo in-arena-attr space .ufo  ;
 
 : move-ufo-to-the-left  ( -- )
-  at-ufo .ufo in-arena-color space  ;
+  at-ufo .ufo in-arena-attr space  ;
 
       ' move-ufo-to-the-left ,
 here  ' noop ,
@@ -2090,7 +2089,7 @@ constant ufo-movements  ( -- a )
   \ ===========================================================
   cr .( Impact)  debug-point  \ {{{1
 
-: ufo-bang  ( -- )  18 12 do  i 15 beep  loop  ;
+: ufo-bang  ( -- )   ;
   \ Make the explosion sound of the UFO.
   \ XXX TODO -- 128 sound
 
@@ -2118,7 +2117,7 @@ constant ufo-movements  ( -- a )
   at-invader invader-explosion$ type  ;
   \ Show the current invader on fire.
 
-: -invader  ( -- )  in-arena-color at-invader 2 spaces  ;
+: -invader  ( -- )  in-arena-attr at-invader 2 spaces  ;
   \ Delete the current invader.
 
 : invader-explosion  ( -- )
@@ -2171,7 +2170,7 @@ constant ufo-movements  ( -- a )
 
 : ufo-impacted?  ( -- f )
   [pixel-projectile]
-  [if]    projectile-coords pixel-attr-addr c@ ufo-color# =
+  [if]    projectile-coords pixel-attr-addr c@ ufo-attr =
   [else]  projectile-y c@ ufo-y =  [then]  ;
 
 : impact  ( -- )
@@ -2181,7 +2180,7 @@ constant ufo-movements  ( -- a )
 
 : hit-something?  ( -- f )
   projectile-coords  [pixel-projectile]
-  [if]    pixel-attr-addr c@ arena-color# <>
+  [if]    pixel-attr-addr c@ arena-attr <>
   [else]  ocr 0<>
   [then]  ;
   \ Did the projectile hit something?
@@ -2209,7 +2208,7 @@ constant ufo-movements  ( -- a )
 : .projectile  ( -- )
   [pixel-projectile]
   [if]    projectile-coords set-pixel
-  [else]  in-projectile-color
+  [else]  in-projectile-attr
           at-projectile projectile .1x1sprite
   [then]  ;
   \ Show the projectile.
@@ -2219,8 +2218,8 @@ constant ufo-movements  ( -- a )
 : -projectile  ( -- )
   [pixel-projectile]
   [if]    projectile-coords reset-pixel
-  [else]  projectile-coords attr projectile-color# <> ?exit
-          at-projectile in-arena-color space
+  [else]  projectile-coords attr projectile-attr <> ?exit
+          at-projectile in-arena-attr space
   [then]  ;
   \ Delete the projectile.
 
@@ -2319,7 +2318,15 @@ variable trigger-delay-counter  trigger-delay-counter off
 : dead  ( -- )  -1 lifes +!  .lifes  ;
   \ One life lost.
 
-: defeat-tune  ( -- )  100 200 do  i 20 beep  -5 +loop  ;
+  \ : defeat-tune  ( -- )
+  \   100 200 do  i 20 beep  -5 +loop  ;
+  \ XXX TODO -- original code in Ace Forth
+
+: defeat-tune  ( -- )
+  10470 5233 do  i 20 dhz>bleep bleep  261 +loop  ;
+  \ XXX REMARK -- sound converted from Ace Forth `beep` to
+  \ Solo Forth's `bleep`
+  \
   \ XXX TODO -- 128 sound
 
 create attributes-backup /attributes allot
@@ -2333,7 +2340,7 @@ create attributes-backup /attributes allot
 : radiation  ( -- )
   [ attributes columns 2 * + ] literal
   [ /attributes columns 4 * - ] literal
-  radiation-color# fill  ;
+  radiation-attr fill  ;
 
 : defeat  ( -- )
   save-attributes
@@ -2403,11 +2410,13 @@ variable invasion-delay  8 invasion-delay !
   broken-bottom-right-container .1x1sprite cr  ;
   \ Show the graphics of the broken containers.
 
-cr cr .( Nuclear Invaders)
-   cr version type  \ XXX FIXME --
-   cr .( Ready)
-   cr .unused
-   cr .( Type RUN to start) cr
+cls .( Nuclear invaders)
+cr version type
+cr .( Loaded)
+
+cr cr greeting
+
+cr cr .( Type RUN to start) cr
 
 end-app
 
