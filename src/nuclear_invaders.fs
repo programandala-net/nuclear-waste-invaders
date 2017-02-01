@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version  ( -- ca len )  s" 0.31.0+201701260049"  ;
+: version  ( -- ca len )  s" 0.32.0+201702012142"  ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -25,7 +25,7 @@ cr cr .( Nuclear Invaders) cr version type cr
 \ (http://www.zonadepruebas.com/viewtopic.php?t=4231).
 
   \ This version:
-\ Copyright (C) 2016 Marcos Cruz (programandala.net)
+\ Copyright (C) 2016,2017 Marcos Cruz (programandala.net)
 
   \ Original version:
 \ Copyright (C) 2013 Scainet Soft
@@ -74,7 +74,7 @@ need value  need 2value  need cvariable  need 2const
   \ --------------------------------------------
   cr .(   -Strings)  \ {{{2
 
-need s+  need char>string  need s\"
+need upper  need s+  need char>string  need s\"
 
   \ --------------------------------------------
   cr .(   -Control structures)  \ {{{2
@@ -125,7 +125,7 @@ need attr-setter   need attr!
 need black  need blue    need red    need magenta  need green
 need cyan   need yellow  need white
 
-need papery  need brighty  need flashy
+need papery  need brighty
 
 need attr
 
@@ -240,7 +240,7 @@ tank-y cconstant arena-bottom-y
            ufo-attr attr-setter in-ufo-attr
 
 : init-colors  ( -- )
-  black paper  white ink  black flash  0 bright
+  [ white black papery + ] cliteral attr!
   overprint-off  inverse-off  black border  ;
 
   \ ===========================================================
