@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201701190050
+  \ Last modified: 201702221550
 
   \ -----------------------------------------------------------
   \ Description
@@ -35,14 +35,14 @@
   \
   \ 2017-01-18: Remove `exit` at the end of conditional
   \ interpretation.
+  \
+  \ 2017-02-17: Update cross references.
 
 ( array> 2array> )
 
-need ?(
-
 [unneeded] array> ?(
-code array>  ( n a1 -- a2 )
-  D1 c, E1 c, 29 c, 19 c, jppushhl,  end-code ?)
+code array> ( n a1 -- a2 )
+  D1 c, E1 c, 29 c, 19 c, jppushhl, end-code ?)
   \ pop de
   \ pop hl
   \ add hl,hl
@@ -51,7 +51,7 @@ code array>  ( n a1 -- a2 )
 
   \ doc{
   \
-  \ array>  ( n a1 -- a2 )
+  \ array> ( n a1 -- a2 )
   \
   \ Return address _a2_ of element _n_ of a 1-dimension
   \ single-cell array _a1_. This word is a common factor
@@ -59,17 +59,15 @@ code array>  ( n a1 -- a2 )
   \ its equivalent definition in Forth is the following:
   \
   \ ----
-  \ : array>  ( n a1 -- a2 )
-  \   swap cells +  ;
+  \ : array> ( n a1 -- a2 )
+  \   swap cells + ;
   \ ----
-  \
-  \ See: `avalue`, `avariable`.
   \
   \ }doc
 
 [unneeded] 2array> ?(
-code 2array>  ( n a1 -- a2 )
-  D1 c, E1 c, 29 c, 29 c, 19 c, jppushhl,  end-code ?)
+code 2array> ( n a1 -- a2 )
+  D1 c, E1 c, 29 c, 29 c, 19 c, jppushhl, end-code ?)
   \ pop de
   \ pop hl
   \ add hl,hl
@@ -79,7 +77,7 @@ code 2array>  ( n a1 -- a2 )
 
   \ doc{
   \
-  \ 2array>  ( n a1 -- a2 )
+  \ 2array> ( n a1 -- a2 )
   \
   \ Return address _a2_ of element _n_ of a 1-dimension
   \ single-cell array _a1_.  This word is a common factor of
@@ -87,11 +85,9 @@ code 2array>  ( n a1 -- a2 )
   \ equivalent definition in Forth is the following:
   \
   \ ----
-  \ : 2array>  ( n a1 -- a2 )
-  \   swap [ 2 cells ] literal * +  ;
+  \ : 2array> ( n a1 -- a2 )
+  \   swap [ 2 cells ] literal * + ;
   \ ----
-  \
-  \ See: `2avalue`, `2avariable`.
   \
   \ }doc
 

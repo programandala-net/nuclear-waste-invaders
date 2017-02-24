@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201701281512
+  \ Last modified: 201702221550
 
   \ -----------------------------------------------------------
   \ Description
@@ -42,12 +42,16 @@
   \ 2017-01-12: Fix and improve documentation.
   \
   \ 2017-01-28: Improve documentation.
+  \
+  \ 2017-02-03: Compact the code, saving one block.
+  \
+  \ 2017-02-17: Update cross references.
 
-( rdraw176 )
+( rdraw176 x1 incx y1 incy y )
 
-need assembler
+[unneeded] rdraw176 ?( need assembler
 
-code rdraw176  ( gx gy -- )
+code rdraw176 ( gx gy -- )
 
   h pop, d pop, b push, d b ldp,
   \ HL = gy
@@ -70,9 +74,7 @@ code rdraw176  ( gx gy -- )
 
   24BA call, \ alternative entry to the DRAW-LINE ROM routine
 
-  b pop,  \ restore Forth IP
-
-  jpnext, end-code
+  b pop, jpnext, end-code ?)
 
   \ Credit:
   \
@@ -80,7 +82,7 @@ code rdraw176  ( gx gy -- )
 
   \ doc{
   \
-  \ rdraw176  ( gx gy -- )
+  \ rdraw176 ( gx gy -- )
   \
   \ Draw a line relative _gx gy_ to the current coordinates,
   \ using only the top 176 pixel rows of the screen (the lower
@@ -89,7 +91,52 @@ code rdraw176  ( gx gy -- )
   \
   \ This word is equivalent to Sinclair BASIC's DRAW command.
   \
-  \ See: `adraw176`, `rdraw`.
+  \ See also: `adraw176`, `rdraw`.
+  \
+  \ }doc
+
+[unneeded] x1 [unneeded] incx
+[unneeded] y1 [unneeded] incy and and and
+
+?\ 2variable x1  2variable incx  2variable y1  2variable incy
+
+  \ doc{
+  \
+  \ x1 ( -- a )
+  \
+  \ A double-cell variable used by `adraw176` and `aline176`.
+  \
+  \ See also: `y1`, `incx`, `incy`.
+  \
+  \ }doc
+
+  \ doc{
+  \
+  \ y1 ( -- a )
+  \
+  \ A double-cell variable used by `adraw176` and `aline176`.
+  \
+  \ See also: `x1`, `incx`, `incy`.
+  \
+  \ }doc
+
+  \ doc{
+  \
+  \ incx ( -- a )
+  \
+  \ A double-cell variable used by `adraw176` and `aline176`.
+  \
+  \ See also: `incy`, `x1`, `y1`.
+  \
+  \ }doc
+
+  \ doc{
+  \
+  \ incy ( -- a )
+  \
+  \ A double-cell variable used by `adraw176` and `aline176`.
+  \
+  \ See also: `incx`, `x1`, `y1`.
   \
   \ }doc
 
@@ -97,9 +144,9 @@ code rdraw176  ( gx gy -- )
 
   \ XXX UNDER DEVELOPMENT -- not usable yet
 
-need assembler  need l:  need os-coords  need (pixel-addr)
+need assembler need l: need os-coords need (pixel-addr)
 
-code rdraw  ( gx gy -- )
+code rdraw ( gx gy -- )
 
   h pop, d pop, b push, d b ldp,
   \ HL = gy
@@ -127,7 +174,7 @@ code rdraw  ( gx gy -- )
     \  ld      a,c
     \  cp      b ; is gx
     \  jr      nc,dl_x_ge_y
-    \  ; gy is greater than gx
+    \ ; gy is greater than gx
 
   c l ld, d push, a xor, a e ld, 00 l# jr,  rthen
     \  ld      l,c
@@ -137,7 +184,7 @@ code rdraw  ( gx gy -- )
     \  jr      dl_larger
 
     \ dl_x_ge_y:
-    \  ; gy is not greater than gx
+    \ ; gy is not greater than gx
   c or, z? ?ret, b l ld, c b ld, d push, 00 d ld#,
     \  or      c
     \  ret     z
@@ -211,7 +258,7 @@ code rdraw  ( gx gy -- )
     \  ret
     \ d_l_range:
     \  jr      z,d_l_plot
-    \  pop bc  ; restore Forth IP
+    \  pop bc ; restore Forth IP
     \  jp next ; jp (ix)
 
   \ Credit:
@@ -221,69 +268,24 @@ code rdraw  ( gx gy -- )
 
   \ doc{
   \
-  \ rdraw  ( gx gy -- )
+  \ rdraw ( gx gy -- )
   \
   \ REMARK: This word is under development.
   \
   \ Draw a line relative _gx gy_ to the current coordinates.
   \ _gx_ is 0..255; _gy_ is 0..191.
   \
-  \ See: `rdraw176`, `adraw176`.
-  \
-  \ }doc
-
-( x1 incx y1 incy y )
-
-2variable x1  2variable incx
-2variable y1  2variable incy
-
-  \ doc{
-  \
-  \ x1  ( -- a )
-  \
-  \ A double-cell variable used by `adraw176` and `aline176`.
-  \
-  \ See: `y1`, `incx`, `incy`, `adraw176`, `aline176`.
-  \
-  \ }doc
-
-  \ doc{
-  \
-  \ y1  ( -- a )
-  \
-  \ A double-cell variable used by `adraw176` and `aline176`.
-  \
-  \ See: `x1`, `incx`, `incy`, `adraw176`, `aline176`.
-  \
-  \ }doc
-
-  \ doc{
-  \
-  \ incx  ( -- a )
-  \
-  \ A double-cell variable used by `adraw176` and `aline176`.
-  \
-  \ See: `incy`, `x1`, `y1`, `adraw176`, `aline176`.
-  \
-  \ }doc
-
-  \ doc{
-  \
-  \ incy  ( -- a )
-  \
-  \ A double-cell variable used by `adraw176` and `aline176`.
-  \
-  \ See: `incx`, `x1`, `y1`, `adraw176`, `aline176`.
+  \ See also: `rdraw176`, `adraw176`.
   \
   \ }doc
 
 ( adraw176 )
 
-need plot176  need os-coordx  need os-coordy
+need plot176 need os-coordx need os-coordy
 
-need x1  need incx  need y1  need incy
+need x1 need incx need y1 need incy
 
-: adraw176  ( gx gy -- )
+: adraw176 ( gx gy -- )
 
   [ os-coordy ] literal c@ dup 0 swap y1 2! - dup abs rot
   \ ( +-ydiff ydiff x )
@@ -302,7 +304,7 @@ need x1  need incx  need y1  need incy
   incy 2! drop r> 1+ 0
   do  x1 @ y1 @ plot176
       x1 2@ incx 2@ d+ x1 2!
-      y1 2@ incy 2@ d+ y1 2!  loop  ;
+      y1 2@ incy 2@ d+ y1 2!  loop ;
 
   \ Credit:
   \
@@ -310,24 +312,24 @@ need x1  need incx  need y1  need incy
 
   \ doc{
   \
-  \ adraw176  ( gx gy -- )
+  \ adraw176 ( gx gy -- )
   \
   \ Draw a line from the current coordinates to the given
   \ absolute coordinates _gx gy_, using only the top 176 pixel
   \ rows of the screen (the lower 16 pixel rows are not used).
   \ _gx_ is 0..255; _gy_ is 0..175.
   \
-  \ See: `rdraw176`, `rline176`.
+  \ See also: `rdraw176`, `rline176`.
   \
   \ }doc
 
 ( aline176 )
 
-need set-save-pixel176  need os-coordx  need os-coordy
+need set-save-pixel176 need os-coordx need os-coordy
 
-need x1  need incx  need y1  need incy
+need x1 need incx need y1 need incy
 
-: aline176  ( gx gy -- )
+: aline176 ( gx gy -- )
 
   [ os-coordy ] literal c@ dup 0 swap y1 2! - dup abs rot
   \ ( +-ydiff ydiff x )
@@ -346,7 +348,7 @@ need x1  need incx  need y1  need incy
   incy 2! drop r> 1+ 0
   do  x1 @ y1 @ set-save-pixel176
       x1 2@ incx 2@ d+ x1 2!
-      y1 2@ incy 2@ d+ y1 2!  loop  ;
+      y1 2@ incy 2@ d+ y1 2!  loop ;
 
   \ Credit:
   \
@@ -354,7 +356,7 @@ need x1  need incx  need y1  need incy
 
   \ doc{
   \
-  \ aline176  ( gx gy -- )
+  \ aline176 ( gx gy -- )
   \
   \ Draw a line from the current coordinates to the given
   \ absolute coordinates _gx gy_, using only the top 176 pixel
@@ -363,9 +365,8 @@ need x1  need incx  need y1  need incy
   \ _gx_ is 0..255; _gy_ is 0..175. This word is faster than
   \ `adraw176`.
   \
-  \ See: `adraw176`, `rdraw176`.
+  \ See also: `rdraw176`.
   \
   \ }doc
-
 
   \ vim: filetype=soloforth

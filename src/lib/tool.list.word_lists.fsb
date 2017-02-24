@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201701191512
+  \ Last modified: 201702221550
 
   \ -----------------------------------------------------------
   \ Description
@@ -53,85 +53,90 @@
   \
   \ 2017-01-19: Remove remaining `exit` at the end of
   \ conditional interpretation.
+  \
+  \ 2017-02-17: Update cross references.
 
 ( .current .context .wordlist )
 
 [unneeded] .current
-?\ : .current  ( -- )  get-current .wordlist  ;
+?\ : .current ( -- ) get-current .wordlist ;
 
   \ doc{
   \
-  \ .current  ( -- )
+  \ .current ( -- )
   \
-  \ Display the word list into which new definitions will be
-  \ placed.
+  \ Display the compilation word list.
+  \
+  \ See also: `get-current`, `.wordlist`, `order`.
   \
   \ }doc
 
-[unneeded] .context ?(  need .wordlist
+[unneeded] .context ?( need .wordlist
 
-: .context  ( -- )
-  get-order begin  ?dup  while  swap .wordlist 1-  repeat  ; ?)
+: .context ( -- )
+  get-order begin  ?dup  while  swap .wordlist 1-  repeat ; ?)
 
   \ doc{
   \
-  \ .context  ( -- )
+  \ .context ( -- )
   \
   \ Display the word lists in the search order in their search
   \ order sequence, from first searched to last searched.
   \
+  \ See also: `get-order`, `.wordlist`, `order`.
+  \
   \ }doc
 
-[unneeded] .wordlist ?(  need wordlist>name
+[unneeded] .wordlist ?( need wordlist>name
 
-: .wordlist  ( wid -- )
-  dup wordlist>name @ ?dup if  .name drop exit  then  u.  ;  ?)
+: .wordlist ( wid -- )
+  dup wordlist>name @ ?dup if  .name drop exit  then  u. ; ?)
 
   \ doc{
   \
-  \ .wordlist  ( wid -- )
+  \ .wordlist ( wid -- )
   \
-  \ Display the id of the word list _wid_: it can be an
-  \ associated name or the number _wid_.
+  \ If the word list identified by _wid_ has an associated
+  \ name, display it; else display _wid_.
+  \
+  \ See also: `wordlists`.
   \
   \ }doc
 
 ( wordlists order )
 
-need ?(
+[unneeded] wordlists ?( need .wordlist need wordlist>link
 
-[unneeded] wordlists ?(  need .wordlist  need wordlist>link
-
-: wordlists  ( -- )
+: wordlists ( -- )
   latest-wordlist
   begin  @ ( wid|0) ?dup  while  dup .wordlist wordlist>link
-  repeat  ; ?)
+  repeat ; ?)
 
   \ doc{
   \
-  \ wordlists  ( -- )
+  \ wordlists ( -- )
   \
   \ List all wordlists defined in the system, either by name
   \ (if they have an associated name) or by number (its word
-  \ list identifier, when they have no associated name). The
-  \ wordlist are listed in reverse chronological order: The
-  \ first wordlist listed is the most recently defined.
+  \ list identifier, if they have no associated name). The
+  \ word lists are listed in reverse chronological order: The
+  \ first word list listed is the most recently defined.
   \
-  \ See: `latest>wordlist`, `wordlist>vocabulary`.
+  \ See also: `.wordlist`, `wordlist`, `latest-wordlist`.
   \
   \ }doc
 
-[unneeded] order ?(  need .context  need .current
+[unneeded] order ?( need .context need .current
 
-: order  ( -- )
-  cr ." Search: " .context cr ." Compile: " .current  ; ?)
+: order ( -- )
+  cr ." Search: " .context cr ." Compile: " .current ; ?)
 
   \ Display the search order currently in effect and the name
   \ of the `current` vocabulary.
 
   \ doc{
   \
-  \ order  ( -- )
+  \ order ( -- )
   \
   \ Display the word lists in the search order in their search
   \ order sequence, from first searched to last searched. Also
@@ -139,7 +144,9 @@ need ?(
   \ placed.
   \
   \ Origin: Forth-2012 (SEARCH EXT).
-
+  \
+  \ See also: `.context`, `.current`, `.wordlist`, `set-order`.
+  \
   \ }doc
 
   \ vim: filetype=soloforth

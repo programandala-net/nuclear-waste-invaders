@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201701191512
+  \ Last modified: 201702221550
 
   \ -----------------------------------------------------------
   \ Description
@@ -37,14 +37,18 @@
   \
   \ 2017-01-19: Remove remaining `exit` at the end of
   \ conditional interpretation.
+  \
+  \ 2017-02-17: Update cross references.
+  \
+  \ 2017-02-22: Improve documentation.
 
 ( +field field: 2field: cfield: begin-structure end-structure )
 
-[unneeded] +field ?\ defer +field  ( n1 n2 "name" -- n3 )  exit
+[unneeded] +field ?\ defer +field ( n1 n2 "name" -- n3 ) exit
 
   \ doc{
   \
-  \ +field  ( n1 n2 "name -- n3 )
+  \ +field ( n1 n2 "name -- n3 )
   \
   \ Create a definition for _name_ with the execution semantics
   \ defined below. Return _n3_ = _n1_ + _n2_ where _n1_ is the
@@ -61,7 +65,7 @@
   \ structures for communication with external elements such as
   \ a hardware register map or protocol packet.  Field
   \ alignment has been left to the appropriate field definition
-  \ (e.g.  `field:`, `2field:`, `cfield:`).
+  \ (e.g. `field:`, `2field:`, `cfield:`).
   \
   \ In Solo Forth, `+field` is an unitialized deferred word,
   \ for which three implementations are provided:
@@ -69,45 +73,40 @@
   \
   \ Origin: Forth-2012 (FACILITY EXT).
   \
-  \ See: `+field-unopt`, `+field-opt-0` and `+field-opt-0124`,
-  \ `field:`, `2field:`, `cfield:`, `begin-structure`.
+  \ See also: `begin-structure`.
   \
   \ }doc
-
-need ?(
 
   \ XXX TODO -- document
 
 [unneeded] field: ?( need +field
-: field:   ( n1 "name" -- n2 )  cell +field  ; ?)
+: field:   ( n1 "name" -- n2 ) cell +field ; ?)
 
 [unneeded] 2field: ?( need +field
-: 2field:  ( n1 "name" -- n2 )
-  [ 2 cells ] literal +field  ; ?)
+: 2field: ( n1 "name" -- n2 )
+  [ 2 cells ] literal +field ; ?)
 
 [unneeded] cfield: ?( need +field
-: cfield:  ( n1 "name" -- n2 )
-  [ 1 chars ] literal +field  ; ?)
+: cfield: ( n1 "name" -- n2 )
+  [ 1 chars ] literal +field ; ?)
 
 [unneeded] begin-structure [unneeded] end-structure and ?(
 
-: begin-structure  ( "name" -- struct-sys 0 )
+: begin-structure ( "name" -- struct-sys 0 )
   create  >mark 0
-  does>   ( -- n )  ( pfa ) @   ;
+  does>   ( -- n ) ( pfa ) @ ;
 
-: end-structure  ( struct-sys n -- )  swap !  ; ?)
+: end-structure ( struct-sys n -- ) swap ! ; ?)
 
 ( +field-unopt +field-opt-0 )
 
-need ?(
+[unneeded] +field-unopt ?( need +field
 
-[unneeded] +field-unopt ?(  need +field
-
-: +field-unopt  ( n1 n2 "name" -- n3 )
+: +field-unopt ( n1 n2 "name" -- n3 )
   create  over , +
-  does>   ( a -- a' )  ( a pfa ) @ +  ;
+  does>   ( a -- a' ) ( a pfa ) @ + ;
 
-' +field-unopt ' +field defer!  ?)
+' +field-unopt ' +field defer! ?)
 
   \ Credit:
   \
@@ -115,30 +114,27 @@ need ?(
 
   \ doc{
   \
-  \ +field-unopt  ( n1 n2 "name" -- n3 )
+  \ +field-unopt ( n1 n2 "name" -- n3 )
   \
   \ Unoptimized implementation of `+field`.  This
   \ implementation is less efficient than `+field-opt-0` and
   \ `+field-opt-0124` because the field offset is calculated
   \ also when it's 0.
   \
-  \ The only advantage of this implementation is it uses only
-  \ 22 bytes of data space, so it could be useful in some
-  \ cases.
-  \
-  \ See: `+field`, `+field-opt-0`, `+field-opt-0124`.
+  \ The advantage of this implementation is it uses only 22
+  \ bytes of data space, so it could be useful in some cases.
   \
   \ }doc
 
-[unneeded] +field-opt-0  ?(  need +field
+[unneeded] +field-opt-0 ?( need +field
 
   \ This implementation optimizes field 0 of the structure.  It
   \ uses 31 bytes of data space.
 
-: +field-opt-0  ( n1 n2 "name" -- n3 )
+: +field-opt-0 ( n1 n2 "name" -- n3 )
   : over ?dup if    postpone literal postpone +
               else  immediate
-              then  postpone ;  +  ;
+              then  postpone ; + ;
 
 ' +field-opt-0 ' +field defer! ?)
 
@@ -162,26 +158,22 @@ need ?(
 
   \ doc{
   \
-  \ +field-opt-0  ( n1 n2 "name" -- n3 )
+  \ +field-opt-0 ( n1 n2 "name" -- n3 )
   \
   \ Optimized implementation of `+field`.  This implementation
   \ is more efficient than `+field-unopt` (but less than
   \ `+field-opt-0124`) because the field 0 does not calculate
   \ the field offset.
   \
-  \ It uses 31 bytes of data space.
-  \
-  \ See: `+field`, `+field-unopt`, `+field-opt-0124`.
+  \ This word uses 31 bytes of data space.
   \
   \ }doc
 
 ( +field-opt-0124 )
 
-need ?(
+[unneeded] +field-opt-0124 ?( need case need +field
 
-[unneeded] +field-opt-0124 ?(  need case  need +field
-
-: +field-opt-0124  ( n1 n2 "name" -- n3 )
+: +field-opt-0124 ( n1 n2 "name" -- n3 )
   :
   over case
   0                   of  immediate                      endof
@@ -189,20 +181,18 @@ need ?(
   cell                of  postpone cell+                 endof
   [ 2 cells ] literal of  postpone cell+ postpone cell+  endof
   dup  postpone literal postpone +  \ default
-  endcase  postpone ;  +  ;
+  endcase  postpone ;  + ;
 
 ' +field-opt-0124 ' +field defer! ?)
 
   \ doc{
   \
-  \ +field-opt-0124  ( n1 n2 "name" -- n3 )
+  \ +field-opt-0124 ( n1 n2 "name" -- n3 )
   \
-  \ This implementation of `+field` optimizes the calculation
-  \ of field offsets 0, 1, 2 and 4. Therefore it's more
-  \ efficient than `+field-unopt` and `+field-opt-0`, but it
-  \ uses 107 bytes of data space and needs `case`.
-  \
-  \ See: `+field`, `+field-unopt`, `+field-opt-0`.
+  \ Optimized implementation of `+field` that optimizes the
+  \ calculation of field offsets 0, 1, 2 and 4. Therefore it's
+  \ more efficient than `+field-unopt` and `+field-opt-0`, but
+  \ it uses 107 bytes of data space and needs `case`.
   \
   \ }doc
 

@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201701252210
+  \ Last modified: 201702241531
 
   \ -----------------------------------------------------------
   \ Description
@@ -57,14 +57,17 @@
   \ support also negative values of pitch.
   \
   \ 2017-01-25: Typo.
+  \
+  \ 2017-02-17: Update cross references.  Change markup of code
+  \ that is not a cross reference.
+  \
+  \ 2017-02-24: Improve documentation markup.
 
 ( bleep hz>bleep dhz>bleep )
 
-need ?(
-
 [unneeded] bleep ?(
 
-code bleep  ( duration pitch -- )
+code bleep ( duration pitch -- )
  E1 c, D1 c, C5 c, CD c, 03B5 , C1 c, DD c, 21 c, next ,
     \ pop hl
     \ pop de
@@ -80,16 +83,19 @@ code bleep  ( duration pitch -- )
 
   \ doc{
   \
-  \ bleep  ( duration pitch -- )
+  \ bleep ( duration pitch -- )
   \
   \ Produce a tone in the internal beeper. This word calls the
   \ BEEPER ROM routine with _pitch_ in the HL register and
   \ _duration_ in the DE register.
   \
+  \ ////
   \ The following description is taken, with small layout
   \ changes, from _Spectrum Advanced Forth_ by Don Thomasson
   \ (Melbourne House, 1984), page 26:
+  \ ////
   \
+  \ [quote, Don Thomasson&#44; Spectrum Advanced Forth (Melbourne House&#44; 1984)&#44; page 26]
   \ _____
   \
   \ (...) but while there is greater flexibility than is
@@ -99,14 +105,18 @@ code bleep  ( duration pitch -- )
   \
   \ To generate a frequency of F Hz, _pitch_ must be set to:
   \
-  \ `pitch = (437500/F)-30`
+  \ ....
+  \ pitch = (437500/F)-30
+  \ ....
   \
   \ Looking in the opposite direction:
   \
-  \ `F = 437500/(pitch+30)`
+  \ ....
+  \ F = 437500/(pitch+30)
+  \ ....
   \
   \ The duration of the note is determined as a number of
-  \ cycles, so _duration_ must be set to `F x T`, where T is
+  \ cycles, so _duration_ must be set to ``F x T``, where _T_ is
   \ the duration in seconds.
   \
   \ A point to note is that if a very low frequency is
@@ -116,12 +126,14 @@ code bleep  ( duration pitch -- )
   \
   \ _____
 
-  \
+  \ ////
   \ The following technical information about the BEEPER ROM
   \ routine is taken, with small layout changes, from the ZX
   \ Spectrum disassembly by Dr. Ian Logan, Dr.  Frank O'Hara et
   \ al.:
+  \ ////
   \
+  \ [quote, Dr. Ian Logan&#44; Dr.  Frank O'Hara et al., ZX Spectrum disassembly]
   \ _____
 
   \ Output a square wave of given duration and frequency
@@ -162,17 +174,17 @@ code bleep  ( duration pitch -- )
   \ _____
 
   \
-  \ See: `hz>bleep`, `dzh>bleep`, `beep`.
+  \ See also: `hz>bleep`, `dzh>bleep`, `beep`.
   \
   \ }doc
 
 [unneeded] hz>bleep ?(
 
-: hz>bleep  ( frequency duration1 -- duration2 pitch )
-  over m* 1000 m/ nip swap  437500. rot m/ nip 30 -  ; ?)
+: hz>bleep ( frequency duration1 -- duration2 pitch )
+  over m* 1000 m/ nip swap  437500. rot m/ nip 30 - ; ?)
 
   \ XXX OLD -- 1.32 slower:
-  \ over 1000 */ swap  4375 100 rot */ 30 -  ;
+  \ over 1000 */ swap  4375 100 rot */ 30 - ;
 
   \ Credit:
   \
@@ -180,22 +192,22 @@ code bleep  ( duration pitch -- )
 
   \ doc{
   \
-  \ hz>bleep  ( frequency duration1 -- duration2 pitch )
+  \ hz>bleep ( frequency duration1 -- duration2 pitch )
   \
   \ Convert _frequency_ (in Hz) and _duration1_ (in ms) to
   \ the parameters _duration2 pitch_ needed by `bleep`.
   \
-  \ See: `dhz>bleep`, `bleep`.
+  \ See also: `dhz>bleep`.
   \
   \ }doc
 
 [unneeded] dhz>bleep ?(
 
-: dhz>bleep  ( frequency duration1 -- duration2 pitch )
-  over m* 10000 m/ nip swap  4375000. rot m/ nip 30 -  ; ?)
+: dhz>bleep ( frequency duration1 -- duration2 pitch )
+  over m* 10000 m/ nip swap  4375000. rot m/ nip 30 - ; ?)
 
   \ XXX OLD -- 1.32 slower:
-  \ over 10000 */ swap  4375 1000 rot */ 30 -  ;
+  \ over 10000 */ swap  4375 1000 rot */ 30 - ;
 
   \ Credit:
   \
@@ -203,13 +215,13 @@ code bleep  ( duration pitch -- )
 
   \ doc{
   \
-  \ dhz>bleep  ( frequency duration1 -- duration2 pitch )
+  \ dhz>bleep ( frequency duration1 -- duration2 pitch )
   \
   \ Convert _frequency_ (in dHz, i.e. tenths of hertzs) and
   \ _duration1_ (in ms) to the parameters _duration2 pitch_
   \ needed by `bleep`.
   \
-  \ See: `hz>bleep`, `bleep`.
+  \ See also: `hz>bleep`.
   \
   \ }doc
 
@@ -246,9 +258,9 @@ code bleep  ( duration pitch -- )
   \ til you get to the "4" row : so middle C is 261.6 Hz.
   \ ___________________________________________________________
 
-need ?(  [unneeded] middle-octave ?(
+[unneeded] middle-octave ?(
 
-create middle-octave  ( -- a )
+create middle-octave ( -- a )
   \ C      C#     D      D#     E      F
     2616 , 2772 , 2937 , 3111 , 3296 , 3492 ,
   \ F#     G      G#     A      A#     B
@@ -259,7 +271,7 @@ create middle-octave  ( -- a )
 
   \ doc{
   \
-  \ middle-octave  ( -- a )
+  \ middle-octave ( -- a )
   \
   \ Return the address of a 12-cell table that contains the
   \ frequencies in dHz (tenths of Hz) of the middle octave.
@@ -281,7 +293,7 @@ create middle-octave  ( -- a )
   \   C   D   E   F   G   A   B
   \ ....
 
-  \ See: `beep>dhz`, `beep`, `/octave`, `octave-changer`.
+  \ See also: `beep`, `/octave`, `octave-changer`.
   \
   \ }doc
 
@@ -289,145 +301,141 @@ create middle-octave  ( -- a )
 
   \ doc{
   \
-  \ /octave  ( -- c )
+  \ /octave ( -- c )
   \
   \ A constant that returns the number of notes in one octave:
   \ 12.
   \
-  \ See: `middle-octave`.
+  \ See also: `middle-octave`.
   \
   \ }doc
 
-[unneeded] octave-changer ?(  need rshift  need lshift
+[unneeded] octave-changer ?( need rshift need lshift
 
         ' rshift  ,
 here    ' drop    ,
-        ' lshift  ,  constant octave-changer  ?)
+        ' lshift  ,  constant octave-changer ?)
 
   \ doc{
   \
-  \ octave-changer  ( -- a )
+  \ octave-changer ( -- a )
   \
   \ Execution table that contains the three execution tokens
   \ used to calculate the frequency of notes from any octave.
   \ _a_ is the address of the second execution token (cell
   \ offset 0).
   \
-  \ See: `change-octave`, `beep>dhz`, `middle-octave`.
+  \ See also: `change-octave`, `beep>dhz`, `middle-octave`.
   \
   \ }doc
 
 [unneeded] change-octave ?(
 
-need polarity  need octave-changer  need array>
+need polarity need octave-changer need array>
 
-: change-octave  ( u n -- u' )
-  dup abs swap polarity octave-changer array> perform  ; ?)
+: change-octave ( u n -- u' )
+  dup abs swap polarity octave-changer array> perform ; ?)
 
   \ doc{
   \
-  \ change-octave  ( u n -- u' )
+  \ change-octave ( u n -- u' )
   \
   \ Change the note frequency _u_ of the middle octave (octave
   \ zero) to its corresponding note frequency _u'_ in octave
   \ _n_.  If _n_ is zero, _u'_ equals _u_.
   \
-  \ See: `octave-changer`, `beep>dhz`, `middle-octave`.
+  \ See also: `octave-changer`, `beep>dhz`, `middle-octave`.
   \
   \ }doc
 
 ( -beep>note +beep>note beep>note )
 
-need ?(
+[unneeded] -beep>note ?( need /octave
 
-[unneeded] -beep>note ?(  need /octave
-
-: -beep>note  ( -n1 -- -n2 +n3 )
+: -beep>note ( -n1 -- -n2 +n3 )
   abs [ /octave 1- ] literal + /octave /mod negate
-      [ /octave 1- ] literal rot -  ; ?)
+      [ /octave 1- ] literal rot - ; ?)
 
   \ doc{
   \
-  \ -beep>note  ( -n1 -- -n2 +n3 )
+  \ -beep>note ( -n1 -- -n2 +n3 )
   \
   \ Convert a Sinclair BASIC BEEP's negative pitch _-n1_ to its
   \ corresponding note _+n3_ (0..11) in octave _-n2_, being
   \ zero the middle octave.
   \
-  \ See: `beep>note`, `+beep>note`, `/octave`.
+  \ See also: `beep>note`, `+beep>note`, `/octave`.
   \
   \ }doc
 
-[unneeded] +beep>note ?(  need /octave
+[unneeded] +beep>note ?( need /octave
 
-: +beep>note  ( +n1 -- +n2 +n3 )  /octave /mod swap  ; ?)
+: +beep>note ( +n1 -- +n2 +n3 ) /octave /mod swap ; ?)
 
   \ doc{
   \
-  \ +beep>note  ( +n1 -- +n2 +n3 )
+  \ +beep>note ( +n1 -- +n2 +n3 )
   \
   \ Convert a Sinclair BASIC BEEP's positive pitch _+n1_ to its
   \ corresponding note _+n3_ (0..11) in octave _+n2_, being
   \ zero the middle octave.
   \
-  \ See: `beep>note`, `-beep>note`, `/octave`.
+  \ See also: `beep>note`, `-beep>note`, `/octave`.
   \
   \ }doc
 
-[unneeded] beep>note ?(  need -beep>note  need +beep>note
+[unneeded] beep>note ?( need -beep>note need +beep>note
 
-: beep>note  ( n1 -- n2 +n3 )
-  dup 0< if  -beep>note exit  then  +beep>note  ; ?)
+: beep>note ( n1 -- n2 +n3 )
+  dup 0< if  -beep>note exit  then  +beep>note ; ?)
 
   \ doc{
   \
-  \ beep>note  ( n1 -- n2 +n3 )
+  \ beep>note ( n1 -- n2 +n3 )
   \
   \ Convert a Sinclair BASIC BEEP's pitch _n1_ to its
   \ corresponding note _+n3_ (0..11) in octave _n2_, being zero
   \ the middle octave.
   \
-  \ See: `-beep>note`, `+beep>note`, `beep>dhz`, `beep>bleep`,
+  \ See also: `-beep>note`, `+beep>note`, `beep>dhz`, `beep>bleep`,
   \ `beep`, `/octave`.
   \
   \ }doc
 
 ( note>dhz beep>dhz beep>bleep beep )
 
-need ?(
+[unneeded] note>dhz ?( need middle-octave need array>
 
-[unneeded] note>dhz ?(  need middle-octave  need array>
-
-: note>dhz  ( +n1 -- +n2 )  middle-octave array> @  ; ?)
+: note>dhz ( +n1 -- +n2 ) middle-octave array> @ ; ?)
 
 [unneeded] beep>dhz ?(
 
-need beep>note  need note>dhz need change-octave
+need beep>note need note>dhz need change-octave
 
-: beep>dhz  ( n -- u )
-  beep>note note>dhz swap change-octave  ; ?)
+: beep>dhz ( n -- u )
+  beep>note note>dhz swap change-octave ; ?)
 
   \ doc{
   \
-  \ beep>dhz  ( n -- u )
+  \ beep>dhz ( n -- u )
   \
   \ Convert a Sinclair BASIC BEEP's pitch _n_ to its
   \ corresponding frequency in dHz (tenths of hertzs) _u_.
   \
-  \ See: `beep>note`, `beep>bleep`, `beep`.
+  \ See also: `beep>note`, `beep>bleep`, `beep`.
   \
   \ }doc
 
 [unneeded] beep>bleep ?(
 
-need beep>dhz  need dhz>bleep
+need beep>dhz need dhz>bleep
 
-: beep>bleep  ( duration1 pitch1 -- pitch2 duration2 )
-  beep>dhz swap dhz>bleep  ; ?)
+: beep>bleep ( duration1 pitch1 -- pitch2 duration2 )
+  beep>dhz swap dhz>bleep ; ?)
 
   \ doc{
   \
-  \ beep>bleep  ( duration1 pitch1 -- pitch2 duration2 )
+  \ beep>bleep ( duration1 pitch1 -- pitch2 duration2 )
   \
   \ Convert _duration1_ and _pitch1_, which are equivalent to
   \ the parameters used by Sinclar BASIC's BEEP command, to
@@ -456,17 +464,17 @@ need beep>dhz  need dhz>bleep
   \           C   D   E   F   G   A   B   C
   \ ....
 
-  \ See: `beep>dhz`, `beep>note`, `dhz>bleep`, `bleep`.
+  \ See also: `beep>dhz`, `beep>note`, `dhz>bleep`.
   \
   \ }doc
 
-[unneeded] beep ?(  need beep>bleep need bleep
+[unneeded] beep ?( need beep>bleep need bleep
 
-: beep  ( duration pitch -- )  beep>bleep bleep  ; ?)
+: beep ( duration pitch -- ) beep>bleep bleep ; ?)
 
   \ doc{
   \
-  \ beep  ( duration pitch -- )
+  \ beep ( duration pitch -- )
   \
   \ Produce a tone in the internal beeper, with parameters that
   \ are equivalent to those of the homonymous Sinclar BASIC
@@ -511,26 +519,26 @@ need beep>dhz  need dhz>bleep
   \
   \ 8 constant /scale
   \
-  \ : play-scale  ( -- )
-  \   /scale 0 ?do  500 scale i + c@ beep  loop  ;
+  \ : play-scale ( -- )
+  \   /scale 0 ?do  500 scale i + c@ beep  loop ;
   \
   \ play-scale
   \ ----
 
   \
-  \ See: `beep>bleep`, `bleep`.
+  \ See also: `beep>bleep`, `bleep`.
   \
   \ }doc
 
 ( laser-gun ambulance )
 
-need ?( [unneeded] laser-gun ?(  need assembler
+[unneeded] laser-gun ?( need assembler
 
-code laser-gun  ( -- )  b push, 5 b ld#, 0500 h ldp#,
+code laser-gun ( -- ) b push, 5 b ld#, 0500 h ldp#,
   <mark  0001 d ldp#,
          h push, 03B5 call, h pop,  \ ROM beeper
          0010 d ldp#, d subp,  nz? ?jr,
-  b pop, next ix ldp#, jpnext,  end-code ?)
+  b pop, next ix ldp#, jpnext, end-code ?)
 
   \ Credit:
   \
@@ -541,15 +549,15 @@ code laser-gun  ( -- )  b push, 5 b ld#, 0500 h ldp#,
 
   \ doc{
   \
-  \ laser-gun  ( -- )
+  \ laser-gun ( -- )
   \
   \ Laser gun sound for ZX Spectrum 48K.
   \
   \ }doc
 
-[unneeded] ambulance ?(  need assembler
+[unneeded] ambulance ?( need assembler
 
-code ambulance  ( n -- )
+code ambulance ( n -- )
 
   d pop, b push, e b ld,
 
@@ -570,7 +578,7 @@ code ambulance  ( n -- )
 
   \ doc{
   \
-  \ ambulance  ( n -- )
+  \ ambulance ( n -- )
   \
   \ Ambulance sound for ZX Spectrum 48K. Make it _n_ times.
   \
@@ -580,7 +588,7 @@ code ambulance  ( n -- )
 
 need assembler
 
-code white-noise  ( u -- )
+code white-noise ( u -- )
 
   d pop,
   b push,  \ save the Forth IP
@@ -613,7 +621,7 @@ code white-noise  ( u -- )
 
   \ doc{
   \
-  \ white-noise  ( -- )
+  \ white-noise ( -- )
   \
   \ White noise for ZX Spectrum 48K.  _u_ is the duration in
   \ number of sample bytes.

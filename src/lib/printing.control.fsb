@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201701182343
+  \ Last modified: 201702221550
 
   \ -----------------------------------------------------------
   \ Description
@@ -46,23 +46,23 @@
   \
   \ 2017-01-18: Remove `exit` at the end of conditional
   \ interpretation.
+  \
+  \ 2017-02-17: Update cross references.
 
 ( printer tabulate )
 
 [unneeded] printer
-?\ : printer  ( -- )  3 channel printing on  ;
+?\ : printer ( -- ) 3 channel printing on ;
 
   \ doc{
   \
-  \ printer  ( -- )
+  \ printer ( -- )
   \
   \ Select the printer as output.
   \
-  \ See: `display`, `printing`.
+  \ See also: `display`, `printing`.
   \
   \ }doc
-
-need ?(
 
 [unneeded] tabulate ?(
 
@@ -71,7 +71,7 @@ need column
 variable /tabulate  8 /tabulate !
   \ doc{
   \
-  \ /tabulate  ( -- a )
+  \ /tabulate ( -- a )
   \
   \ A variable that holds the number of spaces that `tabulate`
   \ counts for. Its default value is 8.
@@ -80,13 +80,13 @@ variable /tabulate  8 /tabulate !
   \
   \ }doc
 
-: tabulate  ( -- )  column 1+ /tabulate @ tuck mod - spaces  ;
+: tabulate ( -- ) column 1+ /tabulate @ tuck mod - spaces ;
 
 ?)
 
   \ doc{
   \
-  \ tabulate  ( -- )
+  \ tabulate ( -- )
   \
   \ Display the appropriate number of spaces to tabulate to the
   \ next position, using the value of `/tabulate`.
@@ -107,12 +107,12 @@ variable /tabulate  8 /tabulate !
 
   \ doc{
   \
-  \ 'tab'  ( -- c )
+  \ 'tab' ( -- c )
   \
   \ A character constant that returns the caracter code used as
   \ tabulator (6).
   \
-  \ See: `tab`, `'cr'`, `'bs'`.
+  \ See also: `tab`, `'cr'`, `'bs'`.
   \
   \ }doc
 
@@ -120,12 +120,12 @@ variable /tabulate  8 /tabulate !
 
   \ doc{
   \
-  \ 'bs'  ( -- c )
+  \ 'bs' ( -- c )
   \
   \ A character constant that returns the caracter code used as
   \ backspace (8).
   \
-  \ See: `'cr'`, `'tab'`.
+  \ See also: `'cr'`, `'tab'`.
   \
   \ }doc
 
@@ -133,78 +133,78 @@ variable /tabulate  8 /tabulate !
 
   \ doc{
   \
-  \ 'cr'  ( -- c )
+  \ 'cr' ( -- c )
   \
   \ A character constant that returns the caracter code used as
   \ carriage return (13).
   \
-  \ See: `cr`, `crs`.
+  \ See also: `cr`, `crs`.
   \
   \ }doc
 
 [unneeded] tab
-?\ need 'tab'  : tab  ( -- )  'tab' emit  ;
+?\ need 'tab'  : tab ( -- ) 'tab' emit ;
 
   \ doc{
   \
-  \ tab  ( -- )
+  \ tab ( -- )
   \
   \ Emit a tabulate character (character code 6), which moves
   \ the print position to the next 16-character column.
   \
-  \ See: `'tab'`.
+  \ See also: `'tab'`.
   \
   \ }doc
 
 [unneeded] backspace
-?\ need 'bs'  : backspace  ( -- )  'bs'  emit  ;
+?\ need 'bs'  : backspace ( -- ) 'bs'  emit ;
 
   \ doc{
   \
-  \ backspace  ( -- )
+  \ backspace ( -- )
   \
   \ Emit a backspace character (character code 8).
   \
-  \ See: `'bs'`.
+  \ See also: `'bs'`.
   \
   \ }doc
 
 [unneeded] crs
-?\ need 'cr'  : crs   ( n -- )  'cr'  emits  ;
+?\ need 'cr'  : crs   ( n -- ) 'cr'  emits ;
 
   \ doc{
   \
-  \ crs  ( n -- )
+  \ crs ( n -- )
   \
   \ Emit _n_ number of cr characters (character code 13).
   \
-  \ See: `cr`, `'cr'`.
+  \ See also: `cr`, `'cr'`.
   \
   \ }doc
 
 [unneeded] tabs
-?\ need 'tab'  : tabs  ( n -- )  'tab' emits  ;
+?\ need 'tab'  : tabs ( n -- ) 'tab' emits ;
 
   \ doc{
   \
-  \ tabs  ( n -- )
+  \ tabs ( n -- )
   \
   \ Emit _n_ number of tab characters (character code 6).
   \
-  \ See: `tab`, `'tab'`.
+  \ See also: `tab`, `'tab'`.
   \
   \ }doc
 
 [unneeded] backspaces
-?\ need 'bs'  : backspaces    ( n -- )  'bs'  emits  ;
+?\ need 'bs'  : backspaces    ( n -- ) 'bs'  emits ;
 
   \ doc{
   \
-  \ backspaces  ( n -- )
+  \ backspaces ( n -- )
   \
   \ Emit _n_ number of backspace characters (character code 8).
   \
-  \ See: `backspace`, `'bs'`.
+  \ See also: `backspace`, `'bs'`.
   \
   \ }doc
 
