@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version  ( -- ca len )  s" 0.32.0+201702012142"  ;
+: version  ( -- ca len )  s" 0.33.0+201702252313"  ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -62,7 +62,7 @@ need [if]
 
 need ~~
 
-need warn.message  need order  need see  need rdepth 
+need warn.message  need order  need see  need rdepth
 need where
 
   \ --------------------------------------------
@@ -79,7 +79,7 @@ need upper  need s+  need char>string  need s\"
   \ --------------------------------------------
   cr .(   -Control structures)  \ {{{2
 
-need case  need 0exit   need +perform  need abort"
+need case  need 0exit   need +perform  need do  need abort"
 
   \ --------------------------------------------
   cr .(   -Memory)  \ {{{2
@@ -105,11 +105,19 @@ need xdepth  need >x  need x>  need xclear
 need .xs  \ XXX TMP -- for debuging
 
   \ --------------------------------------------
+  cr .(   -Printing)  \ {{{2
+
+need at-y  need at-x
+need type-left-field
+need type-right-field
+need type-center-field
+
+  \ --------------------------------------------
   cr .(   -Graphics)  \ {{{2
 
 need os-chars  need os-udg  need pixel-addr
 
-need udg-row[
+need udg-row[  need type-udg
 
 need columns  need rows  need row
 
@@ -161,17 +169,19 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
   ((debug-point))
   \ order
   \ depth ?exit
-  \ ." block:" blk ?  ." latest:" latest .name ." hp:" hp@ u.
+  \ ." block:" blk ?  ."  latest:" latest .name ." hp:" hp@ u.
   \ order
   \ s" ' -1|1 .( -1|1 =) u." evaluate
-  \ depth if  cr .s #-258 throw  then  \ stack imbalance
-  \ key drop
+  cr .(  latest: ) latest .name
+  depth if  decimal cr .s  then
+  \ depth if  decimal cr .s #-258 throw  then  \ stack imbalance
+  key drop
   ;
   \ Abort if the stack is not empty.
   \ XXX TMP -- for debugging
 
-  \ ' noop ' debug-point defer!
-  ' (debug-point) ' debug-point defer!
+  ' noop ' debug-point defer!
+  \ ' (debug-point) ' debug-point defer!
   \ XXX TMP -- for debugging
 
   ' noop ' special-debug-point defer!
@@ -277,9 +287,9 @@ record off
 
 : kk#>string  ( n -- ca len )
   case  kk-en# of  s" Enter"         endof
-        kk-sp# of  s" Space"         endof
-        kk-cs# of  s" Caps Shift"    endof
-        kk-ss# of  s" Symbol Shift"  endof
+        \ kk-sp# of  s" Space"         endof \ XXX OLD
+        \ kk-cs# of  s" Caps Shift"    endof \ XXX OLD
+        \ kk-ss# of  s" Symbol Shift"  endof \ XXX OLD
         dup kk#>c upper char>string rot  \ default
   endcase  ;
 
@@ -332,35 +342,27 @@ current-controls @ set-controls
   \ ===========================================================
   cr .( UDG)  debug-point  \ {{{1
 
-[defined] first-udg ?\ $80 cconstant first-udg
-                         \ first UDG code in Solo Forth
-                       $FF cconstant last-udg
-                         \ last UDG code in Solo Forth
+               128 cconstant last-udg \ last UDG code used
+                 8 cconstant /udg     \ bytes per UDG
+last-udg 1+ /udg * constant /udg-set  \ UDG set size in bytes
 
-        128 cconstant udgs       \ number of UDGs \ XXX TMP --
-          8 cconstant /udg       \ bytes per UDG
-udgs /udg * constant /udg-set   \ size of the UDG set in bytes
+create udg-set /udg-set allot  udg-set os-udg !
+  \ Reserve space for the UDG set.
 
-create udg-set /udg-set allot
-
-udg-set os-udg !
-  \ Point system UDG to the game UDG set.
-  \ Solo Forth will use this set for chars 128..255.
-
-: udg>bitmap  ( c -- a )  first-udg - /udg * udg-set +  ;
+: udg>bitmap  ( c -- a )  /udg * udg-set +  ;
   \ Convert UDG char _c_ to the address _a_ of its bitmap.
 
 : >scan  ( n c -- a )  udg>bitmap +  ;
   \ Convert scan number _n_ of UDG char _c_ to its address _a_.
 
-: scan!  ( c b n -- c )  rot >scan c!  ;
+: scan!  ( c b n -- c )  rot >scan c! ;
   \ Store scan _b_ into scan number _n_ of char _c_,
   \ and return _c_ back for further processing.
 
 variable used-udgs  used-udgs off
   \ Counter of UDGs defined.
 
-: udg-overflow?  ( -- f )  used-udgs @ udgs >  ;
+: udg-overflow?  ( -- f )  used-udgs @ last-udg 1+ >  ;
   \ Too many UDG defined?
 
 : ?udg-overflow  ( -- )  udg-overflow? abort" Too many UDGs"  ;
@@ -378,13 +380,16 @@ variable ocr-first-udg
 variable ocr-last-udg
   \ Char codes of the first and last UDG to be examined
   \ by `ocr`.
+  \
+  \ XXX TODO -- Remove. Use `ocr-first` and `ocr-last`
+  \ directly.
 
 : init-ocr  ( -- )
   ocr-first-udg @ udg>bitmap ocr-charset !
     \ Set address of the first char bitmap to be examined.
-  ocr-first-udg @ ocr-first !
+  ocr-first-udg @ ocr-first c!
     \ Its char code in the UDG set.
-  ocr-last-udg @ ocr-first-udg @ - 1+ ocr-chars !  ;  \ chars
+  ocr-last-udg @ ocr-first-udg @ - 1+ ocr-chars c!  ;  \ chars
   \ Set the UDGs `ocr` will examine to detect collisions.
   \ Set the address of the first char bitmap to be
   \ examined, its char code and the number of examined chars.
@@ -428,7 +433,7 @@ variable player   1 player !   \ 1..max-player
   \ ===========================================================
   cr .( Graphics)  debug-point  \ {{{1
 
-    variable >udg  first-udg >udg !  \ next free UDG
+    variable >udg  >udg off  \ next free UDG
 
 variable latest-sprite-width
 variable latest-sprite-height
@@ -472,8 +477,10 @@ variable latest-sprite-udg
 : 1x1sprite  ( n0..n7 "name" -- )
   1 free-udg dup cconstant (1x1sprite!)  ;
 
-' emit alias .1x1sprite   ( c -- )
-' emits alias .1x1sprites  ( c n -- )
+: emits-udg ( c n -- ) 0 ?do dup emit-udg loop drop ;
+
+' emit-udg alias .1x1sprite   ( c -- )
+' emits-udg alias .1x1sprites  ( c n -- )
 
 : (2x1sprite!)  ( n0..n7 c -- )
   2 ?free-udg  2 1 latest-sprite-size!
@@ -494,7 +501,7 @@ variable latest-sprite-udg
 : 2x1sprite  ( n0..n7 "name" -- )
   2 free-udg dup cconstant (2x1sprite!)  ;
 
-: .2x1sprite  ( c -- )  dup emit 1+ emit  ;
+: .2x1sprite  ( c -- )  dup emit-udg 1+ emit-udg  ;
 
 2 cconstant udg/invader
 2 cconstant udg/ufo
@@ -885,7 +892,7 @@ sprite-string flying-invader-3$  ( -- ca len )
   111111111111111111111111
   111111111111111111111111
   011111111111111111111110
-  ]udg-row  udg/tank 1 latest-sprite-size!
+  ]udg-row udg/tank 1 latest-sprite-size!
 
 sprite-string tank$  ( -- ca len )
 
@@ -898,9 +905,7 @@ sprite-string tank$  ( -- ca len )
 0001001010010000
 0010010001001000
 
-  \ cr latest .name  \ XXX INFORMER
 2x1sprite!  sprite-string invader-explosion$  ( -- ca len )
-  \ cr latest .name key drop  \ XXX INFORMER
 
 [pixel-projectile] 0= [if]
 
@@ -1129,6 +1134,10 @@ decimal
 : center-type  ( ca len row -- )  over centered-at type  ;
   \ Print string _ca len_ centered on the given row.
 
+: center-type-udg  ( ca len row -- )
+  over centered-at type-udg  ;
+  \ Print string _ca len_ centered on the given row.
+
 : type-blank  ( ca len -- )  nip spaces  ;
 
 : center-type-blank  ( ca len row -- )
@@ -1196,7 +1205,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
 
 : .lifes  ( -- )
   at-lifes in-life-attr
-  spare-lifes 0 ?do  tank$ type  loop  udg/tank spaces  ;
+  spare-lifes 0 ?do  tank$ type-udg  loop  udg/tank spaces  ;
   \ Print one icon for each spare life.
 
 : bottom-status-bar  ( -- )  ruler .lifes  ;
@@ -1490,7 +1499,7 @@ transmission-delay-counter off
   transmission-ready? and  ;
   \ Does the tank move? Return its x increment.
 
-: .tank  ( -- )  in-tank-attr tank$ type  ;
+: .tank  ( -- )  in-tank-attr tank$ type-udg  ;
   \ Print the tank at the current cursor position.
 
 : at-tank  ( -- )  tank-x @ tank-y at-xy  ;
@@ -1650,30 +1659,28 @@ defer debug-data-pause  ( -- )
 
   special-debug-point  \ XXX INFORMER
 
-: controls$  ( -- ca len )
-  left-arrow$ left-key$ s+
-  s"   " s+ fire-key$ s+ s"   " s+
-  right-key$ s+ right-arrow$ s+  ;
-  \ String containing the description of the current controls.
-  \ XXX TMP --
-  \ XXX TODO -- rewrite
+: .controls-legend  ( -- )
+  10 at-x left-arrow$  type-udg
+  15 at-x fire-button$ type-udg
+  20 at-x right-arrow$ type-udg  ;
+  \ Print controls legend at the current row.
 
-  special-debug-point  \ XXX INFORMER
+: .control-keys  ( -- )
+  10 at-x left-key$  2 type-right-field
+  13 at-x fire-key$  6 type-center-field
+  20 at-x right-key$ 2 type-left-field  ;
+  \ Print control keys at the current row.
 
 : .controls  ( -- )
   \ s" [Space] to change controls:" row dup >r center-type
-  row >r fire-button$ r@ 2+ center-type
-  0 r@ 3 + at-xy columns spaces
-  controls$ r> 3 + center-type  ;
+    \ XXX TODO --
+  .controls-legend cr .control-keys ;
   \ Print controls at the current row.
-  \ XXX TMP --
-
-  special-debug-point  \ XXX INFORMER
 
 true [if]  \ XXX OLD
 
 : .score-item  ( ca1 len1 ca2 len2 -- )
-  type in-text-attr ."  = " type  ;
+  type-udg in-text-attr ."  = " type  ;
   \ Print an item of the score table, with sprite string _ca2
   \ len2_ and description _ca1 len1_
 
@@ -2094,7 +2101,7 @@ constant ufo-movements  ( -- a )
   \ XXX TODO -- 128 sound
 
 : ufo-on-fire  ( -- )
-  ufo-x @ 1+ ufo-y at-xy ufo-explosion$ type  ;
+  ufo-x @ 1+ ufo-y at-xy ufo-explosion$ type-udg  ;
   \ Show the UFO on fire.
 
 : ufo-explosion  ( -- )  ufo-on-fire ufo-bang -ufo  ;
@@ -2114,7 +2121,7 @@ constant ufo-movements  ( -- a )
   \ XXX TODO -- look for a better sound
 
 : invader-on-fire  ( -- )
-  at-invader invader-explosion$ type  ;
+  at-invader invader-explosion$ type-udg  ;
   \ Show the current invader on fire.
 
 : -invader  ( -- )  in-arena-attr at-invader 2 spaces  ;
@@ -2381,14 +2388,14 @@ variable invasion-delay  8 invasion-delay !
 : defeat?  ( -- f )  lifes @ 0=  ;
 
 : game  ( -- )
-  init-game  begin  combat defeat?  until  game-over  ;
+  init-game begin  combat defeat?  until  game-over  ;
 
 : run  ( -- )  begin  instructions game  again  ;
 
   \ ===========================================================
   cr .( Debugging tools)  debug-point  \ {{{1
 
-: .udgs  ( -- )  cr udgs 0 do  i 128 + emit  loop  ;
+: .udgs  ( -- )  cr last-udg 1+ 0 do  i emit-udg  loop  ;
   \ Print all game UDGs.
 
 : ni  ( -- )      next-invader  ;
