@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version ( -- ca len ) s" 0.34.0+201702252332" ;
+: version ( -- ca len ) s" 0.35.0+201702260042" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -238,7 +238,6 @@ tank-y cconstant arena-bottom-y
   \ ===========================================================
   cr .( Global variables)  debug-point \ {{{1
 
-variable lifes           \ counter (0..4)
 variable level           \ counter (1..max-level)
 variable score           \ counter
 variable record          \ max score
@@ -365,6 +364,9 @@ variable ocr-last-udg
   \
   \ XXX TODO -- Remove. Use `ocr-first` and `ocr-last`
   \ directly.
+  \
+  \ XXX TODO -- Remove `init-ocr`. It's needed only once, right
+  \ after defining the graphics.
 
 : init-ocr ( -- )
   ocr-first-udg @ udg>bitmap ocr-charset !
@@ -1179,18 +1181,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
   columns $FF fill  color-ruler ;
   \ Draw the ruler of the status bar.
 
-: at-lifes ( -- ) 0 status-bar-y at-xy ;
-  \ Set the cursor position to the position of the life icons.
-
-: spare-lifes ( -- n ) lifes @ 1- 0 max ;
-  \ Number of spare lifes.
-
-: .lifes ( -- )
-  at-lifes in-life-attr
-  spare-lifes 0 ?do  tank$ type-udg  loop  udg/tank spaces ;
-  \ Print one icon for each spare life.
-
-: bottom-status-bar ( -- ) ruler .lifes ;
+: bottom-status-bar ( -- ) ruler ;
   \ Draw the status bar.
 
 : status-bars ( -- ) top-status-bar bottom-status-bar ;
@@ -1412,7 +1403,7 @@ variable used-projectiles  used-projectiles off
   \ Counter.
 
 : level-bonus ( -- n )
-  level @ 100 *  lifes @ 10 * +  used-projectiles @ -  0 max ;
+  level @ 100 * used-projectiles @ -  0 max ;
   \ Return bonus _n_ after finishing a level.
 
 : next-level ( -- ) level-bonus update-score
@@ -1562,17 +1553,10 @@ defer debug-data-pause ( -- )
   \ ===========================================================
   cr .( Init)  debug-point \ {{{1
 
-1 cconstant max-lifes
-  \ Maximum number of lifes, including the first one.
-
-: init-lifes ( -- ) max-lifes lifes ! ;
-
-: init-game ( -- )
+: prepare-battle ( -- )
   [pixel-projectile] [ 0= ] [if]  init-ocr  [then]
-  init-lifes  init-level  score off
+  init-level  score off
   cls status-bars ;
-  \ Init the game.
-
   special-debug-point \ ' -1|1 cr u. \ XXX INFORMER
 
 : parade ( -- )
@@ -2296,9 +2280,6 @@ variable trigger-delay-counter  trigger-delay-counter off
 
 : game-over ( -- ) .game-over check-record ;
 
-: dead ( -- ) -1 lifes +!  .lifes ;
-  \ One life lost.
-
   \ : defeat-tune ( -- )
   \   100 200 do  i 20 beep  -5 +loop ;
   \ XXX TODO -- original code in Ace Forth
@@ -2325,7 +2306,7 @@ create attributes-backup /attributes allot
 
 : defeat ( -- )
   save-attributes
-  radiation defeat-tune  2000 ms  fade dead
+  radiation defeat-tune  2000 ms  fade
   restore-attributes ;
   \ XXX TODO -- finish
 
@@ -2334,37 +2315,26 @@ create attributes-backup /attributes allot
 variable invasion-delay  8 invasion-delay !
   \ XXX TMP -- debugging
 
-: init-combat ( -- )
+: prepare-combat ( -- )
   catastrophe off
   init-invaders init-ufo init-tank init-arena init-projectiles
   show-level show-player ;
 
 : (combat) ( -- )
-  begin victory? if next-level init-combat then
+  begin victory? if next-level prepare-combat then
+        break-key? if quit then \ XXX TMP
+        fly-projectile drive
+        fly-projectile shoot
+        fly-projectile manage-ufo
+        fly-projectile invasion
+        fly-projectile catastrophe @
+  until ;
 
-          break-key? if quit then \ XXX TMP
+: combat ( -- ) prepare-combat (combat) defeat ;
 
-          fly-projectile  drive
-          fly-projectile  shoot
-          fly-projectile
-          manage-ufo \ XXX TMP --
-          fly-projectile
-          \ invasion-delay @ random if \ XXX TMP -- debugging
-          invasion
-          \ then \ XXX TMP -- debugging
-          fly-projectile  catastrophe @
-          \ drop false
-            \ XXX TMP -- for debugging
-  until   defeat ;
+: battle ( -- ) prepare-battle combat game-over ;
 
-: combat ( -- ) init-combat (combat) ;
-
-: defeat? ( -- f ) lifes @ 0= ;
-
-: game ( -- )
-  init-game begin combat defeat? until game-over ;
-
-: run ( -- ) begin instructions game again ;
+: run ( -- ) begin instructions battle again ;
 
   \ ===========================================================
   cr .( Debugging tools)  debug-point \ {{{1
@@ -2374,7 +2344,7 @@ variable invasion-delay  8 invasion-delay !
 
 : ni ( -- ) next-invader ;
 : mi ( -- ) move-invader ;
-: ini ( -- ) init-game init-combat ;
+: ini ( -- ) prepare-battle prepare-combat ;
 
 : bc ( -- )
   cls
