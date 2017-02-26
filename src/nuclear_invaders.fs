@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version ( -- ca len ) s" 0.36.0-pre.1+201702262140" ;
+: version ( -- ca len ) s" 0.36.0-pre.3+201702270039" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -223,6 +223,7 @@ tank-y cconstant arena-bottom-y
               white attr-setter in-text-attr
          arena-attr attr-setter in-arena-attr
  white papery red + attr-setter in-brick-attr
+  red papery cyan + attr-setter in-door-attr
                 red attr-setter in-broken-wall-attr
        blue brighty attr-setter in-tank-attr
                blue attr-setter in-life-attr
@@ -822,6 +823,48 @@ sprite-string flying-invader-3$ ( -- ca len )
     \ of the latest sprite.
 [then]
 
+  \ 00111011
+  \ 00111011
+  \ 00111011
+  \ 00000000
+  \ 00111111
+  \ 00111111
+  \ 00111111
+  \ 00000000
+    \ XXX OLD
+
+11110000
+11111000
+11111000
+11111000
+11111000
+11111000
+11111000
+11111000
+
+1x1sprite left-door
+
+  \ 11111100
+  \ 11111100
+  \ 11111100
+  \ 00000100
+  \ 11011100
+  \ 11011100
+  \ 11011100
+  \ 00000000
+    \ XXX OLD
+
+00001111
+00011111
+00011111
+00011111
+00011111
+00011111
+00011111
+00011111
+
+1x1sprite right-door
+
 11111111
 01111111
 01011111
@@ -1373,11 +1416,15 @@ variable containers-left-x   variable containers-right-x
   in-brick-attr brick building-width @ .1x1sprites ;
   \ Draw a floor of the building at row _y_.
 
+: ground-floor ( y -- )
+  building-left-x @ swap at-xy
+  in-door-attr  left-door emit-udg
+  in-brick-attr brick building-width @ 2- .1x1sprites
+  in-door-attr  right-door emit-udg ;
+  \ Draw the ground floor of the building at row _y_.
+
 : building-top ( -- ) building-top-y floor ;
   \ Draw the top of the building.
-
-: building-bottom ( -- ) building-bottom-y  floor ;
-  \ Draw the bottom of the building.
 
 : containers-bottom ( n -- )
   in-container-attr
@@ -1392,24 +1439,6 @@ variable containers-left-x   variable containers-right-x
 : .brick ( -- ) in-brick-attr brick .1x1sprite ;
   \ Draw a brick.
 
-false [if]
-
-  \ XXX OLD
-
-: building ( -- )
-  building-bottom
-  level @  building-left-x @
-  building-top-y [ building-bottom-y 2- ] literal
-  do
-    2dup i 1+ at-xy .brick containers-bottom .brick
-    2dup i    at-xy .brick containers-top    .brick
-  -2 +loop  2drop  building-top ;
-  \ Draw the building and the nuclear containers.
-
-[else]
-
-  \ XXX NEW -- Draft.
-
 create containers-half
     ' containers-bottom , ' containers-top ,
 
@@ -1417,16 +1446,12 @@ create containers-half
   building-top
   level @  building-left-x @
   building-bottom-y [ building-top-y 1+ ] literal
-  do
-    2dup i at-xy .brick
-                 i 1 and containers-half array> perform
-                 .brick
-  loop  2drop
-  tank-y 1- building-bottom-y do i floor loop ;
-  \ XXX TMP -- Experimental.
+  do   2dup i at-xy .brick
+                    i 1 and containers-half array> perform
+                    .brick
+  loop 2drop tank-y dup building-bottom-y do i floor loop
+                        ground-floor ;
   \ Draw the building and the nuclear containers.
-
-[then]
 
   \ ===========================================================
   cr .( Levels)  debug-point \ {{{1
