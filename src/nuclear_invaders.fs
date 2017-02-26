@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version ( -- ca len ) s" 0.35.0+201702260042" ;
+: version ( -- ca len ) s" 0.36.0-pre.1+201702262140" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -64,8 +64,8 @@ need warn.message need order need see need rdepth need where
   \ --------------------------------------------
   cr .(   -Definers) \ {{{2
 
-need defer need alias
-need value need 2value need cvariable need 2const
+need defer need alias need value need 2value need cvariable
+need 2const need cenum
 
   \ --------------------------------------------
   cr .(   -Strings) \ {{{2
@@ -90,7 +90,7 @@ need d< need -1|1 need 2/ need between need random need binary
   \ --------------------------------------------
   cr .(   -Data structures) \ {{{2
 
-need roll need field: need +field-opt-0124
+need roll need field: need +field-opt-0124 need array>
 
 need xstack need allot-xstack need xdepth need >x need x>
 need xclear
@@ -432,7 +432,7 @@ variable latest-sprite-udg
   tuck +  dup >udg !  1- ?udg ;
   \ Free _n_ consecutive UDGs and return the first one _c_.
 
-: latest-sprite-size! ( width height -- )
+: set-latest-sprite-size ( width height -- )
   latest-sprite-height !  latest-sprite-width ! ;
   \ Update the size of the latest sprited defined.
 
@@ -448,7 +448,7 @@ variable latest-sprite-udg
   \ containing all UDGs of the lastest sprite defined.
 
 : (1x1sprite!) ( b0..b7 c -- )
-  1 ?free-udg  1 1 latest-sprite-size!
+  1 ?free-udg  1 1 set-latest-sprite-size
   /udg 0 do
     dup /udg 1+ i - roll i scan!
   loop  drop ;
@@ -467,7 +467,7 @@ variable latest-sprite-udg
 ' emits-udg alias .1x1sprites ( c n -- )
 
 : (2x1sprite!) ( n0..n7 c -- )
-  2 ?free-udg  2 1 latest-sprite-size!
+  2 ?free-udg  2 1 set-latest-sprite-size
   /udg 0 do
     dup /udg 1+ i - pick flip i scan! 1+ \ first UDG
     dup /udg 1+ i - roll      i scan! 1- \ second UDG
@@ -489,6 +489,8 @@ variable latest-sprite-udg
 
 2 cconstant udg/invader
 2 cconstant udg/ufo
+
+0 0 0 0 0 0 0 0 1x1sprite bl-udg
 
 [pixel-projectile] 0= [if]
   >udg @ ocr-first-udg !
@@ -866,7 +868,7 @@ sprite-string flying-invader-3$ ( -- ca len )
 
   \ XXX TODO -- second frame of the tank
 
-  #3 cconstant udg/tank  #3 free-udg udg-row[
+  #3 cconstant udg/tank  #3 free-udg dup udg-row[
 
   000000000010010000000000
   000000000010010000000000
@@ -876,9 +878,13 @@ sprite-string flying-invader-3$ ( -- ca len )
   111111111111111111111111
   111111111111111111111111
   011111111111111111111110
-  ]udg-row udg/tank 1 latest-sprite-size!
+  ]udg-row udg/tank 1 set-latest-sprite-size
 
-sprite-string tank$ ( -- ca len )
+cenum left-tank-udg   ( -- c )
+cenum middle-tank-udg ( -- c )
+cenum right-tank-udg  ( -- c ) drop
+
+sprite-string tank$ ( -- ca len ) \ XXX OLD
 
 0000010001000000
 0010001010001000
@@ -1129,7 +1135,9 @@ decimal
   \ Overwrite string _ca len_ with blanks, centered on the
   \ given row.
 
-17 cconstant message-y \ row for game messages
+ 4 cconstant building-top-y
+
+building-top-y 1- cconstant message-y \ row for game messages
 
 : message ( ca len -- )
   2dup message-y in-text-attr center-type  1500 ms
@@ -1180,12 +1188,16 @@ arena-top-y columns * attributes + constant arena-top-attribute
   [ 0 tank-y row>pixel 8 - pixel-addr nip ] literal
   columns $FF fill  color-ruler ;
   \ Draw the ruler of the status bar.
+  \ XXX TODO -- Use bricks instead.
+  \ XXX TODO -- Rename to `ground`.
 
 : bottom-status-bar ( -- ) ruler ;
   \ Draw the status bar.
+  \ XXX TODO -- Remove.
 
 : status-bars ( -- ) top-status-bar bottom-status-bar ;
   \ Show the data bars.
+  \ XXX TODO -- Only one status bar.
 
   \ ===========================================================
   cr .( Invaders data)  debug-point \ {{{1
@@ -1339,7 +1351,6 @@ create invader-colors ( -- a )
   \ ===========================================================
   cr .( Building)  debug-point \ {{{1
 
- 4 cconstant building-top-y
 15 cconstant building-bottom-y
 
 variable building-width
@@ -1381,6 +1392,10 @@ variable containers-left-x   variable containers-right-x
 : .brick ( -- ) in-brick-attr brick .1x1sprite ;
   \ Draw a brick.
 
+false [if]
+
+  \ XXX OLD
+
 : building ( -- )
   building-bottom
   level @  building-left-x @
@@ -1390,6 +1405,28 @@ variable containers-left-x   variable containers-right-x
     2dup i    at-xy .brick containers-top    .brick
   -2 +loop  2drop  building-top ;
   \ Draw the building and the nuclear containers.
+
+[else]
+
+  \ XXX NEW -- Draft.
+
+create containers-half
+    ' containers-bottom , ' containers-top ,
+
+: building ( -- )
+  building-top
+  level @  building-left-x @
+  building-bottom-y [ building-top-y 1+ ] literal
+  do
+    2dup i at-xy .brick
+                 i 1 and containers-half array> perform
+                 .brick
+  loop  2drop
+  tank-y 1- building-bottom-y do i floor loop ;
+  \ XXX TMP -- Experimental.
+  \ Draw the building and the nuclear containers.
+
+[then]
 
   \ ===========================================================
   cr .( Levels)  debug-point \ {{{1
@@ -1407,7 +1444,7 @@ variable used-projectiles  used-projectiles off
   \ Return bonus _n_ after finishing a level.
 
 : next-level ( -- ) level-bonus update-score
-                      increase-level  set-building-size ;
+                    increase-level set-building-size ;
   \ Change to the next level.
 
 : init-level ( -- ) level off  next-level ;
@@ -1422,6 +1459,7 @@ variable used-projectiles  used-projectiles off
   cr .( Tank)  debug-point \ {{{1
 
 variable tank-x \ column
+  \ XXX TODO -- cvariable
 
 : init-tank ( -- ) columns udg/tank - 2/ tank-x ! ;
   \ Init the tank.
@@ -1448,6 +1486,12 @@ columns udg/tank - 1- cconstant tank-max-x
   [then]  between ;
   \ Is the tank's gun below the building?
 
+false [if]
+
+  \ XXX OLD -- The tank is shown also below the building, after
+  \ the original game.  Besides it flickers, because it's
+  \ deleted and redrawn at every step.
+
 : tank-range ( col -- col' )
   tank-max-x min tank-min-x max ;
   \ Adjust the given column to the limits of the tank.
@@ -1457,8 +1501,9 @@ variable transmission-delay-counter
 transmission-delay-counter off
 
 8 value transmission-delay
+  \ XXX TODO -- Not used.
 
-: update-transmission ( -- )
+: transmission ( -- )
   transmission-delay-counter @ 1- 0 max
   transmission-delay-counter ! ;
   \ Decrement the transmission delay. The minimum is zero.
@@ -1492,6 +1537,99 @@ transmission-delay-counter off
 : drive ( -- )
   update-transmission
   moving-tank? ?dup 0= ?exit  -tank move-tank .tank ;
+
+[else]
+
+  \ XXX NEW -- The tank is invisible inside the building, which
+  \ is on the ground. The characters that form the tank are
+  \ printed apart, and only the first/last one is erased when
+  \ needed, to reduce flickering.
+
+variable transmission-delay  transmission-delay off
+  \ XXX TODO -- Not used.
+
+: transmission ( -- )
+  transmission-delay @ 1- 0 max transmission-delay ! ;
+  \ Decrement the transmission delay. The minimum is zero.
+
+: transmission? ( -- f ) transmission-delay @ 0= ;
+  \ Is the transmission ready?
+  \ XXX TODO -- Not used. Always _true_.
+  \ XXX TODO -- Use a bitmask. This way the delay doesn't need
+  \ initialization. Or remove.
+
+: tank-rudder ( -- -1|0|1 )
+  kk-left pressed? kk-right pressed? abs + transmission? and ;
+  \ Does the tank move? Return its x increment.
+
+: outside? ( col -- f )
+  building-left-x @ building-right-x @ between 0= ;
+  \ Is column _col_ outside the building?
+
+: next-col ( col -- ) 1+ 33 swap - 23688 c!  1 23684 +! ;
+  \ Set the current column to _col+1_, by modifing the
+  \ contents of OS byte variable S_POSN (23688) and increasing
+  \ the OS cell variable DF_CC (23684) (printing address in the
+  \ screen bitmap).  Unfortunately, a bug in the ROM prevents
+  \ control character 9 (cursor right) from working.
+
+: ?emit-outside ( col1 c -- col2 )
+  over outside? if emit-udg else drop dup next-col then 1+ ;
+  \ If column _col1_ is outside the building, display character
+  \ _c_ at the current cursor position.  Increment _col1_ and
+  \ return it as _col2_.
+
+: tank-parts ( col1 -- col2 )
+  in-tank-attr left-tank-udg   ?emit-outside
+               middle-tank-udg ?emit-outside
+               right-tank-udg  ?emit-outside ;
+  \ Display every visible part of the tank (the parts that are
+  \ outside the building).
+
+: -tank-extreme ( col1 -- col2 )
+  in-arena-attr bl-udg ?emit-outside ;
+
+: at-tank@ ( -- col ) tank-x @ dup tank-y at-xy ;
+  \ Set the cursor position at the tank's coordinates
+  \ and return its column _col_.
+
+: tank> ( -- )
+  at-tank@ -tank-extreme tank-parts drop 1 tank-x +! ;
+  \ Move the tank to the right.
+
+: (.tank ( -- col ) at-tank@ tank-parts ;
+  \ Display the tank at its current position and return column
+  \ _col_ at its right.
+
+: .tank ( -- ) (.tank drop ;
+  \ Display the tank at its current position.
+
+: <tank ( -- ) -1 tank-x +! (.tank -tank-extreme drop ;
+  \ Move the tank to the left.
+
+: tank-ready ( -- ) .tank ;
+  \ Print the tank at its current position.
+  \ XXX TMP -- Transitional. Use `.tank` instead.
+
+: ?<tank ( -- ) tank-x @ tank-min-x = ?exit <tank ;
+  \ If the tank column is not the minimum, move the tank to the
+  \ left.
+
+: ?tank> ( -- ) tank-x @ tank-max-x = ?exit tank> ;
+  \ If the tank column is not the maximum, move the tank to the
+  \ right.
+
+      ' ?<tank , \ move tank to the left
+here  0 ,       \ do nothing
+      ' ?tank> , \ move tank to the right
+constant tank-movements ( -- a )
+  \ Execution table of tank movements.
+
+: tank-movement ( -- xt|0 ) tank-rudder tank-movements array> ;
+
+: drive ( -- ) transmission tank-movement perform ;
+
+[then]
 
   \ XXX TODO -- don't delete the whole tank every time, but
   \ only the character not overwritten by the new position
@@ -1553,7 +1691,7 @@ defer debug-data-pause ( -- )
   \ ===========================================================
   cr .( Init)  debug-point \ {{{1
 
-: prepare-battle ( -- )
+: prepare-war ( -- )
   [pixel-projectile] [ 0= ] [if]  init-ocr  [then]
   init-level  score off
   cls status-bars ;
@@ -1728,7 +1866,7 @@ true [if] \ XXX OLD
     endcase
   again ;
 
-: instructions ( -- )
+: mobilize ( -- )
   init-colors in-text-attr cls title
   show-score-table show-players show-controls show-copyright
   menu ;
@@ -2315,13 +2453,13 @@ create attributes-backup /attributes allot
 variable invasion-delay  8 invasion-delay !
   \ XXX TMP -- debugging
 
-: prepare-combat ( -- )
+: prepare-battle ( -- )
   catastrophe off
   init-invaders init-ufo init-tank init-arena init-projectiles
   show-level show-player ;
 
-: (combat) ( -- )
-  begin victory? if next-level prepare-combat then
+: (battle) ( -- )
+  begin victory? if next-level prepare-battle then
         break-key? if quit then \ XXX TMP
         fly-projectile drive
         fly-projectile shoot
@@ -2330,11 +2468,13 @@ variable invasion-delay  8 invasion-delay !
         fly-projectile catastrophe @
   until ;
 
-: combat ( -- ) prepare-combat (combat) defeat ;
+  \ XXX TODO -- Improve the logic and the names of this words.
 
-: battle ( -- ) prepare-battle combat game-over ;
+: battle ( -- ) prepare-battle (battle) defeat ;
 
-: run ( -- ) begin instructions battle again ;
+: war ( -- ) prepare-war battle game-over ;
+
+: run ( -- ) begin mobilize war again ;
 
   \ ===========================================================
   cr .( Debugging tools)  debug-point \ {{{1
@@ -2344,7 +2484,13 @@ variable invasion-delay  8 invasion-delay !
 
 : ni ( -- ) next-invader ;
 : mi ( -- ) move-invader ;
-: ini ( -- ) prepare-battle prepare-combat ;
+: ini ( -- ) prepare-war prepare-battle ;
+
+: h ( -- ) 7 attr! home ; \ Home
+: a ( -- ) cls building h ; \ Arena
+: t ( -- ) .tank h ;
+: tl ( -- ) <tank h ; \ Move tank left
+: tr ( -- ) tank> h ; \ Move tank right
 
 : bc ( -- )
   cls
@@ -2360,6 +2506,7 @@ variable invasion-delay  8 invasion-delay !
   container-bottom .2x1sprite 8 emit
   broken-bottom-right-container .1x1sprite cr ;
   \ Show the graphics of the broken containers.
+
 
 cls .( Nuclear invaders)
 cr version type

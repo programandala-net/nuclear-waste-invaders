@@ -1,10 +1,15 @@
 = Nuclear Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-01-13
+:revdate: 2017-02-26
 
-.2017-02-25:
+.2017-02-26:
 
-Remove extra lifes.
+Max ammo, with a method or place to get more.
+
+.2017-02-26:
+
+Make the building touch the ground. Then make the tank invisible when
+it moves inside the building.
 
 .2017-01-13:
 
@@ -27,8 +32,6 @@ Show an icon of the free projectiles: A graphic with 0..3 bars, or
 .2016-10-16:
 
 Effect: the invaders eat the containers.
-
-Idea: Don't repair the building when using a new life...
 
 Keep moving the projectiles and the invaders after the invasion,
 during the future final effect.
