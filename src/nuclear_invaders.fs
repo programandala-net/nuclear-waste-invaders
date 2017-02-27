@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version ( -- ca len ) s" 0.36.0-pre.3+201702270039" ;
+: version ( -- ca len ) s" 0.36.0-pre.4+201702270114" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -86,6 +86,7 @@ need c+!
   cr .(   -Math) \ {{{2
 
 need d< need -1|1 need 2/ need between need random need binary
+need within
 
   \ --------------------------------------------
   cr .(   -Data structures) \ {{{2
@@ -223,7 +224,7 @@ tank-y cconstant arena-bottom-y
               white attr-setter in-text-attr
          arena-attr attr-setter in-arena-attr
  white papery red + attr-setter in-brick-attr
-  red papery cyan + attr-setter in-door-attr
+              white attr-setter in-door-attr
                 red attr-setter in-broken-wall-attr
        blue brighty attr-setter in-tank-attr
                blue attr-setter in-life-attr
@@ -823,45 +824,25 @@ sprite-string flying-invader-3$ ( -- ca len )
     \ of the latest sprite.
 [then]
 
-  \ 00111011
-  \ 00111011
-  \ 00111011
-  \ 00000000
-  \ 00111111
-  \ 00111111
-  \ 00111111
-  \ 00000000
-    \ XXX OLD
-
-11110000
-11111000
-11111000
-11111000
-11111000
-11111000
-11111000
-11111000
+11111111
+00111111
+00011111
+00011111
+00011111
+00011111
+00011111
+00011111
 
 1x1sprite left-door
 
-  \ 11111100
-  \ 11111100
-  \ 11111100
-  \ 00000100
-  \ 11011100
-  \ 11011100
-  \ 11011100
-  \ 00000000
-    \ XXX OLD
-
-00001111
-00011111
-00011111
-00011111
-00011111
-00011111
-00011111
-00011111
+11111111
+11111100
+11111000
+11111000
+11111000
+11111000
+11111000
+11111000
 
 1x1sprite right-door
 
@@ -1417,9 +1398,9 @@ variable containers-left-x   variable containers-right-x
   \ Draw a floor of the building at row _y_.
 
 : ground-floor ( y -- )
-  building-left-x @ swap at-xy
+  building-left-x @ 1+ swap at-xy
   in-door-attr  left-door emit-udg
-  in-brick-attr brick building-width @ 2- .1x1sprites
+  in-brick-attr brick building-width @ 4 - .1x1sprites
   in-door-attr  right-door emit-udg ;
   \ Draw the ground floor of the building at row _y_.
 
@@ -1588,7 +1569,7 @@ variable transmission-delay  transmission-delay off
   \ Does the tank move? Return its x increment.
 
 : outside? ( col -- f )
-  building-left-x @ building-right-x @ between 0= ;
+  building-left-x @ 1+ building-right-x @ within 0= ;
   \ Is column _col_ outside the building?
 
 : next-col ( col -- ) 1+ 33 swap - 23688 c!  1 23684 +! ;
