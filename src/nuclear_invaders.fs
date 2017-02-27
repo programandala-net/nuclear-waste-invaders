@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version ( -- ca len ) s" 0.36.0-pre.4+201702270114" ;
+: version ( -- ca len ) s" 0.36.0-201702271803" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -825,24 +825,24 @@ sprite-string flying-invader-3$ ( -- ca len )
 [then]
 
 11111111
+01111111
 00111111
-00011111
-00011111
-00011111
-00011111
-00011111
-00011111
+00111111
+00111111
+00111111
+00111111
+00111111
 
 1x1sprite left-door
 
 11111111
+11111110
 11111100
-11111000
-11111000
-11111000
-11111000
-11111000
-11111000
+11111100
+11111100
+11111100
+11111100
+11111100
 
 1x1sprite right-door
 
@@ -1455,11 +1455,6 @@ variable used-projectiles  used-projectiles off
 
 : init-level ( -- ) level off  next-level ;
   \ Init the level number and the related variables.
-
-: level-message ( -- ca len )
-  in-text-attr s" LEVEL " level @ s>d <# # #> s+ ;
-
-: show-level ( -- ) level-message message ;
 
   \ ===========================================================
   cr .( Tank)  debug-point \ {{{1
@@ -2421,6 +2416,8 @@ variable trigger-delay-counter  trigger-delay-counter off
   cr .( Main)  debug-point \ {{{1
 
 : .game-over ( -- ) s" GAME OVER" message ;
+  \ XXX TMP --
+  \ XXX TODO -- Rewrite.
 
 : game-over ( -- ) .game-over check-record ;
 
@@ -2462,7 +2459,7 @@ variable invasion-delay  8 invasion-delay !
 : prepare-battle ( -- )
   catastrophe off
   init-invaders init-ufo init-tank init-arena init-projectiles
-  show-level show-player ;
+  show-player ;
 
 : (battle) ( -- )
   begin victory? if next-level prepare-battle then
