@@ -5,15 +5,12 @@
 
 ( nuclear-invaders )
 
-  \ XXX UNDER DEVELOPMENT
-
 only forth definitions
-need wordlist>vocabulary
+
 wordlist dup constant nuclear-invaders-wordlist
-         dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version ( -- ca len ) s" 0.37.0-pre.3+201702281353" ;
+: version ( -- ca len ) s" 0.37.0+201702281549" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -1234,11 +1231,6 @@ columns udg/invader - cconstant invaders-max-x
 10 cconstant max-invaders
 10 cconstant actual-invaders \ XXX TMP -- for debugging
 
-: half ( -- )
-  [ max-invaders 2/ ] literal !> actual-invaders ;
-  \ Reduce the actual invaders to the left half.
-  \ XXX TMP -- for debugging and testing
-
 0
 
   \ XXX TODO -- reorder for speed: place the most used fields
@@ -1268,8 +1260,10 @@ max-invaders /invader * constant /invaders
 create invaders-data /invaders allot
   \ Invaders data table.
 
-: 'invader ( -- a )
-  current-invader @ /invader * invaders-data + ;
+: invader>data ( n -- a ) /invader * invaders-data + ;
+  \ Convert invader number n_ to its data address _a_.
+
+: 'invader ( -- a ) current-invader @ invader>data ;
   \ Address _a_ of the current invader data.
 
 : invader-active         ( -- a ) 'invader ~active ;
@@ -1706,8 +1700,6 @@ defer debug-data-pause ( -- )
   projectile-x c@ projectile-y c@ ;
   \ Coordinates of the projectile.
 
-  special-debug-point \ ' -1|1 cr u. \ XXX INFORMER
-
   \ ===========================================================
   cr .( Init)  debug-point \ {{{1
 
@@ -1715,48 +1707,31 @@ defer debug-data-pause ( -- )
   [pixel-projectile] [ 0= ] [if]  init-ocr  [then]
   init-level  score off
   cls status-bars ;
-  special-debug-point \ ' -1|1 cr u. \ XXX INFORMER
 
 : parade ( -- )
   in-invader-attr
-  flying-invader-1 dup flying-invader-2 dup flying-invader-3
-  building-bottom-y [ building-top-y 1+ ] literal
-  do
-    invaders-min-x i at-xy dup .2x1sprite
-    invaders-max-x i at-xy     .2x1sprite
-  2 +loop ;
-  \ Show the invaders at their initial positions.
-  \
-  \ XXX FIXME -- This depends on the building, but not on the
-  \ initial data of the invaders!
-
-  special-debug-point \ ' -1|1 cr u. \ XXX INFORMER
+  max-invaders 0 do
+    i invader>data dup >r ~initial-x @ r@ ~y @ at-xy
+                       r> ~flying-sprite @ .2x1sprite
+  loop ;
 
 : init-arena ( -- )  -arena building tank-ready parade ;
 
   \ ===========================================================
   cr .( Instructions)  debug-point \ {{{1
 
-  special-debug-point \ ' -1|1 cr u. \ XXX INFORMER
-
 : title ( -- )
   s" NUCLEAR INVADERS" 0 center-type
   version 1 center-type ;
 
-  special-debug-point \ XXX INFORMER
-
 : (c) ( -- ) 127 emit ;
   \ Print the copyright symbol.
-
-  special-debug-point \ XXX INFORMER
 
 : .copyright ( -- )
   row
   1 over    at-xy (c) ."  2016 Marcos Cruz"
   8 swap 1+ at-xy           ." (programandala.net)" ;
   \ Print the copyright notice at the current coordinates.
-
-  special-debug-point \ XXX INFORMER
 
   \ : f ( "name" -- )
   \   s" show-copyright" defined ?dup 0exit find-name-from u. ;
@@ -1772,19 +1747,11 @@ defer debug-data-pause ( -- )
   \   9 swap 4 + at-xy ." Fire " kk-fire#  .control ;
   \   \ Print controls at the current row.
 
-  special-debug-point \ XXX INFORMER
-
 : left-key$ ( -- ca len ) kk-left# kk#>string ;
-
-  special-debug-point \ XXX INFORMER
 
 : right-key$ ( -- ca len ) kk-right# kk#>string ;
 
-  special-debug-point \ XXX INFORMER
-
 : fire-key$ ( -- ca len ) kk-fire# kk#>string ;
-
-  special-debug-point \ XXX INFORMER
 
 : .controls-legend ( -- )
   10 at-x left-arrow$  type-udg
@@ -1811,8 +1778,6 @@ true [if] \ XXX OLD
   \ Print an item of the score table, with sprite string _ca2
   \ len2_ and description _ca1 len1_
 
-  special-debug-point \ XXX INFORMER
-
 : .score-table ( -- )
   xy 2dup  at-xy s" 10 points"
            in-invader-attr flying-invader-1$ .score-item
@@ -1823,8 +1788,6 @@ true [if] \ XXX OLD
        3 + at-xy s" bonus"
            in-ufo-attr ufo$ .score-item ;
    \ Print the score table at the current coordinates.
-
-  special-debug-point \ XXX INFORMER
 
 [else] \ XXX NEW
 
@@ -1857,8 +1820,6 @@ true [if] \ XXX OLD
    \ Print the score table at the current coordinates.
 
 [then]
-
-  special-debug-point \ XXX INFORMER
 
 : show-score-table ( -- ) 9 4 at-xy .score-table ;
 
@@ -2503,6 +2464,10 @@ variable invasion-delay  8 invasion-delay !
 
   \ ===========================================================
   cr .( Debugging tools)  debug-point \ {{{1
+
+: half ( -- )
+  [ max-invaders 2/ ] literal !> actual-invaders ;
+  \ Reduce the actual invaders to the left half.
 
 : .udgs ( -- ) cr last-udg 1+ 0 do i emit-udg loop ;
   \ Print all game UDGs.
