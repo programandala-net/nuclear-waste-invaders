@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version ( -- ca len ) s" 0.36.0-201702271803" ;
+: version ( -- ca len ) s" 0.37.0-pre.1+201702280151" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -46,6 +46,9 @@ cr cr .( Nuclear Invaders) cr version type cr
 false constant [pixel-projectile] immediate
   \ Pixel projectiles (new) instead of UDG projectiles (old)?
   \ XXX TODO -- finish support for pixel projectiles
+
+true constant [landscape] immediate
+  \ Show 8-line landscape. Experimental.
 
   \ ===========================================================
   cr .( Library) \ {{{1
@@ -86,7 +89,7 @@ need c+!
   cr .(   -Math) \ {{{2
 
 need d< need -1|1 need 2/ need between need random need binary
-need within
+need within need even?
 
   \ --------------------------------------------
   cr .(   -Data structures) \ {{{2
@@ -200,11 +203,10 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
   \ Address and size of the screen attributes.
 
      2 cconstant arena-top-y
-    21 cconstant tank-y
+
+21 [landscape] abs 6 * - cconstant tank-y
+
 tank-y cconstant arena-bottom-y
-    23 cconstant status-bar-y
-  \ XXX TMP --
-  \ XXX TODO --
 
   \ ===========================================================
   cr .( Colors)  debug-point \ {{{1
@@ -1159,7 +1161,7 @@ decimal
   \ Overwrite string _ca len_ with blanks, centered on the
   \ given row.
 
- 4 cconstant building-top-y
+4 [landscape] + cconstant building-top-y
 
 building-top-y 1- cconstant message-y \ row for game messages
 
@@ -1347,18 +1349,24 @@ create invaders-data /invaders allot
   \   n3 = points for destroy;
   \   n4 = points for retreat.
 
+create altitudes 12 c, 10 c, 8 c, 6 c, 4 c,
+
+: altitude ( n -- row ) altitudes + c@ ;
+  \ XXX TODO -- Use a calculation instead, using the current
+  \ value of `building-top-y`.
+
 : init-invaders-data ( -- )
   invaders-data /invaders erase
-  13 invaders-max-x -1 invader-1-data
-  11 invaders-max-x -1 invader-1-data
-   9 invaders-max-x -1 invader-2-data
-   7 invaders-max-x -1 invader-2-data
-   5 invaders-max-x -1 invader-3-data
-  13 invaders-min-x  1 invader-1-data
-  11 invaders-min-x  1 invader-1-data
-   9 invaders-min-x  1 invader-2-data
-   7 invaders-min-x  1 invader-2-data
-   5 invaders-min-x  1 invader-3-data
+  0 altitude invaders-max-x -1 invader-1-data
+  1 altitude invaders-max-x -1 invader-1-data
+  2 altitude invaders-max-x -1 invader-2-data
+  3 altitude invaders-max-x -1 invader-2-data
+  4 altitude invaders-max-x -1 invader-3-data
+  0 altitude invaders-min-x  1 invader-1-data
+  1 altitude invaders-min-x  1 invader-1-data
+  2 altitude invaders-min-x  1 invader-2-data
+  3 altitude invaders-min-x  1 invader-2-data
+  4 altitude invaders-min-x  1 invader-3-data
   max-invaders 0 ?do  i init-invader-data  loop ;
   \ Init the data of all invaders.
 
@@ -1375,7 +1383,9 @@ create invader-colors ( -- a )
   \ ===========================================================
   cr .( Building)  debug-point \ {{{1
 
-15 cconstant building-bottom-y
+building-top-y 11 + cconstant building-bottom-y
+  \ XXX TODO -- Rename. This was valid when the building
+  \ was "flying".
 
 variable building-width
 
@@ -1421,7 +1431,11 @@ variable containers-left-x   variable containers-right-x
   \ Draw a brick.
 
 create containers-half
-    ' containers-bottom , ' containers-top ,
+  ' containers-top ' containers-bottom
+    \ execution vectors to display the containers
+  building-top-y even? ?\ swap
+    \ change their order, depending on the building position
+  , ,
 
 : building ( -- )
   building-top
@@ -1430,7 +1444,7 @@ create containers-half
   do   2dup i at-xy .brick
                     i 1 and containers-half array> perform
                     .brick
-  loop 2drop tank-y dup building-bottom-y do i floor loop
+  loop 2drop tank-y dup building-bottom-y ?do i floor loop
                         ground-floor ;
   \ Draw the building and the nuclear containers.
 
@@ -1707,6 +1721,9 @@ defer debug-data-pause ( -- )
     invaders-max-x i at-xy     .2x1sprite
   2 +loop ;
   \ Show the invaders at their initial positions.
+  \
+  \ XXX FIXME -- This depends on the building, but not on the
+  \ initial data of the invaders!
 
   special-debug-point \ ' -1|1 cr u. \ XXX INFORMER
 
