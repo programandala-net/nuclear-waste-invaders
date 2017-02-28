@@ -10,7 +10,7 @@ only forth definitions
 wordlist dup constant nuclear-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.38.0+201702281744" ;
+: version ( -- ca len ) s" 0.39.0+201702282004" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -115,6 +115,7 @@ need type-udg need columns need rows need row need fade
 [else] need ocr [then]
 
 need inverse-off need overprint-off need attr-setter need attr!
+need attr-addr
 
 need black need blue   need red   need magenta need green
 need cyan  need yellow need white
@@ -218,7 +219,6 @@ tank-y cconstant arena-bottom-y
            magenta cconstant ufo-attr
              black cconstant arena-attr
     yellow brighty cconstant radiation-attr
-             white cconstant ruler-attr
             yellow cconstant projectile-attr
 
               white attr-setter in-text-attr
@@ -1188,7 +1188,9 @@ arena-top-y columns * attributes + constant arena-top-attribute
 : score-titles$ ( -- ca len )
   s"  SCORE<1>    RECORD    SCORE<2>" ;
 
-: top-status-bar ( -- )
+1 cconstant status-bar-rows
+
+: status-bar ( -- )
   home in-text-attr score-titles$ type .score .record ;
   \ XXX TODO -- support player 2
 
@@ -1203,25 +1205,6 @@ arena-top-y columns * attributes + constant arena-top-attribute
 : row>pixel ( n1 -- n2 ) 8 * 191 swap - ;
   \ Convert a row (0..23) to a pixel y coordinate (0..191).
   \ XXX TODO -- Move to Solo Forth and rewrite in Z80
-
-: color-ruler ( -- )
-  [ attributes rows 2- columns * + ] literal
-  columns ruler-attr fill ;
-
-: ruler ( -- )
-  [ 0 tank-y row>pixel 8 - pixel-addr nip ] literal
-  columns $FF fill  color-ruler ;
-  \ Draw the ruler of the status bar.
-  \ XXX TODO -- Use bricks instead.
-  \ XXX TODO -- Rename to `ground`.
-
-: bottom-status-bar ( -- ) ruler ;
-  \ Draw the status bar.
-  \ XXX TODO -- Remove.
-
-: status-bars ( -- ) top-status-bar bottom-status-bar ;
-  \ Show the data bars.
-  \ XXX TODO -- Only one status bar.
 
   \ ===========================================================
   cr .( Invaders data)  debug-point \ {{{1
@@ -1705,9 +1688,8 @@ defer debug-data-pause ( -- )
   cr .( Init)  debug-point \ {{{1
 
 : prepare-war ( -- )
-  [pixel-projectile] [ 0= ] [if]  init-ocr  [then]
-  init-level  score off
-  cls status-bars ;
+  [pixel-projectile] [ 0= ] [if] init-ocr [then]
+  init-level score off cls status-bar ;
 
 : parade ( -- )
   in-invader-attr
@@ -2425,9 +2407,8 @@ create attributes-backup /attributes allot
   attributes-backup attributes /attributes cmove ;
 
 : radiation ( -- )
-  [ attributes columns 2 * + ] literal
-  [ /attributes columns 4 * - ] literal
-  radiation-attr fill ;
+  [ attributes columns status-bar-rows * + ] literal
+  [ /attributes ] literal radiation-attr fill ;
 
 : defeat ( -- )
   save-attributes
@@ -2440,8 +2421,14 @@ create attributes-backup /attributes allot
 variable invasion-delay  8 invasion-delay !
   \ XXX TMP -- debugging
 
+: landscape ( -- )
+  [ 0 tank-y 1+ attr-addr ] literal
+  [ /attributes 3 / ] literal level @ papery fill ;
+  \ XXX TMP -- Color the landscape after the current level.
+  \ XXX TODO -- Load the graphic.
+
 : prepare-battle ( -- )
-  catastrophe off
+  landscape  catastrophe off
   init-invaders init-ufo init-tank init-arena init-projectiles
   show-player ;
 
