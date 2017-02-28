@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201702261227
+  \ Last modified: 201702281944
 
   \ -----------------------------------------------------------
   \ Description
@@ -145,6 +145,10 @@
   \
   \ 2017-02-26: Update "hp" notation to "np", after the changes
   \ in the kernel.
+  \
+  \ 2017-02-27: Improve documentation.
+  \
+  \ 2017-02-28: Fix typos in documentation.
 
 ( delimited located needed-word )
 
@@ -394,9 +398,11 @@ defer reneed ( "name" -- ) defer needed ( ca len -- )
   \ [needed] ( "name" -- f )
   \
   \ Parse _name_.  If there's no unresolved `need`, `needed`,
-  \ `reneed` or `reneeded`, return true.  Otherwise, if _name_
+  \ `reneed` or `reneeded`, return _true_.  Otherwise, if _name_
   \ is the needed word specified by the last execution of
   \ `need` or `needed`, return _true_, else return _false_.
+  \
+  \ ``[needed]`` is an `immediate` word.
   \
   \ }doc
 
@@ -408,9 +414,11 @@ defer reneed ( "name" -- ) defer needed ( ca len -- )
   \ [unneeded] ( "name" -- f )
   \
   \ Parse _name_.  If there's no unresolved `need`, `needed`,
-  \ `reneed` or `reneeded`, return false.  Otherwise, if _name_
+  \ `reneed` or `reneeded`, return _false_.  Otherwise, if _name_
   \ is the needed word specified by the last execution of
   \ `need` or `needed`, return _false_, else return _true_.
+  \
+  \ ``[unneeded]`` is an `immediate` word.
   \
   \ }doc
 

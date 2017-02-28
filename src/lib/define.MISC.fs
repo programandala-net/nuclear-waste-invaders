@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201702221550
+  \ Last modified: 201702282019
 
   \ -----------------------------------------------------------
   \ Description
@@ -54,6 +54,10 @@
   \
   \ 2017-02-17: Update notation "behaviour" to "action".
   \ Update cross references.
+  \
+  \ 2017-02-27: Improve documentation.
+  \
+  \ 2017-02-28: Fix typo in documentation.
 
 ( create: ;code :noname nextname )
 
@@ -81,7 +85,7 @@
   \ 2016-04-24: Move `;code` to the library.
 
 : ;code ( -- ) postpone (;code)  finish-code
- ; immediate compile-only ?)
+  ; immediate compile-only ?)
 
   \ XXX TODO -- Improve documentation.
 
@@ -91,6 +95,8 @@
   \
   \ Stop compilation and terminate a new defining word by
   \ compiling the run-time routine `(;code)`.
+  \
+  \ ``;code`` is an `immediate` and `compile-only` word.
   \
   \ Origin: fig-Forth, Forth-79 (Assembler Word Set), Forth-83
   \ (Assembler Extension Word Set), Forth-94 (TOOLS EXT),
@@ -170,8 +176,8 @@
   \ nextname ( ca len -- )
   \
   \ The next defined word will have the name _ca len_; the
-  \ defining word will leave the input stream alone. `nextname`
-  \ works with any defining word.
+  \ defining word will leave the input stream alone.
+  \ ``nextname`` works with any defining word.
   \
   \ Origin: Gforth.
   \
