@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version ( -- ca len ) s" 0.37.0-pre.2+201702281325" ;
+: version ( -- ca len ) s" 0.37.0-pre.3+201702281353" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -2355,8 +2355,8 @@ constant ufo-movements ( -- a )
 : projectile-lost? ( -- f )
   projectile-y c@
   [pixel-projectile]
-  [if]    [ building-top-y row>pixel ] cliteral >
-  [else]  [ building-top-y 1- ] cliteral <
+  [if]    [ arena-top-y row>pixel ] cliteral >
+  [else]  [ arena-top-y 1+ ] cliteral <
   [then] ;
   \ Is the projectile lost?
 
