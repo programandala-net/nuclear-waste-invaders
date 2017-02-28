@@ -10,7 +10,7 @@ only forth definitions
 wordlist dup constant nuclear-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.37.0+201702281549" ;
+: version ( -- ca len ) s" 0.38.0+201702281744" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -135,7 +135,8 @@ need frames@ need ms
   \ --------------------------------------------
   cr .(   -Sound) \ {{{2
 
-need beep need shoot need whip need  metalic
+need bleep need dhz>bleep
+need shoot need whip need lightning1
 
   \ --------------------------------------------
 
@@ -2202,7 +2203,7 @@ constant ufo-movements ( -- a )
 : ufo-impacted ( -- ) ufo-explosion ufo-bonus ;
   \ The UFO has been impacted.
 
-' whip alias invader-bang ( -- )
+' shoot alias invader-bang ( -- )
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
@@ -2231,7 +2232,7 @@ constant ufo-movements ( -- a )
   -1 invaders +!  invader-stamina off  invader-active off ;
   \ The current invader explodes.
 
-' metalic alias retreat-sound
+' lightning1 alias retreat-sound
   \ XXX TMP --
   \ XXX TODO -- look for a proper sound
 
@@ -2303,7 +2304,7 @@ constant ufo-movements ( -- a )
   [then] ;
   \ Show the projectile.
 
-' shoot alias fire-sound ( -- )
+' whip alias fire-sound ( -- )
 
 : -projectile ( -- )
   [pixel-projectile]
