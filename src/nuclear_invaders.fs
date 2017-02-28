@@ -10,7 +10,7 @@ only forth definitions
 wordlist dup constant nuclear-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.39.0+201702282004" ;
+: version ( -- ca len ) s" 0.40.0+201702282126" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -387,22 +387,25 @@ variable ocr-last-udg
   \ ===========================================================
   cr .( Score)  debug-point \ {{{1
 
- 1 cconstant score-y
-14 cconstant record-x
+                     0 cconstant status-bar-y
+                     4 cconstant score-digits
+          status-bar-y cconstant score-y
+                        variable score-x
+columns score-digits - cconstant record-x
 
 2 cconstant max-player
 
 variable players  1 players ! \ 1..max-player
 variable player   1 player !   \ 1..max-player
 
-: score-x ( -- x ) 3 player @ 1- 22 * + ;
-  \ Column of the score of the current player.
+: ?[#] ( n -- ) 0 ?do postpone # loop ; immediate compile-only
+  \ Compile `#` _n_ times.
 
 : (.score) ( n x y -- )
-  at-xy s>d <# # # # # #> in-text-attr type ;
+  at-xy s>d <# [ score-digits ] ?[#] #> in-text-attr type ;
   \ Print score _n_ at coordinates _x y_.
 
-: score-xy ( -- x y ) score-x score-y ;
+: score-xy ( -- x y ) score-x @ score-y ;
   \ Coordinates of the score.
 
 : at-score ( -- ) score-xy at-xy ;
@@ -1185,14 +1188,24 @@ arena-top-y columns * attributes + constant arena-top-attribute
 
 : -arena ( -- ) black-arena wipe-arena ;
 
-: score-titles$ ( -- ca len )
-  s"  SCORE<1>    RECORD    SCORE<2>" ;
+: score$ ( -- ca len ) s" SCORE" ;
+: record$ ( -- ca len ) s" RECORD" ;
 
 1 cconstant status-bar-rows
 
+: .score-label ( -- )
+  score$ dup 1+ score-x ! home type ;
+
+: >record-label-x ( len -- x )
+  [ columns score-digits 1+ - ] cliteral swap - ;
+  \ Get the column _x_ of the record label from its length
+  \ _len_.
+
+: .record-label ( -- )
+  record$ dup >record-label-x at-x type ;
+
 : status-bar ( -- )
-  home in-text-attr score-titles$ type .score .record ;
-  \ XXX TODO -- support player 2
+  in-text-attr .score-label .score .record-label .record ;
 
 : show-player ( -- )
   10 0 do  at-score 4 spaces 64 ms  .score 64 ms  loop ;
