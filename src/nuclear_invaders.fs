@@ -10,7 +10,7 @@ only forth definitions
 wordlist dup constant nuclear-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.40.0+201702282126" ;
+: version ( -- ca len ) s" 0.41.0+201702282233" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -1207,10 +1207,6 @@ arena-top-y columns * attributes + constant arena-top-attribute
 : status-bar ( -- )
   in-text-attr .score-label .score .record-label .record ;
 
-: show-player ( -- )
-  10 0 do  at-score 4 spaces 64 ms  .score 64 ms  loop ;
-  \ Show the current player by making its score blink.
-
 : col>pixel ( n1 -- n2 ) 8 * ;
   \ Convert a row (0..31) to a pixel y coordinate (0..255).
   \ XXX TODO -- Move to Solo Forth and rewrite in Z80
@@ -1724,13 +1720,9 @@ defer debug-data-pause ( -- )
   \ Print the copyright symbol.
 
 : .copyright ( -- )
-  row
-  1 over    at-xy (c) ."  2016 Marcos Cruz"
-  8 swap 1+ at-xy           ." (programandala.net)" ;
+  row 1 over    at-xy (c) ."  2016,2017 Marcos Cruz"
+      8 swap 1+ at-xy           ." (programandala.net)" ;
   \ Print the copyright notice at the current coordinates.
-
-  \ : f ( "name" -- )
-  \   s" show-copyright" defined ?dup 0exit find-name-from u. ;
 
 : show-copyright ( -- ) 0 22 at-xy .copyright ;
 
@@ -1825,9 +1817,7 @@ true [if] \ XXX OLD
 : .players ( -- ) ." [P]layers " players ? ;
    \ Print the number of players at the current coordinates.
 
-: show-players ( -- )
-  exit \ XXX TMP --
-  0 8 at-xy .players ;
+: show-players ( -- ) 0 8 at-xy .players ;
 
 : show-controls ( -- )
   0 12 at-xy .controls
@@ -2441,9 +2431,8 @@ variable invasion-delay  8 invasion-delay !
   \ XXX TODO -- Load the graphic.
 
 : prepare-battle ( -- )
-  landscape  catastrophe off
-  init-invaders init-ufo init-tank init-arena init-projectiles
-  show-player ;
+  landscape catastrophe off init-invaders init-ufo init-tank
+                            init-arena init-projectiles ;
 
 : (battle) ( -- )
   begin victory? if next-level prepare-battle then
