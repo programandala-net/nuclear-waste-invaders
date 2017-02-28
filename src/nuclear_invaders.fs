@@ -13,7 +13,7 @@ wordlist dup constant nuclear-invaders-wordlist
          dup wordlist>vocabulary nuclear-invaders
          dup >order set-current
 
-: version ( -- ca len ) s" 0.37.0-pre.1+201702280151" ;
+: version ( -- ca len ) s" 0.37.0-pre.2+201702281325" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -1349,11 +1349,16 @@ create invaders-data /invaders allot
   \   n3 = points for destroy;
   \   n4 = points for retreat.
 
-create altitudes 12 c, 10 c, 8 c, 6 c, 4 c,
+max-invaders 2 / 1- cconstant top-invader-layer
+  \ The number of the highest invader "layer". The pair
+  \ of invaders that fly nearest the ground are layer 0.
+  \ The pair above them are layer 1, and so on.
 
-: altitude ( n -- row ) altitudes + c@ ;
-  \ XXX TODO -- Use a calculation instead, using the current
-  \ value of `building-top-y`.
+: altitude ( n -- row )
+  top-invader-layer swap - 2* building-top-y + 1+ ;
+  \ Convert invader "layer" _n_ to its actual _row_.  The pair
+  \ of invaders that fly nearest the ground are layer 0.  The
+  \ pair above them are layer 1, and so on.
 
 : init-invaders-data ( -- )
   invaders-data /invaders erase
