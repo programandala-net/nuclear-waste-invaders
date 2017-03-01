@@ -2,6 +2,10 @@
 :author: Marcos Cruz (programandala.net)
 :revdate: 2017-02-28
 
+.2017-03-01:
+
+Add some inertia to the tank.
+
 .2017-02-28:
 
 Make the tank delay through the doors.

@@ -10,7 +10,7 @@ only forth definitions
 wordlist dup constant nuclear-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.41.0+201702282233" ;
+: version ( -- ca len ) s" 0.42.0+201703010145" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -895,8 +895,11 @@ sprite-string flying-invader-3$ ( -- ca len )
 
   \ XXX TODO -- second frame of the tank
 
-  #3 cconstant udg/tank  #3 free-udg dup udg-row[
+  #3 cconstant udg/tank  #3 free-udg dup
 
+  false [if] \ XXX OLD
+
+  udg-row[
   000000000010010000000000
   000000000010010000000000
   000000000110011000000000
@@ -904,8 +907,23 @@ sprite-string flying-invader-3$ ( -- ca len )
   011111111111111111111110
   111111111111111111111111
   111111111111111111111111
-  011111111111111111111110
-  ]udg-row udg/tank 1 set-latest-sprite-size
+  011111111111111111111110 ]udg-row
+
+  [else] \ XXX NEW
+
+  udg-row[
+  000000000010010000000000
+  000111111010010111111100
+  001111111111111111111110
+  011111111111111111111111
+  011010101010101010101011
+  001101110111011101110110
+  000101110111011101110100
+  000010101010101010101000 ]udg-row
+
+  [then]
+
+  udg/tank 1 set-latest-sprite-size
 
 cenum left-tank-udg   ( -- c )
 cenum middle-tank-udg ( -- c )
