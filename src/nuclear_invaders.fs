@@ -10,7 +10,7 @@ only forth definitions
 wordlist dup constant nuclear-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.43.0+201703011612" ;
+: version ( -- ca len ) s" 0.44.0+201703011643" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -1918,8 +1918,10 @@ variable broken-wall-x
 
 : turn-back ( -- )
   invader-x-inc @ negate invader-x-inc !
-  invader-retreating @ invert invader-retreating ! ;
-  \ Make the current invader turn back.
+  invader-retreating @ invert invader-retreating !
+  invader-active on ;
+  \ Make the current invader turn back.  Also activate it, in
+  \ case it's temporarily inactive at the wall of the building.
   \
   \ XXX TODO -- write `negate!` and `invert!` in Z80 in Solo
   \ Forth's library

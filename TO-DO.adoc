@@ -2,39 +2,7 @@
 :author: Marcos Cruz (programandala.net)
 :revdate: 2017-03-01
 
-.2017-03-01:
-
-Change the graphic of the invaders that are delayed at the wall.
-
-.2017-03-01:
-
-Make the invaders that are delayed at the wall retreat as usual, when
-they're shoot.
-
-.2017-03-01:
-
-Add some inertia to the tank.
-
-.2017-02-28:
-
-Make the tank delay through the doors.
-
-.2017-02-28:
-
-Make a hit invader randomly move up to the next layer, if it's free.
-
-.2017-02-26:
-
-Max ammo, with a method or place to get more.
-
-.2017-02-26:
-
-Make the building touch the ground. Then make the tank invisible when
-it moves inside the building.
-
-.2017-01-13:
-
-Improve the visibility of the projectile right above the tank.
+Older first:
 
 .2016-08-01:
 
@@ -78,3 +46,48 @@ Fix: sometimes the projectile erases half of the invader.
 
 Rename UFO to mothership.
 Make the UFO woundable like the invaders: same levels of stamina.
+
+.2017-02-26:
+
+Max ammo, with a method or place to get more.
+
+.2017-02-26:
+
+Make the building touch the ground. Then make the tank invisible when
+it moves inside the building.
+
+.2017-02-28:
+
+Make the tank delay through the doors.
+
+.2017-02-28:
+
+Make a hit invader randomly move up to the next layer, if it's free.
+
+.2017-01-13:
+
+Improve the visibility of the projectile right above the tank.
+
+.2017-03-01:
+
+Make the detection on the wall depend on its actual presence, not on
+the x position. This way the wall will not be detected when it's
+broken.
+
+.2017-03-01:
+
+Now two data fields are used for the invader status: `~active` and
+`~retreating`.
+
+Use only one datum instead, to hold the identifier of the current
+status (attacking, docked, breaking the wall, retreating...). This
+will be simpler to use and more versatile.
+
+.2017-03-01:
+
+Change the graphic of the invaders that are delayed at the wall.
+
+.2017-03-01:
+
+Add some inertia to the tank.
+
