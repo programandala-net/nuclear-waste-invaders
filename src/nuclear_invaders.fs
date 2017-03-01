@@ -10,7 +10,7 @@ only forth definitions
 wordlist dup constant nuclear-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.44.0+201703011643" ;
+: version ( -- ca len ) s" 0.45.0+201703012218" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -1828,52 +1828,45 @@ variable broken-wall-x
 : flying-to-the-right? ( -- f ) invader-x-inc @ 0> ;
   \ Is the current invader flying to the right?
 
+: flying-to-the-left? ( -- f ) invader-x-inc @ 0< ;
+  \ Is the current invader flying to the left?
+
 : retreating? ( -- f ) invader-retreating @ ;
   \ Is the current invader retreating?
 
 : attacking? ( -- f ) retreating? 0= ;
   \ Is the current invader attacking?
 
-: broken-bricks-coordinates ( -- x1 y1 x2 y2 )
-  broken-wall-x @ invader-y @ 1+  2dup 2- ;
-  \ Coordinates of the broken brick above the invader, _x2 y2_,
-  \ and below it, _x1 y1_.
+: broken-bricks-coordinates ( -- x1 y1 x2 y2 x3 y3 )
+  broken-wall-x @ invader-y @ 2dup 1+ 2dup 2- ;
+  \ Coordinates of the broken brick above the invader, _x3 y3_,
+  \ below it, _x3 y3_, and if front of it, _x1 y1_.
 
 : broken-left-wall ( x1 y1 x2 y2 -- )
   at-xy broken-top-left-brick .1x1sprite
-  at-xy broken-bottom-left-brick  .1x1sprite ;
+  at-xy broken-bottom-left-brick .1x1sprite
+  at-xy space ;
   \ Print the broken left wall at the given coordinates of the
-  \ broken brick above the invader, _x2 y2_, and below it, _x1
-  \ y1_.
+  \ broken brick above the invader, _x3 y3_, and below it, _x2
+  \ y2_, and in front of it, _x1 y1_.
+  \
+  \ XXX TODO -- Graphic instead of space.
 
-: broken-right-wall ( x1 y1 x2 y2 -- )
+: broken-right-wall ( x1 y1 x2 y2 x3 y3 -- )
   at-xy broken-top-right-brick .1x1sprite
-  at-xy broken-bottom-right-brick .1x1sprite ;
+  at-xy broken-bottom-right-brick .1x1sprite
+  at-xy space ;
   \ Print the broken right wall at the given coordinates of the
-  \ broken brick above the invader, _x2 y2_, and below it, _x1
-  \ y1_.
+  \ broken brick above the invader, _x3 y3_, and below it, _x2
+  \ y2_, and in front of it, _x1 y1_.
+  \
+  \ XXX TODO -- Graphic instead of space.
 
 : broken-wall ( -- )
   in-broken-wall-attr  broken-bricks-coordinates
   flying-to-the-right? if   broken-left-wall
                        else broken-right-wall then ;
-  \ Show the broken wall of the building, hit by the current
-  \ invader.
-
-: broken-wall? ( -- f )
-  invader-x @ flying-to-the-right?
-  if   1+ building-left-x
-  else    building-right-x
-  then @ dup broken-wall-x ! = ;
-  \ Has the current invader broken the wall of the building?
-  \ Update the x coordinate of the broken wall, just in case.
-
-: hit-wall? ( -- f )
-  invader-x @ flying-to-the-right?
-  if   2+ building-left-x
-  else 1- building-right-x
-  then @ = ;
-  \ Has the current invader hit the wall of the building?
+  \ Show the broken wall of the building.
 
 : broken-left-container ( -- )
   invader-x @ 2+ invader-y @ at-xy
@@ -1902,13 +1895,18 @@ variable broken-wall-x
   then @ = ;
   \ Has the current invader broken a container?
 
-: hit-wall ( -- )
-  invader-active @ if invader-active off then ;
+: hit-wall ( -- ) invader-active off ;
   \ XXX TMP --
 
+: hit-wall? ( -- f )
+  invader-x @ 2+ flying-to-the-left? 3 * +
+  invader-y @ ocr brick =  ;
+  \ Has the current invader hit the wall of the building?
+
+[then]
+
 : ?damages ( -- )
-  hit-wall?    if hit-wall    exit then
-  broken-wall? if broken-wall exit then
+  hit-wall? if hit-wall exit then
   broken-container? dup if   broken-container
                         then catastrophe ! ;
   \ Manage the possible damages caused by the current invader.
@@ -1985,9 +1983,28 @@ variable cure-factor  20 cure-factor !
   \ Undock the current invader randomly, depending on the
   \ number of invaders.
 
-: require-invader ( -- )
-  healthy? if ?undock else ?cure then at-invader .invader ;
+: require-docked-invader ( -- )
+  healthy? if ?undock else ?cure then ;
+
+: docked? ( -- f ) invader-x @ invader-initial-x @ = ;
+  \ Is the current invader docked?
+
+: break-the-wall ( -- )
+  invader-active on
+  invader-x @ flying-to-the-right? if 2+ else 1- then
+  broken-wall-x ! broken-wall ;
+
+: require-entering-invader ( -- )
+  invaders @ random 0= if break-the-wall then ;
+
+: (nonflying-invader) ( -- )
+  docked? if   require-docked-invader
+          else require-entering-invader
+          then at-invader .invader ;
   \ Require the current invader, either inactive or wounded.
+
+: nonflying-invader ( -- )
+  invader-stamina @ if (nonflying-invader) then ;
 
 : last-invader? ( -- f )
   \ current-invader @ [ actual-invaders 1- ] literal = ;
@@ -2001,8 +2018,8 @@ variable cure-factor  20 cure-factor !
   \ Update the invader to the next one.
 
 : move-invader ( -- )
-   invader-active @ if flying-invader exit then
-  invader-stamina @ if require-invader     then ;
+  invader-active @ if   flying-invader
+                   else nonflying-invader then ;
   \ Move the current invader if it's active; else
   \ just try to activate it, if it's alive.
 
