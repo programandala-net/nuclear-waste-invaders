@@ -10,7 +10,7 @@ only forth definitions
 wordlist dup constant nuclear-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.42.0+201703010145" ;
+: version ( -- ca len ) s" 0.43.0+201703011612" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -226,7 +226,7 @@ tank-y cconstant arena-bottom-y
  white papery red + attr-setter in-brick-attr
               white attr-setter in-door-attr
                 red attr-setter in-broken-wall-attr
-       blue brighty attr-setter in-tank-attr
+              white attr-setter in-tank-attr
                blue attr-setter in-life-attr
        invader-attr attr-setter in-invader-attr
      yellow brighty attr-setter in-container-attr
@@ -1511,65 +1511,6 @@ columns udg/tank - 1- cconstant tank-max-x
   [then]  between ;
   \ Is the tank's gun below the building?
 
-false [if]
-
-  \ XXX OLD -- The tank is shown also below the building, after
-  \ the original game.  Besides it flickers, because it's
-  \ deleted and redrawn at every step.
-
-: tank-range ( col -- col' )
-  tank-max-x min tank-min-x max ;
-  \ Adjust the given column to the limits of the tank.
-
-variable transmission-delay-counter
-
-transmission-delay-counter off
-
-8 value transmission-delay
-  \ XXX TODO -- Not used.
-
-: transmission ( -- )
-  transmission-delay-counter @ 1- 0 max
-  transmission-delay-counter ! ;
-  \ Decrement the transmission delay. The minimum is zero.
-
-: transmission-ready? ( -- f )
-  transmission-delay-counter @ 0= ;
-  \ Is the transmission ready?
-
-: moving-tank? ( -- -1|0|1 )
-  kk-left pressed? kk-right pressed? abs +
-  transmission-ready? and ;
-  \ Does the tank move? Return its x increment.
-
-: .tank ( -- ) in-tank-attr tank$ type-udg ;
-  \ Print the tank at the current cursor position.
-
-: at-tank ( -- ) tank-x @ tank-y at-xy ;
-  \ Set the cursor position at the tank's coordinates.
-
-: tank-ready ( -- ) at-tank .tank ;
-  \ Print the tank at its current position.
-
-: -tank ( -- ) at-tank in-arena-attr udg/tank spaces ;
-  \ Delete the tank.
-
-: move-tank ( -1|1 -- )
-  tank-x @ + tank-range dup tank-x ! tank-y at-xy ;
-  \ Increment the column of the tank with the given value, then
-  \ set the cursor position to the coordinates of the tank.
-
-: drive ( -- )
-  update-transmission
-  moving-tank? ?dup 0= ?exit  -tank move-tank .tank ;
-
-[else]
-
-  \ XXX NEW -- The tank is invisible inside the building, which
-  \ is on the ground. The characters that form the tank are
-  \ printed apart, and only the first/last one is erased when
-  \ needed, to reduce flickering.
-
 variable transmission-delay  transmission-delay off
   \ XXX TODO -- Not used.
 
@@ -1590,6 +1531,8 @@ variable transmission-delay  transmission-delay off
 : outside? ( col -- f )
   building-left-x @ 1+ building-right-x @ within 0= ;
   \ Is column _col_ outside the building?
+  \ The most left and most right columns of the building
+  \ are considered outside, because they are the doors.
 
 : next-col ( col -- ) 1+ 33 swap - 23688 c!  1 23684 +! ;
   \ Set the current column to _col+1_, by modifing the
@@ -1597,6 +1540,8 @@ variable transmission-delay  transmission-delay off
   \ the OS cell variable DF_CC (23684) (printing address in the
   \ screen bitmap).  Unfortunately, a bug in the ROM prevents
   \ control character 9 (cursor right) from working.
+  \ This word is needed because `emit-udg` does not update
+  \ the current coordinates.
 
 : ?emit-outside ( col1 c -- col2 )
   over outside? if emit-udg else drop dup next-col then 1+ ;
@@ -1632,10 +1577,6 @@ variable transmission-delay  transmission-delay off
 : <tank ( -- ) -1 tank-x +! (.tank -tank-extreme drop ;
   \ Move the tank to the left.
 
-: tank-ready ( -- ) .tank ;
-  \ Print the tank at its current position.
-  \ XXX TMP -- Transitional. Use `.tank` instead.
-
 : ?<tank ( -- ) tank-x @ tank-min-x = ?exit <tank ;
   \ If the tank column is not the minimum, move the tank to the
   \ left.
@@ -1653,11 +1594,6 @@ constant tank-movements ( -- a )
 : tank-movement ( -- xt|0 ) tank-rudder tank-movements array> ;
 
 : drive ( -- ) transmission tank-movement perform ;
-
-[then]
-
-  \ XXX TODO -- don't delete the whole tank every time, but
-  \ only the character not overwritten by the new position
 
   \ ===========================================================
   cr .( Projectiles)  debug-point \ {{{1
@@ -1725,7 +1661,7 @@ defer debug-data-pause ( -- )
                        r> ~flying-sprite @ .2x1sprite
   loop ;
 
-: init-arena ( -- )  -arena building tank-ready parade ;
+: init-arena ( -- )  -arena building .tank parade ;
 
   \ ===========================================================
   cr .( Instructions)  debug-point \ {{{1
@@ -1927,9 +1863,17 @@ variable broken-wall-x
 : broken-wall? ( -- f )
   invader-x @ flying-to-the-right?
   if   1+ building-left-x
-  else building-right-x
+  else    building-right-x
   then @ dup broken-wall-x ! = ;
   \ Has the current invader broken the wall of the building?
+  \ Update the x coordinate of the broken wall, just in case.
+
+: hit-wall? ( -- f )
+  invader-x @ flying-to-the-right?
+  if   2+ building-left-x
+  else 1- building-right-x
+  then @ = ;
+  \ Has the current invader hit the wall of the building?
 
 : broken-left-container ( -- )
   invader-x @ 2+ invader-y @ at-xy
@@ -1954,16 +1898,18 @@ variable broken-wall-x
 : broken-container? ( -- f )
   invader-x @ flying-to-the-right?
   if   1+ containers-left-x
-  else    containers-right-x then @ = ;
+  else    containers-right-x
+  then @ = ;
   \ Has the current invader broken a container?
 
+: hit-wall ( -- )
+  invader-active @ if invader-active off then ;
+  \ XXX TMP --
+
 : ?damages ( -- )
+  hit-wall?    if hit-wall    exit then
   broken-wall? if broken-wall exit then
   broken-container? dup if   broken-container
-                              \ invader-stamina off
-                                \ XXX TMP -- for debugging
-                              \ invader-active off
-                                \ XXX TMP -- for debugging
                         then catastrophe ! ;
   \ Manage the possible damages caused by the current invader.
 
