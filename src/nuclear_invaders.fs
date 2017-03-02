@@ -10,7 +10,7 @@ only forth definitions
 wordlist dup constant nuclear-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.45.0+201703012218" ;
+: version ( -- ca len ) s" 0.46.0+201703021445" ;
 
 cr cr .( Nuclear Invaders) cr version type cr
 
@@ -86,7 +86,7 @@ need c+!
   cr .(   -Math) \ {{{2
 
 need d< need -1|1 need 2/ need between need random need binary
-need within need even?
+need within need even? need crnd
 
   \ --------------------------------------------
   cr .(   -Data structures) \ {{{2
@@ -1511,18 +1511,12 @@ columns udg/tank - 1- cconstant tank-max-x
   [then]  between ;
   \ Is the tank's gun below the building?
 
-variable transmission-delay  transmission-delay off
-  \ XXX TODO -- Not used.
+create transmission-quality  255 c,
+  \ XXX TODO -- Almost no effect yet (1/256 times only).
+  \ Decrement during the battle.
 
-: transmission ( -- )
-  transmission-delay @ 1- 0 max transmission-delay ! ;
-  \ Decrement the transmission delay. The minimum is zero.
-
-: transmission? ( -- f ) transmission-delay @ 0= ;
-  \ Is the transmission ready?
-  \ XXX TODO -- Not used. Always _true_.
-  \ XXX TODO -- Use a bitmask. This way the delay doesn't need
-  \ initialization. Or remove.
+: transmission? ( -- f ) transmission-quality c@ crnd > ;
+  \ Is the transmission working?
 
 : tank-rudder ( -- -1|0|1 )
   kk-left pressed? kk-right pressed? abs + transmission? and ;
@@ -1593,7 +1587,7 @@ constant tank-movements ( -- a )
 
 : tank-movement ( -- xt|0 ) tank-rudder tank-movements array> ;
 
-: drive ( -- ) transmission tank-movement perform ;
+: drive ( -- ) tank-movement perform ;
 
   \ ===========================================================
   cr .( Projectiles)  debug-point \ {{{1

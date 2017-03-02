@@ -15,8 +15,7 @@ Use pixels instead of characters as projectiles.
 
 .2016-10-15:
 
-Show an icon of the free projectiles: A graphic with 0..3 bars, or
-0..3 graphics.
+Show a graphic of the ammo left.
 
 .2016-10-16:
 
