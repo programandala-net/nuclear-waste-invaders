@@ -1,18 +1,18 @@
-  \ nuclear_invaders.fs
+  \ nuclear_waste_invaders.fs
   \
-  \ This file is part of Nuclear Invaders
-  \ http://programandala.net/en.program.nuclear_invaders.html
+  \ This file is part of Nuclear Waste Invaders
+  \ http://programandala.net/en.program.nuclear_waste_invaders.html
 
-( nuclear-invaders )
+( nuclear-waste-invaders )
 
 only forth definitions
 
-wordlist dup constant nuclear-invaders-wordlist
+wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
 : version ( -- ca len ) s" 0.46.0+201703021445" ;
 
-cr cr .( Nuclear Invaders) cr version type cr
+cr cr .( Nuclear Waste Invaders) cr version type cr
 
 \ Description
 
@@ -141,7 +141,7 @@ need shoot need whip need lightning1
 
   \ --------------------------------------------
 
-nuclear-invaders-wordlist set-current
+nuclear-waste-invaders-wordlist set-current
 
   \ ===========================================================
   cr .( Debug) \ {{{1
@@ -1661,7 +1661,7 @@ defer debug-data-pause ( -- )
   cr .( Instructions)  debug-point \ {{{1
 
 : title ( -- )
-  s" NUCLEAR INVADERS" 0 center-type
+  s" NUCLEAR WASTE INVADERS" 0 center-type
   version 1 center-type ;
 
 : (c) ( -- ) 127 emit ;
@@ -2465,7 +2465,7 @@ variable invasion-delay  8 invasion-delay !
   \ Show the graphics of the broken containers.
 
 
-cls .( Nuclear invaders)
+cls .( Nuclear Waste Invaders)
 cr version type
 cr .( Loaded)
 

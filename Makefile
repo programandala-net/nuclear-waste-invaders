@@ -1,11 +1,11 @@
-# Nuclear Invaders Makefile
+# Makefile
 
 # Author: Marcos Cruz (programandala.net), 2016, 2017
 
-# This file is part of Nuclear Invaders
-# http://programandala.net/en.program.nuclear_invaders.html
+# This file is part of Nuclear Waste Invaders
+# http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 201702272252
+# Last modified: 201703111728
 
 # ==============================================================
 # Requirements
@@ -30,6 +30,8 @@
 # 2017-02-27: Update after the changes in Solo Forth (the filename extension
 # "fs" is used instead of "fsb") and fsb2 (the filename extension of the input
 # file is not preserved).
+#
+# 2017-03-11: Update project name.
 
 # ==============================================================
 # Notes
@@ -52,17 +54,17 @@ MAKEFLAGS = --no-print-directory
 # Main
 
 .PHONY: all
-all: disk_2_nuclear_invaders.mgt
+all: disk_2_nuclear_waste_invaders.mgt
 
 .PHONY : clean
 clean:
 	rm -f tmp/*
-	rm -f disk_2_nuclear_invaders.mgt
+	rm -f disk_2_nuclear_waste_invaders.mgt
 
 secondary_source_files=$(sort $(wildcard src/00*.fs))
 library_source_files=$(sort $(wildcard src/lib/*.fs))
 
-tmp/nuclear_invaders.fba: src/nuclear_invaders.fs
+tmp/nuclear_waste_invaders.fba: src/nuclear_waste_invaders.fs
 	./make/fs2fba.sh $<
 	mv $(basename $<).fba $@
 
@@ -74,13 +76,13 @@ tmp/library.fs: \
 tmp/library.fb: tmp/library.fs
 	fsb2 $<
 
-tmp/disk_2_nuclear_invaders.fb: \
+tmp/disk_2_nuclear_waste_invaders.fb: \
 	tmp/library.fb \
-	tmp/nuclear_invaders.fba
+	tmp/nuclear_waste_invaders.fba
 	cat $^ > $@
 
-disk_2_nuclear_invaders.mgt: tmp/disk_2_nuclear_invaders.fb
+disk_2_nuclear_waste_invaders.mgt: tmp/disk_2_nuclear_waste_invaders.fb
 	cp $< $<.copy
-	make/fb2mgt.sh tmp/disk_2_nuclear_invaders.fb
-	mv tmp/disk_2_nuclear_invaders.mgt .
+	make/fb2mgt.sh tmp/disk_2_nuclear_waste_invaders.fb
+	mv tmp/disk_2_nuclear_waste_invaders.mgt .
 	mv $<.copy $<

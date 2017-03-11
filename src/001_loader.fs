@@ -1,9 +1,9 @@
   \ 001_loader.fs
   \
-  \ This file is part of Nuclear Invaders
-  \ http://programandala.net/en.program.nuclear_invaders.html
+  \ This file is part of Nuclear Waste Invaders
+  \ http://programandala.net/en.program.nuclear_waste_invaders.html
 
-( Nuclear Invaders -- load block  )
+( Nuclear Waste Invaders -- load block  )
 
 [defined] need
 ?\ 2 load
@@ -14,7 +14,7 @@
 
 need load-app
 
-load-app nuclear-invaders
+load-app nuclear-waste-invaders
 
   \ Compile the game.
 
