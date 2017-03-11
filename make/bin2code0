@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# bin2code0
+
+# A wrapper to Metalbrain's bin2code
+# (http://metalbrain.speccy.org/link-eng.htm), to prevent it from
+# returning error code 97.
+
+# By Marcos Cruz (programandala.net)
+
+# 2017-03-11
+
+bin2code $1 $2 $3
+exit 0
+
+# vim: filetype=sh

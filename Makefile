@@ -5,10 +5,13 @@
 # This file is part of Nuclear Waste Invaders
 # http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 201703111728
+# Last modified: 201703111846
 
 # ==============================================================
 # Requirements
+
+# bin2code (by Metalbrain)
+# 	http://metalbrain.speccy.org/link-eng.htm
 
 # cat (from the GNU coreutils)
 
@@ -54,7 +57,7 @@ MAKEFLAGS = --no-print-directory
 # Main
 
 .PHONY: all
-all: disk_2_nuclear_waste_invaders.mgt
+all: disk_2_nuclear_waste_invaders.mgt tmp/landscapes.tap
 
 .PHONY : clean
 clean:
@@ -86,3 +89,12 @@ disk_2_nuclear_waste_invaders.mgt: tmp/disk_2_nuclear_waste_invaders.fb
 	make/fb2mgt.sh tmp/disk_2_nuclear_waste_invaders.fb
 	mv tmp/disk_2_nuclear_waste_invaders.mgt .
 	mv $<.copy $<
+
+scr_landscapes=$(wildcard graphics/landscapes/*.scr)
+tap_landscapes=$(addsuffix .tap,$(scr_landscapes))
+
+%.scr.tap: %.scr
+	make/bin2code0 $< $@ 16384
+
+tmp/landscapes.tap: $(tap_landscapes)
+	cat $^ > $@

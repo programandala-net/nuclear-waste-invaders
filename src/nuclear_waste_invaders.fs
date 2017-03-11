@@ -1,38 +1,39 @@
   \ nuclear_waste_invaders.fs
-  \
+
   \ This file is part of Nuclear Waste Invaders
   \ http://programandala.net/en.program.nuclear_waste_invaders.html
 
 ( nuclear-waste-invaders )
 
-only forth definitions
+\ A game for ZX Spectrum 128, written in Forth with Solo Forth
+\ (http://programandala.net/en.program.solo_forth.html).
 
-wordlist dup constant nuclear-waste-invaders-wordlist
-         dup >order set-current
-
-: version ( -- ca len ) s" 0.46.0+201703021445" ;
-
-cr cr .( Nuclear Waste Invaders) cr version type cr
-
-\ Description
-
-\ This game is a ZX Spectrum port (for Solo Forth:
-\ http://programandala.net/en.program.solo_forth.html) of a
-\ game written by Dancresp in 2013 for Jupiter ACE
-\ (http://www.zonadepruebas.com/viewtopic.php?t=4231).
-
-  \ This version:
 \ Copyright (C) 2016,2017 Marcos Cruz (programandala.net)
 
-  \ Original version:
-\ Copyright (C) 2013 Scainet Soft
-
+\ =============================================================
 \ License
 
 \ You may do whatever you want with this work, so long as you
 \ retain the copyright/authorship/acknowledgment/credit
 \ notice(s) and this license in all redistributed copies and
 \ derived works.  There is no warranty.
+
+\ =============================================================
+\ Credit
+
+\ Nuclear Waste Invaders was inspired by and is based on
+\ Nuclear Invaders (Copyright 2013 Scainet Soft), written by
+\ Dancresp for Jupiter ACE:
+\ http://www.zonadepruebas.com/viewtopic.php?t=4231.
+
+only forth definitions
+
+wordlist dup constant nuclear-waste-invaders-wordlist
+         dup >order set-current
+
+: version ( -- ca len ) s" 0.47.0+201703112357" ;
+
+cr cr .( Nuclear Waste Invaders) cr version type cr
 
   \ ===========================================================
   cr .( Options) \ {{{1
@@ -140,6 +141,11 @@ need bleep need dhz>bleep
 need shoot need whip need lightning1
 
   \ --------------------------------------------
+  \ Files
+
+need tape-file>
+
+  \ --------------------------------------------
 
 nuclear-waste-invaders-wordlist set-current
 
@@ -206,6 +212,52 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
 21 [landscape] abs 6 * - cconstant tank-y
 
 tank-y cconstant arena-bottom-y
+
+  \ ===========================================================
+  cr .( Landscapes)  debug-point \ {{{1
+
+7 cconstant landscapes
+
+far-banks 3 + c@ cconstant landscapes-bank
+  \ Use the last far-memory bank to store the landscapes.
+
+/bank negate farlimit +!
+  \ Lower the far-memory limit accordingly.
+
+sys-screen /sys-screen-bitmap 3 / 2 * + constant landscape-scra
+  \ Screen address of the landscape.
+
+attributes /attributes 3 / 2 * + constant landscape-attra
+  \ Attributes address of the landscape.
+
+/sys-screen-bitmap 3 / dup constant /landscape-bitmap
+       /attributes 3 / dup constant /landscape-attributes
+                         + constant /landscape
+
+: landscape> ( n -- a ) /landscape * bank-start + ;
+
+: landscape>screen ( n -- )
+  landscapes-bank bank
+  landscape> dup
+    landscape-scra /landscape-bitmap cmove
+  /landscape-bitmap +
+    landscape-attra /landscape-attributes cmove  default-bank ;
+
+: screen>landscape ( n -- )
+  >r landscapes-bank bank
+  landscape-scra r> landscape> dup >r
+    /landscape-bitmap cmove
+  landscape-attra r> /landscape-bitmap +
+    /landscape-attributes cmove  default-bank ;
+
+: load-landscapes ( -- )
+  landscapes 0 ?do
+    0 0 sys-screen 0 tape-file> i screen>landscape
+  loop ;
+
+  \ cr .( Insert the landscapes tape)
+  \ cr .( then press any key) key drop
+  load-landscapes
 
   \ ===========================================================
   cr .( Colors)  debug-point \ {{{1
@@ -2401,11 +2453,8 @@ create attributes-backup /attributes allot
 variable invasion-delay  8 invasion-delay !
   \ XXX TMP -- debugging
 
-: landscape ( -- )
-  [ 0 tank-y 1+ attr-addr ] literal
-  [ /attributes 3 / ] literal level @ papery fill ;
-  \ XXX TMP -- Color the landscape after the current level.
-  \ XXX TODO -- Load the graphic.
+: landscape ( -- ) level @ 1- landscape>screen ;
+  \ Display the landscape of the current level.
 
 : prepare-battle ( -- )
   landscape catastrophe off init-invaders init-ufo init-tank
