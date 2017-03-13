@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.47.0+201703112357" ;
+: version ( -- ca len ) s" 0.48.0+201703131833" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -87,7 +87,7 @@ need c+!
   cr .(   -Math) \ {{{2
 
 need d< need -1|1 need 2/ need between need random need binary
-need within need even? need crnd
+need within need even? need crnd need 8*
 
   \ --------------------------------------------
   cr .(   -Data structures) \ {{{2
@@ -110,13 +110,14 @@ need type-center-field
 
 need os-chars need os-udg need pixel-addr need udg-row[
 need type-udg need columns need rows need row need fade
+need last-column
 
 [pixel-projectile]
 [if]   need set-pixel need reset-pixel need pixel-attr-addr
 [else] need ocr [then]
 
 need inverse-off need overprint-off need attr-setter need attr!
-need attr-addr
+need attr-addr need pixel-addr
 
 need black need blue   need red   need magenta need green
 need cyan  need yellow need white
@@ -1499,6 +1500,10 @@ create containers-half
     \ change their order, depending on the building position
   , ,
 
+: yard ( row -- )
+                         0 over at-xy .brick
+  [ last-column ] cliteral swap at-xy .brick ;
+
 : building ( -- )
   building-top
   level @  building-left-x @
@@ -1507,7 +1512,7 @@ create containers-half
                     i 1 and containers-half array> perform
                     .brick
   loop 2drop tank-y dup building-bottom-y ?do i floor loop
-                        ground-floor ;
+                        dup ground-floor yard ;
   \ Draw the building and the nuclear containers.
 
   \ ===========================================================
