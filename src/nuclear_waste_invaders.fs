@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.49.0+201703131924" ;
+: version ( -- ca len ) s" 0.50.0+201703132128" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -1503,6 +1503,7 @@ create containers-half
 : yard ( row -- )
                          0 over at-xy .brick
   [ last-column ] cliteral swap at-xy .brick ;
+  \ Draw the yard limits.
 
 : building ( -- )
   building-top
@@ -1518,7 +1519,7 @@ create containers-half
   \ ===========================================================
   cr .( Levels)  debug-point \ {{{1
 
-9 cconstant max-level
+8 cconstant max-level
 
 : increase-level ( -- ) level @ 1+ max-level min level ! ;
   \ Increase the level number.
@@ -1555,7 +1556,7 @@ variable transmission-damage
 
                     1 cconstant tank-min-x
 columns udg/tank - 1- cconstant tank-max-x
-  \ Mininum and maximin columns of the tank.
+  \ Mininum and maximum columns of the tank.
 
 : new-projectile-x ( -- col|x )
   [pixel-projectile]
@@ -2463,8 +2464,18 @@ create attributes-backup /attributes allot
 variable invasion-delay  8 invasion-delay !
   \ XXX TMP -- debugging
 
-: landscape ( -- ) level @ 1- landscape>screen ;
+: north-pole ( -- )
+  [ 0 tank-y 1+ attr-addr ] literal
+  [ /attributes 3 /       ] literal
+  [ white dup papery +    ] cliteral fill ;
+  \ The first level is the North Pole. No landscape graphic
+  \ is displayed, only white ground.
+
+: landscape ( -- )
+  level @ 1 = if   north-pole
+              else level @ 1- landscape>screen then ;
   \ Display the landscape of the current level.
+  \ XXX TODO -- Improve. Simplify. Use 0-index level.
 
 : prepare-battle ( -- )
   landscape catastrophe off init-invaders init-ufo init-tank

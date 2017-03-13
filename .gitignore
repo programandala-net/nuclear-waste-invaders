@@ -3,4 +3,5 @@ _meta
 *.z80
 *.mgt
 *.png
+*.tap
 tmp/

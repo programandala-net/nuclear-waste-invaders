@@ -5,7 +5,8 @@
 # This file is part of Nuclear Waste Invaders
 # http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 201703111846
+# Last modified: 201703132205
+# See change log at the end of the file
 
 # ==============================================================
 # Requirements
@@ -17,24 +18,6 @@
 
 # fsb2 (by Marcos Cruz)
 # 	http://programandala.net/en.program.fsb2.html
-
-# mkmgt (by Marcos Cruz)
-# 	http://programandala.net/en.program.mkmgt.html
-
-# ==============================================================
-# History
-
-# 2016-03-22: First version, based on the Makefile of Solo Forth.
-#
-# 2016-03-23: Adapted to the new splitted library of Solo Forth.
-#
-# 2016-05-13: Modified after the new format of the main source.
-#
-# 2017-02-27: Update after the changes in Solo Forth (the filename extension
-# "fs" is used instead of "fsb") and fsb2 (the filename extension of the input
-# file is not preserved).
-#
-# 2017-03-11: Update project name.
 
 # ==============================================================
 # Notes
@@ -57,12 +40,12 @@ MAKEFLAGS = --no-print-directory
 # Main
 
 .PHONY: all
-all: disk_2_nuclear_waste_invaders.mgt tmp/landscapes.tap
+all: disk_2_nuclear_waste_invaders.mgt tape.tap
 
 .PHONY : clean
 clean:
 	rm -f tmp/*
-	rm -f disk_2_nuclear_waste_invaders.mgt
+	rm -f disk_2_nuclear_waste_invaders.mgt tape.tap
 
 secondary_source_files=$(sort $(wildcard src/00*.fs))
 library_source_files=$(sort $(wildcard src/lib/*.fs))
@@ -96,5 +79,23 @@ tap_landscapes=$(addsuffix .tap,$(scr_landscapes))
 %.scr.tap: %.scr
 	make/bin2code0 $< $@ 16384
 
-tmp/landscapes.tap: $(tap_landscapes)
-	cat $^ > $@
+tape.tap: $(tap_landscapes)
+	cat $(sort $^) > $@
+
+# ==============================================================
+# Change log
+
+# 2016-03-22: First version, based on the Makefile of Solo Forth.
+#
+# 2016-03-23: Adapted to the new splitted library of Solo Forth.
+#
+# 2016-05-13: Modified after the new format of the main source.
+#
+# 2017-02-27: Update after the changes in Solo Forth (the filename extension
+# "fs" is used instead of "fsb") and fsb2 (the filename extension of the input
+# file is not preserved).
+#
+# 2017-03-11: Update project name.
+#
+# 2017-03-13: Move the graphics tape to the root directory and sort its files.
+
