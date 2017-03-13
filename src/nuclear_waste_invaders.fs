@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.48.0+201703131833" ;
+: version ( -- ca len ) s" 0.49.0+201703131924" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -1540,11 +1540,18 @@ variable used-projectiles  used-projectiles off
   \ ===========================================================
   cr .( Tank)  debug-point \ {{{1
 
-variable tank-x \ column
+cvariable tank-x \ column
   \ XXX TODO -- cvariable
 
-: init-tank ( -- ) columns udg/tank - 2/ tank-x ! ;
-  \ Init the tank.
+variable transmission-damage
+
+: repair-transmission ( -- ) transmission-damage off ;
+
+: repair-tank ( -- ) repair-transmission ;
+
+: park-tank ( -- ) columns udg/tank - 2/ tank-x c! ;
+
+: init-tank ( -- ) repair-tank park-tank ;
 
                     1 cconstant tank-min-x
 columns udg/tank - 1- cconstant tank-max-x
@@ -1552,8 +1559,8 @@ columns udg/tank - 1- cconstant tank-max-x
 
 : new-projectile-x ( -- col|x )
   [pixel-projectile]
-  [if]    tank-x @ col>pixel [ udg/tank 8 * 2/ ] literal +
-  [else]  tank-x @ 1+
+  [if]    tank-x c@ col>pixel [ udg/tank 8 * 2/ ] literal +
+  [else]  tank-x c@ 1+
   [then] ;
   \ Return the column _col_ or graphic coordinate _x_ for the
   \ new projectile, depending (at compile time) on the type of
@@ -1568,11 +1575,7 @@ columns udg/tank - 1- cconstant tank-max-x
   [then]  between ;
   \ Is the tank's gun below the building?
 
-create transmission-quality  255 c,
-  \ XXX TODO -- Almost no effect yet (1/256 times only).
-  \ Decrement during the battle.
-
-: transmission? ( -- f ) transmission-quality c@ crnd > ;
+: transmission? ( -- f ) rnd transmission-damage @ u> ;
   \ Is the transmission working?
 
 : tank-rudder ( -- -1|0|1 )
@@ -1610,12 +1613,12 @@ create transmission-quality  255 c,
 : -tank-extreme ( col1 -- col2 )
   in-arena-attr bl-udg ?emit-outside ;
 
-: at-tank@ ( -- col ) tank-x @ dup tank-y at-xy ;
+: at-tank@ ( -- col ) tank-x c@ dup tank-y at-xy ;
   \ Set the cursor position at the tank's coordinates
   \ and return its column _col_.
 
 : tank> ( -- )
-  at-tank@ -tank-extreme tank-parts drop 1 tank-x +! ;
+  at-tank@ -tank-extreme tank-parts drop 1 tank-x c+! ;
   \ Move the tank to the right.
 
 : (.tank ( -- col ) at-tank@ tank-parts ;
@@ -1625,14 +1628,14 @@ create transmission-quality  255 c,
 : .tank ( -- ) (.tank drop ;
   \ Display the tank at its current position.
 
-: <tank ( -- ) -1 tank-x +! (.tank -tank-extreme drop ;
+: <tank ( -- ) -1 tank-x c+! (.tank -tank-extreme drop ;
   \ Move the tank to the left.
 
-: ?<tank ( -- ) tank-x @ tank-min-x = ?exit <tank ;
+: ?<tank ( -- ) tank-x c@ tank-min-x = ?exit <tank ;
   \ If the tank column is not the minimum, move the tank to the
   \ left.
 
-: ?tank> ( -- ) tank-x @ tank-max-x = ?exit tank> ;
+: ?tank> ( -- ) tank-x c@ tank-max-x = ?exit tank> ;
   \ If the tank column is not the maximum, move the tank to the
   \ right.
 
@@ -2357,6 +2360,8 @@ variable trigger-delay-counter  trigger-delay-counter off
 : delay-trigger ( -- )
   trigger-delay trigger-delay-counter ! ;
 
+: damage-transmission ( -- ) 1 transmission-damage +! ;
+
 : fire ( -- )
   1 used-projectiles +!
   x> to projectile#  .debug-data
@@ -2365,7 +2370,7 @@ variable trigger-delay-counter  trigger-delay-counter off
   [if]    [ tank-y row>pixel 1+ ] literal
   [else]  [ tank-y 1- ] literal
   [then]  projectile-y c!
-  .projectile fire-sound delay-trigger ;
+  .projectile fire-sound delay-trigger damage-transmission ;
   \ The tank fires.
   \ XXX TODO -- confirm `tank-y 1-`
 
