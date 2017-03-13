@@ -4,29 +4,24 @@
   \ http://programandala.net/en.program.solo_forth.html
 
   \ Last modified: 201702272224
+  \ See change log at the end of the file
 
-  \ -----------------------------------------------------------
+  \ ===========================================================
   \ Description
 
   \ Words to manipulate or build fonts.
 
-  \ -----------------------------------------------------------
+  \ ===========================================================
   \ Author
 
   \ Marcos Cruz (programandala.net), 2016, 2017.
 
-  \ -----------------------------------------------------------
+  \ ===========================================================
   \ License
 
   \ You may do whatever you want with this work, so long as you
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
-
-  \ -----------------------------------------------------------
-  \ Latest changes
-
-  \ 2017-02-27: Add `outlet-autochars`. Move `get-font` and
-  \ `rom-font` from the UDG module.
 
 ( get-font rom-font )
 
@@ -145,7 +140,7 @@ code outlet-autochars ( a -- )
 
   \ doc{
   \
-  \ outlet-autochars  ( a -- )
+  \ outlet-autochars ( a -- )
   \
   \ Create a modified, bolder copy of the ZX Spectrum ROM font
   \ and store it at _a_. 768 bytes will be used from _a_. Then
@@ -234,5 +229,11 @@ code outlet-autochars ( a -- )
   \ ld (hl),a
   \
   \ ret
+
+  \ ===========================================================
+  \ Change log
+
+  \ 2017-02-27: Add `outlet-autochars`. Move `get-font` and
+  \ `rom-font` from the UDG module.
 
   \ vim: filetype=soloforth

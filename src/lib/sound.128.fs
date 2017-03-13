@@ -4,58 +4,24 @@
   \ http://programandala.net/en.program.solo_forth.html
 
   \ Last modified: 201702281835
+  \ See change log at the end of the file
 
-  \ -----------------------------------------------------------
+  \ ===========================================================
   \ Description
 
   \ Words related to 128k sound.
 
-  \ -----------------------------------------------------------
+  \ ===========================================================
   \ Author
 
   \ Marcos Cruz (programandala.net), 2015, 2016.
 
-  \ -----------------------------------------------------------
+  \ ===========================================================
   \ License
 
   \ You may do whatever you want with this work, so long as you
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
-
-  \ -----------------------------------------------------------
-  \ Latest changes
-
-  \ 2016-04-24: Need `pick`, which has been moved to the
-  \ library.
-  \
-  \ 2016-05-18: Need `vocabulary`, which has been moved to the
-  \ library.
-  \
-  \ 2016-10-10: Fix name of `applause`. Define `/sound` only
-  \ once.
-  \
-  \ 2016-12-20: Rename `jpnext` to `jpnext,` after the change
-  \ in the kernel.
-  \
-  \ 2017-01-02: Convert `zplay` from `z80-asm` to `z80-asm,`.
-  \
-  \ 2017-01-05: Update `need z80-asm,` to `need assembler`.
-  \
-  \ 2017-01-13: Improve documentation.
-  \
-  \ 2017-01-23: Make all remaining words individually
-  \ accessible to `need`.
-  \
-  \ 2017-02-17: Fix typo in documentation.  Update cross
-  \ references.
-  \
-  \ 2017-02-20: Replace `do`, which has been moved to the
-  \ library, with `?do`.
-  \
-  \ 2017-02-28: Fix names of "lightning" effects.  Rename `vol`
-  \ to `!volume`. Add `@volume`. Rename `shutup` to `-mixer`.
-  \ Write `silence`, an upper layer on `-mixer`. Add `@sound`.
-  \ Add `get-mixer`, `set-mixer`.  Improve documentation.
 
 ( /sound sound-register-port sound-write-port !sound @sound )
 
@@ -79,7 +45,7 @@ $FFFD const sound-register-port $BFFD const sound-write-port ?)
 
   \ doc{
   \
-  \ sound-register-port  ( -- a )
+  \ sound-register-port ( -- a )
   \
   \ The I/O port used to select a register of the AY-3-8912
   \ sound generator, before writing a value into it using
@@ -95,7 +61,7 @@ $FFFD const sound-register-port $BFFD const sound-write-port ?)
 
   \ doc{
   \
-  \ sound-write-port  ( -- a )
+  \ sound-write-port ( -- a )
   \
   \ The I/O port used to write to a register of the AY-3-8912
   \ sound generator.
@@ -154,7 +120,7 @@ need !p need sound-register-port need sound-write-port
 
   \ doc{
   \
-  \ !volume  ( b1 b2 -- )
+  \ !volume ( b1 b2 -- )
   \
   \ Store _b1_ at volume register of channel _b2_ (0..2,
   \ equivalent to notation 'A'..'C').
@@ -179,7 +145,7 @@ need !p need sound-register-port need sound-write-port
 
   \ doc{
   \
-  \ @volume  ( b1 -- b2 )
+  \ @volume ( b1 -- b2 )
   \
   \ Fetch _b2_ from the volume register of channel _b1_ (0..2,
   \ equivalent to notation 'A'..'C').
@@ -204,7 +170,7 @@ need !p need sound-register-port need sound-write-port
 
   \ doc{
   \
-  \ set-mixer  ( b -- )
+  \ set-mixer ( b -- )
   \
   \ Set the mixer register of the AY-3-8912 sound
   \ generator to _b_.
@@ -239,7 +205,7 @@ need !p need sound-register-port need sound-write-port
 
   \ doc{
   \
-  \ get-mixer  ( -- b )
+  \ get-mixer ( -- b )
   \
   \ Get the contents _b_ of the mixer register of the
   \ AY-3-8912 sound generator.
@@ -274,7 +240,7 @@ need !p need sound-register-port need sound-write-port
 
   \ doc{
   \
-  \ -mixer  ( -- )
+  \ -mixer ( -- )
   \
   \ Disable the noise and tone mixers for the three channels of
   \ the AY-3-8912 sound generator.
@@ -632,5 +598,40 @@ need sound  hex
 ?\ 00 00 00 00 00 06 07 10 10 10 38 08 00 00 sound explosion2
 
 decimal
+
+  \ ===========================================================
+  \ Change log
+
+  \ 2016-04-24: Need `pick`, which has been moved to the
+  \ library.
+  \
+  \ 2016-05-18: Need `vocabulary`, which has been moved to the
+  \ library.
+  \
+  \ 2016-10-10: Fix name of `applause`. Define `/sound` only
+  \ once.
+  \
+  \ 2016-12-20: Rename `jpnext` to `jpnext,` after the change
+  \ in the kernel.
+  \
+  \ 2017-01-02: Convert `zplay` from `z80-asm` to `z80-asm,`.
+  \
+  \ 2017-01-05: Update `need z80-asm,` to `need assembler`.
+  \
+  \ 2017-01-13: Improve documentation.
+  \
+  \ 2017-01-23: Make all remaining words individually
+  \ accessible to `need`.
+  \
+  \ 2017-02-17: Fix typo in documentation.  Update cross
+  \ references.
+  \
+  \ 2017-02-20: Replace `do`, which has been moved to the
+  \ library, with `?do`.
+  \
+  \ 2017-02-28: Fix names of "lightning" effects.  Rename `vol`
+  \ to `!volume`. Add `@volume`. Rename `shutup` to `-mixer`.
+  \ Write `silence`, an upper layer on `-mixer`. Add `@sound`.
+  \ Add `get-mixer`, `set-mixer`.  Improve documentation.
 
   \ vim: filetype=soloforth
