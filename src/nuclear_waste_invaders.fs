@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.50.0+201703132128" ;
+: version ( -- ca len ) s" 0.51.0+201703142050" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -108,21 +108,21 @@ need type-center-field
   \ --------------------------------------------
   cr .(   -Graphics) \ {{{2
 
-need os-chars need os-udg need pixel-addr need udg-row[
+need os-chars need os-udg need udg-row[
 need type-udg need columns need rows need row need fade
 need last-column
 
 [pixel-projectile]
-[if]   need set-pixel need reset-pixel need pixel-attr-addr
+[if]   need set-pixel need reset-pixel need gxy>attra
 [else] need ocr [then]
 
 need inverse-off need overprint-off need attr-setter need attr!
-need attr-addr need pixel-addr
+need xy>attra
 
 need black need blue   need red   need magenta need green
 need cyan  need yellow need white
 
-need papery need brighty need attr
+need papery need brighty need xy>attr
 
   \ --------------------------------------------
   cr .(   -Keyboard) \ {{{2
@@ -293,7 +293,7 @@ attributes /attributes 3 / 2 * + constant landscape-attra
   \ ===========================================================
   cr .( Global variables)  debug-point \ {{{1
 
-variable level           \ counter (1..max-level)
+variable location        \ counter
 variable score           \ counter
 variable record          \ max score
 variable current-invader \ element of table (0..9)
@@ -1455,15 +1455,15 @@ variable building-width
 variable building-left-x     variable building-right-x
 variable containers-left-x   variable containers-right-x
 
-: set-building-size ( -- )
-  level @ 2* 2+  building-width !
-  [ columns 2/ 1- ] literal \ half of the screen
-  level @ \ half width of all containers
-  2dup 1- - containers-left-x !
-  2dup    - building-left-x !
+: size-building ( -- )
+  [ columns 2/ 1- ] cliteral \ half of the screen
+  location @ 1+              \ half width of all containers
+  dup 2* 2+ building-width     !
+  2dup 1- - containers-left-x  !
+  2dup    - building-left-x    !
   2dup    + containers-right-x !
-       1+ + building-right-x ! ;
-  \ Set the size of the building after the current level.
+       1+ + building-right-x   ! ;
+  \ Set the size of the building after the current location.
 
 : floor ( y -- )
   building-left-x @ swap at-xy
@@ -1507,7 +1507,7 @@ create containers-half
 
 : building ( -- )
   building-top
-  level @  building-left-x @
+  location @ 1+  building-left-x @
   building-bottom-y [ building-top-y 1+ ] literal
   do   2dup i at-xy .brick
                     i 1 and containers-half array> perform
@@ -1517,26 +1517,29 @@ create containers-half
   \ Draw the building and the nuclear containers.
 
   \ ===========================================================
-  cr .( Levels)  debug-point \ {{{1
+  cr .( Locations)  debug-point \ {{{1
 
-8 cconstant max-level
+8 cconstant locations
 
-: increase-level ( -- ) level @ 1+ max-level min level ! ;
-  \ Increase the level number.
+: (next-location ( -- )
+  location @ 1+ locations min location ! ;
+  \ Increase the location number, but not beyond the maximum.
+  \ XXX TMP --
+  \ XXX TODO -- Check the limit to finish the game instead.
 
 variable used-projectiles  used-projectiles off
   \ Counter.
 
-: level-bonus ( -- n )
-  level @ 100 * used-projectiles @ -  0 max ;
-  \ Return bonus _n_ after finishing a level.
+: battle-bonus ( -- n )
+  location @ 100 * used-projectiles @ - 0 max ;
+  \ Return bonus _n_ after winning a battle.
 
-: next-level ( -- ) level-bonus update-score
-                    increase-level set-building-size ;
-  \ Change to the next level.
+: next-location ( -- )
+  battle-bonus update-score (next-location size-building ;
+  \ Change to the next location.
 
-: init-level ( -- ) level off  next-level ;
-  \ Init the level number and the related variables.
+: first-location ( -- ) location off size-building ;
+  \ Init the location number and the related variables.
 
   \ ===========================================================
   cr .( Tank)  debug-point \ {{{1
@@ -1648,7 +1651,7 @@ constant tank-movements ( -- a )
 
 : tank-movement ( -- xt|0 ) tank-rudder tank-movements array> ;
 
-: drive ( -- ) tank-movement perform ;
+: driving ( -- ) tank-movement perform ;
 
   \ ===========================================================
   cr .( Projectiles)  debug-point \ {{{1
@@ -1707,7 +1710,7 @@ defer debug-data-pause ( -- )
 
 : prepare-war ( -- )
   [pixel-projectile] [ 0= ] [if] init-ocr [then]
-  init-level score off cls status-bar ;
+  first-location score off cls status-bar ;
 
 : parade ( -- )
   in-invader-attr
@@ -2287,7 +2290,7 @@ constant ufo-movements ( -- a )
 
 : ufo-impacted? ( -- f )
   [pixel-projectile]
-  [if]   projectile-coords pixel-attr-addr c@ ufo-attr =
+  [if]   projectile-coords gxy>attra c@ ufo-attr =
   [else] projectile-y c@ ufo-y =  [then] ;
 
 : impact ( -- ) ufo-impacted? if   ufo-impacted
@@ -2296,7 +2299,7 @@ constant ufo-movements ( -- a )
 
 : hit-something? ( -- f )
   projectile-coords  [pixel-projectile]
-  [if]   pixel-attr-addr c@ arena-attr <>
+  [if]   gxy>attra c@ arena-attr <>
   [else] ocr 0<> [then] ;
   \ Did the projectile hit something?
 
@@ -2332,7 +2335,7 @@ constant ufo-movements ( -- a )
 : -projectile ( -- )
   [pixel-projectile]
   [if]    projectile-coords reset-pixel
-  [else]  projectile-coords attr projectile-attr <> ?exit
+  [else]  projectile-coords xy>attr projectile-attr <> ?exit
           at-projectile in-arena-attr space
   [then] ;
   \ Delete the projectile.
@@ -2400,13 +2403,13 @@ variable trigger-delay-counter  trigger-delay-counter off
   flying-projectile? if move-projectile then next-projectile ;
   \ Manage the shoot.
 
-: shoot ( -- )
+: shooting ( -- )
   update-trigger
-  trigger-pressed? 0exit
-  trigger-ready? 0exit
-  projectile-left? 0exit
-  gun-below-building? ?exit  fire ;
-  \ Manage the shoot.
+  trigger-pressed?    0exit
+  trigger-ready?      0exit
+  projectile-left?    0exit
+  gun-below-building? ?exit fire ;
+  \ Manage the gun.
 
 : new-record? ( -- f ) score @ record @ > ;
   \ Is there a new record?
@@ -2423,12 +2426,6 @@ variable trigger-delay-counter  trigger-delay-counter off
 
   \ ===========================================================
   cr .( Main)  debug-point \ {{{1
-
-: .game-over ( -- ) s" GAME OVER" message ;
-  \ XXX TMP --
-  \ XXX TODO -- Rewrite.
-
-: game-over ( -- ) .game-over check-record ;
 
   \ : defeat-tune ( -- )
   \   100 200 do  i 20 beep  -5 +loop ;
@@ -2456,8 +2453,10 @@ create attributes-backup /attributes allot
 : defeat ( -- )
   save-attributes
   radiation defeat-tune  2000 ms  fade
-  restore-attributes ;
-  \ XXX TODO -- finish
+  restore-attributes
+  check-record ;
+  \ XXX TODO -- Finish.
+  \ XXX TODO -- Factor.
 
 : victory? ( -- f ) invaders @ 0= ;
 
@@ -2465,37 +2464,36 @@ variable invasion-delay  8 invasion-delay !
   \ XXX TMP -- debugging
 
 : north-pole ( -- )
-  [ 0 tank-y 1+ attr-addr ] literal
-  [ /attributes 3 /       ] literal
-  [ white dup papery +    ] cliteral fill ;
-  \ The first level is the North Pole. No landscape graphic
+  [ 0 tank-y 1+ xy>attra ] literal
+  [ /attributes 3 /      ] literal
+  [ white dup papery +   ] cliteral fill ;
+  \ The first location is the North Pole. No landscape graphic
   \ is displayed, only white ground.
+  \
+  \ XXX TMP --
+  \ XXX TODO -- Add more landscapes when possible.
 
 : landscape ( -- )
-  level @ 1 = if   north-pole
-              else level @ 1- landscape>screen then ;
-  \ Display the landscape of the current level.
-  \ XXX TODO -- Improve. Simplify. Use 0-index level.
+  location @ ?dup if 1- landscape>screen else north-pole then ;
+  \ Display the landscape of the current location.
 
 : prepare-battle ( -- )
   landscape catastrophe off init-invaders init-ufo init-tank
                             init-arena init-projectiles ;
 
-: (battle) ( -- )
-  begin victory? if next-level prepare-battle then
-        break-key? if quit then \ XXX TMP
-        fly-projectile drive
-        fly-projectile shoot
-        fly-projectile manage-ufo
-        fly-projectile invasion
-        fly-projectile catastrophe @
-  until ;
+: fight ( -- ) fly-projectile driving
+               fly-projectile shooting
+               fly-projectile manage-ufo
+               fly-projectile invasion ;
 
-  \ XXX TODO -- Improve the logic and the names of this words.
+: battle-end? ( -- f ) victory? catastrophe @ or ;
 
-: battle ( -- ) prepare-battle (battle) defeat ;
+: battle ( -- ) begin fight battle-end? until ;
 
-: war ( -- ) prepare-war battle game-over ;
+: campaign ( -- ) begin prepare-battle battle victory?
+                  while next-location repeat ;
+
+: war ( -- ) prepare-war campaign defeat ;
 
 : run ( -- ) begin mobilize war again ;
 
