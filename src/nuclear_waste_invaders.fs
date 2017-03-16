@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.54.0+201703161958" ;
+: version ( -- ca len ) s" 0.55.0+201703162324" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -564,7 +564,10 @@ variable latest-sprite-udg
 
 binary
 
-  \ flying invader 1, frame 1
+  \ -----------------------------------------------------------
+  \ Invader species 0
+
+  \ invader species 0, left flying, frame 0
 0000001111000000
 0001111111111000
 0011111111111100
@@ -574,14 +577,13 @@ binary
 0000110110110000
 0011000000001100
 
-2x1sprite flying-invader-0
-sprite-string flying-invader-0$ ( -- ca len )
+2x1sprite left-flying-invader-0
 
-  \ flying invader 1, frame 2
+  \ invader species 0, left flying, frame 1
 0000001111000000
 0001111111111000
 0011111111111100
-0011100110011100
+0011001100111100
 0011111111111100
 0000111001110000
 0001100110011000
@@ -589,11 +591,11 @@ sprite-string flying-invader-0$ ( -- ca len )
 
 2x1sprite!
 
-  \ flying invader 1, frame 3
+  \ invader species 0, left flying, frame 2
 0000001111000000
 0001111111111000
 0011111111111100
-0011100110011100
+0010011001111100
 0011111111111100
 0000111001110000
 0001100110011000
@@ -601,11 +603,11 @@ sprite-string flying-invader-0$ ( -- ca len )
 
 2x1sprite!
 
-  \ flying invader 1, frame 4
+  \ invader species 0, left flying, frame 3
 0000001111000000
 0001111111111000
 0011111111111100
-0011100110011100
+0011001100111100
 0011111111111100
 0000111001110000
 0001100110011000
@@ -613,7 +615,56 @@ sprite-string flying-invader-0$ ( -- ca len )
 
 2x1sprite!
 
-  \ docked invader 1, frame 1
+  \ invader species 0, right flying, frame 0
+0000001111000000
+0001111111111000
+0011111111111100
+0011100110011100
+0011111111111100
+0000011001100000
+0000110110110000
+0011000000001100
+
+2x1sprite right-flying-invader-0
+
+  \ invader species 0, right flying, frame 1
+0000001111000000
+0001111111111000
+0011111111111100
+0011110011001100
+0011111111111100
+0000111001110000
+0001100110011000
+0001100000011000
+
+2x1sprite!
+
+  \ invader species 0, right flying, frame 2
+0000001111000000
+0001111111111000
+0011111111111100
+0011111001100100
+0011111111111100
+0000111001110000
+0001100110011000
+0000110000110000
+
+2x1sprite!
+
+  \ invader species 0, right flying, frame 3
+0000001111000000
+0001111111111000
+0011111111111100
+0011110011001100
+0011111111111100
+0000111001110000
+0001100110011000
+0001100000011000
+
+2x1sprite!
+
+
+  \ invader species 0, docked, frame 0
 0000001111000000
 0001111111111000
 0011111111111100
@@ -625,7 +676,7 @@ sprite-string flying-invader-0$ ( -- ca len )
 
 2x1sprite docked-invader-0
 
-  \ docked invader 1, frame 2
+  \ invader species 0, docked, frame 1
 0000001111000000
 0001111111111000
 0011111111111100
@@ -636,8 +687,9 @@ sprite-string flying-invader-0$ ( -- ca len )
 0011000000001100
 
 2x1sprite!
+sprite-string docked-invader-0$ ( -- ca len )
 
-  \ docked invader 1, frame 3
+  \ invader species 0, docked, frame 2
 0000001111000000
 0001111111111000
 0011111111111100
@@ -649,7 +701,10 @@ sprite-string flying-invader-0$ ( -- ca len )
 
 2x1sprite!
 
-  \ flying invader 2, frame 1
+  \ -----------------------------------------------------------
+  \ Invader species 1
+
+  \ invader species 1, left flying, frame 0
 0000100000100000
 0000010001000000
 0000111111100000
@@ -659,12 +714,9 @@ sprite-string flying-invader-0$ ( -- ca len )
 0010100000101000
 0000011011000000
 
-2x1sprite flying-invader-1
-sprite-string flying-invader-1$ ( -- ca len )
+2x1sprite left-flying-invader-1
 
-binary
-
-  \ flying invader 2 , frame 2
+  \ invader species 1, left flying, frame 1
 0000100000100000
 0000010001000000
 0000111111100000
@@ -676,7 +728,7 @@ binary
 
 2x1sprite!
 
-  \ flying invader 2 , frame 3
+  \ invader species 1, left flying, frame 2
 0000100000100000
 0010010001001000
 0010111111101000
@@ -688,7 +740,7 @@ binary
 
 2x1sprite!
 
-  \ flying invader 2 , frame 4
+  \ invader species 1, left flying, frame 3
 0000100000100000
 0000010001000000
 0000111111100000
@@ -700,7 +752,7 @@ binary
 
 2x1sprite!
 
-  \ docked invader 2, frame 1
+  \ invader species 1, docked, frame 0
 0000100000100000
 0000010001000000
 0000111111100000
@@ -712,7 +764,7 @@ binary
 
 2x1sprite docked-invader-1
 
-  \ docked invader 2, frame 2
+  \ invader species 1, docked, frame 1
 0000100000100000
 0000010001000000
 0000111111100000
@@ -723,8 +775,9 @@ binary
 0000011011000000
 
 2x1sprite!
+sprite-string docked-invader-1$ ( -- ca len )
 
-  \ docked invader 2, frame 3
+  \ invader species 1, docked, frame 2
 0000100000100000
 0000010001000000
 0000111111100000
@@ -736,7 +789,10 @@ binary
 
 2x1sprite!
 
-  \ flying invader 3, frame 1
+  \ -----------------------------------------------------------
+  \ Invader species 2
+
+  \ invader species 2, left flying, frame 0
 0000000110000000
 0000001111000000
 0000011111100000
@@ -746,10 +802,9 @@ binary
 0000010110100000
 0000101001010000
 
-2x1sprite flying-invader-2
-sprite-string flying-invader-2$ ( -- ca len )
+2x1sprite left-flying-invader-2
 
-  \ flying invader 3, frame 2
+  \ invader species 2, left flying, frame 1
 0000000110000000
 0000001111000000
 0000011111100000
@@ -761,7 +816,7 @@ sprite-string flying-invader-2$ ( -- ca len )
 
 2x1sprite!
 
-  \ flying invader 3, frame 3
+  \ invader species 2, left flying, frame 2
 0000000110000000
 0000001111000000
 0000011111100000
@@ -773,7 +828,7 @@ sprite-string flying-invader-2$ ( -- ca len )
 
 2x1sprite!
 
-  \ flying invader 3, frame 4
+  \ invader species 2, left flying, frame 3
 0000000110000000
 0000001111000000
 0000011111100000
@@ -785,7 +840,7 @@ sprite-string flying-invader-2$ ( -- ca len )
 
 2x1sprite!
 
-  \ docked invader 3, frame 1
+  \ invader species 2, docked, frame 0
 0000000110000000
 0000001111000000
 0000011111100000
@@ -797,7 +852,7 @@ sprite-string flying-invader-2$ ( -- ca len )
 
 2x1sprite docked-invader-2
 
-  \ docked invader 3, frame 2
+  \ invader species 2, docked, frame 1
 0000000110000000
 0000001111000000
 0000011111100000
@@ -808,8 +863,9 @@ sprite-string flying-invader-2$ ( -- ca len )
 0000101001010000
 
 2x1sprite!
+sprite-string docked-invader-2$ ( -- ca len )
 
-  \ docked invader 3, frame 2
+  \ invader species 2, docked, frame 1
 0000000110000000
 0000001111000000
 0000011111100000
@@ -821,7 +877,10 @@ sprite-string flying-invader-2$ ( -- ca len )
 
 2x1sprite!
 
-  \ ufo, frame 1
+  \ -----------------------------------------------------------
+  \ Mothership
+
+  \ ufo, frame 0
 0000000000000000
 0000011111100000
 0001111111111000
@@ -833,7 +892,7 @@ sprite-string flying-invader-2$ ( -- ca len )
 
 2x1sprite ufo  sprite-string ufo$ ( -- ca len )
 
-  \ ufo, frame 2
+  \ ufo, frame 1
 0000000000000000
 0000011111100000
 0001111111111000
@@ -845,7 +904,7 @@ sprite-string flying-invader-2$ ( -- ca len )
 
 2x1sprite!
 
-  \ ufo, frame 3
+  \ ufo, frame 2
 0000000000000000
 0000011111100000
 0001111111111000
@@ -857,7 +916,7 @@ sprite-string flying-invader-2$ ( -- ca len )
 
 2x1sprite!
 
-  \ ufo, frame 4
+  \ ufo, frame 3
 0000000000000000
 0000011111100000
 0001111111111000
@@ -866,6 +925,9 @@ sprite-string flying-invader-2$ ( -- ca len )
 1111111111111111
 0011100110011100
 0001000000001000
+
+  \ -----------------------------------------------------------
+  \ Building
 
 2x1sprite!
 
@@ -951,6 +1013,9 @@ sprite-string flying-invader-2$ ( -- ca len )
 11111111
 
 1x1sprite broken-bottom-right-brick
+
+  \ -----------------------------------------------------------
+  \ Tank
 
   \ XXX TODO -- second frame of the tank
 
@@ -1099,6 +1164,11 @@ sprite-string tank$ ( -- ca len ) \ XXX OLD
 
 [then]
 
+  \ -----------------------------------------------------------
+  \ Containers
+
+  \ XXX TODO -- Move to the building section.
+
 0000000000000010
 0010000001100100
 0100011111110000
@@ -1175,6 +1245,9 @@ sprite-string tank$ ( -- ca len ) \ XXX OLD
 00000000
 
 1x1sprite broken-bottom-right-container
+
+  \ -----------------------------------------------------------
+  \ Icons
 
 0000000000000000
 0000000000001000
@@ -1331,16 +1404,18 @@ create species #species /species * allot
   \   c3 = right flying sprite
   \   c4 = points for destroy
   \   c5 = points for retreat
-  \   c6 = species
 
-docked-invader-0 flying-invader-0 flying-invader-0 10 1
-0 set-species
+docked-invader-0
+left-flying-invader-0 right-flying-invader-0
+10 1 0 set-species
 
-docked-invader-1 flying-invader-1 flying-invader-1 20 2
-1 set-species
+docked-invader-1
+left-flying-invader-1 left-flying-invader-1
+20 2 1 set-species
 
-docked-invader-2 flying-invader-2 flying-invader-2 30 3
-2 set-species
+docked-invader-2
+left-flying-invader-2 left-flying-invader-2
+30 3 2 set-species
 
   \ --------------------------------------------
 
@@ -1399,19 +1474,19 @@ create invaders-data /invaders allot
 : invader-retreat-points ( -- a )
   invader-species @ ~retreat-points ;
 
-0 [if] \ XXX TMP -- Not used.
+: flying-to-the-right? ( -- f ) invader-x-inc @ 0> ;
+  \ Is the current invader flying to the right?
 
-: invader-flying-sprite ( -- ca )
-  invader-species @ ~flying-left-sprite ;
-  \ XXX REMARK -- Left and right are  the same at the moment.
-  \ XXX TMP -- Adapt to both directions, when implemented.
-  \ XXX TMP -- Not used.
+: flying-to-the-left? ( -- f ) invader-x-inc @ 0< ;
+  \ Is the current invader flying to the left?
 
-: invader-docked-sprite ( -- ca )
-  invader-species @ ~docked-sprite ;
-  \ XXX TMP -- Not used.
+: retreating? ( -- f ) invader-retreating @ ;
+  \ Is the current invader retreating?
+  \ XXX TODO -- Compare `invader-initial-x` and `invader-x-inc`
+  \ instead; `invader-retrating` can be removed.
 
-[then]
+: attacking? ( -- f ) retreating? 0= ;
+  \ Is the current invader attacking?
 
 : .y/n ( f -- ) if ." Y" else ." N" then space ;
   \ XXX TMP -- for debugging
@@ -1429,11 +1504,17 @@ create invaders-data /invaders allot
 
 : set-flying-sprite ( -- )
   invader-species @ dup
-  ~flying-left-sprite c@ invader-sprite c!
-  ~flying-left-sprite-frames c@ invader-frames c!
+  flying-to-the-left?
+  if   ~flying-left-sprite c@ swap
+       ~flying-left-sprite-frames  c@
+  else ~flying-right-sprite c@ swap
+       ~flying-right-sprite-frames c@
+  then invader-frames c! invader-sprite c!
   0 invader-frame c! ;
   \ XXX REMARK -- Left and right are  the same at the moment.
-  \ XXX TODO -- Adapt to both directions, when implemented.
+  \
+  \ XXX TODO -- Use double-cell fields to copy both fields with
+  \ one operation or use `move`.
 
 : set-docked-sprite ( -- )
   invader-species @ dup
@@ -1831,11 +1912,11 @@ true [if] \ XXX OLD
 
 : .score-table ( -- )
   xy 2dup  at-xy s" 10 points"
-           in-invader-attr flying-invader-0$ .score-item
+           in-invader-attr docked-invader-0$ .score-item
   2dup 1+  at-xy s" 20 points"
-           in-invader-attr flying-invader-1$ .score-item
+           in-invader-attr docked-invader-1$ .score-item
   2dup 2+  at-xy s" 30 points"
-           in-invader-attr flying-invader-2$ .score-item
+           in-invader-attr docked-invader-2$ .score-item
        3 + at-xy s" bonus"
            in-ufo-attr ufo$ .score-item ;
    \ Print the score table at the current coordinates.
@@ -1854,7 +1935,7 @@ true [if] \ XXX OLD
   \   n5 = color
 
 : ufo-data ( -- x1 c2 n3 x4 )
-  docked-invader-0 flying-invader-0 10 1 ;
+  docked-invader-0 left-flying-invader-0 10 1 ;
   \ Data specific to the UFO:
   \   x1 = fake datum;
   \   c2 = sprite;
@@ -1941,18 +2022,6 @@ variable invaders \ counter
 variable broken-wall-x
   \ Column of the wall broken by the current alien.
 
-: flying-to-the-right? ( -- f ) invader-x-inc @ 0> ;
-  \ Is the current invader flying to the right?
-
-: flying-to-the-left? ( -- f ) invader-x-inc @ 0< ;
-  \ Is the current invader flying to the left?
-
-: retreating? ( -- f ) invader-retreating @ ;
-  \ Is the current invader retreating?
-
-: attacking? ( -- f ) retreating? 0= ;
-  \ Is the current invader attacking?
-
 : broken-bricks-coordinates ( -- x1 y1 x2 y2 x3 y3 )
   broken-wall-x @ invader-y c@ 2dup 1+ 2dup 2- ;
   \ Coordinates of the broken brick above the invader, _x3 y3_,
@@ -2030,8 +2099,11 @@ variable broken-wall-x
 : at-home? ( -- f ) invader-x c@ invader-initial-x c@ = ;
   \ Is the current invader at its start position?
 
+: change-direction ( -- )
+  invader-x-inc @ negate invader-x-inc ! ;
+
 : turn-back ( -- )
-  invader-x-inc @ negate invader-x-inc !
+  change-direction set-flying-sprite
   invader-retreating @ invert invader-retreating !
   invader-active on ;
   \ Make the current invader turn back.  Also activate it, in
