@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.52.0+201703152337" ;
+: version ( -- ca len ) s" 0.53.0+201703161908" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -118,7 +118,7 @@ need last-column
 [else] need ocr [then]
 
 need inverse-off need overprint-off need attr-setter need attr!
-need xy>attra
+need attr@ need xy>attra
 
 need black need blue   need red   need magenta need green
 need cyan  need yellow need white
@@ -186,12 +186,17 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
   \   s" attributes drop " evaluate : ;
   \ XXX TMP -- for debugging
 
+: ~~ ( -- )
+  postpone attr@ postpone >r postpone red postpone attr!
+  postpone ~~    postpone r> postpone attr! ;
+  immediate compile-only
+
 : XXX ( -- )
   ~~? @ 0= ?exit
   base @ >r decimal latest .name .s r> base !
   key drop ;
 
-'q' ~~quit-key !  ~~resume-key on  22 ~~y !  ~~? on
+'q' ~~quit-key c!  $FF ~~resume-key c!  22 ~~y c!  ~~? off
 
 : ~~stack-info ( -- )
   home ." rdepth:" rdepth . ;
@@ -294,11 +299,11 @@ attributes /attributes 3 / 2 * + constant landscape-attra
   \ ===========================================================
   cr .( Global variables)  debug-point \ {{{1
 
-variable location        \ counter
-variable score           \ counter
-variable record          \ max score
-variable current-invader \ element of table (0..9)
-variable catastrophe     \ flag (game end condition)
+cvariable location        \ counter
+ variable score           \ counter
+ variable record          \ max score
+cvariable current-invader \ element of table (0..9)
+ variable catastrophe     \ flag (game end condition)
 
 record off
 
@@ -569,8 +574,8 @@ binary
 0000110110110000
 0011000000001100
 
-2x1sprite flying-invader-1
-sprite-string flying-invader-1$ ( -- ca len )
+2x1sprite flying-invader-0
+sprite-string flying-invader-0$ ( -- ca len )
 
   \ flying invader 1, frame 2
 0000001111000000
@@ -618,7 +623,7 @@ sprite-string flying-invader-1$ ( -- ca len )
 0000110110110000
 0011000000001100
 
-2x1sprite docked-invader-1
+2x1sprite docked-invader-0
 
   \ docked invader 1, frame 2
 0000001111000000
@@ -654,8 +659,8 @@ sprite-string flying-invader-1$ ( -- ca len )
 0010100000101000
 0000011011000000
 
-2x1sprite flying-invader-2
-sprite-string flying-invader-2$ ( -- ca len )
+2x1sprite flying-invader-1
+sprite-string flying-invader-1$ ( -- ca len )
 
 binary
 
@@ -705,7 +710,7 @@ binary
 0010100000101000
 0000011011000000
 
-2x1sprite docked-invader-2
+2x1sprite docked-invader-1
 
   \ docked invader 2, frame 2
 0000100000100000
@@ -741,8 +746,8 @@ binary
 0000010110100000
 0000101001010000
 
-2x1sprite flying-invader-3
-sprite-string flying-invader-3$ ( -- ca len )
+2x1sprite flying-invader-2
+sprite-string flying-invader-2$ ( -- ca len )
 
   \ flying invader 3, frame 2
 0000000110000000
@@ -790,7 +795,7 @@ sprite-string flying-invader-3$ ( -- ca len )
 0000010110100000
 0000101001010000
 
-2x1sprite docked-invader-3
+2x1sprite docked-invader-2
 
   \ docked invader 3, frame 2
 0000000110000000
@@ -1293,7 +1298,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
   \ --------------------------------------------
   \ Invader species
 
-3 cconstant #invader-species
+3 cconstant #species
 
 0
   cfield: ~flying-left-sprite
@@ -1304,39 +1309,38 @@ arena-top-y columns * attributes + constant arena-top-attribute
   cfield: ~docked-sprite-frames
   cfield: ~destroy-points
   cfield: ~retreat-points
-cconstant /invader-species
+cconstant /species
 
-create invader-species
-  #invader-species /invader-species * allot
+create species #species /species * allot
   \ Invaders species data table.
 
-: invader-species> ( n -- a )
-  /invader-species * invader-species + ;
+: species>data ( n -- a ) /species * species + ;
 
-: set-invader-species ( c1 c2 c3 c4 c5 c6 -- )
-  invader-species> >r r@ ~retreat-points c!
-                      r@ ~destroy-points c!
-                      r@ ~docked-sprite c!
-                    4 r@ ~docked-sprite-frames c!
-                      r@ ~flying-right-sprite c!
-                    4 r@ ~flying-right-sprite-frames c!
-                      r@ ~flying-left-sprite c!
-                    4 r> ~flying-left-sprite-frames c! ;
+: set-species ( c1 c2 c3 c4 c5 c6 -- )
+  species>data >r r@ ~retreat-points c!
+                  r@ ~destroy-points c!
+                  r@ ~flying-right-sprite c!
+                4 r@ ~flying-right-sprite-frames c!
+                  r@ ~flying-left-sprite c!
+                4 r@ ~flying-left-sprite-frames c!
+                  r@ ~docked-sprite c!
+                3 r> ~docked-sprite-frames c! ;
   \ Init the data of invaders species _c6_:
-  \   c1 = left flying sprite
-  \   c2 = right flying sprite
-  \   c3 = docked sprite
+  \   c1 = docked sprite
+  \   c2 = left flying sprite
+  \   c3 = right flying sprite
   \   c4 = points for destroy
   \   c5 = points for retreat
+  \   c6 = species
 
-docked-invader-1 flying-invader-1 flying-invader-1 10 1
-0 set-invader-species
+docked-invader-0 flying-invader-0 flying-invader-0 10 1
+0 set-species
 
-docked-invader-2 flying-invader-2 flying-invader-2 20 2
-1 set-invader-species
+docked-invader-1 flying-invader-1 flying-invader-1 20 2
+1 set-species
 
-docked-invader-3 flying-invader-3 flying-invader-3 30 3
-2 set-invader-species
+docked-invader-2 flying-invader-2 flying-invader-2 30 3
+2 set-species
 
   \ --------------------------------------------
 
@@ -1351,22 +1355,20 @@ columns udg/invader - cconstant invaders-max-x
   \ XXX TODO -- reorder for speed: place the most used fields
   \ at cell offsets +0, +1, +2, +4
 
-  field: ~active \ XXX TODO -- use `~stamina` instead
   cfield: ~y
   cfield: ~x
-  cfield: ~initial-x
   cfield: ~sprite
   cfield: ~flying-sprite
-  cfield: ~docked-sprite
   cfield: ~frame
+  cfield: ~docked-sprite
+  cfield: ~initial-x
   cfield: ~frames
-  field: ~x-inc
-  field: ~initial-x-inc
-  cfield: ~destroy-points
-  cfield: ~retreat-points
+  field:  ~x-inc
+  field:  ~initial-x-inc
   cfield: ~stamina
-  field: ~retreating
-  cfield: ~species
+  field:  ~active \ XXX TODO -- use `~stamina` instead
+  field:  ~retreating
+  field:  ~species
 cconstant /invader
 
 max-invaders /invader * constant /invaders
@@ -1377,31 +1379,35 @@ create invaders-data /invaders allot
 : invader>data ( n -- a ) /invader * invaders-data + ;
   \ Convert invader number n_ to its data address _a_.
 
-: 'invader ( -- a ) current-invader @ invader>data ;
+: 'invader ( -- a ) current-invader c@ invader>data ;
   \ Address _a_ of the current invader data.
 
-: invader-active         ( -- a ) 'invader ~active ;
-: invader-sprite         ( -- a ) 'invader ~sprite ;
-: invader-flying-sprite  ( -- a ) 'invader ~flying-sprite ;
-: invader-docked-sprite  ( -- a ) 'invader ~docked-sprite ;
-: invader-frame          ( -- a ) 'invader ~frame ;
-: invader-frames         ( -- a ) 'invader ~frames ;
-: invader-destroy-points ( -- a ) 'invader ~destroy-points ;
-: invader-stamina        ( -- a ) 'invader ~stamina ;
-: invader-retreat-points ( -- a ) 'invader ~retreat-points ;
-: invader-retreating     ( -- a ) 'invader ~retreating ;
-: invader-x              ( -- a ) 'invader ~x ;
-: invader-initial-x      ( -- a ) 'invader ~initial-x ;
-: invader-x-inc          ( -- a ) 'invader ~x-inc ;
-: invader-initial-x-inc  ( -- a ) 'invader ~initial-x-inc ;
-: invader-y              ( -- a ) 'invader ~y ;
-: invader-species        ( -- ca ) 'invader ~species ;
+: invader-species       ( -- a  ) 'invader ~species ;
+: invader-active        ( -- a  ) 'invader ~active ;
+: invader-sprite        ( -- ca ) 'invader ~sprite ;
+: invader-flying-sprite ( -- ca ) 'invader ~flying-sprite ;
+: invader-docked-sprite ( -- ca ) 'invader ~docked-sprite ;
+: invader-frame         ( -- ca ) 'invader ~frame ;
+: invader-frames        ( -- ca ) 'invader ~frames ;
+: invader-stamina       ( -- ca ) 'invader ~stamina ;
+: invader-retreating    ( -- a  ) 'invader ~retreating ;
+: invader-x             ( -- ca ) 'invader ~x ;
+: invader-initial-x     ( -- ca ) 'invader ~initial-x ;
+: invader-x-inc         ( -- a  ) 'invader ~x-inc ;
+: invader-initial-x-inc ( -- a  ) 'invader ~initial-x-inc ;
+: invader-y             ( -- ca ) 'invader ~y ;
+
+: invader-destroy-points ( -- a )
+  invader-species @ ~destroy-points ;
+
+: invader-retreat-points ( -- a )
+  invader-species @ ~retreat-points ;
 
 : .y/n ( f -- ) if ." Y" else ." N" then space ;
   \ XXX TMP -- for debugging
 
 : ~~invader-info ( -- )
-  home current-invader @ 2 .r
+  home current-invader c@ 2 .r
   ." Ret.:" invader-retreating @ .y/n
   ." Sta.:" invader-stamina c@ . ;
   \ XXX TMP -- for debugging
@@ -1413,11 +1419,10 @@ create invaders-data /invaders allot
 4 cconstant undocked-invader-frames
 3 cconstant docked-invader-frames
 
-: init-invader-data ( n1 n2 n3 c4 c5 n6 n7 n0 -- )
-  current-invader !
+: set-invader ( c1 c2 c3 c4 c5 c0 -- )
+  current-invader c!
   max-stamina invader-stamina c!
-  invader-retreat-points c!
-  invader-destroy-points c!
+  species>data invader-species !
   invader-flying-sprite c!
   dup invader-docked-sprite c!
       invader-sprite c!
@@ -1426,40 +1431,37 @@ create invaders-data /invaders allot
       invader-x c!
   invader-y c!
   docked-invader-frames invader-frames c! ;
-  \ Init data of invader_n0_ with default values:
-  \   n1 = y;
-  \   n2 = x = initial x;
-  \   n3 = initial x inc;
-  \   c4 = docked sprite;
-  \   c5 = flying sprite;
-  \   n6 = points for destroy;
-  \   n7 = points for retreat.
+  \ Set initial data of invader_c0_:
+  \   c1 = y
+  \   c2 = x = initial x
+  \   c3 = initial x inc
+  \   c4 = docked sprite
+  \   c5 = flying sprite
+  \   c6 = species
+  \   c0 = invader
   \ Other fields don't need initialization, because they
   \ contain zero (default) or a constant.
 
-: invader-1-data ( -- c1 c2 n3 n4 )
-  docked-invader-1 flying-invader-1 10 1 ;
+: species-0 ( -- c1 c2 c3 )
+  docked-invader-0 flying-invader-0 0 ;
   \ Data specific to invader type 1
-  \   c1 = docked sprite;
-  \   c2 = flying sprite;
-  \   n3 = points for destroy;
-  \   n4 = points for retreat.
+  \   c1 = docked sprite
+  \   c2 = flying sprite
+  \   c3  = species
 
-: invader-2-data ( -- c1 c2 n3 n4 )
-  docked-invader-2 flying-invader-2 20 2 ;
+: species-1 ( -- c1 c2 c3 )
+  docked-invader-1 flying-invader-1 1 ;
   \ Data specific to invader type 2.
-  \   c1 = docked sprite;
-  \   c2 = flying sprite;
-  \   n3 = points for destroy;
-  \   n4 = points for retreat.
+  \   c1 = docked sprite
+  \   c2 = flying sprite
+  \   c3  = species
 
-: invader-3-data ( -- c1 c2 n3 n4 )
-  docked-invader-3 flying-invader-3 30 3 ;
+: species-2 ( -- c1 c2 c3 )
+  docked-invader-2 flying-invader-2 2 ;
   \ Data specific to invader type 3.
-  \   c1 = docked sprite;
-  \   c2 = flying sprite;
-  \   n3 = points for destroy;
-  \   n4 = points for retreat.
+  \   c1 = docked sprite
+  \   c2 = flying sprite
+  \   c3  = species
 
 max-invaders 2 / 1- cconstant top-invader-layer
   \ The number of the highest invader "layer". The pair
@@ -1474,27 +1476,26 @@ max-invaders 2 / 1- cconstant top-invader-layer
 
 : init-invaders-data ( -- )
   invaders-data /invaders erase
-  0 altitude invaders-max-x -1 invader-1-data
-  1 altitude invaders-max-x -1 invader-1-data
-  2 altitude invaders-max-x -1 invader-2-data
-  3 altitude invaders-max-x -1 invader-2-data
-  4 altitude invaders-max-x -1 invader-3-data
-  0 altitude invaders-min-x  1 invader-1-data
-  1 altitude invaders-min-x  1 invader-1-data
-  2 altitude invaders-min-x  1 invader-2-data
-  3 altitude invaders-min-x  1 invader-2-data
-  4 altitude invaders-min-x  1 invader-3-data
-  max-invaders 0 ?do  i init-invader-data  loop ;
+  0 altitude invaders-max-x -1 species-0 9 set-invader
+  1 altitude invaders-max-x -1 species-0 8 set-invader
+  2 altitude invaders-max-x -1 species-1 7 set-invader
+  3 altitude invaders-max-x -1 species-1 6 set-invader
+  4 altitude invaders-max-x -1 species-2 5 set-invader
+  0 altitude invaders-min-x  1 species-0 4 set-invader
+  1 altitude invaders-min-x  1 species-0 3 set-invader
+  2 altitude invaders-min-x  1 species-1 2 set-invader
+  3 altitude invaders-min-x  1 species-1 1 set-invader
+  4 altitude invaders-min-x  1 species-2 0 set-invader ;
   \ Init the data of all invaders.
 
-create invader-colors ( -- a )
+create invader-stamina-attr ( -- ca )
   dying-invader-attr    c,
   wounded-invader-attr  c,
   sane-invader-attr     c,
-  \ Table to index the invader stamina to its proper color.
+  \ Table to index the invader stamina to its proper attribute.
 
-: invader-proper-color ( -- n )
-  invader-stamina c@ [ invader-colors 1- ] literal + c@ ;
+: invader-proper-attr ( -- c )
+  invader-stamina c@ [ invader-stamina-attr 1- ] literal + c@ ;
   \ Invader proper color for its stamina.
 
   \ ===========================================================
@@ -1511,7 +1512,7 @@ variable containers-left-x   variable containers-right-x
 
 : size-building ( -- )
   [ columns 2/ 1- ] cliteral \ half of the screen
-  location @ 1+              \ half width of all containers
+  location c@ 1+              \ half width of all containers
   dup 2* 2+ building-width     !
   2dup 1- - containers-left-x  !
   2dup    - building-left-x    !
@@ -1561,7 +1562,7 @@ create containers-half
 
 : building ( -- )
   building-top
-  location @ 1+  building-left-x @
+  location c@ 1+  building-left-x @
   building-bottom-y [ building-top-y 1+ ] literal
   do   2dup i at-xy .brick
                     i 1 and containers-half array> perform
@@ -1576,7 +1577,7 @@ create containers-half
 8 cconstant locations
 
 : (next-location ( -- )
-  location @ 1+ locations min location ! ;
+  location c@ 1+ locations min location c! ;
   \ Increase the location number, but not beyond the maximum.
   \ XXX TMP --
   \ XXX TODO -- Check the limit to finish the game instead.
@@ -1585,14 +1586,14 @@ variable used-projectiles  used-projectiles off
   \ Counter.
 
 : battle-bonus ( -- n )
-  location @ 100 * used-projectiles @ - 0 max ;
+  location c@ 100 * used-projectiles @ - 0 max ;
   \ Return bonus _n_ after winning a battle.
 
 : next-location ( -- )
   battle-bonus update-score (next-location size-building ;
   \ Change to the next location.
 
-: first-location ( -- ) location off size-building ;
+: first-location ( -- ) 0 location c! size-building ;
   \ Init the location number and the related variables.
 
   \ ===========================================================
@@ -1728,10 +1729,10 @@ create 'projectile-x #projectiles allot
 create 'projectile-y #projectiles allot
   \ Tables for the coordinates of all projectiles.
 
-: projectile-x ( -- a ) 'projectile-x projectile# + ;
+: projectile-x ( -- ca ) 'projectile-x projectile# + ;
   \ Address of the x coordinate of the current projectile.
 
-: projectile-y ( -- a ) 'projectile-y projectile# + ;
+: projectile-y ( -- ca ) 'projectile-y projectile# + ;
   \ Address of the y coordinate of the current projectile.
 
 defer .debug-data ( -- )
@@ -1834,11 +1835,11 @@ true [if] \ XXX OLD
 
 : .score-table ( -- )
   xy 2dup  at-xy s" 10 points"
-           in-invader-attr flying-invader-1$ .score-item
+           in-invader-attr flying-invader-0$ .score-item
   2dup 1+  at-xy s" 20 points"
-           in-invader-attr flying-invader-2$ .score-item
+           in-invader-attr flying-invader-1$ .score-item
   2dup 2+  at-xy s" 30 points"
-           in-invader-attr flying-invader-3$ .score-item
+           in-invader-attr flying-invader-2$ .score-item
        3 + at-xy s" bonus"
            in-ufo-attr ufo$ .score-item ;
    \ Print the score table at the current coordinates.
@@ -1848,6 +1849,7 @@ true [if] \ XXX OLD
 : .score-item ( c1 c2 n3 n4 -- )
   attr! drop swap .2x1sprite
   in-text-attr ." = " . ." points" drop ;
+  \ XXX TODO -- Rewrite. Parameters changed.
   \ Print an item of the score table:
   \   c1 = docked sprite;
   \   c2 = flying sprite;
@@ -1856,7 +1858,7 @@ true [if] \ XXX OLD
   \   n5 = color
 
 : ufo-data ( -- x1 c2 n3 x4 )
-  docked-invader-1 flying-invader-1 10 1 ;
+  docked-invader-0 flying-invader-0 10 1 ;
   \ Data specific to the UFO:
   \   x1 = fake datum;
   \   c2 = sprite;
@@ -1867,9 +1869,9 @@ true [if] \ XXX OLD
   \ in order to use `.score-item` also with the UFO.
 
 : .score-table ( -- )
-  xy 2dup  at-xy invader-1-data invader-attr .score-item
-  2dup 1+  at-xy invader-2-data invader-attr .score-item
-  2dup 2+  at-xy invader-3-data invader-attr .score-item
+  xy 2dup  at-xy species-0 invader-attr .score-item
+  2dup 1+  at-xy species-1 invader-attr .score-item
+  2dup 2+  at-xy species-2 invader-attr .score-item
        3 + at-xy ufo-data       ufo-attr     .score-item ;
    \ Print the score table at the current coordinates.
 
@@ -1913,7 +1915,7 @@ true [if] \ XXX OLD
 variable invaders \ counter
 
 : init-invaders ( -- )
-  init-invaders-data  current-invader off
+  init-invaders-data  0 current-invader c!
   actual-invaders invaders ! ;
   \ Init the invaders.
 
@@ -1936,7 +1938,7 @@ variable invaders \ counter
   \ deactivate this for docked invaders.
 
 : .invader ( -- )
-  invader-proper-color attr! invader-udg .2x1sprite ;
+  invader-proper-attr attr! invader-udg .2x1sprite ;
   \ Print the current invader.
 
 variable broken-wall-x
@@ -2124,14 +2126,14 @@ variable cure-factor  20 cure-factor !
   invader-stamina c@ if (nonflying-invader) then ;
 
 : last-invader? ( -- f )
-  \ current-invader @ [ actual-invaders 1- ] literal = ;
-  current-invader @ actual-invaders 1- = ;
+  \ current-invader c@ [ actual-invaders 1- ] literal = ;
+  current-invader c@ actual-invaders 1- = ;
   \ XXX TMP -- for debugging, calculate at run-time
   \ Is the current invader the last one?
 
 : next-invader ( -- )
-  last-invader? if   current-invader off exit
-                then 1 current-invader +! ;
+  last-invader? if   0 current-invader c! exit
+                then 1 current-invader c+! ;
   \ Update the invader to the next one.
 
 : move-invader ( -- )
@@ -2304,13 +2306,17 @@ constant ufo-movements ( -- a )
   \ Show the explosion of the current invader.
 
 : impacted-invader ( -- n )
-  projectile-y c@ [ building-top-y 1+ ] literal - 2/
-  projectile-x c@ [ columns 2/ ] literal > abs 5 * + ;
+  projectile-y c@ [ building-top-y 1+ ] cliteral - 2/
+  projectile-x c@ [ columns 2/ ] cliteral > abs 5 * + ;
   \ Return the impacted invader (0..9), calculated from the
   \ projectile coordinates: Invaders 0 and 5 are at the top,
   \ one row below the top of the building; 1 and 6 are two rows
   \ below and so on.  0..4 are at the left of the screen; 5..9
   \ are at the right.
+  \
+  \ XXX TODO -- Change the numbering of invaders to reading
+  \ order, to simplify the calculation: 0: top left; 1: top
+  \ right; etc..
 
 : explode ( -- )
   invader-destroy-points c@  update-score  invader-explosion
@@ -2323,16 +2329,18 @@ constant ufo-movements ( -- a )
 
 : retreat ( -- )
   retreat-sound
-  invader-retreat-points c@ update-score  turn-back ;
+  invader-retreat-points c@ update-score turn-back ;
   \ The current invader retreats.
 
-: wounded ( -- ) invader-stamina c@ 1- invader-stamina c! ;
+: wounded ( -- ) -1 invader-stamina c+! ;
   \ Reduce the invader's stamina after being shoot.
 
 : mortal? ( -- f ) invader-stamina c@ 2* random 0= ;
   \ Is it a mortal impact?  _f_ depends on a random calculation
   \ based on the stamina: The more stamina, the less chances to
-  \ be true.  If stamina is zero, _f_ is always true.
+  \ be a mortal impact.  If stamina is zero, _f_ is always
+  \ true.
+  \ XXX TODO -- Reduce the chances.
 
 : (invader-impacted) ( -- )
   wounded mortal? if   explode
@@ -2342,19 +2350,21 @@ constant ufo-movements ( -- a )
   \ retreats.
 
 : invader-impacted ( -- )
-  current-invader @  >r impacted-invader current-invader !
-  (invader-impacted) r> current-invader ! ;
+  current-invader c@  >r impacted-invader current-invader c!
+  (invader-impacted)  r> current-invader c! ;
   \ An invader has been impacted by the projectile.
   \ Make it the current one and manage it.
+  \
+  \ XXX TODO -- Don't use the return stack.
 
 : ufo-impacted? ( -- f )
   [pixel-projectile]
   [if]   projectile-coords gxy>attra c@ ufo-attr =
   [else] projectile-y c@ ufo-y =  [then] ;
 
-: impact ( -- ) ufo-impacted? if   ufo-impacted
-                              else invader-impacted
-                              then destroy-projectile ;
+: impact ( -- ) ufo-impacted? if ufo-impacted
+                                 else invader-impacted
+                                 then destroy-projectile ;
 
 : hit-something? ( -- f )
   projectile-coords  [pixel-projectile]
@@ -2533,7 +2543,8 @@ variable invasion-delay  8 invasion-delay !
   \ XXX TODO -- Add more landscapes when possible.
 
 : landscape ( -- )
-  location @ ?dup if 1- landscape>screen else north-pole then ;
+  location c@ ?dup if   1- landscape>screen
+                   else north-pole then ;
   \ Display the landscape of the current location.
 
 : prepare-battle ( -- )
@@ -2575,6 +2586,28 @@ variable invasion-delay  8 invasion-delay !
 : t ( -- ) .tank h ;
 : tl ( -- ) <tank h ; \ Move tank left
 : tr ( -- ) tank> h ; \ Move tank right
+
+: .i ( n -- )
+  >r
+  ." active         "  r@ invader>data ~active ? cr
+  ." sprite         "  r@ invader>data ~sprite c@ . cr
+  ." flying-sprite  "  r@ invader>data ~flying-sprite c@ . cr
+  ." docked-sprite  "  r@ invader>data ~docked-sprite c@ . cr
+  ." frame          "  r@ invader>data ~frame c@ . cr
+  ." frames         "  r@ invader>data ~frames c@ . cr
+  ." stamina        "  r@ invader>data ~stamina c@ . cr
+  ." retreating     "  r@ invader>data ~retreating ? cr
+  ." x              "  r@ invader>data ~x c@ . cr
+  ." initial-x      "  r@ invader>data ~initial-x c@ . cr
+  ." x-inc          "  r@ invader>data ~x-inc ? cr
+  ." initial-x-inc  "  r@ invader>data ~initial-x-inc ? cr
+  ." y              "  r@ invader>data ~y c@ . cr
+  ." species        "  r@ invader>data ~species dup ? cr @
+  ." SPECIES DATA:" cr
+  rdrop >r
+  ." retreat-points "  r@ ~retreat-points c@ . cr
+  ." destroy-points "  r@ ~destroy-points c@ . cr
+  rdrop ;
 
 : bc ( -- )
   cls
