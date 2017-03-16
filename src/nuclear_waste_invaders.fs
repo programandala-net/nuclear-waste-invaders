@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.53.0+201703161908" ;
+: version ( -- ca len ) s" 0.54.0+201703161958" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -1314,17 +1314,17 @@ cconstant /species
 create species #species /species * allot
   \ Invaders species data table.
 
-: species>data ( n -- a ) /species * species + ;
+: species~ ( n -- a ) /species * species + ;
 
 : set-species ( c1 c2 c3 c4 c5 c6 -- )
-  species>data >r r@ ~retreat-points c!
-                  r@ ~destroy-points c!
-                  r@ ~flying-right-sprite c!
-                4 r@ ~flying-right-sprite-frames c!
-                  r@ ~flying-left-sprite c!
-                4 r@ ~flying-left-sprite-frames c!
-                  r@ ~docked-sprite c!
-                3 r> ~docked-sprite-frames c! ;
+  species~ >r r@ ~retreat-points c!
+              r@ ~destroy-points c!
+              r@ ~flying-right-sprite c!
+            4 r@ ~flying-right-sprite-frames c!
+              r@ ~flying-left-sprite c!
+            4 r@ ~flying-left-sprite-frames c!
+              r@ ~docked-sprite c!
+            3 r> ~docked-sprite-frames c! ;
   \ Init the data of invaders species _c6_:
   \   c1 = docked sprite
   \   c2 = left flying sprite
@@ -1358,11 +1358,9 @@ columns udg/invader - cconstant invaders-max-x
   cfield: ~y
   cfield: ~x
   cfield: ~sprite
-  cfield: ~flying-sprite
-  cfield: ~frame
-  cfield: ~docked-sprite
-  cfield: ~initial-x
   cfield: ~frames
+  cfield: ~frame
+  cfield: ~initial-x
   field:  ~x-inc
   field:  ~initial-x-inc
   cfield: ~stamina
@@ -1376,19 +1374,17 @@ max-invaders /invader * constant /invaders
 create invaders-data /invaders allot
   \ Invaders data table.
 
-: invader>data ( n -- a ) /invader * invaders-data + ;
+: invader~ ( n -- a ) /invader * invaders-data + ;
   \ Convert invader number n_ to its data address _a_.
 
-: 'invader ( -- a ) current-invader c@ invader>data ;
+: 'invader ( -- a ) current-invader c@ invader~ ;
   \ Address _a_ of the current invader data.
 
 : invader-species       ( -- a  ) 'invader ~species ;
 : invader-active        ( -- a  ) 'invader ~active ;
 : invader-sprite        ( -- ca ) 'invader ~sprite ;
-: invader-flying-sprite ( -- ca ) 'invader ~flying-sprite ;
-: invader-docked-sprite ( -- ca ) 'invader ~docked-sprite ;
-: invader-frame         ( -- ca ) 'invader ~frame ;
 : invader-frames        ( -- ca ) 'invader ~frames ;
+: invader-frame         ( -- ca ) 'invader ~frame ;
 : invader-stamina       ( -- ca ) 'invader ~stamina ;
 : invader-retreating    ( -- a  ) 'invader ~retreating ;
 : invader-x             ( -- ca ) 'invader ~x ;
@@ -1403,6 +1399,20 @@ create invaders-data /invaders allot
 : invader-retreat-points ( -- a )
   invader-species @ ~retreat-points ;
 
+0 [if] \ XXX TMP -- Not used.
+
+: invader-flying-sprite ( -- ca )
+  invader-species @ ~flying-left-sprite ;
+  \ XXX REMARK -- Left and right are  the same at the moment.
+  \ XXX TMP -- Adapt to both directions, when implemented.
+  \ XXX TMP -- Not used.
+
+: invader-docked-sprite ( -- ca )
+  invader-species @ ~docked-sprite ;
+  \ XXX TMP -- Not used.
+
+[then]
+
 : .y/n ( f -- ) if ." Y" else ." N" then space ;
   \ XXX TMP -- for debugging
 
@@ -1416,52 +1426,38 @@ create invaders-data /invaders allot
   \ XXX TMP -- for debugging
 
 3 cconstant max-stamina
-4 cconstant undocked-invader-frames
-3 cconstant docked-invader-frames
 
-: set-invader ( c1 c2 c3 c4 c5 c0 -- )
+: set-flying-sprite ( -- )
+  invader-species @ dup
+  ~flying-left-sprite c@ invader-sprite c!
+  ~flying-left-sprite-frames c@ invader-frames c!
+  0 invader-frame c! ;
+  \ XXX REMARK -- Left and right are  the same at the moment.
+  \ XXX TODO -- Adapt to both directions, when implemented.
+
+: set-docked-sprite ( -- )
+  invader-species @ dup
+  ~docked-sprite c@ invader-sprite c!
+  ~docked-sprite-frames c@ invader-frames c!
+  0 invader-frame c! ;
+
+: set-invader ( c1 c2 c3 c4 c0 -- )
   current-invader c!
   max-stamina invader-stamina c!
-  species>data invader-species !
-  invader-flying-sprite c!
-  dup invader-docked-sprite c!
-      invader-sprite c!
+  species~ invader-species !
   invader-initial-x-inc !
   dup invader-initial-x c!
       invader-x c!
   invader-y c!
-  docked-invader-frames invader-frames c! ;
+  set-docked-sprite ;
   \ Set initial data of invader_c0_:
   \   c1 = y
   \   c2 = x = initial x
   \   c3 = initial x inc
-  \   c4 = docked sprite
-  \   c5 = flying sprite
-  \   c6 = species
+  \   c4 = species
   \   c0 = invader
   \ Other fields don't need initialization, because they
   \ contain zero (default) or a constant.
-
-: species-0 ( -- c1 c2 c3 )
-  docked-invader-0 flying-invader-0 0 ;
-  \ Data specific to invader type 1
-  \   c1 = docked sprite
-  \   c2 = flying sprite
-  \   c3  = species
-
-: species-1 ( -- c1 c2 c3 )
-  docked-invader-1 flying-invader-1 1 ;
-  \ Data specific to invader type 2.
-  \   c1 = docked sprite
-  \   c2 = flying sprite
-  \   c3  = species
-
-: species-2 ( -- c1 c2 c3 )
-  docked-invader-2 flying-invader-2 2 ;
-  \ Data specific to invader type 3.
-  \   c1 = docked sprite
-  \   c2 = flying sprite
-  \   c3  = species
 
 max-invaders 2 / 1- cconstant top-invader-layer
   \ The number of the highest invader "layer". The pair
@@ -1476,16 +1472,16 @@ max-invaders 2 / 1- cconstant top-invader-layer
 
 : init-invaders-data ( -- )
   invaders-data /invaders erase
-  0 altitude invaders-max-x -1 species-0 9 set-invader
-  1 altitude invaders-max-x -1 species-0 8 set-invader
-  2 altitude invaders-max-x -1 species-1 7 set-invader
-  3 altitude invaders-max-x -1 species-1 6 set-invader
-  4 altitude invaders-max-x -1 species-2 5 set-invader
-  0 altitude invaders-min-x  1 species-0 4 set-invader
-  1 altitude invaders-min-x  1 species-0 3 set-invader
-  2 altitude invaders-min-x  1 species-1 2 set-invader
-  3 altitude invaders-min-x  1 species-1 1 set-invader
-  4 altitude invaders-min-x  1 species-2 0 set-invader ;
+  0 altitude invaders-max-x -1 0 9 set-invader
+  1 altitude invaders-max-x -1 0 8 set-invader
+  2 altitude invaders-max-x -1 1 7 set-invader
+  3 altitude invaders-max-x -1 1 6 set-invader
+  4 altitude invaders-max-x -1 2 5 set-invader
+  0 altitude invaders-min-x  1 0 4 set-invader
+  1 altitude invaders-min-x  1 0 3 set-invader
+  2 altitude invaders-min-x  1 1 2 set-invader
+  3 altitude invaders-min-x  1 1 1 set-invader
+  4 altitude invaders-min-x  1 2 0 set-invader ;
   \ Init the data of all invaders.
 
 create invader-stamina-attr ( -- ca )
@@ -1770,8 +1766,8 @@ defer debug-data-pause ( -- )
 : parade ( -- )
   in-invader-attr
   max-invaders 0 do
-    i invader>data dup >r ~initial-x c@ r@ ~y c@ at-xy
-                       r> ~flying-sprite c@ .2x1sprite
+    i invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
+                       r> ~sprite c@ .2x1sprite
   loop ;
 
 : init-arena ( -- )  -arena building .tank parade ;
@@ -1869,11 +1865,12 @@ true [if] \ XXX OLD
   \ in order to use `.score-item` also with the UFO.
 
 : .score-table ( -- )
-  xy 2dup  at-xy species-0 invader-attr .score-item
-  2dup 1+  at-xy species-1 invader-attr .score-item
-  2dup 2+  at-xy species-2 invader-attr .score-item
-       3 + at-xy ufo-data       ufo-attr     .score-item ;
+  xy 2dup  at-xy 0 invader-attr .score-item
+  2dup 1+  at-xy 1 invader-attr .score-item
+  2dup 2+  at-xy 2 invader-attr .score-item
+       3 + at-xy ufo-data ufo-attr .score-item ;
    \ Print the score table at the current coordinates.
+  \ XXX TODO -- Rewrite. Parameters of `.score-item` changed.
 
 [then]
 
@@ -2046,17 +2043,13 @@ variable broken-wall-x
 : dock ( -- )
   invader-active off
   invader-x-inc off invader-retreating off
-  invader-docked-sprite c@ invader-sprite c!
-  0 invader-frame c!
-  docked-invader-frames invader-frames c! ;
+  set-docked-sprite ;
   \ Dock the current invader.
 
 : undock ( -- )
   invader-active on
   invader-initial-x-inc @ invader-x-inc !
-  invader-flying-sprite c@ invader-sprite c!
-  0 invader-frame c!
-  undocked-invader-frames invader-frames c! ;
+  set-flying-sprite ;
   \ Undock the current invader.
 
 : ?dock ( -- ) at-home? 0exit dock ;
@@ -2589,24 +2582,25 @@ variable invasion-delay  8 invasion-delay !
 
 : .i ( n -- )
   >r
-  ." active         "  r@ invader>data ~active ? cr
-  ." sprite         "  r@ invader>data ~sprite c@ . cr
-  ." flying-sprite  "  r@ invader>data ~flying-sprite c@ . cr
-  ." docked-sprite  "  r@ invader>data ~docked-sprite c@ . cr
-  ." frame          "  r@ invader>data ~frame c@ . cr
-  ." frames         "  r@ invader>data ~frames c@ . cr
-  ." stamina        "  r@ invader>data ~stamina c@ . cr
-  ." retreating     "  r@ invader>data ~retreating ? cr
-  ." x              "  r@ invader>data ~x c@ . cr
-  ." initial-x      "  r@ invader>data ~initial-x c@ . cr
-  ." x-inc          "  r@ invader>data ~x-inc ? cr
-  ." initial-x-inc  "  r@ invader>data ~initial-x-inc ? cr
-  ." y              "  r@ invader>data ~y c@ . cr
-  ." species        "  r@ invader>data ~species dup ? cr @
+  ." active              " r@ invader~ ~active ? cr
+  ." sprite              " r@ invader~ ~sprite c@ . cr
+  ." frame               " r@ invader~ ~frame c@ . cr
+  ." frames              " r@ invader~ ~frames c@ . cr
+  ." stamina             " r@ invader~ ~stamina c@ . cr
+  ." retreating          " r@ invader~ ~retreating ? cr
+  ." x                   " r@ invader~ ~x c@ . cr
+  ." initial-x           " r@ invader~ ~initial-x c@ . cr
+  ." x-inc               " r@ invader~ ~x-inc ? cr
+  ." initial-x-inc       " r@ invader~ ~initial-x-inc ? cr
+  ." y                   " r@ invader~ ~y c@ . cr
+  ." species             " r@ invader~ ~species dup u. cr @
   ." SPECIES DATA:" cr
   rdrop >r
-  ." retreat-points "  r@ ~retreat-points c@ . cr
-  ." destroy-points "  r@ ~destroy-points c@ . cr
+  ." retreat-points      " r@ ~retreat-points c@ . cr
+  ." destroy-points      " r@ ~destroy-points c@ . cr
+  ." flying-left-sprite  " r@ ~flying-left-sprite c@ . cr
+  ." flying-right-sprite " r@ ~flying-right-sprite c@ . cr
+  ." docked-sprite       " r@ ~docked-sprite c@ . cr
   rdrop ;
 
 : bc ( -- )
