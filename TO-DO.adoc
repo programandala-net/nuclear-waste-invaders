@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-03-01
+:revdate: 2017-03-17
 
 Older first:
 
@@ -90,3 +90,7 @@ Change the graphic of the invaders that are delayed at the wall.
 
 Add some inertia to the tank.
 
+.2017-03-17:
+
+Create a sprite frames table to point to UDG frames, in order to
+remove duplicated frames from the UDG set.
