@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.58.0+201703171554" ;
+: version ( -- ca len ) s" 0.59.0+201703171622" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -449,13 +449,13 @@ variable ocr-last-udg
                      0 cconstant status-bar-y
                      4 cconstant score-digits
           status-bar-y cconstant score-y
-                        variable score-x
+                       cvariable score-x
 columns score-digits - cconstant record-x
 
 2 cconstant max-player
 
-variable players  1 players ! \ 1..max-player
-variable player   1 player !   \ 1..max-player
+cvariable players  1 players c! \ 1..max-player
+cvariable player   1 player  c! \ 1..max-player
 
 : ?[#] ( n -- ) 0 ?do postpone # loop ; immediate compile-only
   \ Compile `#` _n_ times.
@@ -464,7 +464,7 @@ variable player   1 player !   \ 1..max-player
   at-xy s>d <# [ score-digits ] ?[#] #> in-text-attr type ;
   \ Print score _n_ at coordinates _x y_.
 
-: score-xy ( -- x y ) score-x @ score-y ;
+: score-xy ( -- x y ) score-x c@ score-y ;
   \ Coordinates of the score.
 
 : at-score ( -- ) score-xy at-xy ;
@@ -1440,7 +1440,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
 1 cconstant status-bar-rows
 
 : .score-label ( -- )
-  score$ dup 1+ score-x ! home type ;
+  score$ dup 1+ score-x c! home type ;
 
 : >record-label-x ( len -- x )
   [ columns score-digits 1+ - ] cliteral swap - ;
@@ -1676,30 +1676,30 @@ building-top-y 11 + cconstant building-bottom-y
   \ XXX TODO -- Rename. This was valid when the building
   \ was "flying".
 
-variable building-width
+cvariable building-width
 
-variable building-left-x     variable building-right-x
-variable containers-left-x   variable containers-right-x
+cvariable building-left-x     cvariable building-right-x
+cvariable containers-left-x   cvariable containers-right-x
 
 : size-building ( -- )
   [ columns 2/ 1- ] cliteral \ half of the screen
   location c@ 1+              \ half width of all containers
-  dup 2* 2+ building-width     !
-  2dup 1- - containers-left-x  !
-  2dup    - building-left-x    !
-  2dup    + containers-right-x !
-       1+ + building-right-x   ! ;
+  dup 2* 2+ building-width     c!
+  2dup 1- - containers-left-x  c!
+  2dup    - building-left-x    c!
+  2dup    + containers-right-x c!
+       1+ + building-right-x   c! ;
   \ Set the size of the building after the current location.
 
 : floor ( y -- )
-  building-left-x @ swap at-xy
-  in-brick-attr brick building-width @ .1x1sprites ;
+  building-left-x c@ swap at-xy
+  in-brick-attr brick building-width c@ .1x1sprites ;
   \ Draw a floor of the building at row _y_.
 
 : ground-floor ( y -- )
-  building-left-x @ 1+ swap at-xy
+  building-left-x c@ 1+ swap at-xy
   in-door-attr  left-door emit-udg
-  in-brick-attr brick building-width @ 4 - .1x1sprites
+  in-brick-attr brick building-width c@ 4 - .1x1sprites
   in-door-attr  right-door emit-udg ;
   \ Draw the ground floor of the building at row _y_.
 
@@ -1733,7 +1733,7 @@ create containers-half
 
 : building ( -- )
   building-top
-  location c@ 1+  building-left-x @
+  location c@ 1+  building-left-x c@
   building-bottom-y [ building-top-y 1+ ] literal
   do   2dup i at-xy .brick
                     i 1 and containers-half array> perform
@@ -1799,9 +1799,9 @@ columns udg/tank - 1- cconstant tank-max-x
 : gun-below-building? ( -- f )
   new-projectile-x
   [pixel-projectile] [if]
-    building-left-x @ col>pixel building-right-x @ col>pixel
+    building-left-x c@ col>pixel building-right-x c@ col>pixel
   [else]
-    building-left-x @ building-right-x @
+    building-left-x c@ building-right-x c@
   [then]  between ;
   \ Is the tank's gun below the building?
 
@@ -1813,7 +1813,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ Does the tank move? Return its x increment.
 
 : outside? ( col -- f )
-  building-left-x @ 1+ building-right-x @ within 0= ;
+  building-left-x c@ 1+ building-right-x c@ within 0= ;
   \ Is column _col_ outside the building?
   \ The most left and most right columns of the building
   \ are considered outside, because they are the doors.
@@ -2052,9 +2052,9 @@ true [if] \ XXX OLD
 : show-score-table ( -- ) 9 4 at-xy .score-table ;
 
 : change-players ( -- )
-  players @ 1+ dup max-player > if drop 1 then players ! ;
+  players c@ 1+ dup max-player > if drop 1 then players c! ;
 
-: .players ( -- ) ." [P]layers " players ? ;
+: .players ( -- ) ." [P]layers " players c@ . ;
    \ Print the number of players at the current coordinates.
 
 : show-players ( -- ) 0 8 at-xy .players ;
@@ -2084,11 +2084,11 @@ true [if] \ XXX OLD
   \ ===========================================================
   cr .( Invasion)  debug-point \ {{{1
 
-variable invaders \ counter
+cvariable invaders \ counter
 
 : init-invaders ( -- )
   init-invaders-data  0 current-invader c!
-  actual-invaders invaders ! ;
+  actual-invaders invaders c! ;
   \ Init the invaders.
 
 : at-invader ( -- ) invader-x c@ invader-y c@ at-xy ;
@@ -2171,7 +2171,7 @@ variable broken-wall-x
   invader-x c@ flying-to-the-right?
   if   1+ containers-left-x
   else    containers-right-x
-  then @ = ;
+  then c@ = ;
   \ Has the current invader broken a container?
 
 : hit-wall ( -- ) invader-active off ;
@@ -2252,7 +2252,7 @@ variable cure-factor  20 cure-factor !
 : healthy? ( -- f ) invader-stamina c@ max-stamina = ;
   \ Is the current invader healthy? Has it got maximum stamina?
 
-: ?undock ( -- ) invaders @ random ?exit undock ;
+: ?undock ( -- ) invaders c@ random ?exit undock ;
   \ Undock the current invader randomly, depending on the
   \ number of invaders.
 
@@ -2268,7 +2268,7 @@ variable cure-factor  20 cure-factor !
   broken-wall-x ! broken-wall ;
 
 : require-entering-invader ( -- )
-  invaders @ random 0= if break-the-wall then ;
+  invaders c@ random 0= if break-the-wall then ;
 
 : (nonflying-invader) ( -- )
   docked? if   require-docked-invader
@@ -2474,7 +2474,7 @@ constant ufo-movements ( -- a )
 
 : explode ( -- )
   invader-destroy-points c@  update-score  invader-explosion
-  -1 invaders +!  0 invader-stamina c!  invader-active off ;
+  -1 invaders c+!  0 invader-stamina c!  invader-active off ;
   \ The current invader explodes.
 
 ' lightning1 alias retreat-sound
@@ -2681,7 +2681,7 @@ create attributes-backup /attributes allot
   \ XXX TODO -- Finish.
   \ XXX TODO -- Factor.
 
-: victory? ( -- f ) invaders @ 0= ;
+: victory? ( -- f ) invaders c@ 0= ;
 
 variable invasion-delay  8 invasion-delay !
   \ XXX TMP -- debugging
