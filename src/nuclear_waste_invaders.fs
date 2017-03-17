@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.55.0+201703162324" ;
+: version ( -- ca len ) s" 0.56.0+201703170008" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -1440,7 +1440,6 @@ columns udg/invader - cconstant invaders-max-x
   field:  ~initial-x-inc
   cfield: ~stamina
   field:  ~active \ XXX TODO -- use `~stamina` instead
-  field:  ~retreating
   field:  ~species
 cconstant /invader
 
@@ -1461,7 +1460,6 @@ create invaders-data /invaders allot
 : invader-frames        ( -- ca ) 'invader ~frames ;
 : invader-frame         ( -- ca ) 'invader ~frame ;
 : invader-stamina       ( -- ca ) 'invader ~stamina ;
-: invader-retreating    ( -- a  ) 'invader ~retreating ;
 : invader-x             ( -- ca ) 'invader ~x ;
 : invader-initial-x     ( -- ca ) 'invader ~initial-x ;
 : invader-x-inc         ( -- a  ) 'invader ~x-inc ;
@@ -1480,12 +1478,8 @@ create invaders-data /invaders allot
 : flying-to-the-left? ( -- f ) invader-x-inc @ 0< ;
   \ Is the current invader flying to the left?
 
-: retreating? ( -- f ) invader-retreating @ ;
-  \ Is the current invader retreating?
-  \ XXX TODO -- Compare `invader-initial-x` and `invader-x-inc`
-  \ instead; `invader-retrating` can be removed.
-
-: attacking? ( -- f ) retreating? 0= ;
+: attacking? ( -- f )
+  invader-initial-x-inc @ invader-x-inc @ = ;
   \ Is the current invader attacking?
 
 : .y/n ( f -- ) if ." Y" else ." N" then space ;
@@ -1493,7 +1487,7 @@ create invaders-data /invaders allot
 
 : ~~invader-info ( -- )
   home current-invader c@ 2 .r
-  ." Ret.:" invader-retreating @ .y/n
+  ." Att.:" attacking? .y/n
   ." Sta.:" invader-stamina c@ . ;
   \ XXX TMP -- for debugging
 
@@ -1515,12 +1509,16 @@ create invaders-data /invaders allot
   \
   \ XXX TODO -- Use double-cell fields to copy both fields with
   \ one operation or use `move`.
+  \
+  \ XXX TODO -- Rename.
 
 : set-docked-sprite ( -- )
   invader-species @ dup
   ~docked-sprite c@ invader-sprite c!
   ~docked-sprite-frames c@ invader-frames c!
   0 invader-frame c! ;
+  \
+  \ XXX TODO -- Rename.
 
 : set-invader ( c1 c2 c3 c4 c0 -- )
   current-invader c!
@@ -2101,27 +2099,22 @@ variable broken-wall-x
 
 : change-direction ( -- )
   invader-x-inc @ negate invader-x-inc ! ;
+  \ XXX TODO -- Write `negate! ( a -- )` in Z80.
 
 : turn-back ( -- )
-  change-direction set-flying-sprite
-  invader-retreating @ invert invader-retreating !
-  invader-active on ;
+  change-direction set-flying-sprite invader-active on ;
   \ Make the current invader turn back.  Also activate it, in
   \ case it's temporarily inactive at the wall of the building.
-  \
-  \ XXX TODO -- write `negate!` and `invert!` in Z80 in Solo
-  \ Forth's library
 
 : dock ( -- )
-  invader-active off
-  invader-x-inc off invader-retreating off
-  set-docked-sprite ;
+  invader-active off invader-x-inc off set-docked-sprite ;
   \ Dock the current invader.
 
+: default-direction ( -- )
+  invader-initial-x-inc @ invader-x-inc ! ;
+
 : undock ( -- )
-  invader-active on
-  invader-initial-x-inc @ invader-x-inc !
-  set-flying-sprite ;
+  invader-active on default-direction set-flying-sprite ;
   \ Undock the current invader.
 
 : ?dock ( -- ) at-home? 0exit dock ;
@@ -2138,8 +2131,8 @@ variable broken-wall-x
 : flying-invader ( -- )
   flying-to-the-right? if   right-flying-invader
                        else left-flying-invader then
-           retreating? if   ?dock
-                       else ?damages then ;
+            attacking? if   ?damages
+                       else ?dock then ;
 
 variable cure-factor  20 cure-factor !
   \ XXX TMP -- for testing
@@ -2659,7 +2652,6 @@ variable invasion-delay  8 invasion-delay !
   ." frame               " r@ invader~ ~frame c@ . cr
   ." frames              " r@ invader~ ~frames c@ . cr
   ." stamina             " r@ invader~ ~stamina c@ . cr
-  ." retreating          " r@ invader~ ~retreating ? cr
   ." x                   " r@ invader~ ~x c@ . cr
   ." initial-x           " r@ invader~ ~initial-x c@ . cr
   ." x-inc               " r@ invader~ ~x-inc ? cr
