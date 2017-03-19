@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.59.0+201703171622" ;
+: version ( -- ca len ) s" 0.60.0+201703192217" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -109,9 +109,9 @@ need type-center-field
   \ --------------------------------------------
   cr .(   -Graphics) \ {{{2
 
-need os-chars need os-udg need udg-row[
+need os-chars need os-udg need /udg
 need type-udg need columns need rows need row need fade-display
-need last-column
+need last-column need udg-block need udg!
 
 [pixel-projectile]
 [if]   need set-pixel need reset-pixel need gxy>attra
@@ -128,7 +128,7 @@ need papery need brighty need xy>attr
   \ --------------------------------------------
   cr .(   -Keyboard) \ {{{2
 
-need kk-ports need kk-1#  need pressed?    need kk-chars
+need kk-ports need kk-1# need pressed? need kk-chars
 need #>kk need inkey
 
   \ --------------------------------------------
@@ -385,7 +385,6 @@ current-controls @ set-controls
   cr .( UDG)  debug-point \ {{{1
 
                128 cconstant last-udg \ last UDG code used
-                 8 cconstant /udg     \ bytes per UDG
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
 create udg-set /udg-set allot  udg-set os-udg !
@@ -483,78 +482,48 @@ cvariable player   1 player  c! \ 1..max-player
 
     variable >udg  >udg off \ next free UDG
 
-variable latest-sprite-width
-variable latest-sprite-height
-variable latest-sprite-udg
+cvariable latest-sprite-width
+cvariable latest-sprite-height
+cvariable latest-sprite-udg
 
 : ?udg ( c -- ) last-udg > abort" Too many UDGs" ;
   \ Abort if UDG _n_ is too high.
   \ XXX TMP -- during the development
 
 : free-udg ( n -- c )
-  >udg @ dup latest-sprite-udg !
+  >udg @ dup latest-sprite-udg c!
   tuck +  dup >udg !  1- ?udg ;
   \ Free _n_ consecutive UDGs and return the first one _c_.
 
 : set-latest-sprite-size ( width height -- )
-  latest-sprite-height !  latest-sprite-width ! ;
+  latest-sprite-height c!  latest-sprite-width c! ;
   \ Update the size of the latest sprited defined.
 
-: ?sprite-height ( -- )
-  latest-sprite-height @ 1 >
-  abort" Sprite height not supported for sprite strings" ;
-
 : sprite-string ( "name" -- )
-  ?sprite-height
-  here latest-sprite-udg @  latest-sprite-width @ dup >r
+  here latest-sprite-udg c@  latest-sprite-width c@ dup >r
   0 ?do  dup c, 1+  loop  drop  r> 2constant ;
   \ Create a definition "name" that will return a string
   \ containing all UDGs of the lastest sprite defined.
-
-: (1x1sprite!) ( b0..b7 c -- )
-  1 ?free-udg  1 1 set-latest-sprite-size
-  /udg 0 do
-    dup /udg 1+ i - roll i scan!
-  loop  drop ;
-  \ Store a 1x1 UDG sprite into UDG _c_.
-
-: 1x1sprite! ( b0..b7 -- )
-  1 free-udg (1x1sprite!) ;
-  \ Store a 1x1 UDG sprite into the next available UDG.
-
-: 1x1sprite ( n0..n7 "name" -- )
-  1 free-udg dup cconstant (1x1sprite!) ;
 
 : emits-udg ( c n -- ) 0 ?do dup emit-udg loop drop ;
 
 ' emit-udg alias .1x1sprite ( c -- )
 ' emits-udg alias .1x1sprites ( c n -- )
 
-: (2x1sprite!) ( n0..n7 c -- )
-  2 ?free-udg  2 1 set-latest-sprite-size
-  /udg 0 do
-    dup /udg 1+ i - pick flip i scan! 1+ \ first UDG
-    dup /udg 1+ i - roll      i scan! 1- \ second UDG
-  loop  drop ;
-  \ Store a 2x1 UDG sprite into chars _c_ and _c_+1.
-  \ Scans _n0..n7_ are 16-bit: high part is char _c_,
-  \ and low part is _c_+1.
-
-: 2x1sprite! ( n0..n7 -- )
-  2 free-udg (2x1sprite!) ;
-  \ Store a 2x1 UDG sprite into the next two available UDGs.
-  \ Scans _n0..n7_ are 16-bit: their high parts form the first
-  \ available UDG, and their low parts form the next one.
-
-: 2x1sprite ( n0..n7 "name" -- )
-  2 free-udg dup cconstant (2x1sprite!) ;
-
 : .2x1sprite ( c -- ) dup emit-udg 1+ emit-udg ;
+
+: (sprite ( width height -- width height c )
+  2dup set-latest-sprite-size 2dup * free-udg ;
+
+: sprite ( width height -- ) (sprite udg-block ;
+
+: sprite: ( width height "name" -- )
+  (sprite dup cconstant udg-block ;
 
 2 cconstant udg/invader
 2 cconstant udg/ufo
 
-0 0 0 0 0 0 0 0 1x1sprite bl-udg
+0 0 0 0 0 0 0 0 1 free-udg dup cconstant bl-udg udg!
 
 [pixel-projectile] 0= [if]
   >udg @ ocr-first-udg !
@@ -562,481 +531,520 @@ variable latest-sprite-udg
     \ the next sprite.
 [then]
 
-binary
-
   \ -----------------------------------------------------------
   \ Invader species 0
 
-  \ invader species 0, left flying, frame 0
-0000001111000000
-0001111111111000
-0011111111111100
-0011100110011100
-0011111111111100
-0000011001100000
-0000110110110000
-0011000000001100
+  \ invader species 0, left flying, frame 0:
 
-2x1sprite left-flying-invader-0
+2 1 sprite: left-flying-invader-0
 
-  \ invader species 0, left flying, frame 1
-0000001111000000
-0001111111111000
-0011111111111100
-0011001100111100
-0011111111111100
-0000111001110000
-0001100110011000
-0001100000001100
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXX..XX..XXX..
+..XXXXXXXXXXXX..
+.....XX..XX.....
+....XX.XX.XX....
+..XX........XX..
 
-2x1sprite!
+  \ invader species 0, left flying, frame 1:
 
-  \ invader species 0, left flying, frame 2
-0000001111000000
-0001111111111000
-0011111111111100
-0010011001111100
-0011111111111100
-0000111001110000
-0001100110011000
-0000110000001100
+2 1 sprite
 
-2x1sprite!
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XX..XX..XXXX..
+..XXXXXXXXXXXX..
+....XXX..XXX....
+...XX..XX..XX...
+...XX.......XX..
 
-  \ invader species 0, left flying, frame 3
-0000001111000000
-0001111111111000
-0011111111111100
-0011001100111100
-0011111111111100
-0000111001110000
-0001100110011000
-0001100000001100
+  \ invader species 0, left flying, frame 2:
 
-2x1sprite!
+2 1 sprite
 
-  \ invader species 0, right flying, frame 0
-0000001111000000
-0001111111111000
-0011111111111100
-0011100110011100
-0011111111111100
-0000011001100000
-0000110110110000
-0011000000001100
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..X..XX..XXXXX..
+..XXXXXXXXXXXX..
+....XXX..XXX....
+...XX..XX..XX...
+....XX......XX..
 
-2x1sprite right-flying-invader-0
+  \ invader species 0, left flying, frame 3:
 
-  \ invader species 0, right flying, frame 1
-0000001111000000
-0001111111111000
-0011111111111100
-0011110011001100
-0011111111111100
-0000111001110000
-0001100110011000
-0011000000011000
+2 1 sprite
 
-2x1sprite!
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XX..XX..XXXX..
+..XXXXXXXXXXXX..
+....XXX..XXX....
+...XX..XX..XX...
+...XX.......XX..
 
-  \ invader species 0, right flying, frame 2
-0000001111000000
-0001111111111000
-0011111111111100
-0011111001100100
-0011111111111100
-0000111001110000
-0001100110011000
-0011000000110000
+  \ invader species 0, right flying, frame 0:
 
-2x1sprite!
+2 1 sprite: right-flying-invader-0
 
-  \ invader species 0, right flying, frame 3
-0000001111000000
-0001111111111000
-0011111111111100
-0011110011001100
-0011111111111100
-0000111001110000
-0001100110011000
-0011000000011000
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXX..XX..XXX..
+..XXXXXXXXXXXX..
+.....XX..XX.....
+....XX.XX.XX....
+..XX........XX..
 
-2x1sprite!
+  \ invader species 0, right flying, frame 1:
 
+2 1 sprite
 
-  \ invader species 0, docked, frame 0
-0000001111000000
-0001111111111000
-0011111111111100
-0011100110011100
-0011111111111100
-0000011001100000
-0000110110110000
-0011000000001100
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXXX..XX..XX..
+..XXXXXXXXXXXX..
+....XXX..XXX....
+...XX..XX..XX...
+..XX.......XX...
 
-2x1sprite docked-invader-0
+  \ invader species 0, right flying, frame 2:
+
+2 1 sprite
+
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXXXX..XX..X..
+..XXXXXXXXXXXX..
+....XXX..XXX....
+...XX..XX..XX...
+..XX......XX....
+
+  \ invader species 0, right flying, frame 3:
+
+2 1 sprite
+
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXXX..XX..XX..
+..XXXXXXXXXXXX..
+....XXX..XXX....
+...XX..XX..XX...
+..XX.......XX...
+
+  \ invader species 0, docked, frame 0:
+
+2 1 sprite: docked-invader-0
+
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXX..XX..XXX..
+..XXXXXXXXXXXX..
+.....XX..XX.....
+....XX.XX.XX....
+..XX........XX..
+
 sprite-string docked-invader-0$ ( -- ca len )
 
-  \ invader species 0, docked, frame 1
-0000001111000000
-0001111111111000
-0011111111111100
-0011100110011100
-0011111111111100
-0000011001100000
-0000110110110000
-0011000000001100
+  \ invader species 0, docked, frame 1:
 
-2x1sprite!
+2 1 sprite
 
-  \ invader species 0, docked, frame 2
-0000001111000000
-0001111111111000
-0011111111111100
-0011111111111100
-0011111111111100
-0000011001100000
-0000110110110000
-0011000000001100
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXX..XX..XXX..
+..XXXXXXXXXXXX..
+.....XX..XX.....
+....XX.XX.XX....
+..XX........XX..
 
-2x1sprite!
+  \ invader species 0, docked, frame 2:
+
+2 1 sprite
+
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXXXXXXXXXXX..
+..XXXXXXXXXXXX..
+.....XX..XX.....
+....XX.XX.XX....
+..XX........XX..
 
   \ -----------------------------------------------------------
   \ Invader species 1
 
-  \ invader species 1, left flying, frame 0
-0000001000100000
-0000010001000000
-0000111111100000
-0001101110110000
-0011111111111000
-0011111111111000
-0010100000101000
-0000100000100000
+  \ invader species 1, left flying, frame 0:
 
-2x1sprite left-flying-invader-1
+2 1 sprite: left-flying-invader-1
 
-  \ invader species 1, left flying, frame 1
-0000001000100000
-0000010001000000
-0000111111100000
-1111011101111110
-0011111111111000
-0001111111110000
-0000100000100000
-0000010000010000
+......X...X.....
+.....X...X......
+....XXXXXXX.....
+...XX.XXX.XX....
+..XXXXXXXXXXX...
+..XXXXXXXXXXX...
+..X.X.....X.X...
+....X.....X.....
 
-2x1sprite!
+  \ invader species 1, left flying, frame 1:
 
-  \ invader species 1, left flying, frame 2
-0000001000100000
-0010010001001000
-0010111111101000
-0011101110111000
-0011111111111000
-0001111111110000
-0000100000100000
-0000100000100000
+2 1 sprite
 
-2x1sprite!
+......X...X.....
+.....X...X......
+....XXXXXXX.....
+XXXX.XXX.XXXXXX.
+..XXXXXXXXXXX...
+...XXXXXXXXX....
+....X.....X.....
+.....X.....X....
 
-  \ invader species 1, left flying, frame 3
-0000001000100000
-0000010001000000
-0000111111100000
-1111011101111110
-0011111111111000
-0001111111110000
-0000100000100000
-0000010000010000
+  \ invader species 1, left flying, frame 2:
 
-2x1sprite!
+2 1 sprite
 
-  \ invader species 1, right flying, frame 0
-0000010001000000
-0000001000100000
-0000011111110000
-0000110111011000
-0001111111111100
-0001111111111100
-0001010000010100
-0000010000010000
+......X...X.....
+..X..X...X..X...
+..X.XXXXXXX.X...
+..XXX.XXX.XXX...
+..XXXXXXXXXXX...
+...XXXXXXXXX....
+....X.....X.....
+....X.....X.....
 
-2x1sprite right-flying-invader-1
+  \ invader species 1, left flying, frame 3:
 
-  \ invader species 1, right flying, frame 1
-0000010001000000
-0000001000100000
-0000011111110000
-0111111011101111
-0001111111111100
-0000111111111000
-0000010000010000
-0000100000100000
+2 1 sprite
 
-2x1sprite!
+......X...X.....
+.....X...X......
+....XXXXXXX.....
+XXXX.XXX.XXXXXX.
+..XXXXXXXXXXX...
+...XXXXXXXXX....
+....X.....X.....
+.....X.....X....
 
-  \ invader species 1, right flying, frame 2
-0000010001000000
-0001001000100100
-0001011111110100
-0001110111011100
-0001111111111100
-0000111111111000
-0000010000010000
-0000010000010000
+  \ invader species 1, right flying, frame 0:
 
-2x1sprite!
+2 1 sprite: right-flying-invader-1
 
-  \ invader species 1, right flying, frame 3
-0000010001000000
-0000001000100000
-0000011111110000
-0111111011101111
-0001111111111100
-0000111111111000
-0000010000010000
-0000100000100000
+.....X...X......
+......X...X.....
+.....XXXXXXX....
+....XX.XXX.XX...
+...XXXXXXXXXXX..
+...XXXXXXXXXXX..
+...X.X.....X.X..
+.....X.....X....
 
-2x1sprite!
+  \ invader species 1, right flying, frame 1:
 
-  \ invader species 1, docked, frame 0
-0000100000100000
-0000010001000000
-0000111111100000
-0001101110110000
-0011111111111000
-0011111111111000
-0010100000101000
-0000011011000000
+2 1 sprite
 
-2x1sprite docked-invader-1
+.....X...X......
+......X...X.....
+.....XXXXXXX....
+.XXXXXX.XXX.XXXX
+...XXXXXXXXXXX..
+....XXXXXXXXX...
+.....X.....X....
+....X.....X.....
+
+  \ invader species 1, right flying, frame 2:
+
+2 1 sprite
+
+.....X...X......
+...X..X...X..X..
+...X.XXXXXXX.X..
+...XXX.XXX.XXX..
+...XXXXXXXXXXX..
+....XXXXXXXXX...
+.....X.....X....
+.....X.....X....
+
+  \ invader species 1, right flying, frame 3:
+
+2 1 sprite
+
+.....X...X......
+......X...X.....
+.....XXXXXXX....
+.XXXXXX.XXX.XXXX
+...XXXXXXXXXXX..
+....XXXXXXXXX...
+.....X.....X....
+....X.....X.....
+
+  \ invader species 1, docked, frame 0:
+
+2 1 sprite: docked-invader-1
+
+....X.....X.....
+.....X...X......
+....XXXXXXX.....
+...XX.XXX.XX....
+..XXXXXXXXXXX...
+..XXXXXXXXXXX...
+..X.X.....X.X...
+.....XX.XX......
+
 sprite-string docked-invader-1$ ( -- ca len )
 
-  \ invader species 1, docked, frame 1
-0000100000100000
-0000010001000000
-0000111111100000
-0001101110110000
-0011111111111000
-0011111111111000
-0010100000101000
-0000011011000000
+  \ invader species 1, docked, frame 1:
 
-2x1sprite!
+2 1 sprite
 
-  \ invader species 1, docked, frame 2
-0000100000100000
-0000010001000000
-0000111111100000
-0001111111110000
-0011111111111000
-0011111111111000
-0010100000101000
-0000011011000000
+....X.....X.....
+.....X...X......
+....XXXXXXX.....
+...XX.XXX.XX....
+..XXXXXXXXXXX...
+..XXXXXXXXXXX...
+..X.X.....X.X...
+.....XX.XX......
 
-2x1sprite!
+  \ invader species 1, docked, frame 2:
+
+2 1 sprite
+
+....X.....X.....
+.....X...X......
+....XXXXXXX.....
+...XXXXXXXXX....
+..XXXXXXXXXXX...
+..XXXXXXXXXXX...
+..X.X.....X.X...
+.....XX.XX......
 
   \ -----------------------------------------------------------
   \ Invader species 2
 
-  \ invader species 2, left flying, frame 0
-0000000110000000
-0000001111000000
-0000011111100000
-0000110110110000
-0000111111110000
-0000001001000000
-0000010110100000
-0000101001010000
+  \ invader species 2, left flying, frame 0:
 
-2x1sprite left-flying-invader-2
+2 1 sprite: left-flying-invader-2
 
-  \ invader species 2, left flying, frame 1
-0000000110000000
-0000001111000000
-0000011111100000
-0000111111110000
-0000111111110000
-0000010110100000
-0000100000010000
-0000100000010000
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XX.XX.XX....
+....XXXXXXXX....
+......X..X......
+.....X.XX.X.....
+....X.X..X.X....
 
-2x1sprite!
+  \ invader species 2, left flying, frame 1:
 
-  \ invader species 2, left flying, frame 2
-0000000110000000
-0000001111000000
-0000011111100000
-0000110110110000
-0000111111110000
-0000010110100000
-0000100000010000
-0000010000001000
+2 1 sprite
 
-2x1sprite!
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XXXXXXXX....
+....XXXXXXXX....
+.....X.XX.X.....
+....X......X....
+....X......X....
 
-  \ invader species 2, left flying, frame 3
-0000000110000000
-0000001111000000
-0000011111100000
-0000101101110000
-0000111111110000
-0000010110100000
-0000100000010000
-0000100000010000
+  \ invader species 2, left flying, frame 2:
 
-2x1sprite!
+2 1 sprite
 
-  \ invader species 2, right flying, frame 0
-0000000110000000
-0000001111000000
-0000011111100000
-0000110110110000
-0000111111110000
-0000001001000000
-0000010110100000
-0000101001010000
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XX.XX.XX....
+....XXXXXXXX....
+.....X.XX.X.....
+....X......X....
+.....X......X...
 
-2x1sprite right-flying-invader-2
+  \ invader species 2, left flying, frame 3:
 
-  \ invader species 2, right flying, frame 1
-0000000110000000
-0000001111000000
-0000011111100000
-0000111011010000
-0000111111110000
-0000010110100000
-0000100000010000
-0000100000010000
+2 1 sprite
 
-2x1sprite!
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....X.XX.XXX....
+....XXXXXXXX....
+.....X.XX.X.....
+....X......X....
+....X......X....
 
-  \ invader species 2, right flying, frame 2
-0000000110000000
-0000001111000000
-0000011111100000
-0000110110110000
-0000111111110000
-0000010110100000
-0000100000010000
-0001000000100000
+  \ invader species 2, right flying, frame 0:
 
-2x1sprite!
+2 1 sprite: right-flying-invader-2
 
-  \ invader species 2, right flying, frame 3
-0000000110000000
-0000001111000000
-0000011111100000
-0000111010110000
-0000111111110000
-0000010110100000
-0000100000010000
-0000100000010000
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XX.XX.XX....
+....XXXXXXXX....
+......X..X......
+.....X.XX.X.....
+....X.X..X.X....
 
-2x1sprite!
+  \ invader species 2, right flying, frame 1:
 
-  \ invader species 2, docked, frame 0
-0000000110000000
-0000001111000000
-0000011111100000
-0000110110110000
-0000111111110000
-0000001001000000
-0000010110100000
-0000101001010000
+2 1 sprite
 
-2x1sprite docked-invader-2
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XXX.XX.X....
+....XXXXXXXX....
+.....X.XX.X.....
+....X......X....
+....X......X....
+
+  \ invader species 2, right flying, frame 2:
+
+2 1 sprite
+
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XX.XX.XX....
+....XXXXXXXX....
+.....X.XX.X.....
+....X......X....
+...X......X.....
+
+  \ invader species 2, right flying, frame 3:
+
+2 1 sprite
+
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XXX.X.XX....
+....XXXXXXXX....
+.....X.XX.X.....
+....X......X....
+....X......X....
+
+  \ invader species 2, docked, frame 0:
+
+2 1 sprite: docked-invader-2
+
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XX.XX.XX....
+....XXXXXXXX....
+......X..X......
+.....X.XX.X.....
+....X.X..X.X....
+
 sprite-string docked-invader-2$ ( -- ca len )
 
-  \ invader species 2, docked, frame 1
-0000000110000000
-0000001111000000
-0000011111100000
-0000110110110000
-0000111111110000
-0000001001000000
-0000010110100000
-0000101001010000
+  \ invader species 2, docked, frame 1:
 
-2x1sprite!
+2 1 sprite
 
-  \ invader species 2, docked, frame 2
-0000000110000000
-0000001111000000
-0000011111100000
-0000111111110000
-0000111111110000
-0000001001000000
-0000010110100000
-0000101001010000
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XX.XX.XX....
+....XXXXXXXX....
+......X..X......
+.....X.XX.X.....
+....X.X..X.X....
 
-2x1sprite!
+  \ invader species 2, docked, frame 2:
+
+2 1 sprite
+
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XXXXXXXX....
+....XXXXXXXX....
+......X..X......
+.....X.XX.X.....
+....X.X..X.X....
 
   \ -----------------------------------------------------------
   \ Mothership
 
-  \ ufo, frame 0
-0000000000000000
-0000011111100000
-0001111111111000
-0011111111111100
-0110110110110110
-1111111111111111
-0011100110011100
-0001000000001000
+  \ ufo, frame 0:
 
-2x1sprite ufo  sprite-string ufo$ ( -- ca len )
+2 1 sprite: ufo
 
-  \ ufo, frame 1
-0000000000000000
-0000011111100000
-0001111111111000
-0011111111111100
-0011011011011010
-1111111111111111
-0011100110011100
-0001000000001000
+................
+.....XXXXXX.....
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+.XX.XX.XX.XX.XX.
+XXXXXXXXXXXXXXXX
+..XXX..XX..XXX..
+...X........X...
 
-2x1sprite!
+sprite-string ufo$ ( -- ca len )
 
-  \ ufo, frame 2
-0000000000000000
-0000011111100000
-0001111111111000
-0011111111111100
-0101101101101100
-1111111111111111
-0011100110011100
-0001000000001000
+  \ ufo, frame 1:
 
-2x1sprite!
+2 1 sprite
 
-  \ ufo, frame 3
-0000000000000000
-0000011111100000
-0001111111111000
-0011111111111100
-0010110110110110
-1111111111111111
-0011100110011100
-0001000000001000
+................
+.....XXXXXX.....
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XX.XX.XX.XX.X.
+XXXXXXXXXXXXXXXX
+..XXX..XX..XXX..
+...X........X...
+
+  \ ufo, frame 2:
+
+2 1 sprite
+
+................
+.....XXXXXX.....
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+.X.XX.XX.XX.XX..
+XXXXXXXXXXXXXXXX
+..XXX..XX..XXX..
+...X........X...
+
+  \ ufo, frame 3:
+
+2 1 sprite
+
+................
+.....XXXXXX.....
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..X.XX.XX.XX.XX.
+XXXXXXXXXXXXXXXX
+..XXX..XX..XXX..
+...X........X...
 
   \ -----------------------------------------------------------
   \ Building
 
-2x1sprite!
+1 1 sprite: brick
 
-11111011
-11111011
-11111011
-00000000
-11011111
-11011111
-11011111
-00000000
-
-1x1sprite brick
+XXXXX.XX
+XXXXX.XX
+XXXXX.XX
+........
+XX.XXXXX
+XX.XXXXX
+XX.XXXXX
+........
 
 [pixel-projectile] 0= [if]
   >udg @ 1- ocr-last-udg !
@@ -1044,217 +1052,235 @@ sprite-string docked-invader-2$ ( -- ca len )
     \ of the latest sprite.
 [then]
 
-11111111
-01111111
-00111111
-00111111
-00111111
-00111111
-00111111
-00111111
+1 1 sprite: left-door
 
-1x1sprite left-door
+XXXXXXXX
+.XXXXXXX
+..XXXXXX
+..XXXXXX
+..XXXXXX
+..XXXXXX
+..XXXXXX
+..XXXXXX
 
-11111111
-11111110
-11111100
-11111100
-11111100
-11111100
-11111100
-11111100
+1 1 sprite: right-door
 
-1x1sprite right-door
+XXXXXXXX
+XXXXXXX.
+XXXXXX..
+XXXXXX..
+XXXXXX..
+XXXXXX..
+XXXXXX..
+XXXXXX..
 
-11111111
-01111111
-01011111
-00011011
-00000011
-00000111
-00000010
-00000000
+1 1 sprite: broken-top-left-brick
 
-1x1sprite broken-top-left-brick
+XXXXXXXX
+.XXXXXXX
+.X.XXXXX
+...XX.XX
+......XX
+.....XXX
+......X.
+........
 
-00000000
-00000000
-00000111
-00000011
-00011011
-01111111
-11111111
-11111111
+1 1 sprite: broken-bottom-left-brick
 
-1x1sprite broken-bottom-left-brick
+........
+........
+.....XXX
+......XX
+...XX.XX
+.XXXXXXX
+XXXXXXXX
+XXXXXXXX
 
-11111111
-11111111
-11111000
-11111100
-11100100
-10000000
-00000000
-00000000
+1 1 sprite: broken-top-right-brick
 
-1x1sprite broken-top-right-brick
+XXXXXXXX
+XXXXXXXX
+XXXXX...
+XXXXXX..
+XXX..X..
+X.......
+........
+........
 
-00000000
-10000000
-10100000
-11100100
-11111100
-11111000
-11111101
-11111111
+1 1 sprite: broken-bottom-right-brick
 
-1x1sprite broken-bottom-right-brick
+........
+X.......
+X.X.....
+XXX..X..
+XXXXXX..
+XXXXX...
+XXXXXX.X
+XXXXXXXX
 
   \ -----------------------------------------------------------
   \ Tank
 
   \ XXX TODO -- second frame of the tank
 
-  #3 cconstant udg/tank  #3 free-udg dup
+  3 cconstant udg/tank  >udg @
 
   false [if] \ XXX OLD
 
-  udg-row[
-  000000000010010000000000
-  000000000010010000000000
-  000000000110011000000000
-  001111111111111111111100
-  011111111111111111111110
-  111111111111111111111111
-  111111111111111111111111
-  011111111111111111111110 ]udg-row
+  udg/tank 1 sprite
+  ..........X..X..........
+  ..........X..X..........
+  .........XX..XX.........
+  ..XXXXXXXXXXXXXXXXXXXX..
+  .XXXXXXXXXXXXXXXXXXXXXX.
+  XXXXXXXXXXXXXXXXXXXXXXXX
+  XXXXXXXXXXXXXXXXXXXXXXXX
+  .XXXXXXXXXXXXXXXXXXXXXX.
 
   [else] \ XXX NEW
 
-  udg-row[
-  000000000010010000000000
-  000111111010010111111100
-  001111111111111111111110
-  011111111111111111111111
-  011010101010101010101011
-  001101110111011101110110
-  000101110111011101110100
-  000010101010101010101000 ]udg-row
+  udg/tank 1 sprite
+  ..........X..X..........
+  ...XXXXXX.X..X.XXXXXXX..
+  ..XXXXXXXXXXXXXXXXXXXXX.
+  .XXXXXXXXXXXXXXXXXXXXXXX
+  .XX.X.X.X.X.X.X.X.X.X.XX
+  ..XX.XXX.XXX.XXX.XXX.XX.
+  ...X.XXX.XXX.XXX.XXX.X..
+  ....X.X.X.X.X.X.X.X.X...
 
   [then]
-
-  udg/tank 1 set-latest-sprite-size
 
 cenum left-tank-udg   ( -- c )
 cenum middle-tank-udg ( -- c )
 cenum right-tank-udg  ( -- c ) drop
 
-sprite-string tank$ ( -- ca len ) \ XXX OLD
+2 1 sprite
 
-0000010001000000
-0010001010001000
-0001000000010000
-0000100000100000
-0110000000001100
-0000010000100000
-0001001010010000
-0010010001001000
+.....X...X......
+..X...X.X...X...
+...X.......X....
+....X.....X.....
+.XX.........XX..
+.....X....X.....
+...X..X.X..X....
+..X..X...X..X...
 
-2x1sprite!  sprite-string invader-explosion$ ( -- ca len )
+sprite-string invader-explosion$ ( -- ca len )
 
 [pixel-projectile] 0= [if]
 
   >udg @ \ next free UDG
 
-  00100000
-  00000100
-  00100000
-  00000100
-  00100000
-  00000100
-  00100000
-  00000100  1x1sprite projectile-frame-0
+  1 1 sprite: projectile-frame-0
 
-  00000100
-  00100000
-  00000100
-  00100000
-  00000100
-  00100000
-  00000100
-  00100000 1x1sprite!
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
 
-  00100000
-  00100100
-  00000100
-  00100000
-  00100100
-  00000100
-  00100000
-  00100100 1x1sprite!
+  1 1 sprite
 
-  00000100
-  00100100
-  00100000
-  00000100
-  00100100
-  00100000
-  00000100
-  00100100 1x1sprite!
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
 
-  00100000
-  00000000
-  00100100
-  00000000
-  00000100
-  00100000
-  00000000
-  00100100 1x1sprite!
+  1 1 sprite
 
-  00000100
-  00000000
-  00100100
-  00000000
-  00100000
-  00000100
-  00000000
-  00100100 1x1sprite!
+  ..X.....
+  ..X..X..
+  .....X..
+  ..X.....
+  ..X..X..
+  .....X..
+  ..X.....
+  ..X..X..
 
-  00100100
-  00000100
-  00100000
-  00000000
-  00100100
-  00000100
-  00100000
-  00000000 1x1sprite!
+  1 1 sprite
 
-  00100100
-  00100000
-  00000100
-  00000000
-  00100100
-  00100000
-  00000100
-  00000000 1x1sprite!
+  .....X..
+  ..X..X..
+  ..X.....
+  .....X..
+  ..X..X..
+  ..X.....
+  .....X..
+  ..X..X..
 
-  00100000
-  00100100
-  00000000
-  00100100
-  00100000
-  00000100
-  00100000
-  00100100 1x1sprite!
+  1 1 sprite
 
-  00000100
-  00100100
-  00000000
-  00100100
-  00000100
-  00100000
-  00000100
-  00100100 1x1sprite!
+  ..X.....
+  ........
+  ..X..X..
+  ........
+  .....X..
+  ..X.....
+  ........
+  ..X..X..
+
+  1 1 sprite
+
+  .....X..
+  ........
+  ..X..X..
+  ........
+  ..X.....
+  .....X..
+  ........
+  ..X..X..
+
+  1 1 sprite
+
+  ..X..X..
+  .....X..
+  ..X.....
+  ........
+  ..X..X..
+  .....X..
+  ..X.....
+  ........
+
+  1 1 sprite
+
+  ..X..X..
+  ..X.....
+  .....X..
+  ........
+  ..X..X..
+  ..X.....
+  .....X..
+  ........
+
+  1 1 sprite
+
+  ..X.....
+  ..X..X..
+  ........
+  ..X..X..
+  ..X.....
+  .....X..
+  ..X.....
+  ..X..X..
+
+  1 1 sprite
+
+  .....X..
+  ..X..X..
+  ........
+  ..X..X..
+  .....X..
+  ..X.....
+  .....X..
+  ..X..X..
 
   >udg @ swap - cconstant frames/projectile
 
@@ -1265,123 +1291,126 @@ sprite-string tank$ ( -- ca len ) \ XXX OLD
 
   \ XXX TODO -- Move to the building section.
 
-0000000000000010
-0010000001100100
-0100011111110000
-0000111111111010
-0001111011011001
-0100110011110000
-1000011111000100
-0010001100010010
+2 1 sprite
 
-2x1sprite!  sprite-string ufo-explosion$ ( -- ca len )
+..............X.
+..X......XX..X..
+.X...XXXXXXX....
+....XXXXXXXXX.X.
+...XXXX.XX.XX..X
+.X..XX..XXXX....
+X....XXXXX...X..
+..X...XX...X..X.
 
-0000001111100000
-0001110000011100
-0010001111100010
-0010000000000010
-0010000111000010
-0010001111100010
-0010000111000010
-0010000010000010
+sprite-string ufo-explosion$ ( -- ca len )
 
-2x1sprite container-top
+2 1 sprite: container-top
 
-00000000
-00011100
-00100010
-00100010
-00100010
-00100001
-00100001
-00100001
+......XXXXX.....
+...XXX.....XXX..
+..X...XXXXX...X.
+..X...........X.
+..X....XXX....X.
+..X...XXXXX...X.
+..X....XXX....X.
+..X.....X.....X.
 
-1x1sprite broken-top-left-container
+1 1 sprite: broken-top-left-container
 
-00000000
-00011100
-00100010
-00100010
-01000010
-01000010
-01000010
-10000010
+........
+...XXX..
+..X...X.
+..X...X.
+..X...X.
+..X....X
+..X....X
+..X....X
 
-1x1sprite broken-top-right-container
+1 1 sprite: broken-top-right-container
 
-0010010101010010
-0010111101111010
-0010111000111010
-0010011000110010
-0010000000000010
-0001110000011100
-0000001111100000
-0000000000000000
+........
+...XXX..
+..X...X.
+..X...X.
+.X....X.
+.X....X.
+.X....X.
+X.....X.
 
-2x1sprite container-bottom
+2 1 sprite: container-bottom
 
-00000001
-00000111
-00011110
-00100110
-00100000
-00011100
-00000011
-00000000
+..X..X.X.X.X..X.
+..X.XXXX.XXXX.X.
+..X.XXX...XXX.X.
+..X..XX...XX..X.
+..X...........X.
+...XXX.....XXX..
+......XXXXX.....
+................
 
-1x1sprite broken-bottom-left-container
+1 1 sprite: broken-bottom-left-container
 
-11000000
-01110000
-00111100
-00110010
-00000010
-00011100
-11100000
-00000000
+.......X
+.....XXX
+...XXXX.
+..X..XX.
+..X.....
+...XXX..
+......XX
+........
 
-1x1sprite broken-bottom-right-container
+1 1 sprite: broken-bottom-right-container
+
+XX......
+.XXX....
+..XXXX..
+..XX..X.
+......X.
+...XXX..
+XXX.....
+........
 
   \ -----------------------------------------------------------
   \ Icons
 
-0000000000000000
-0000000000001000
-0000000000001100
-0000111111111110
-0000111111111111
-0000111111111110
-0000000000001100
-0000000000001000
+2 1 sprite: right-arrow
 
-2x1sprite right-arrow
+................
+............X...
+............XX..
+....XXXXXXXXXXX.
+....XXXXXXXXXXXX
+....XXXXXXXXXXX.
+............XX..
+............X...
+
 sprite-string right-arrow$ ( -- ca len )
 
-0000000000000000
-0001000000000000
-0011000000000000
-0111111111110000
-1111111111110000
-0111111111110000
-0011000000000000
-0001000000000000
+2 1 sprite: left-arrow
 
-2x1sprite left-arrow
+................
+...X............
+..XX............
+.XXXXXXXXXXX....
+XXXXXXXXXXXX....
+.XXXXXXXXXXX....
+..XX............
+...X............
+
 sprite-string left-arrow$ ( -- ca len )
 
-0000111111110000
-0011000000001100
-0011000000001100
-0010111111110100
-0010000000000100
-0010000000000100
-0010000000000100
-1111111111111111
+2 1 sprite: fire-button
 
-2x1sprite fire-button
+....XXXXXXXX....
+..XX........XX..
+..XX........XX..
+..X.XXXXXXXX.X..
+..X..........X..
+..X..........X..
+..X..........X..
+XXXXXXXXXXXXXXXX
+
 sprite-string fire-button$ ( -- ca len )
-
-decimal
 
   \ ===========================================================
   cr .( Type)  debug-point \ {{{1
@@ -2181,8 +2210,6 @@ variable broken-wall-x
   invader-x c@ 2+ flying-to-the-left? 3 * +
   invader-y c@ ocr brick =  ;
   \ Has the current invader hit the wall of the building?
-
-[then]
 
 : ?damages ( -- )
   hit-wall? if hit-wall exit then
