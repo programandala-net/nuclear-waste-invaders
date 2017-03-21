@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201703171102
+  \ Last modified: 201703190106
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -33,144 +33,71 @@
   \ When `alias` is already defined,
   \ this version uses 40 bytes; else it uses 51 bytes.
 
-[defined] alias dup 0=
-?\ ' 0 alias case
-?\ 0 cconstant case
-immediate compile-only
+[defined] alias dup 0= ?\   ' 0 alias case
+                       ?\ 0 cconstant case
+                       immediate compile-only
+  \ doc{
+  \
+  \ case  ( -- 0 )
+  \
+  \ ``case`` is an `immediate` and `compile-only` word.
+  \
+  \ Origin: Forth-94 (CORE EXT), Forth-2012 (CORE EXT).
+  \
+  \ }doc
 
 : of
   \ Compilation: ( -- orig )
   \ Run-time: ( x1 x2 -- )
   postpone over  postpone =  postpone if  postpone drop ;
   immediate compile-only
+
+  \ doc{
+  \
+  \ of
+  \   Compilation: ( -- orig )
+  \   Run-time: ( x1 x2 -- )
+  \
+  \ ``of`` is an `immediate` and `compile-only` word.
+  \
+  \ Origin: Forth-94 (CORE EXT), Forth-2012 (CORE EXT).
+  \
+  \ }doc
 
 [defined] alias dup 0=
 ?\ ' else alias endof ( orig1 -- orig2 )
 ?\ : endof ( orig1 -- orig2 ) postpone else ;
 immediate compile-only
 
+  \ doc{
+  \
+  \ endof ( orig1 -- orig2 )
+  \
+  \ Mark the end of an `of` clause of the `case` structure.
+  \
+  \ ``endof`` is an `immediate` and `compile-only` word.
+  \
+  \ Origin: Forth-94 (CORE EXT), Forth-2012 (CORE EXT).
+  \
+  \ }doc
+
 : endcase
-  \ Compilation: ( 0 orig1..orign -- )
+  \ Compilation: ( 0 orig[1]..orig[n] -- )
   \ Run-time: ( x -- )
-  postpone drop  begin  ?dup  while  postpone then  repeat ;
+  postpone drop  begin ?dup while postpone then repeat ;
   immediate compile-only
 
-( case )
-
-  \ Credit:
+  \ doc{
   \
-  \ Code adapted and modified from eForth.
-
-  \ This version uses 51 bytes.
-
-0 cconstant case  immediate compile-only
-
-: of
-  \ Compilation: ( -- orig )
-  \ Run-time: ( x1 x2 -- )
-  postpone over  postpone =  postpone if  postpone drop ;
-  immediate compile-only
-
-: endof ( orig1 -- orig2 )
-  postpone else ; immediate compile-only
-
-: endcase
-  \ Compilation: ( 0 orig1..orign -- )
-  \ Run-time: ( x -- )
-  postpone drop  begin  ?dup  while  postpone then  repeat ;
-  immediate compile-only
-
-( eforth-case )
-
-  \ Credit:
+  \ endcase
+  \   Compilation: ( 0 orig1..orign -- )
+  \   Run-time: ( x -- )
   \
-  \ Code adapted and modified from eForth.
-
-  \ This version uses 58 bytes.
-
-0 cconstant case  immediate compile-only
-
-: of
-  \ Compilation: ( -- orig )
-  \ Run-time: ( x1 x2 -- )
-  postpone over postpone = postpone if  postpone drop ;
-  immediate compile-only
-
-: endof ( orig1 -- orig2 )
-  postpone else ; immediate compile-only
-
-: (endcase) ( 0 orig1..orign -- )
-  begin  ?dup  while  postpone then  repeat ;
-
-: endcase
-  \ Compilation: ( 0 orig1..orign -- )
-  \ Run-time: ( x -- )
-  postpone drop (endcase) ; immediate compile-only
-
-( 94-doc-case )
-
-  \ Credit:
+  \ ``endcase`` is an `immediate` and `compile-only` word.
   \
-  \ Code copied from the example provided in the Forth-94
-  \ documentation.
-
-  \ This version uses 59 bytes.
-
-0 cconstant case  immediate compile-only
-  \ init count of ofs
-
-: of
-  \ Compilation: ( #of -- orig #of+1 )
-  \ Run-time: ( x1 x2 -- )
-  1+ >r
-  postpone over  postpone =   \ copy and test case value
-  postpone if                 \ add orig to control flow stack
-  postpone drop               \ discards case value if =
-  r> ; immediate compile-only
-
-: endof
-  \ Compilation: ( orig1 #of -- orig2 #of )
-  \ Run-time: ( -- )
-  >r  postpone else  r> ; immediate compile-only
-
-: endcase
-  \ Compilation: ( orig1..orign #of -- )
-  \ Run-time: ( x -- )
-  postpone drop  \ discard case value
-  0 ?do  postpone then  loop ; immediate compile-only
-
-( abersoft-case )
-
-  \ Credit:
+  \ Origin: Forth-94 (CORE EXT), Forth-2012 (CORE EXT).
   \
-  \ This is the `case` provided by Abersoft Forth,
-  \ translated from the Z80 disassembly, modified (compiler
-  \ security has been removed) and commented.
-
-  \ This version uses 68 bytes.
-
-: case
-  \ Compilation: ( -- a )
-  \ Run-time: ( x -- )
-  csp @ !csp ; immediate compile-only
-
-: of
-  \ Compilation: ( -- )
-  \ Run-time: ( x -- )
-  postpone over  postpone =  postpone if  postpone drop
- ; immediate compile-only
-
-: endof
-  \ Compilation: ( -- )
-  \ Run-time: ( -- )
-  postpone else ; immediate compile-only
-
-: endcase
-  \ Compilation: ( a orig1..orign -- )
-  \ Run-time: ( x -- )
-  postpone drop
-  begin  sp@ csp @ <>  while  postpone then  repeat
-  csp ! ;  immediate
+  \ }doc
 
 ( between-of )
 
@@ -188,14 +115,28 @@ need between
   \ Run-time: ( x1 x2 x3 -- | x1 )
   postpone (between-of) postpone of ;  immediate compile-only
 
+  \ doc{
+  \
+  \ between-of
+  \   Compilation: ( -- of-sys )
+  \   Run-time: ( x1 x2 x3 -- | x1 )
+
+  \
+  \ ``between-of`` is an `immediate` and `compile-only` word.
+  \
   \ Usage example:
 
-  \ : test ( x -- )
+  \ ----
+  \ : test ( n -- )
   \   case
   \     1 of  ." one"  endof
   \     2 5 between-of  ." between two and five"  endof
   \     6 of  ." six"  endof
   \   endcase ;
+  \ ----
+
+  \
+  \ }doc
 
 ( less-of greater-of )
 
@@ -210,22 +151,53 @@ need between
 : (less-of) ( x1 x2 -- x1 x1 | x1 x1' )
   nup nup >= if  invert  then ;
 
+  \ doc{
+  \
+  \ (less-of) ( x1 x2 -- x1 x1 | x1 x1' )
+  \
+  \ The run-time factor of `less-of`.
+  \
+  \ }doc
+
 : less-of
   \ Compilation: ( -- of-sys )
   \ Run-time: ( x1 x2 -- | x1 )
   postpone (less-of) postpone of ;  immediate compile-only ?)
 
+  \ doc{
+  \
+  \ less-of
+  \   Compilation: ( -- of-sys )
+  \   Run-time: ( x1 x2 -- | x1 )
+
+  \
+  \ ``less-of`` is an `immediate` and `compile-only` word.
+  \
   \ Usage example:
 
+  \ ----
   \ : test ( x -- )
   \   case
-  \     10 of  ." ten!"  endof
-  \     15 less-of  ." less than 15"  endof
+  \     10 of      ." ten!"         endof
+  \     15 less-of ." less than 15" endof
   \     ." greater than 14"
   \   endcase ;
+  \ ----
+
+  \ See also: `greater-of`, `(less-of)`.
+  \
+  \ }doc
 
 : (greater-of) ( x1 x2 -- x1 x1 | x1 x1' )
   nup nup <= if  invert  then ;
+
+  \ doc{
+  \
+  \ (greater-of) ( x1 x2 -- x1 x1 | x1 x1' )
+  \
+  \ The run-time factor of `greater-of`.
+  \
+  \ }doc
 
 : greater-of
   \ Compilation: ( -- of-sys )
@@ -234,12 +206,30 @@ need between
 
   \ Usage example:
 
+
+  \ doc{
+  \
+  \ greater-of
+  \   Compilation: ( -- of-sys )
+  \   Run-time: ( x1 x2 -- | x1 )
+
+  \
+  \ ``greater-of`` is an `immediate` and `compile-only` word.
+  \
+  \ Usage example:
+
+  \ ----
   \ : test ( x -- )
   \   case
-  \     10 of  ." ten!"  endof
-  \     15 greater-of  ." greater than 15"  endof
+  \     10 of         ." ten!"            endof
+  \     15 greater-of ." greater than 15" endof
   \     ." less than 10 or 11..15"
   \   endcase ;
+  \ ----
+
+  \ See also: `less-of`.
+  \
+  \ }doc
 
 ( any-of default-of )
 
@@ -256,7 +246,6 @@ need between
   \ _x1..xn_, return _x0 x0_; else return _x0 0_.
   \
   \ }doc
-
 
 : any-of
   \ Compilation: ( -- of-sys )
@@ -290,9 +279,9 @@ need between
   \ ----
   \ : test ( n -- )
   \   case
-  \     1 of  ." one"  endof
-  \     2 7 10 3 any-of  ." two, seven or ten"  endof
-  \     6 of  ." six"  endof
+  \     1 of            ." one"               endof
+  \     2 7 10 3 any-of ." two, seven or ten" endof
+  \     6 of            ." six"               endof
   \   endcase ;
   \ ----
 
@@ -314,9 +303,9 @@ need between
 
   \ : test ( x -- )
   \   case
-  \     1 of  ." one"  endof
-  \     2 of  ." two"  endof
-  \     default-of  ." other"  endof
+  \     1 of       ." one"    endof
+  \     2 of       ." two"    endof
+  \     default-of ." other"  endof
   \   endcase ;
 
 ( within-of or-of )
@@ -341,9 +330,9 @@ need between
 
   \ : test ( x -- )
   \   case
-  \     1 of  ." one"  endof
-  \     2 5 within-of  ." within two and five"  endof
-  \     6 of  ." six"  endof
+  \     1 of          ." one"                 endof
+  \     2 5 within-of ." within two and five" endof
+  \     6 of          ." six"                 endof
   \   endcase ;
 
   \ Credit:
@@ -362,9 +351,9 @@ need between
 
   \ : test ( x -- )
   \   case
-  \     1 of  ." one"  endof
-  \     2 3 or-of  ." two or three"  endof
-  \     4 of  ." four"  endof
+  \     1 of      ." one"          endof
+  \     2 3 or-of ." two or three" endof
+  \     4 of      ." four"         endof
   \   endcase ;
 
   \ ===========================================================
@@ -386,6 +375,9 @@ need between
   \ interpretation.
   \
   \ 2017-03-17: Use `cconstant` instead of `constant`. Update
-  \ style of stack comments.
+  \ style of stack comments. Remove all alternative
+  \ implementations of `case`. Improve documentation.
+  \
+  \ 2017-03-19: Improve documentation.
 
   \ vim: filetype=soloforth
