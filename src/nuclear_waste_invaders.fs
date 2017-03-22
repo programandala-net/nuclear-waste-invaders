@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.60.0+201703192217" ;
+: version ( -- ca len ) s" 0.61.0+201703221935" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -81,7 +81,7 @@ need case need 0exit  need +perform need do need abort"
   \ --------------------------------------------
   cr .(   -Memory) \ {{{2
 
-need c+!
+need c+! need zx7t
 
   \ --------------------------------------------
   cr .(   -Math) \ {{{2
@@ -145,7 +145,7 @@ need shoot need whip need lightning1
   \ --------------------------------------------
   \ Files
 
-need tape-file>
+need tape-file> need last-tape-header
 
   \ --------------------------------------------
 
@@ -223,6 +223,16 @@ tank-y cconstant arena-bottom-y
   \ ===========================================================
   cr .( Landscapes)  debug-point \ {{{1
 
+sys-screen /sys-screen-bitmap 3 / 2 * + constant landscape-scra
+  \ Screen address of the landscape.
+
+attributes /attributes 3 / 2 * + constant landscape-attra
+  \ Attributes address of the landscape.
+
+false [if]
+
+  \ XXX OLD -- Uncompressed landscape graphics.
+
 7 cconstant landscapes
 
 far-banks 3 + c@ cconstant landscapes-bank
@@ -230,12 +240,6 @@ far-banks 3 + c@ cconstant landscapes-bank
 
 /bank negate farlimit +!
   \ Lower the far-memory limit accordingly.
-
-sys-screen /sys-screen-bitmap 3 / 2 * + constant landscape-scra
-  \ Screen address of the landscape.
-
-attributes /attributes 3 / 2 * + constant landscape-attra
-  \ Attributes address of the landscape.
 
 /sys-screen-bitmap 3 / dup constant /landscape-bitmap
        /attributes 3 / dup constant /landscape-attributes
@@ -262,9 +266,65 @@ attributes /attributes 3 / 2 * + constant landscape-attra
     0 0 sys-screen 0 tape-file> i screen>landscape
   loop ;
 
+[else]
+
+  \ XXX NEW -- Compressed landscape graphics.
+
+7 cconstant landscapes
+
+7 cconstant landscapes-bank
+  \ Use the free bank to store the landscapes.
+
+create landscape-bitmap> landscapes cells allot
+  \ Array to store the addresses of the compressed landscape
+  \ bitmaps (2048 bytes uncompressed).
+
+create landscape-attrs> landscapes cells allot
+  \ Array to store the addresses of the compressed landscape
+  \ attributes (256 bytes uncompressed).
+
+: landscape>screen ( n -- )
+  landscapes-bank bank
+  dup landscape-bitmap> array> @ landscape-scra  zx7t
+      landscape-attrs>  array> @ landscape-attra zx7t
+  default-bank ;
+  \ Decompress landscape _n_ (0 index) from memory bank to
+  \ screen.
+
+variable landscape> bank-start landscape> !
+  \ Address where the next compressed landscape bitmap or
+  \ attributes will be stored, in the memory bank.
+
+: landscape+! ( -- ) last-tape-length @ landscape> +! ;
+  \ Update `landscape>` with the length of the last tape file
+  \ loaded.
+
+: (load-landscape ( n a -- )
+  array> landscape> @ swap !
+  0 0 landscape> @ 0 tape-file> landscape+! ;
+  \ Store the address hold in `landscape>` into element _n_ of
+  \ cell array _a2_.  Then read the contents of the next tape
+  \ file to the address hold in `landscape>`. Finally update
+  \ `landscape>` with the length of the loaded file.
+
+: load-landscape ( n -- )
+  landscapes-bank bank  dup landscape-attrs>  (load-landscape
+                            landscape-bitmap> (load-landscape
+  default-bank ;
+  \ Load landscape _n_ (0 index) from tape and store it into
+  \ the memory bank used for landscape graphics.  Each
+  \ landscape consists of two compressed files: first the
+  \ attributes (256 bytes uncompressed) and next the bitmap
+  \ (2048 bytes uncompressed).
+
+: load-landscapes ( -- )
+  landscapes 0 ?do i load-landscape loop ;
+
+[then]
+
   \ cr .( Insert the landscapes tape)
   \ cr .( then press any key) key drop
-  load-landscapes
+load-landscapes
 
   \ ===========================================================
   cr .( Colors)  debug-point \ {{{1

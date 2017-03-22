@@ -1,5 +1,5 @@
 = Nuclear Waste Invaders
-:revdate: 2017-03-13
+:revdate: 2017-03-22
 
 // This document is written in AsciiDoc/Asciidoctor format.
 // See: <http://asciidoctor.org>.
@@ -9,8 +9,8 @@
 // license in all redistributed copies and derived works.  There is no
 // warranty.
 
-_Nuclear Waste Invaders_ is a ZX Spectrum 128 version under
-development of
+_Nuclear Waste Invaders_ is a ZX Spectrum 128 version, under
+development, of
 http://www.zonadepruebas.com/viewtopic.php?t=4231[Jupiter ACE's
 Nuclear Invaders (by Dancresp, 2013)].
 
@@ -19,19 +19,22 @@ http://programandala.net/en.program.solo_forth.html[Solo Forth]
 (http://github.com/programandala-net/solo-forth[Solo Forth in
 GitHub]).
 
+Project home page:
+http://programandala.net/en.program.nuclear_waste_invaders.html.
+
 == How to compile and run
 
 . Make sure the required programs, listed in the header of the
   <Makefile> file, are installed on your system.
 . Type `make` in the project directory to build the
-  <disk_2_nuclear_waste_invaders.mgt> disk image and the <tape.tap>
-  tape image.
+  <disk_2_nuclear_waste_invaders.mgt> disk image and the
+  <landscapes.compressed.tap> tape image.
 . Start a ZX Spectrum 128 emulator with the Plus D interface.
 . Enter 128 BASIC.
-. Insert the <disk_1_solo_forth.mgt> disk image into drive 1.
+. Insert the Solo Forth's <disk_0_boot.mgt> disk image into drive 1.
 . Type `run` to load G+DOS and Solo Forth from drive 1.
 . Insert the <disk_2_nuclear_invaders.mgt> disk image into drive 1.
-. Open the <tape.tap> tape image as input tape.
+. Open the <landscapes.compressed.tape.tap> tape image as input tape.
 . Type `1 load` to load block 1 from the current drive. This will
   start the compilation. Messages will be shown during the process.
 . Set your emulator to its maximum speed and wait. When the

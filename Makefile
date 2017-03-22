@@ -5,7 +5,7 @@
 # This file is part of Nuclear Waste Invaders
 # http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 201703132205
+# Last modified: 201703221955
 # See change log at the end of the file
 
 # ==============================================================
@@ -18,6 +18,11 @@
 
 # fsb2 (by Marcos Cruz)
 # 	http://programandala.net/en.program.fsb2.html
+
+# split (from the GNU coreutils)
+
+# ZX7 (by Einar Saukas et al.)
+#	http://www.worldofspectrum.org/infoseekid.cgi?id=0027996
 
 # ==============================================================
 # Notes
@@ -40,12 +45,15 @@ MAKEFLAGS = --no-print-directory
 # Main
 
 .PHONY: all
-all: disk_2_nuclear_waste_invaders.mgt tape.tap
+all: disk_2_nuclear_waste_invaders.mgt landscapes.compressed.tap
 
 .PHONY : clean
 clean:
 	rm -f tmp/*
-	rm -f disk_2_nuclear_waste_invaders.mgt tape.tap
+	rm -f disk_2_nuclear_waste_invaders.mgt *.tap
+
+# ==============================================================
+# Source block disk
 
 secondary_source_files=$(sort $(wildcard src/00*.fs))
 library_source_files=$(sort $(wildcard src/lib/*.fs))
@@ -73,13 +81,59 @@ disk_2_nuclear_waste_invaders.mgt: tmp/disk_2_nuclear_waste_invaders.fb
 	mv tmp/disk_2_nuclear_waste_invaders.mgt .
 	mv $<.copy $<
 
-scr_landscapes=$(wildcard graphics/landscapes/*.scr)
-tap_landscapes=$(addsuffix .tap,$(scr_landscapes))
+# ==============================================================
+# Landscapes tape
 
+# Landscape graphics in SCR format:
+landscapes_scr=$(wildcard graphics/landscapes/*.scr)
+
+# ----------------------------------------------
+# XXX OLD -- First version, uncompressed graphics
+
+landscapes_scr_tap=$(addsuffix .tap,$(landscapes_scr))
+
+# Create a TAP file from a SCR file:
 %.scr.tap: %.scr
 	make/bin2code0 $< $@ 16384
 
-tape.tap: $(tap_landscapes)
+# Create the final TAP file with all SCR files:
+landscapes.uncompressed.tap: $(landscapes_scr_tap)
+	cat $(sort $^) > $@
+
+# ----------------------------------------------
+# Second version, compressed graphics
+
+landscapes_scr_3rd=$(addsuffix .3rd,$(landscapes_scr))
+
+landscapes_scr_3rd_attr=$(addsuffix .attr,$(landscapes_scr_3rd))
+
+landscapes_scr_zx7=\
+	$(addsuffix .zx7,$(landscapes_scr_3rd) $(landscapes_scr_3rd_attr))
+
+landscapes_scr_3rd_tap=$(addsuffix .tap,$(landscapes_scr_zx7))
+
+# Extract the last third of the bitmap from a SCR file:
+%.scr.3rd: %.scr
+	split --bytes=2048 --numeric-suffixes $< $@
+	mv $@02 $@
+	rm -f $@??
+
+# Extract the last third of the attributes from a SCR file:
+%.scr.3rd.attr: %.scr
+	split --bytes=256 --numeric-suffixes $< $@
+	mv $@26 $@
+	rm -f $@??
+
+# Create a TAP file from a ZX7 file:
+%.zx7.tap: %.zx7
+	make/bin2code0 $< $@
+
+# Compress a file with ZX7:
+%.zx7: %
+	zx7 $<
+
+# Create the final TAP file with all compressed SCR files:
+landscapes.compressed.tap: $(landscapes_scr_3rd_tap)
 	cat $(sort $^) > $@
 
 # ==============================================================
@@ -98,4 +152,5 @@ tape.tap: $(tap_landscapes)
 # 2017-03-11: Update project name.
 #
 # 2017-03-13: Move the graphics tape to the root directory and sort its files.
-
+#
+# 2017-03-22: Compress the landscape graphics.
