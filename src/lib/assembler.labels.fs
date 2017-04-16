@@ -3,13 +3,13 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201703250000
+  \ Last modified: 201703280125
   \ See change log at the end of the file
 
   \ ===========================================================
   \ Description
 
-  \ Local labels for the Z80 assembler.
+  \ Assembler labels.
 
   \ ===========================================================
   \ Author
@@ -25,7 +25,7 @@
 
 ( l: )
 
-get-order get-current .unused
+get-order get-current
 only forth definitions need array> need c+!
 assembler-wordlist dup >order set-current need ?rel
 
@@ -36,6 +36,10 @@ assembler-wordlist dup >order set-current need ?rel
   \ rl-id ( -- b )
   \
   \ Identifier of relative references created by `rl#`.
+  \ ``rl-id`` is used as a bitmask added to the label number
+  \ stored in `l-refs`.
+  \
+  \ See also: `al-id`.
   \
   \ }doc
 
@@ -44,17 +48,43 @@ assembler-wordlist dup >order set-current need ?rel
   \ al-id ( -- b )
   \
   \ Identifier of absolute references created by `al#`.
+  \ ``rl-ad`` is used as a bitmask added to the label number
+  \ stored in `l-refs`.
+  \
+  \ See also: `rl-id`.
   \
   \ }doc
 
-create max-labels #16 c,  create max-l-refs #16 c,
+create max-labels 8 c,  create max-l-refs 16 c,
 
   \ doc{
   \
   \ max-labels  ( -- ca )
   \
   \ _ca_ holds a byte, which is the maximum number (count) of
-  \ labels that can be defined by `l:`.
+  \ labels that can be defined by `l:`.  Its default value is
+  \ 8. The application can change the value, but the default
+  \ one should be restored after the code word has been
+  \ compiled.
+  \
+  \ ``max-labels`` is used by `init-labels` to allocate the
+  \ `labels` table.
+  \
+  \ Usage example:
+
+  \ ----
+  \ need assembler  also assembler need l:
+  \ max-labels c@ #24 max-labels c!
+  \ previous
+  \
+  \ code my-word ( -- )
+  \   \ Z80 code that needs #24 labels
+  \ end-code
+  \
+  \ max-labels c! \ restore the default value
+  \ ----
+
+  \ See also: `max-l-refs`.
   \
   \ }doc
 
@@ -64,7 +94,28 @@ create max-labels #16 c,  create max-l-refs #16 c,
   \
   \ _ca_ holds a byte, which is the maximum number (count) of
   \ unresolved label referenced that can be created by `rl#` or
-  \ `al#`.
+  \ `al#`.  Its default value is 16. The application can change
+  \ the value, but the default one should be restored after the
+  \ code word has been compiled.
+  \
+  \ ``max-l-refs`` is used by `init-labels` to allocate the
+  \ `l-refs` table.
+  \
+  \ Usage example:
+
+  \ ----
+  \ need assembler  also assembler need l:
+  \ max-l-refs c@ #16 max-l-refs c!
+  \ previous
+  \
+  \ code my-word ( -- )
+  \   \ Z80 code that needs #16 label references
+  \ end-code
+  \
+  \ max-l-refs c! \ restore the default value
+  \ ----
+
+  \ See also: `max-labels`.
   \
   \ }doc
 
@@ -72,8 +123,10 @@ create max-labels #16 c,  create max-l-refs #16 c,
   \ Size of a label reference.
 
 : /l-refs ( -- n ) max-l-refs c@ /l-ref * ;
+  \ Size of the label references table in bytes
 
 : /labels ( -- n ) max-labels c@ cells ;
+  \ Size of the labels table in bytes.
 
 variable labels  variable l-refs
 
@@ -81,9 +134,9 @@ variable labels  variable l-refs
   \
   \ labels  ( -- a )
   \
-  \ A variable. _a_ contains the address of the table of
-  \ labels, which is allocated in the `stringer` by
-  \ `init-labels`.
+  \ A variable. _a_ contains the address of the labels table,
+  \ which is allocated in the `stringer` by `init-labels`.  The
+  \ size of the table can be configured with `max-label`.
   \
   \ Each element of the table (0 index) is one cell, which
   \ holds hold the address of the correspending label, or zero
@@ -95,23 +148,24 @@ variable labels  variable l-refs
   \
   \ l-refs  ( -- a )
   \
-  \ A variable. _a_ contains the address of the table of label
-  \ references, which is allocated in the `stringer` by
-  \ `init-labels`.
+  \ A variable. _a_ contains the address of the label
+  \ references table, which is allocated in the `stringer` by
+  \ `init-labels`. The size of the table can be configured with
+  \ `max-l-refs`.
   \
   \ Each element of the table (0 index) has the following
   \ structure:
-  \
+
   \ ....
   \ +0 = byte: unused reference:
   \               all bits are 0
   \            used reference:
-  \               label number: bits 0..5
+  \               label number:        bits 0..5
   \               relative reference?: bit 6 = 1 (mask `rl-id`)
   \               absolute reference?: bit 7 = 1 (mask `al-id`)
   \ +1 = cell: label address
   \ ....
-  \
+
   \ }doc
 
 : init-labels ( -- )
@@ -156,16 +210,28 @@ init-labels ' init-labels ' init-asm defer!
 
 : new-l-ref ( orig n b -- )
   or free-l-ref dup 0= #-285 ?throw tuck c! 1+ ! ;
-  \ Create a new reference _orig_ to label _n_ of type _b_.
-  \ If all label references are in use, throw exception #-285.
+  \ Create a new reference _orig_ to label _n_ of type _b_
+  \ (`rl-id` or `al-id`).  If all label references are in use,
+  \ throw exception #-285.
 
-: >l ( n -- a )
+: >l ( b -- a )
   [ rl-id al-id or invert ] cliteral and labels @ array> ;
-  \ Return address _a_ of label _n_ in the labels array.
+  \ Return address _a_ of label _b_ in the labels array.
   \ _a_ holds the value of the label.
 
+: resolve-al# ( orig b -- ) >l @ swap ! ;
+  \ Resolve an absolute reference at _orig_ to label _b_.
+
+: resolve-rl# ( orig b -- ) >l @ over 1+ - dup ?rel swap c! ;
+  \ Resolve a relative reference at _orig_ to label _b_.
+
+: (resolve-ref ( orig b -- )
+  dup rl-id and if resolve-rl# else resolve-al# then ;
+  \ Resolve reference at _orig_ to label _b_.
+  \ XXX TODO -- Unfactor.
+
 : al# ( -- ) here cell- dup @ ( orig n ) dup ?l# dup >l @ ?dup
-             if nip swap ! else al-id new-l-ref then ;
+             if nip swap ! else al-id new-l-ref then ; -->
 
   \ doc{
   \
@@ -194,12 +260,9 @@ init-labels ' init-labels ' init-asm defer!
   \
   \ }doc
 
--->
-
 ( l: )
 
-: rl# ( n -- a )
-  dup ?l#  dup >l @ ?dup
+: rl# ( n -- a ) dup ?l#  dup >l @ ?dup
   if nip else here 1+ dup rot rl-id new-l-ref then ;
 
   \ doc{
@@ -229,16 +292,17 @@ init-labels ' init-labels ' init-asm defer!
   \
   \ }doc
 
-: @l-ref ( a0 -- a b ) dup 1+ @ swap c@ ;
-  \ Fetch a label reference _a b_ from _a0_.
+: @l-ref ( a -- orig b ) dup 1+ @ swap c@ ;
+  \ Fetch a label reference _orig b_ from _a0_.
 
-: resolve-ref ( a -- ) dup @l-ref resolve-l# /l-ref erase ;
+: resolve-ref ( a -- ) dup @l-ref (resolve-ref /l-ref erase ;
   \ Resolve label reference stored at _a_.
 
 : l-id># ( b -- n ) [ rl-id al-id or invert ] cliteral and ;
 
 : ?resolve-ref ( n1 n2 -- )
-  >l-ref dup c@ dup if   l-id># rot = if resolve-ref then
+  >l-ref dup c@ dup if   l-id># rot = if resolve-ref
+                                      else drop then
                     else 2drop drop then ;
   \ If label reference _n2_ points to label _n1_, resolve it.
 
@@ -246,25 +310,50 @@ init-labels ' init-labels ' init-asm defer!
   max-l-refs c@ 0 ?do dup i ?resolve-ref loop drop ;
   \ Resolve all references to label _n_.
 
-: l: ( n -- )
-  dup >l dup @ #-284 ?throw here swap ! resolve-refs ;
+: l! ( x n -- )
+  dup >l dup @ #-284 ?throw rot swap ! resolve-refs ;
+
+  \ doc{
+  \
+  \ l!  ( x n -- )
+  \
+  \ If assembler label _n_ has been defined in the current
+  \ definition, throw exception #-284 (assembly label number
+  \ already used); else create a new assembler label _n_ with
+  \ value _x_ and resolve all previous references to it that
+  \ could have been created by `rl#` or `al#`. Usually _x_ is
+  \ an address.
+  \
+  \ See also: `l:`.
+  \
+  \ }doc
+
+: l: ( n -- ) here swap l! ;
 
   \ doc{
   \
   \ l:  ( n -- )
   \
-  \ Create a new assembler label _n_.
+  \ If assembler label _n_ has been defined in the current
+  \ definition, throw exception #-284 (assembly label number
+  \ already used); else create a new assembler label _n_ with
+  \ the value returned by `here` and resolve all previous
+  \ references to it that could have been created by `rl#` or
+  \ `al#`.
   \
-  \ See also: `rl#`, `al#`.
+  \ See also: `l!`.
   \
   \ }doc
 
-set-current set-order .unused -->
+set-current set-order
 
 ( .l )
 
+  \ XXX TMP -- For debugging.
+
 need dump
-assembler-wordlist >order
+
+assembler-wordlist >order need l:
 
 : .l ( -- ) labels @ /labels dump cr l-refs @ /l-refs dump ;
 
@@ -313,12 +402,19 @@ previous
   \ 2017-03-23: Increase number of labels and references to 23,
   \ needed by `dzx7m`. Start an improved version.
   \
-  \ XXX UNDER DEVELOPMENT -- 2017-03-24:
+  \ 2017-03-24: Reduce the size of the label references table,
+  \ by combining the label number and the reference type into
+  \ one byte.
   \
-  \ Memory used at the moment (including requirements and space
-  \ for 16 labels and 16 references):
-  \
-  \ Data/code space:      561 B
-  \ Name space:           383 B
+  \ 2017-03-25: Make the size of the tables configurable by the
+  \ application and use the `stringer` to allocate them.
+  \ Memory used (including requirements):
+
+  \ Data/code space:      500 B
+  \ Name space:           355 B
+
+  \ Improve documentation.
+
+  \ 2017-03-27: Add `l!` and rewrite `l:` after it.
 
   \ vim: filetype=soloforth

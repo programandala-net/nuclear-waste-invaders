@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.61.0+201703221935" ;
+: version ( -- ca len ) s" 0.62.0+201704161427" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -81,7 +81,7 @@ need case need 0exit  need +perform need do need abort"
   \ --------------------------------------------
   cr .(   -Memory) \ {{{2
 
-need c+! need zx7t
+need c+! need dzx7t
 
   \ --------------------------------------------
   cr .(   -Math) \ {{{2
@@ -93,7 +93,7 @@ need within need even? need crnd need 8*
   cr .(   -Data structures) \ {{{2
 
 need roll need cfield: need field: need +field-opt-0124
-need array>
+need array> need !>
 
 need xstack need allot-xstack need xdepth need >x need x>
 need xclear
@@ -285,8 +285,8 @@ create landscape-attrs> landscapes cells allot
 
 : landscape>screen ( n -- )
   landscapes-bank bank
-  dup landscape-bitmap> array> @ landscape-scra  zx7t
-      landscape-attrs>  array> @ landscape-attra zx7t
+  dup landscape-bitmap> array> @ landscape-scra  dzx7t
+      landscape-attrs>  array> @ landscape-attra dzx7t
   default-bank ;
   \ Decompress landscape _n_ (0 index) from memory bank to
   \ screen.
@@ -423,9 +423,9 @@ max-controls 1- cconstant last-control
   \ Convert controls number _n_ to its address _a_.
 
 : set-controls ( n -- )
-  >controls     dup c@  dup to kk-left#   #>kk 2to kk-left
-             1+ dup c@  dup to kk-right#  #>kk 2to kk-right
-             1+     c@  dup to kk-fire#   #>kk 2to kk-fire ;
+  >controls     dup c@  dup to kk-left#   #>kk to kk-left
+             1+ dup c@  dup to kk-right#  #>kk to kk-right
+             1+     c@  dup to kk-fire#   #>kk to kk-fire ;
   \ Make controls number _n_ (item of the `controls` table) the
   \ current controls.
 
@@ -1971,7 +1971,7 @@ constant tank-movements ( -- a )
   \ ===========================================================
   cr .( Projectiles)  debug-point \ {{{1
 
-%111 value max-projectile#
+%111 cconstant max-projectile#
   \ Bitmask for the projectile counter (0..7).
   \ XXX TODO -- try %1111 and %11111
 
@@ -2669,7 +2669,7 @@ variable trigger-delay-counter  trigger-delay-counter off
 
 [pixel-projectile] [if]    8
                    [else]  6
-                   [then]  value trigger-delay
+                   [then]  cconstant trigger-delay
 
 : delay-trigger ( -- )
   trigger-delay trigger-delay-counter ! ;
