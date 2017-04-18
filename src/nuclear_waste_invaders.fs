@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.65.0+201704181925" ;
+: version ( -- ca len ) s" 0.66.0+201704182021" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -81,7 +81,7 @@ need evaluate
   \ --------------------------------------------
   cr .(   -Definers) \ {{{2
 
-need defer need alias need value need 2value need cvariable
+need defer need alias need cvariable
 need 2const need cenum
 
   \ --------------------------------------------
@@ -109,7 +109,7 @@ need within need even? need crnd need 8*
   cr .(   -Data structures) \ {{{2
 
 need roll need cfield: need field: need +field-opt-0124
-need array> need !>
+need array> need !> need c!> need 2!>
 
 need sconstants
 
@@ -319,7 +319,7 @@ load-landscapes
   cenum es         \ Spanish
   cconstant langs  \ number of languages
 
-en value lang  \ current language
+en cconstant lang  \ current language
 
 : localized-word ( xt[langs]..xt[1] "name" -- )
   create langs 0 ?do , loop
@@ -545,10 +545,12 @@ record off
 
 13 cconstant enter-key
 
-0 value kk-left#    0 value kk-right#    0 value kk-fire#
-0. 2value kk-left   0. 2value kk-right   0. 2value kk-fire
 
-: wait ( -- ) begin  inkey  until ;
+0 cconstant kk-left#  0. 2constant kk-left
+0 cconstant kk-right# 0. 2constant kk-right
+0 cconstant kk-fire#  0. 2constant kk-fire
+
+: wait ( -- ) begin inkey until ;
   \ Wait until any key is pressed.
 
 : enter-key? ( -- f ) inkey enter-key = ;
@@ -596,9 +598,9 @@ max-controls 1- cconstant last-control
   \ Convert controls number _n_ to its address _a_.
 
 : set-controls ( n -- )
-  >controls     dup c@  dup to kk-left#   #>kk to kk-left
-             1+ dup c@  dup to kk-right#  #>kk to kk-right
-             1+     c@  dup to kk-fire#   #>kk to kk-fire ;
+  >controls     dup c@  dup c!> kk-left#   #>kk 2!> kk-left
+             1+ dup c@  dup c!> kk-right#  #>kk 2!> kk-right
+             1+     c@  dup c!> kk-fire#   #>kk 2!> kk-fire ;
   \ Make controls number _n_ (item of the `controls` table) the
   \ current controls.
 
@@ -2154,7 +2156,7 @@ max-projectile# 1+ cconstant #projectiles
   \ Create and activate an extra stack to store the free
   \ projectiles.
 
-0 value projectile#
+0 cconstant projectile#
   \ Number of the current projectile.
 
 create 'projectile-x #projectiles allot
@@ -2352,7 +2354,7 @@ false [if] \ XXX TODO --
   cls invariable-menu-screen variable-menu-screen ;
 
 : change-language  ( -- )
-  lang 1+ dup langs < abs * to lang variable-menu-screen ;
+  lang 1+ dup langs < abs * c!> lang variable-menu-screen ;
   \ Change the current language and update the screen.
 
 : menu ( -- )
@@ -2880,7 +2882,7 @@ variable trigger-delay-counter  trigger-delay-counter off
 
 : fire ( -- )
   1 used-projectiles +!
-  x> to projectile#  .debug-data
+  x> c!> projectile#  .debug-data
   new-projectile-x projectile-x c!
   [pixel-projectile]
   [if]    [ tank-y row>pixel 1+ ] literal
@@ -2907,7 +2909,7 @@ variable trigger-delay-counter  trigger-delay-counter off
   \ Is the fire key pressed?
 
 : next-projectile ( -- )
-  projectile# 1+ max-projectile# and to projectile# ;
+  projectile# 1+ max-projectile# and c!> projectile# ;
   \ Point to the next current projectile.
 
 : fly-projectile ( -- )
