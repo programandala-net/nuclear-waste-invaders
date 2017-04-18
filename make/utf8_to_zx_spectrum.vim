@@ -3,7 +3,7 @@
 " This file is part of Nuclear Waste Invaders
 " http://programandala.net/en.program.nuclear_waste_invaders.html
 
-" Last modified 201704172351
+" Last modified 201704181822
 " See change log at the end of the file
 
 " ==============================================================
@@ -44,22 +44,31 @@ echo "Converting Spanish UTF-8 characters to ZX Spectrum codes"
 
 echo "Converting Esperanto UTF-8 characters to ZX Spectrum codes"
 
-%s/Ĉ/\=nr2char(128)/gIe
-%s/ĉ/\=nr2char(129)/gIe
-%s/Ĝ/\=nr2char(130)/gIe
-%s/ĝ/\=nr2char(131)/gIe
-%s/Ĥ/\=nr2char(132)/gIe
-%s/ĥ/\=nr2char(133)/gIe
-%s/Ĵ/\=nr2char(134)/gIe
-%s/ĵ/\=nr2char(135)/gIe
-%s/Ŝ/\=nr2char(136)/gIe
-%s/ŝ/\=nr2char(137)/gIe
-%s/Ŭ/\=nr2char(138)/gIe
-%s/ŭ/\=nr2char(139)/gIe
+%s/Ĉ/\=nr2char(144)/gIe
+%s/ĉ/\=nr2char(145)/gIe
+%s/Ĝ/\=nr2char(146)/gIe
+%s/ĝ/\=nr2char(147)/gIe
+%s/Ĥ/\=nr2char(148)/gIe
+%s/ĥ/\=nr2char(149)/gIe
+%s/Ĵ/\=nr2char(150)/gIe
+%s/ĵ/\=nr2char(151)/gIe
+%s/Ŝ/\=nr2char(152)/gIe
+%s/ŝ/\=nr2char(153)/gIe
+%s/Ŭ/\=nr2char(154)/gIe
+%s/ŭ/\=nr2char(155)/gIe
+
+" ==============================================================
+" French characters
+
+echo "Converting French UTF-8 characters to ZX Spectrum codes"
+
+%s/â/\=nr2char(156)/gIe
 
 " ==============================================================
 " Change log
 
 " 2017-04-17: Start, based on the code used by Black Flag
-" (http://programandala.net/en.program.black_flag.html)
+" (http://programandala.net/en.program.black_flag.html).
+"
+" 2017-04-18: Add French character. Update all character codes.
 

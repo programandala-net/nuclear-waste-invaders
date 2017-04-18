@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.64.0+201704181720" ;
+: version ( -- ca len ) s" 0.65.0+201704181925" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -314,8 +314,6 @@ load-landscapes
   \ ===========================================================
   \ Localization
 
-  \ XXX UNDER DEVELOPMENT
-
 0 cenum en         \ English
   cenum eo         \ Esperanto
   cenum es         \ Spanish
@@ -342,82 +340,123 @@ en value lang  \ current language
   \ localized strings have been compiled, in reverse order of
   \ ISO language code, i.e.: es, eo, en.
   \
-  \ XXX TODO -- Not used yet.
   \ XXX TODO -- Benchmark `cells +` vs `swap array>`.
+
+: localized-character ( c[n]..c[1] "name" -- c )
+  create langs 0 ?do c, loop
+  does> ( -- c ) ( pfa ) lang + c@ ;
+  \ Create a word _name_ that will return a character
+  \ from _c[langs]..c[1]_, depending on the current language.
+  \ _c[langs]..c[1]_, are sorted in reverse order of ISO
+  \ language code, i.e.: es, eo, en.
 
   \ ===========================================================
   cr .( Texts)  debug-point \ {{{1
 
-  \ XXX UNDER DEVELOPMENT
+here ," Invasores de Residuos Nucleares"
+here ," Atomrubaĵaj Invadantoj"
+here ," Nuclear Waste Invaders"
+localized-string game-title$ ( -- ca len )
 
-:noname ( -- ca len ) s" Invasores de Residuos Nucleares" ;
-:noname ( -- ca len ) s" Atomrubaĵaj Invadantoj" ;
-:noname ( -- ca len ) s" Nuclear Waste Invaders" ;
-localized-word game-title$ ( -- ca len )
+here ," [N]o en español"
+here ," [N]e en Esperanto"
+here ," [N]ot in English"
+localized-string not-in-this-language$ ( -- ca len )
 
-:noname ( -- ca len ) s" NO en español" ;
-:noname ( -- ca len ) s" NE en Esperanto" ;
-:noname ( -- ca len ) s" NOT in English" ;
-localized-word not-in-this-language$ ( -- ca len )
+'n' cconstant language-key
+  \ Key to change the current language.
 
-:noname ( -- ca len ) s" puntos " ;
-:noname ( -- ca len ) s" poentoj" ;
-:noname ( -- ca len ) s" points " ;
-localized-word points$ ( -- ca len )
+here ," puntos "
+here ," poentoj"
+here ," points "
+localized-string points$ ( -- ca len )
 
-:noname ( -- ca len ) s" puntos extra" ;
-:noname ( -- ca len ) s" krompoentoj " ;
-:noname ( -- ca len ) s" bonus       " ;
-localized-word bonus$ ( -- ca len )
+here ," puntos extra"
+here ," krompoentoj "
+here ," bonus       "
+localized-string bonus$ ( -- ca len )
 
-:noname ( -- ca len ) s" PUNTUACIÓN" ;
-:noname ( -- ca len ) s" POENTARO" ;
-:noname ( -- ca len ) s" SCORE" ;
-localized-word score$ ( -- ca len )
+here ," PUNTUACIÓN"
+here ," POENTARO"
+here ," SCORE"
+localized-string score$ ( -- ca len )
 
-:noname ( -- ca len ) s" RÉCOR" ;
-:noname ( -- ca len ) s" RIKORDO" ;
-:noname ( -- ca len ) s" RECORD" ;
-localized-word record$ ( -- ca len )
+here ," RÉCOR"
+here ," RIKORDO"
+here ," RECORD"
+localized-string record$ ( -- ca len )
 
   \ XXX TODO -- Simplify: use `sconstants` instead, using the
   \ language as index and a wrapper word to provide it.
 
 0 [if]
 
-:noname ( -- ca len ) s" jugadores" ;
-:noname ( -- ca len ) s" ludantoj" ;
-:noname ( -- ca len ) s" players" ;
-localized-word players$ ( -- ca len )
+here ," jugadores"
+here ," ludantoj"
+here ," players"
+localized-string players$ ( -- ca len )
 
 [then]
 
-:noname ( -- ca len ) s" empezar" ;
-:noname ( -- ca len ) s" eki" ;
-:noname ( -- ca len ) s" start" ;
-localized-word start$ ( -- ca len )
+here ," [E]mpezar"
+here ," [E]ki"
+here ," [S]tart"
+localized-string start$ ( -- ca len )
+
+'e' \ [e]mpezar
+'e' \ [e]ki
+'s' \ [s]tart
+localized-character start-key ( -- c )
+  \ Key to start the game from the main menu.
 
 0
-  here ," " \ XXX TODO
-  here ," " \ XXX TODO
-  here ," " \ XXX TODO
+  here ," River Cess"
+  here ," Tichla" \ XXX TODO -- change
+  here ," Zagora" \ XXX TODO -- change
   here ," Tomelloso"
-  here ," Chateaubriant"
-  here ," " \ XXX TODO
+  here ," Châteaubriant"
+  here ," Peel"
   here ," Vestmahavn"
   here ," Longyearbyen"
-sconstants location-town$ ( n -- ca len ) drop
+sconstants >town$ ( n -- ca len ) drop
 
 0
+  here ," Rivercess County"
   here ," " \ XXX TODO
   here ," " \ XXX TODO
+  here ," Ciudad Real"
+  here ," Pays de la Loire" \ XXX TODO -- confirm English name
+  here ," Isle of Man"
+  here ," Faroe Islands"
+  here ," Svalbard"
+sconstants >en.region$ ( n -- ca len ) drop
+
+0
+  here ," Rivercess County"
   here ," " \ XXX TODO
   here ," " \ XXX TODO
+  here ," Reĝurbo"
+  here ," Luarlandoj"
+  here ," Manksinsulo"
+  here ," Ferooj"
+  here ," Svalbardo"
+sconstants >eo.region$ ( n -- ca len ) drop
+
+0
+  here ," Rivercess County"
   here ," " \ XXX TODO
+  here ," " \ XXX TODO
+  here ," Ciudad Real"
+  here ," Países del Loira"
   here ," Isla de Man"
   here ," Islas Feroes"
-  here ," Islas Svalbard"
-sconstants location-region$ ( n -- ca len ) drop
+  here ," Svalbard"
+sconstants >es.region$ ( n -- ca len ) drop
+
+' >es.region$
+' >eo.region$
+' >en.region$
+localized-word >region$ ( n -- ca len )
 
 0
   here ," Liberia"
@@ -428,7 +467,7 @@ sconstants location-region$ ( n -- ca len ) drop
   here ," Great Britain"
   here ," Denmark"
   here ," Norway"
-sconstants en.location-country$ ( n -- ca len ) drop
+sconstants >en.country$ ( n -- ca len ) drop
 
 0
   here ," Liberio"
@@ -439,7 +478,7 @@ sconstants en.location-country$ ( n -- ca len ) drop
   here ," Britujo"
   here ," Danlando"
   here ," Norvegio"
-sconstants eo.location-country$ ( n -- ca len ) drop
+sconstants >eo.country$ ( n -- ca len ) drop
 
 0
   here ," Liberia"
@@ -450,15 +489,15 @@ sconstants eo.location-country$ ( n -- ca len ) drop
   here ," Reino Unido"
   here ," Dinamarca"
   here ," Noruega"
-sconstants es.location-country$ ( n -- ca len ) drop
+sconstants >es.country$ ( n -- ca len ) drop
 
-' es.location-country$
-' eo.location-country$
-' en.location-country$
-localized-word (location-country)$ ( n -- ca len )
+' >es.country$
+' >eo.country$
+' >en.country$
+localized-word >(country)$ ( n -- ca len )
 
-: location-country$ ( n -- ca len )
-  s" (" rot (location-country)$ s+ s" )" s+ ;
+: >country$ ( n -- ca len )
+  s" (" rot >(country)$ s+ s" )" s+ ;
 
   \ ===========================================================
   cr .( Colors)  debug-point \ {{{1
@@ -2295,10 +2334,8 @@ false [if] \ XXX TODO --
 : show-controls ( -- )
   0 12 at-xy .controls
   \ s" SPACE: change - ENTER: start" 18 center-type  ; XXX TMP
-  0 16 at-xy s" N:" not-in-this-language$ s+
-             columns type-center-field
-  0 19 at-xy s" ENTER: " start$ s+
-             columns type-center-field ;
+  0 16 at-xy not-in-this-language$ columns type-center-field
+  0 19 at-xy start$ columns type-center-field ;
   \ XXX TMP --
 
 : invariable-menu-screen ( -- )
@@ -2322,8 +2359,8 @@ false [if] \ XXX TODO --
   begin
     break-key? if quit then \ XXX TMP
     key lower case
-    enter-key of  exit  endof \ XXX TMP --
-    'n' of change-language endof
+    start-key    of  exit           endof \ XXX TMP --
+    language-key of change-language endof
     \ bl  of  next-controls show-controls  endof
     \ 'p' of  change-players show-players  endof
     \ XXX TMP --
@@ -2943,9 +2980,9 @@ variable invasion-delay  8 invasion-delay !
   \ using `gigatype` style 1.
 
 : (location-title) ( n -- )
-  dup location-town$     6 .location
-  dup location-region$  12 .location
-      location-country$ 18 .location ;
+  dup >town$    6 .location
+  dup >region$  12 .location
+      >country$ 18 .location ;
   \ Display the title of location _n_.
 
 : veiled-location-title ( n -- )
