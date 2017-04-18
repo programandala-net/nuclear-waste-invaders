@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.62.0+201704161427" ;
+: version ( -- ca len ) s" 0.63.0+201704181420" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -57,10 +57,26 @@ blk @ 1- last-locatable !
 forth-wordlist set-current
 
   \ --------------------------------------------
+  \ Resize the stringer
+
+  \ The default size of the stringer is 256 bytes, which is not
+  \ enough to load some nested requirements.
+
+need !>
+
+  \ stringer /stringer 2constant old-stringer
+  \ Preserve the old `stringer`, to reuse its space later.
+  \ XXX TODO --
+
+here 512 dup allot !> /stringer !> stringer empty-stringer
+  \ Create a new 512-byte `stringer` in data space.
+
+  \ --------------------------------------------
   cr .(   -Development tools) \ {{{2
 
 need [if] need ~~
 need warn.message need order need see need rdepth need where
+need evaluate
 
   \ --------------------------------------------
   cr .(   -Definers) \ {{{2
@@ -76,7 +92,7 @@ need upper need s+ need char>string need s\"
   \ --------------------------------------------
   cr .(   -Control structures) \ {{{2
 
-need case need 0exit  need +perform need do need abort"
+need case need 0exit need +perform need do need abort"
 
   \ --------------------------------------------
   cr .(   -Memory) \ {{{2
@@ -95,6 +111,8 @@ need within need even? need crnd need 8*
 need roll need cfield: need field: need +field-opt-0124
 need array> need !>
 
+need sconstants
+
 need xstack need allot-xstack need xdepth need >x need x>
 need xclear
 
@@ -104,14 +122,14 @@ need .xs \ XXX TMP -- for debuging
   cr .(   -Printing) \ {{{2
 
 need at-y need at-x need type-left-field need type-right-field
-need type-center-field
+need type-center-field need gigatype-title
 
   \ --------------------------------------------
   cr .(   -Graphics) \ {{{2
 
 need os-chars need os-udg need /udg
 need type-udg need columns need rows need row need fade-display
-need last-column need udg-block need udg!
+need last-column need udg-block need udg! need blackout
 
 [pixel-projectile]
 [if]   need set-pixel need reset-pixel need gxy>attra
@@ -134,13 +152,13 @@ need #>kk need inkey
   \ --------------------------------------------
   cr .(   -Time) \ {{{2
 
-need frames@ need ms
+need frames@ need ms need seconds need ?seconds
 
   \ --------------------------------------------
   cr .(   -Sound) \ {{{2
 
-need bleep need dhz>bleep
-need shoot need whip need lightning1
+need bleep need dhz>bleep need shoot
+need whip need lightning1
 
   \ --------------------------------------------
   \ Files
@@ -160,16 +178,26 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
 
 : (debug-point) ( -- )
   ((debug-point))
+
   \ order
   \ depth ?exit
   \ ." block:" blk ?  ."  latest:" latest .name ." hp:" hp@ u.
   \ order
   \ s" ' -1|1 .( -1|1 =) u." evaluate
-  cr .(  latest: ) latest .name
-  depth if decimal cr .s then
+
+  \ XXX TMP -- 2017-04-16: To discover the problem with
+  \ `shoot`:
+  cr ."  latest: " latest .name ." shoot nt:"
+  s" ' shoot u." evaluate
+
+  \ depth if decimal cr .s then
+
   \ depth if decimal cr .s #-258 throw then \ stack imbalance
-  key drop
+
+  \ key drop
+
   ;
+
   \ Abort if the stack is not empty.
   \ XXX TMP -- for debugging
 
@@ -229,48 +257,7 @@ sys-screen /sys-screen-bitmap 3 / 2 * + constant landscape-scra
 attributes /attributes 3 / 2 * + constant landscape-attra
   \ Attributes address of the landscape.
 
-false [if]
-
-  \ XXX OLD -- Uncompressed landscape graphics.
-
-7 cconstant landscapes
-
-far-banks 3 + c@ cconstant landscapes-bank
-  \ Use the last far-memory bank to store the landscapes.
-
-/bank negate farlimit +!
-  \ Lower the far-memory limit accordingly.
-
-/sys-screen-bitmap 3 / dup constant /landscape-bitmap
-       /attributes 3 / dup constant /landscape-attributes
-                         + constant /landscape
-
-: landscape> ( n -- a ) /landscape * bank-start + ;
-
-: landscape>screen ( n -- )
-  landscapes-bank bank
-  landscape> dup
-    landscape-scra /landscape-bitmap cmove
-  /landscape-bitmap +
-    landscape-attra /landscape-attributes cmove  default-bank ;
-
-: screen>landscape ( n -- )
-  >r landscapes-bank bank
-  landscape-scra r> landscape> dup >r
-    /landscape-bitmap cmove
-  landscape-attra r> /landscape-bitmap +
-    /landscape-attributes cmove  default-bank ;
-
-: load-landscapes ( -- )
-  landscapes 0 ?do
-    0 0 sys-screen 0 tape-file> i screen>landscape
-  loop ;
-
-[else]
-
-  \ XXX NEW -- Compressed landscape graphics.
-
-7 cconstant landscapes
+8 cconstant landscapes
 
 7 cconstant landscapes-bank
   \ Use the free bank to store the landscapes.
@@ -320,11 +307,159 @@ variable landscape> bank-start landscape> !
 : load-landscapes ( -- )
   landscapes 0 ?do i load-landscape loop ;
 
-[then]
-
   \ cr .( Insert the landscapes tape)
   \ cr .( then press any key) key drop
 load-landscapes
+
+  \ ===========================================================
+  \ Localization
+
+  \ XXX UNDER DEVELOPMENT
+
+0 cenum en         \ English
+  cenum eo         \ Esperanto
+  cenum es         \ Spanish
+  cconstant langs  \ number of languages
+
+en value lang  \ current language
+
+: localized-word ( xt[langs]..xt[1] "name" -- )
+  create langs 0 ?do , loop
+  does> ( -- ) ( pfa ) lang +perform ;
+  \ Create a word _name_ that will execute an execution token
+  \ from _xt[langs]..xt[1]_, depending on the current language.
+  \ _xt[langs]..xt[1]_, are the execution tokens of the
+  \ localized versions, in reverse order of ISO language code,
+  \ i.e.: es, eo, en.
+
+: localized-string ( ca[n]..ca[1] "name" -- n )
+  create langs 0 ?do , loop
+  \ does> ( -- ca len ) ( pfa ) lang cells + @ count ;
+  does> ( -- ca len ) ( pfa ) lang swap array> @ count ;
+  \ Create a word _name_ that will return a counted string
+  \ from _ca[langs]..ca[1]_, depending on the current language.
+  \ _ca[langs]..ca[1]_, are the addresses where the
+  \ localized strings have been compiled, in reverse order of
+  \ ISO language code, i.e.: es, eo, en.
+  \
+  \ XXX TODO -- Not used yet.
+  \ XXX TODO -- Benchmark `cells +` vs `swap array>`.
+
+  \ ===========================================================
+  cr .( Texts)  debug-point \ {{{1
+
+  \ XXX UNDER DEVELOPMENT
+
+:noname ( -- ca len ) s" Invasores de Residuos Nucleares" ;
+:noname ( -- ca len ) s" Atomrubaĵaj Invadantoj" ;
+:noname ( -- ca len ) s" Nuclear Waste Invaders" ;
+localized-word game-title$ ( -- ca len )
+
+:noname ( -- ca len ) s" NO en español" ;
+:noname ( -- ca len ) s" NE en Esperanto" ;
+:noname ( -- ca len ) s" NOT in English" ;
+localized-word not-in-this-language$ ( -- ca len )
+
+:noname ( -- ca len ) s" puntos" ;
+:noname ( -- ca len ) s" poentoj" ;
+:noname ( -- ca len ) s" points" ;
+localized-word points$ ( -- ca len )
+
+:noname ( -- ca len ) s" puntos extra" ;
+:noname ( -- ca len ) s" krompoentoj" ;
+:noname ( -- ca len ) s" bonus" ;
+localized-word bonus$ ( -- ca len )
+
+:noname ( -- ca len ) s" PUNTUACIÓN" ;
+:noname ( -- ca len ) s" POENTARO" ;
+:noname ( -- ca len ) s" SCORE" ;
+localized-word score$ ( -- ca len )
+
+:noname ( -- ca len ) s" RÉCOR" ;
+:noname ( -- ca len ) s" RIKORDO" ;
+:noname ( -- ca len ) s" RECORD" ;
+localized-word record$ ( -- ca len )
+
+  \ XXX TODO -- Simplify: use `sconstants` instead, using the
+  \ language as index and a wrapper word to provide it.
+
+0 [if]
+
+:noname ( -- ca len ) s" jugadores" ;
+:noname ( -- ca len ) s" ludantoj" ;
+:noname ( -- ca len ) s" players" ;
+localized-word players$ ( -- ca len )
+
+[then]
+
+:noname ( -- ca len ) s" empezar" ;
+:noname ( -- ca len ) s" eki" ;
+:noname ( -- ca len ) s" start" ;
+localized-word start$ ( -- ca len )
+
+0
+  here ," " \ XXX TODO
+  here ," " \ XXX TODO
+  here ," " \ XXX TODO
+  here ," Tomelloso"
+  here ," Chateaubriant"
+  here ," " \ XXX TODO
+  here ," Vestmahavn"
+  here ," Longyearbyen"
+sconstants location-town$ ( n -- ca len ) drop
+
+0
+  here ," " \ XXX TODO
+  here ," " \ XXX TODO
+  here ," " \ XXX TODO
+  here ," " \ XXX TODO
+  here ," " \ XXX TODO
+  here ," Isla de Man"
+  here ," Islas Feroes"
+  here ," Islas Svalbard"
+sconstants location-region$ ( n -- ca len ) drop
+  \ XXX TODO -- localize
+
+0
+  here ," Liberia"
+  here ," Western Sahara"
+  here ," Morocco"
+  here ," Spain"
+  here ," France"
+  here ," Great Britain"
+  here ," Denmark"
+  here ," Norway"
+sconstants en.location-country$ ( n -- ca len ) drop
+
+0
+  here ," Liberio"
+  here ," Okcidenta Saharo"
+  here ," Maroko"
+  here ," Hispanujo"
+  here ," Francujo"
+  here ," Britujo"
+  here ," Danlando"
+  here ," Norvegio"
+sconstants eo.location-country$ ( n -- ca len ) drop
+
+0
+  here ," Liberia"
+  here ," Sahara Occidental"
+  here ," Marruecos"
+  here ," España"
+  here ," Francia"
+  here ," Reino Unido"
+  here ," Dinamarca"
+  here ," Noruega"
+sconstants es.location-country$ ( n -- ca len ) drop
+
+' es.location-country$
+' eo.location-country$
+' en.location-country$
+localized-word (location-country)$ ( n -- ca len )
+
+: location-country$ ( n -- ca len )
+  s" (" rot (location-country)$ s+ s" )" s+ ;
 
   \ ===========================================================
   cr .( Colors)  debug-point \ {{{1
@@ -1514,17 +1649,17 @@ arena-bottom-y arena-top-y - 1+ columns * constant /arena
 arena-top-y columns * attributes + constant arena-top-attribute
   \ Address of the first attribute of the arena.
 
+false [if] \ XXX OLD
+
 : black-arena ( -- ) arena-top-attribute /arena erase ;
   \ Make the arena black.
 
 : wipe-arena ( -- ) 0 arena-top-y at-xy /arena spaces ;
   \ Clear the arena (the whole screen except the status bars).
-  \ XXX TODO -- wipe attributes first
 
 : -arena ( -- ) black-arena wipe-arena ;
 
-: score$ ( -- ca len ) s" SCORE" ;
-: record$ ( -- ca len ) s" RECORD" ;
+[then]
 
 1 cconstant status-bar-rows
 
@@ -1536,8 +1671,7 @@ arena-top-y columns * attributes + constant arena-top-attribute
   \ Get the column _x_ of the record label from its length
   \ _len_.
 
-: .record-label ( -- )
-  record$ dup >record-label-x at-x type ;
+: .record-label ( -- ) record$ dup >record-label-x at-x type ;
 
 : status-bar ( -- )
   in-text-attr .score-label .score .record-label .record ;
@@ -1959,12 +2093,12 @@ columns udg/tank - 1- cconstant tank-max-x
   \ right.
 
       ' ?<tank , \ move tank to the left
-here  0 ,       \ do nothing
+here  0 ,        \ do nothing
       ' ?tank> , \ move tank to the right
 constant tank-movements ( -- a )
   \ Execution table of tank movements.
 
-: tank-movement ( -- xt|0 ) tank-rudder tank-movements array> ;
+: tank-movement ( -- a ) tank-rudder tank-movements array> ;
 
 : driving ( -- ) tank-movement perform ;
 
@@ -2014,7 +2148,7 @@ defer debug-data-pause ( -- )
 : init-projectiles ( -- )
   used-projectiles off
   'projectile-y #projectiles erase
-  xclear #projectiles 0 do  i >x  loop ;
+  xclear #projectiles 0 do i >x loop ;
 
 : projectile-coords ( -- x y )
   projectile-x c@ projectile-y c@ ;
@@ -2025,7 +2159,7 @@ defer debug-data-pause ( -- )
 
 : prepare-war ( -- )
   [pixel-projectile] [ 0= ] [if] init-ocr [then]
-  first-location score off cls status-bar ;
+  first-location score off cls ;
 
 : parade ( -- )
   in-invader-attr
@@ -2034,14 +2168,15 @@ defer debug-data-pause ( -- )
                        r> ~sprite c@ .2x1sprite
   loop ;
 
-: init-arena ( -- )  -arena building .tank parade ;
+: init-arena ( -- )  status-bar building .tank parade ;
+  \ XXX REMARK -- `-arena` was used here, but `blackout`, used
+  \ in `enter-location`, made it redundant.
 
   \ ===========================================================
   cr .( Instructions)  debug-point \ {{{1
 
 : title ( -- )
-  s" NUCLEAR WASTE INVADERS" 0 center-type
-  version 1 center-type ;
+  game-title$ 0 center-type version 1 center-type ;
 
 : (c) ( -- ) 127 emit ;
   \ Print the copyright symbol.
@@ -2094,21 +2229,21 @@ true [if] \ XXX OLD
   \ len2_ and description _ca1 len1_
 
 : .score-table ( -- )
-  xy 2dup  at-xy s" 10 points"
+  xy 2dup  at-xy s" 10 " points$ s+
            in-invader-attr docked-invader-0$ .score-item
-  2dup 1+  at-xy s" 20 points"
+  2dup 1+  at-xy s" 20 " points$ s+
            in-invader-attr docked-invader-1$ .score-item
-  2dup 2+  at-xy s" 30 points"
+  2dup 2+  at-xy s" 30 " points$ s+
            in-invader-attr docked-invader-2$ .score-item
-       3 + at-xy s" bonus"
+       3 + at-xy bonus$
            in-ufo-attr ufo$ .score-item ;
    \ Print the score table at the current coordinates.
 
-[else] \ XXX NEW
+[else] \ XXX TODO --
 
 : .score-item ( c1 c2 n3 n4 -- )
   attr! drop swap .2x1sprite
-  in-text-attr ." = " . ." points" drop ;
+  in-text-attr ." = " . points$ type drop ;
   \ XXX TODO -- Rewrite. Parameters changed.
   \ Print an item of the score table:
   \   c1 = docked sprite;
@@ -2143,32 +2278,47 @@ true [if] \ XXX OLD
 : change-players ( -- )
   players c@ 1+ dup max-player > if drop 1 then players c! ;
 
-: .players ( -- ) ." [P]layers " players c@ . ;
+false [if] \ XXX TODO --
+
+: .players ( -- ) players$ type players c@ . ;
    \ Print the number of players at the current coordinates.
 
 : show-players ( -- ) 0 8 at-xy .players ;
 
+[else]  \ XXX TMP --
+
+: show-players ( -- ) ;
+
+[then]
+
 : show-controls ( -- )
   0 12 at-xy .controls
   \ s" SPACE: change - ENTER: start" 18 center-type  ; XXX TMP
-  s" ENTER: start" 18 center-type ;
+  s" N:" not-in-this-language$ s+ 16 center-type
+  s" ENTER: " start$ s+ 19 center-type ;
   \ XXX TMP --
+
+: menu-screen ( -- )
+  cls title
+  show-score-table show-players show-controls show-copyright ;
+
+: change-language  ( -- )
+  lang 1+ dup langs < abs * to lang menu-screen ;
+  \ Change the current language and update the screen.
 
 : menu ( -- )
   begin
     break-key? if quit then \ XXX TMP
-    key case
+    key lower case
     enter-key of  exit  endof \ XXX TMP --
+    'n' of change-language endof
     \ bl  of  next-controls show-controls  endof
     \ 'p' of  change-players show-players  endof
     \ XXX TMP --
     endcase
   again ;
 
-: mobilize ( -- )
-  init-colors in-text-attr cls title
-  show-score-table show-players show-controls show-copyright
-  menu ;
+: mobilize ( -- ) init-colors in-text-attr menu-screen menu ;
 
   \ ===========================================================
   cr .( Invasion)  debug-point \ {{{1
@@ -2532,6 +2682,9 @@ constant ufo-movements ( -- a )
   \ The UFO has been impacted.
 
 ' shoot alias invader-bang ( -- )
+  \ XXX FIXME -- 2017-04-16: suddenly, `shoot` is not found
+  \ here!
+  \
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
@@ -2773,24 +2926,40 @@ create attributes-backup /attributes allot
 variable invasion-delay  8 invasion-delay !
   \ XXX TMP -- debugging
 
-: north-pole ( -- )
-  [ 0 tank-y 1+ xy>attra ] literal
-  [ /attributes 3 /      ] literal
-  [ white dup papery +   ] cliteral fill ;
-  \ The first location is the North Pole. No landscape graphic
-  \ is displayed, only white ground.
-  \
-  \ XXX TMP --
-  \ XXX TODO -- Add more landscapes when possible.
+: .location ( ca len y -- ) 0 swap at-xy 1 gigatype-title ;
+  \ Display location name part _ca len_, centered at row _y_,
+  \ using `gigatype` style 1.
 
-: landscape ( -- )
-  location c@ ?dup if   1- landscape>screen
-                   else north-pole then ;
-  \ Display the landscape of the current location.
+: (location-title) ( n -- )
+  dup location-town$     6 .location
+  dup location-region$  12 .location
+      location-country$ 18 .location ;
+  \ Display the title of location _n_.
 
-: prepare-battle ( -- )
-  landscape catastrophe off init-invaders init-ufo init-tank
-                            init-arena init-projectiles ;
+: veiled-location-title ( n -- )
+  blackout attr@ >r black attr! (location-title) r> attr! ;
+  \ Clear the screen and display a veiled (black ink on black
+  \ paper) title of location _n_.
+
+: unveil-location-title ( -- )
+  attributes /attributes white fill ;
+  \ Unveil the location title suddenly, by filling the screen
+  \ attributes with white ink.
+
+: location-title ( n -- )
+  veiled-location-title unveil-location-title ;
+  \ Display the title of location _n_.
+
+: enter-location ( n -- )
+  dup location-title 3 seconds blackout landscape>screen ;
+  \ Display the name and landscape of location _n_.
+
+: enter-current-location ( -- ) location c@ enter-location ;
+  \ Display the name and landscape of the current location.
+
+: prepare-battle ( -- ) enter-current-location catastrophe off
+                        init-invaders init-ufo init-tank
+                        init-projectiles init-arena ;
 
 : fight ( -- ) fly-projectile driving
                fly-projectile shooting

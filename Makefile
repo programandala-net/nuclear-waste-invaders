@@ -5,7 +5,7 @@
 # This file is part of Nuclear Waste Invaders
 # http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 201703221955
+# Last modified: 201704181323
 # See change log at the end of the file
 
 # ==============================================================
@@ -58,9 +58,14 @@ clean:
 secondary_source_files=$(sort $(wildcard src/00*.fs))
 library_source_files=$(sort $(wildcard src/lib/*.fs))
 
-tmp/nuclear_waste_invaders.fba: src/nuclear_waste_invaders.fs
+tmp/nuclear_waste_invaders_converted_to_zx_spectrum_charset.fs: src/nuclear_waste_invaders.fs
+	cp $< $@
+	vim -S ./make/utf8_to_zx_spectrum.vim \
+		-c "set fileencoding=latin1" \
+		-c "wq" $@
+
+tmp/nuclear_waste_invaders_converted_to_zx_spectrum_charset.fba: tmp/nuclear_waste_invaders_converted_to_zx_spectrum_charset.fs
 	./make/fs2fba.sh $<
-	mv $(basename $<).fba $@
 
 tmp/library.fs: \
 	$(secondary_source_files) \
@@ -72,13 +77,13 @@ tmp/library.fb: tmp/library.fs
 
 tmp/disk_2_nuclear_waste_invaders.fb: \
 	tmp/library.fb \
-	tmp/nuclear_waste_invaders.fba
+	tmp/nuclear_waste_invaders_converted_to_zx_spectrum_charset.fba
 	cat $^ > $@
 
 disk_2_nuclear_waste_invaders.mgt: tmp/disk_2_nuclear_waste_invaders.fb
 	cp $< $<.copy
-	make/fb2mgt.sh tmp/disk_2_nuclear_waste_invaders.fb
-	mv tmp/disk_2_nuclear_waste_invaders.mgt .
+	make/fb2mgt.sh $<
+	mv $(basename $<).mgt .
 	mv $<.copy $<
 
 # ==============================================================
@@ -154,3 +159,5 @@ landscapes.compressed.tap: $(landscapes_scr_3rd_tap)
 # 2017-03-13: Move the graphics tape to the root directory and sort its files.
 #
 # 2017-03-22: Compress the landscape graphics.
+#
+# 2017-04-18: Convert UTF-8 characters to ZX Spectrum character codes.
