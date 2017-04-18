@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.63.0+201704181420" ;
+: version ( -- ca len ) s" 0.64.0+201704181720" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -360,14 +360,14 @@ localized-word game-title$ ( -- ca len )
 :noname ( -- ca len ) s" NOT in English" ;
 localized-word not-in-this-language$ ( -- ca len )
 
-:noname ( -- ca len ) s" puntos" ;
+:noname ( -- ca len ) s" puntos " ;
 :noname ( -- ca len ) s" poentoj" ;
-:noname ( -- ca len ) s" points" ;
+:noname ( -- ca len ) s" points " ;
 localized-word points$ ( -- ca len )
 
 :noname ( -- ca len ) s" puntos extra" ;
-:noname ( -- ca len ) s" krompoentoj" ;
-:noname ( -- ca len ) s" bonus" ;
+:noname ( -- ca len ) s" krompoentoj " ;
+:noname ( -- ca len ) s" bonus       " ;
 localized-word bonus$ ( -- ca len )
 
 :noname ( -- ca len ) s" PUNTUACIÓN" ;
@@ -418,7 +418,6 @@ sconstants location-town$ ( n -- ca len ) drop
   here ," Islas Feroes"
   here ," Islas Svalbard"
 sconstants location-region$ ( n -- ca len ) drop
-  \ XXX TODO -- localize
 
 0
   here ," Liberia"
@@ -2175,8 +2174,10 @@ defer debug-data-pause ( -- )
   \ ===========================================================
   cr .( Instructions)  debug-point \ {{{1
 
-: title ( -- )
-  game-title$ 0 center-type version 1 center-type ;
+: game-title ( -- )
+  home game-title$ columns type-center-field ;
+
+: game-version ( -- ) version 1 center-type ;
 
 : (c) ( -- ) 127 emit ;
   \ Print the copyright symbol.
@@ -2294,16 +2295,27 @@ false [if] \ XXX TODO --
 : show-controls ( -- )
   0 12 at-xy .controls
   \ s" SPACE: change - ENTER: start" 18 center-type  ; XXX TMP
-  s" N:" not-in-this-language$ s+ 16 center-type
-  s" ENTER: " start$ s+ 19 center-type ;
+  0 16 at-xy s" N:" not-in-this-language$ s+
+             columns type-center-field
+  0 19 at-xy s" ENTER: " start$ s+
+             columns type-center-field ;
   \ XXX TMP --
 
+: invariable-menu-screen ( -- )
+  game-version show-copyright ;
+  \ Display the parts of the menu screen that are invariable,
+  \ i.e., don't depend on the current language.
+
+: variable-menu-screen ( -- )
+  game-title show-players show-score-table show-controls ;
+  \ Display the parts of the menu screen that are variable,
+  \ i.e., depend on the current language.
+
 : menu-screen ( -- )
-  cls title
-  show-score-table show-players show-controls show-copyright ;
+  cls invariable-menu-screen variable-menu-screen ;
 
 : change-language  ( -- )
-  lang 1+ dup langs < abs * to lang menu-screen ;
+  lang 1+ dup langs < abs * to lang variable-menu-screen ;
   \ Change the current language and update the screen.
 
 : menu ( -- )
