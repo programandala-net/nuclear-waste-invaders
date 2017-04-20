@@ -3,7 +3,7 @@
 " This file is part of Nuclear Waste Invaders
 " http://programandala.net/en.program.nuclear_waste_invaders.html
 
-" Last modified 201704181822
+" Last modified 201704201706
 " See change log at the end of the file
 
 " ==============================================================
@@ -27,17 +27,17 @@ echo "Converting Spanish UTF-8 characters to ZX Spectrum codes"
 %s/Á/\=nr2char(130)/gIe
 %s/É/\=nr2char(131)/gIe
 %s/Í/\=nr2char(132)/gIe
-%s/Ñ/\=nr2char(133)/gIe
-%s/Ó/\=nr2char(134)/gIe
-%s/Ú/\=nr2char(135)/gIe
-%s/Ü/\=nr2char(136)/gIe
+%s/Ó/\=nr2char(133)/gIe
+%s/Ú/\=nr2char(134)/gIe
+%s/Ü/\=nr2char(135)/gIe
+%s/Ñ/\=nr2char(136)/gIe
 %s/á/\=nr2char(137)/gIe
 %s/é/\=nr2char(138)/gIe
 %s/í/\=nr2char(139)/gIe
-%s/ñ/\=nr2char(140)/gIe
-%s/ó/\=nr2char(141)/gIe
-%s/ú/\=nr2char(142)/gIe
-%s/ü/\=nr2char(143)/gIe
+%s/ó/\=nr2char(140)/gIe
+%s/ú/\=nr2char(141)/gIe
+%s/ü/\=nr2char(142)/gIe
+%s/ñ/\=nr2char(143)/gIe
 
 " ==============================================================
 " Esperanto characters
@@ -71,4 +71,6 @@ echo "Converting French UTF-8 characters to ZX Spectrum codes"
 " (http://programandala.net/en.program.black_flag.html).
 "
 " 2017-04-18: Add French character. Update all character codes.
+"
+" 2017-04-20: Change the order of the Spanish chars.
 

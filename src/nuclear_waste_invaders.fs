@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.67.0+201704191819" ;
+: version ( -- ca len ) s" 0.68.0+201704202003" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -307,12 +307,23 @@ variable landscape> bank-start landscape> !
 : load-landscapes ( -- )
   landscapes 0 ?do i load-landscape loop ;
 
-  \ cr .( Insert the landscapes tape)
-  \ cr .( then press any key) key drop
+  cr .( Insert the tape image)
+  cr .( <graphics_and_font.tap>.)
+
 load-landscapes
 
   \ ===========================================================
-  \ Localization
+  cr .( Font)  debug-point \ {{{1
+
+1000 constant /game-font
+create game-font /game-font allot
+
+0 0 game-font /game-font tape-file>
+
+game-font 256 - constant game-font0
+
+  \ ===========================================================
+  cr .( Localization)  debug-point \ {{{1
 
 0 cenum en         \ English
   cenum eo         \ Esperanto
@@ -2370,7 +2381,11 @@ false [if] \ XXX TODO --
     endcase
   again ;
 
-: mobilize ( -- ) init-colors in-text-attr menu-screen menu ;
+: init-font ( -- )
+  game-font0 set-font ['] mode32iso-emit ['] emit defer! ;
+
+: mobilize ( -- )
+  init-font init-colors in-text-attr menu-screen menu ;
 
   \ ===========================================================
   cr .( Invasion)  debug-point \ {{{1

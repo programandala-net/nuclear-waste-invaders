@@ -5,7 +5,7 @@
 # This file is part of Nuclear Waste Invaders
 # http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 201704181323
+# Last modified: 201704202000
 # See change log at the end of the file
 
 # ==============================================================
@@ -18,6 +18,9 @@
 
 # fsb2 (by Marcos Cruz)
 # 	http://programandala.net/en.program.fsb2.html
+
+# Gforth (by Anton Ertl, Bernd Paysan et al.)
+# 	http://gnu.org/software/gforth
 
 # split (from the GNU coreutils)
 
@@ -45,7 +48,7 @@ MAKEFLAGS = --no-print-directory
 # Main
 
 .PHONY: all
-all: disk_2_nuclear_waste_invaders.mgt landscapes.compressed.tap
+all: disk_2_nuclear_waste_invaders.mgt graphics_and_font.tap
 
 .PHONY : clean
 clean:
@@ -87,26 +90,39 @@ disk_2_nuclear_waste_invaders.mgt: tmp/disk_2_nuclear_waste_invaders.fb
 	mv $<.copy $<
 
 # ==============================================================
-# Landscapes tape
+# Tape
 
-# Landscape graphics in SCR format:
+# ----------------------------------------------
+# Font
+
+tmp/font.bin: fonts/chato.fs
+	gforth $< > $@
+
+tmp/font.tap: tmp/font.bin
+	make/bin2code0 $< $@
+
+# ----------------------------------------------
+# Landscape graphics
+
 landscapes_scr=$(wildcard graphics/landscapes/*.scr)
 
-# ----------------------------------------------
-# XXX OLD -- First version, uncompressed graphics
+# ..............................
+# Uncompressed graphics
 
-landscapes_scr_tap=$(addsuffix .tap,$(landscapes_scr))
+# XXX OLD - First version
 
-# Create a TAP file from a SCR file:
-%.scr.tap: %.scr
-	make/bin2code0 $< $@ 16384
+# landscapes_scr_tap=$(addsuffix .tap,$(landscapes_scr))
 
-# Create the final TAP file with all SCR files:
-landscapes.uncompressed.tap: $(landscapes_scr_tap)
-	cat $(sort $^) > $@
+# # Create a TAP file from a SCR file:
+# %.scr.tap: %.scr
+# 	make/bin2code0 $< $@ 16384
 
-# ----------------------------------------------
-# Second version, compressed graphics
+# # Create the final TAP file with all SCR files:
+# landscapes.uncompressed.tap: $(landscapes_scr_tap)
+# 	cat $(sort $^) > $@
+
+# ..............................
+# Compressed graphics
 
 landscapes_scr_3rd=$(addsuffix .3rd,$(landscapes_scr))
 
@@ -137,8 +153,10 @@ landscapes_scr_3rd_tap=$(addsuffix .tap,$(landscapes_scr_zx7))
 %.zx7: %
 	zx7 $<
 
-# Create the final TAP file with all compressed SCR files:
-landscapes.compressed.tap: $(landscapes_scr_3rd_tap)
+# ----------------------------------------------
+# Tape
+
+graphics_and_font.tap: $(landscapes_scr_3rd_tap) tmp/font.tap
 	cat $(sort $^) > $@
 
 # ==============================================================
@@ -161,3 +179,5 @@ landscapes.compressed.tap: $(landscapes_scr_3rd_tap)
 # 2017-03-22: Compress the landscape graphics.
 #
 # 2017-04-18: Convert UTF-8 characters to ZX Spectrum character codes.
+#
+# 2017-04-20: Add font to the tape.
