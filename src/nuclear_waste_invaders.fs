@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.66.0+201704182021" ;
+: version ( -- ca len ) s" 0.67.0+201704191819" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -604,16 +604,16 @@ max-controls 1- cconstant last-control
   \ Make controls number _n_ (item of the `controls` table) the
   \ current controls.
 
-variable current-controls
+cvariable current-controls
   \ Index of the current controls in `controls` table.
 
-current-controls off
-current-controls @ set-controls
+0 current-controls c!
+current-controls c@ set-controls
   \ Default controls.
 
 : next-controls ( -- )
-  current-controls @ 1+  dup last-control > 0= abs *
-  dup current-controls !  set-controls ;
+  current-controls c@ 1+  dup last-control > 0= abs *
+  dup current-controls c!  set-controls ;
   \ Change the current controls.
 
   \ ===========================================================
@@ -635,16 +635,16 @@ create udg-set /udg-set allot  udg-set os-udg !
   \ Store scan _b_ into scan number _n_ of char _c_,
   \ and return _c_ back for further processing.
 
-variable used-udgs  used-udgs off
+cvariable used-udgs  0 used-udgs c!
   \ Counter of UDGs defined.
 
-: udg-overflow? ( -- f ) used-udgs @ last-udg 1+ > ;
+: udg-overflow? ( -- f ) used-udgs c@ last-udg 1+ > ;
   \ Too many UDG defined?
 
 : ?udg-overflow ( -- ) udg-overflow? abort" Too many UDGs" ;
   \ Abort if there are too many UDG defined.
 
-: ?free-udg ( n -- ) used-udgs +!  ?udg-overflow ;
+: ?free-udg ( n -- ) used-udgs c+!  ?udg-overflow ;
   \ Abort if there is not free space to define _n_ UDG.
 
   \ ===========================================================
@@ -652,8 +652,8 @@ variable used-udgs  used-udgs off
 
 [pixel-projectile] 0= [if]
 
-variable ocr-first-udg
-variable ocr-last-udg
+cvariable ocr-first-udg
+cvariable ocr-last-udg
   \ Char codes of the first and last UDG to be examined
   \ by `ocr`.
   \
@@ -664,11 +664,11 @@ variable ocr-last-udg
   \ after defining the graphics.
 
 : init-ocr ( -- )
-  ocr-first-udg @ udg>bitmap ocr-charset !
+  ocr-first-udg c@ udg>bitmap ocr-charset !
     \ Set address of the first char bitmap to be examined.
-  ocr-first-udg @ ocr-first c!
+  ocr-first-udg c@ ocr-first c!
     \ Its char code in the UDG set.
-  ocr-last-udg @ ocr-first-udg @ - 1+ ocr-chars c!  ; \ chars
+  ocr-last-udg c@ ocr-first-udg c@ - 1+ ocr-chars c!  ; \ chars
   \ Set the UDGs `ocr` will examine to detect collisions.
   \ Set the address of the first char bitmap to be
   \ examined, its char code and the number of examined chars.
@@ -715,7 +715,7 @@ cvariable player   1 player  c! \ 1..max-player
   \ ===========================================================
   cr .( Graphics)  debug-point \ {{{1
 
-    variable >udg  >udg off \ next free UDG
+    cvariable >udg  0 >udg c! \ next free UDG
 
 cvariable latest-sprite-width
 cvariable latest-sprite-height
@@ -726,8 +726,8 @@ cvariable latest-sprite-udg
   \ XXX TMP -- during the development
 
 : free-udg ( n -- c )
-  >udg @ dup latest-sprite-udg c!
-  tuck +  dup >udg !  1- ?udg ;
+  >udg c@ dup latest-sprite-udg c!
+  tuck +  dup >udg c!  1- ?udg ;
   \ Free _n_ consecutive UDGs and return the first one _c_.
 
 : set-latest-sprite-size ( width height -- )
@@ -761,7 +761,7 @@ cvariable latest-sprite-udg
 0 0 0 0 0 0 0 0 1 free-udg dup cconstant bl-udg udg!
 
 [pixel-projectile] 0= [if]
-  >udg @ ocr-first-udg !
+  >udg c@ ocr-first-udg c!
     \ The first UDG examined by `ocr` must be the first one of
     \ the next sprite.
 [then]
@@ -1282,7 +1282,7 @@ XX.XXXXX
 ........
 
 [pixel-projectile] 0= [if]
-  >udg @ 1- ocr-last-udg !
+  >udg c@ 1- ocr-last-udg c!
     \ The last UDG examined by `ocr` must be the last one
     \ of the latest sprite.
 [then]
@@ -1358,7 +1358,7 @@ XXXXXXXX
 
   \ XXX TODO -- second frame of the tank
 
-  3 cconstant udg/tank  >udg @
+  3 cconstant udg/tank  >udg c@
 
   false [if] \ XXX OLD
 
@@ -1405,7 +1405,7 @@ sprite-string invader-explosion$ ( -- ca len )
 
 [pixel-projectile] 0= [if]
 
-  >udg @ \ next free UDG
+  >udg c@ \ next free UDG
 
   1 1 sprite: projectile-frame-0
 
@@ -1517,7 +1517,7 @@ sprite-string invader-explosion$ ( -- ca len )
   .....X..
   ..X..X..
 
-  >udg @ swap - cconstant frames/projectile
+  >udg c@ swap - cconstant frames/projectile
 
 [then]
 
@@ -1810,20 +1810,21 @@ create invaders-data /invaders allot
 : invader~ ( n -- a ) /invader * invaders-data + ;
   \ Convert invader number n_ to its data address _a_.
 
-: 'invader ( -- a ) current-invader c@ invader~ ;
+: current-invader~ ( -- a ) current-invader c@ invader~ ;
   \ Address _a_ of the current invader data.
 
-: invader-species       ( -- a  ) 'invader ~species ;
-: invader-active        ( -- a  ) 'invader ~active ;
-: invader-sprite        ( -- ca ) 'invader ~sprite ;
-: invader-frames        ( -- ca ) 'invader ~frames ;
-: invader-frame         ( -- ca ) 'invader ~frame ;
-: invader-stamina       ( -- ca ) 'invader ~stamina ;
-: invader-x             ( -- ca ) 'invader ~x ;
-: invader-initial-x     ( -- ca ) 'invader ~initial-x ;
-: invader-x-inc         ( -- a  ) 'invader ~x-inc ;
-: invader-initial-x-inc ( -- a  ) 'invader ~initial-x-inc ;
-: invader-y             ( -- ca ) 'invader ~y ;
+: invader-species       ( -- a  ) current-invader~ ~species ;
+: invader-active        ( -- a  ) current-invader~ ~active ;
+: invader-sprite        ( -- ca ) current-invader~ ~sprite ;
+: invader-frames        ( -- ca ) current-invader~ ~frames ;
+: invader-frame         ( -- ca ) current-invader~ ~frame ;
+: invader-stamina       ( -- ca ) current-invader~ ~stamina ;
+: invader-x             ( -- ca ) current-invader~ ~x ;
+: invader-initial-x     ( -- ca ) current-invader~ ~initial-x ;
+: invader-x-inc         ( -- a  ) current-invader~ ~x-inc ;
+: invader-initial-x-inc ( -- a  )
+  current-invader~ ~initial-x-inc ;
+: invader-y             ( -- ca ) current-invader~ ~y ;
 
 : invader-destroy-points ( -- a )
   invader-species @ ~destroy-points ;
@@ -2403,11 +2404,11 @@ cvariable invaders \ counter
   invader-proper-attr attr! invader-udg .2x1sprite ;
   \ Print the current invader.
 
-variable broken-wall-x
+cvariable broken-wall-x
   \ Column of the wall broken by the current alien.
 
 : broken-bricks-coordinates ( -- x1 y1 x2 y2 x3 y3 )
-  broken-wall-x @ invader-y c@ 2dup 1+ 2dup 2- ;
+  broken-wall-x c@ invader-y c@ 2dup 1+ 2dup 2- ;
   \ Coordinates of the broken brick above the invader, _x3 y3_,
   \ below it, _x3 y3_, and if front of it, _x1 y1_.
 
@@ -2518,12 +2519,12 @@ variable broken-wall-x
             attacking? if   ?damages
                        else ?dock then ;
 
-variable cure-factor  20 cure-factor !
+cvariable cure-factor  20 cure-factor c!
   \ XXX TMP -- for testing
 
 : difficult-cure? ( -- f )
   max-stamina invader-stamina c@ -
-  cure-factor @ \ XXX TMP -- for testing
+  cure-factor c@ \ XXX TMP -- for testing
   * random 0<> ;
   \ Is it a difficult cure? The flag _f_ is calculated
   \ randomly, based on the stamina: The less stamina, the more
@@ -2553,7 +2554,7 @@ variable cure-factor  20 cure-factor !
 : break-the-wall ( -- )
   invader-active on
   invader-x c@ flying-to-the-right? if 2+ else 1- then
-  broken-wall-x ! broken-wall ;
+  broken-wall-x c! broken-wall ;
 
 : require-entering-invader ( -- )
   invaders c@ random 0= if break-the-wall then ;
@@ -2633,20 +2634,20 @@ variable ufo-x-inc  -1|1 ufo-x-inc !
 cvariable ufo-frame \ counter (0..3)
 
 : ~~ufo-info ( -- )
-  home ." x:" ufo-y ?  ." inc.:" ufo-x-inc ? ;
+  home ." x:" ufo-x ? ." inc.:" ufo-x-inc ? ;
   \ ' ~~ufo-info ' ~~app-info defer!
   \ XXX TMP -- for debugging
 
 : ufo-returns ( -- ) ufo-x-inc @ negate ufo-x-inc ! ;
 
-96 constant ufo-limit-x
+96 cconstant ufo-limit-x
   \ Limit of the x coordinate of the UFO in either direction.
 
 : init-ufo ( -- ) ufo-limit-x ufo-x ! ;
   \ Init the UFO.
 
-columns udg/ufo - constant ufo-max-x
-                0 constant ufo-min-x
+columns udg/ufo - cconstant ufo-max-x
+                0 cconstant ufo-min-x
 
 : visible-ufo? ( -- f )
   ufo-x @ ufo-min-x ufo-max-x between ;
@@ -2733,9 +2734,6 @@ constant ufo-movements ( -- a )
   \ The UFO has been impacted.
 
 ' shoot alias invader-bang ( -- )
-  \ XXX FIXME -- 2017-04-16: suddenly, `shoot` is not found
-  \ here!
-  \
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
@@ -2869,14 +2867,14 @@ constant ufo-movements ( -- a )
   \ Manage the projectile.
   \ XXX TODO -- Move `[if]` out and set a constant.
 
-variable trigger-delay-counter  trigger-delay-counter off
+cvariable trigger-delay-counter  0 trigger-delay-counter c!
 
 [pixel-projectile] [if]    8
                    [else]  6
                    [then]  cconstant trigger-delay
 
 : delay-trigger ( -- )
-  trigger-delay trigger-delay-counter ! ;
+  trigger-delay trigger-delay-counter c! ;
 
 : damage-transmission ( -- ) 1 transmission-damage +! ;
 
@@ -2899,10 +2897,11 @@ variable trigger-delay-counter  trigger-delay-counter off
   \ Is there any projectile left?
 
 : update-trigger ( -- )
-  trigger-delay-counter @ 1- 0 max trigger-delay-counter ! ;
+  trigger-delay-counter c@ 1- 0 max trigger-delay-counter c! ;
   \ Decrement the trigger delay. The minimum is zero.
+  \ XXX TODO -- since the counter is a byte, `max` may be removed
 
-: trigger-ready? ( -- f ) trigger-delay-counter @ 0= ;
+: trigger-ready? ( -- f ) trigger-delay-counter c@ 0= ;
   \ Is the trigger ready?
 
 : trigger-pressed? ( -- f ) kk-fire pressed? ;
@@ -2937,45 +2936,10 @@ variable trigger-delay-counter  trigger-delay-counter off
   \ ===========================================================
   cr .( Players config)  debug-point \ {{{1
 
+  \ XXX TODO --
 
   \ ===========================================================
-  cr .( Main)  debug-point \ {{{1
-
-  \ : defeat-tune ( -- )
-  \   100 200 do  i 20 beep  -5 +loop ;
-  \ XXX TODO -- original code in Ace Forth
-
-: defeat-tune ( -- )
-  10470 5233 do  i 20 dhz>bleep bleep  261 +loop ;
-  \ XXX REMARK -- sound converted from Ace Forth `beep` to
-  \ Solo Forth's `bleep`
-  \
-  \ XXX TODO -- 128 sound
-
-create attributes-backup /attributes allot
-
-: save-attributes ( -- )
-  attributes attributes-backup /attributes cmove ;
-
-: restore-attributes ( -- )
-  attributes-backup attributes /attributes cmove ;
-
-: radiation ( -- )
-  [ attributes columns status-bar-rows * + ] literal
-  [ /attributes ] literal radiation-attr fill ;
-
-: defeat ( -- )
-  save-attributes
-  radiation defeat-tune  2000 ms  fade-display
-  restore-attributes
-  check-record ;
-  \ XXX TODO -- Finish.
-  \ XXX TODO -- Factor.
-
-: victory? ( -- f ) invaders c@ 0= ;
-
-variable invasion-delay  8 invasion-delay !
-  \ XXX TMP -- debugging
+  cr .( Location titles)  debug-point \ {{{1
 
 : .location ( ca len y -- ) 0 swap at-xy 1 gigatype-title ;
   \ Display location name part _ca len_, centered at row _y_,
@@ -3008,6 +2972,48 @@ variable invasion-delay  8 invasion-delay !
 : enter-current-location ( -- ) location c@ enter-location ;
   \ Display the name and landscape of the current location.
 
+  \ ===========================================================
+  cr .( The end)  debug-point \ {{{1
+
+  \ : defeat-tune ( -- )
+  \   100 200 do  i 20 beep  -5 +loop ;
+  \ XXX TODO -- original code in Ace Forth
+
+: defeat-tune ( -- )
+  10470 5233 do  i 20 dhz>bleep bleep  261 +loop ;
+  \ XXX REMARK -- sound converted from Ace Forth `beep` to
+  \ Solo Forth's `bleep`
+  \
+  \ XXX TODO -- 128 sound
+
+create attributes-backup /attributes allot
+
+: save-attributes ( -- )
+  attributes attributes-backup /attributes cmove ;
+
+: restore-attributes ( -- )
+  attributes-backup attributes /attributes cmove ;
+
+: radiation ( -- )
+  [ attributes columns status-bar-rows * + ] literal
+  [ /attributes ] literal radiation-attr fill ;
+
+: defeat ( -- )
+  save-attributes
+  radiation defeat-tune  2000 ms  fade-display
+  restore-attributes
+  check-record ;
+  \ XXX TODO -- Finish.
+  \ XXX TODO -- Factor.
+
+  \ ===========================================================
+  cr .( Main loop)  debug-point \ {{{1
+
+: victory? ( -- f ) invaders c@ 0= ;
+
+  \ cvariable invasion-delay  8 invasion-delay c!
+  \ XXX TMP -- debugging
+
 : prepare-battle ( -- ) enter-current-location catastrophe off
                         init-invaders init-ufo init-tank
                         init-projectiles init-arena ;
@@ -3023,6 +3029,9 @@ variable invasion-delay  8 invasion-delay !
 
 : campaign ( -- ) begin prepare-battle battle victory?
                   while next-location repeat ;
+
+  \ XXX TODO -- `next-location` only if the building is intact.
+  \ Otherwise the invaders try again.
 
 : war ( -- ) prepare-war campaign defeat ;
 
@@ -3085,6 +3094,8 @@ variable invasion-delay  8 invasion-delay !
   broken-bottom-right-container .1x1sprite cr ;
   \ Show the graphics of the broken containers.
 
+  \ ===========================================================
+  cr .( Boot)  debug-point \ {{{1
 
 cls .( Nuclear Waste Invaders)
 cr version type
