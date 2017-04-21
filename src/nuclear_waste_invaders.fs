@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.68.0+201704202003" ;
+: version ( -- ca len ) s" 0.69.0+201704202022" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -119,10 +119,10 @@ need xclear
 need .xs \ XXX TMP -- for debuging
 
   \ --------------------------------------------
-  cr .(   -Printing) \ {{{2
+  cr .(   -Display) \ {{{2
 
 need at-y need at-x need type-left-field need type-right-field
-need type-center-field need gigatype-title
+need type-center-field need gigatype-title need mode-32iso
 
   \ --------------------------------------------
   cr .(   -Graphics) \ {{{2
@@ -493,7 +493,7 @@ sconstants >eo.country$ ( n -- ca len ) drop
 
 0
   here ," Liberia"
-  here ," Sahara Occidental"
+  here ," Sahara Occidental" \ XXX TODO -- change, too long
   here ," Marruecos"
   here ," España"
   here ," Francia"
@@ -555,7 +555,6 @@ record off
   cr .( Keyboard)  debug-point \ {{{1
 
 13 cconstant enter-key
-
 
 0 cconstant kk-left#  0. 2constant kk-left
 0 cconstant kk-right# 0. 2constant kk-right
@@ -2382,7 +2381,7 @@ false [if] \ XXX TODO --
   again ;
 
 : init-font ( -- )
-  game-font0 set-font ['] mode32iso-emit ['] emit defer! ;
+  game-font0 set-font ['] mode-32iso-emit ['] emit defer! ;
 
 : mobilize ( -- )
   init-font init-colors in-text-attr menu-screen menu ;
