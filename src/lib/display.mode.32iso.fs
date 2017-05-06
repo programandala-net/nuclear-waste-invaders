@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201704211836
+  \ Last modified: 201704231335
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -42,13 +42,13 @@ need mode-32iso-emit
   \ mode-32iso ( -- )
   \
   \ A 32 CPL display mode,  an alternative to the default
-  \ `mode-32`.  Characters are displayed by the ROM routine at
-  \ $0010.  The only difference with `mode-32` is
+  \ `mode-32`.  The only difference with `mode-32` is
   \ ``mode-32iso`` can use a ISO character set, i.e. it
   \ displays characters 32..255 from the current font.  See
   \ `mode-32iso-emit` for details.
   \
-  \ See also: `set-font`.
+  \ See also: `current-mode`, `set-font`, `set-mode-output`,
+  \ `columns`, `rows`, `mode-32-xy`, `mode-32-at-xy`.
   \
   \ }doc
 
@@ -121,7 +121,7 @@ os-chars h ftp, h push, b addp, os-chars h stp, FF 52 iy st#x,
   \ character set with more than 128 characters). A similar
   \ result could be obtained with `mode-32-emit` and
   \ `last-font-char`, by treating the characters greater than
-  \ 128 as UDG, using `set-udg`.  The advantage of
+  \ 128 as UDG and using `set-udg`.  The advantage of
   \ `mode-32iso-emit` is the ISO font can be managed (e.g.
   \ built, loaded from disk, allocated, etc.) as a whole, using
   \ only the font address, and reserving the full UDG set for
@@ -142,6 +142,8 @@ os-chars h ftp, h push, b addp, os-chars h stp, FF 52 iy st#x,
 
   \ 2017-04-21: Start. Move `mode-32iso-emit` from the kernel.
   \ Write `mode-32iso`.
+  \
+  \ 2017-04-23: Improve documentation.
 
   \ vim: filetype=soloforth
 

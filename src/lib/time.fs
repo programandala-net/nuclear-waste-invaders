@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201703292330
+  \ Last modified: 201705061710
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -92,7 +92,8 @@ code ms ( u -- )
   \ Fetch the system frames counter, which is incremented every
   \ 20 ms by the OS.
   \
-  \ See also: `frames!`, `reset-frames`, `os-frames`, `bench{`.
+  \ See also: `frames!`, `reset-frames`, `os-frames`,
+  \ `frames/second`, `bench{`.
   \
   \ }doc
 
@@ -108,7 +109,8 @@ code ms ( u -- )
   \ Store _d_ at the system frames counter, which is
   \ incremented every 20 ms by the OS.
   \
-  \ See also: `frames@`, `reset-frames`, `os-frames`, `bench{`.
+  \ See also: `frames@`, `reset-frames`, `os-frames`,
+  \ `frames/second`, `bench{`.
   \
   \ }doc
 
@@ -123,7 +125,73 @@ code ms ( u -- )
   \ Reset the system frames counter, which is incremented every
   \ 20 ms by the OS, setting it to zero.
   \
-  \ See: `frames@`, `frames!`, `os-frames`, `bench{`.
+  \ See: `frames@`, `frames!`, `os-frames`, `frames/second`,
+  \ `bench{`.
+  \
+  \ }doc
+
+( frames/second frames>cs frames>ms frames>seconds )
+
+[unneeded] frames/second ?\ 50 cconstant frames/second
+
+  \ doc{
+  \
+  \ frames/second ( -- n )
+  \
+  \ _n_ is the number of system frames in one second.  There
+  \ are 50 frames per second in Europe and 60 frames per second
+  \ in USA.
+  \
+  \ See also: `frames>seconds`, `frames>cs`, `frames>ms`,
+  \ `frames@`.
+  \
+  \ }doc
+
+[unneeded] frames>cs ?( need frames/second need % need m+
+
+: frames>cs ( d1 -- d2 )
+  frames/second m/ 100 m* rot frames/second % m+ ; ?)
+
+  \ doc{
+  \
+  \ frames>cs ( d1 -- d2 )
+  \
+  \ Convert system frames _d1_ to centiseconds _d2_.
+  \
+  \ See also: `frames>seconds`, `frames>ms`, `frames/seconds`,
+  \ `frames@`.
+  \
+  \ }doc
+
+[unneeded] frames>ms ?( need frames/second
+
+: frames>ms ( d1 -- d2 )
+  frames/second m/ 1000 m*
+  rot frames/second 1000 swap */ m+ ; ?)
+
+  \ doc{
+  \
+  \ frames>ms ( d1 -- d2 )
+  \
+  \ Convert system frames _d1_ to milliseconds _d2_.
+  \
+  \ See also: `frames>seconds`, `frames>cs`, `frames/seconds`,
+  \ `frames@`.
+  \
+  \ }doc
+
+[unneeded] frames>seconds ?( need frames/second need m*/
+
+: frames>seconds ( d1 -- d2 ) 1 frames/second m*/ ; ?)
+
+  \ doc{
+  \
+  \ frames>seconds ( d -- n )
+  \
+  \ Convert system frames _d_ to seconds _n_.
+  \
+  \ See also: `frames>cs`, `frames>ms`, `frames/seconds`,
+  \ `frames@`.
   \
   \ }doc
 
@@ -141,11 +209,11 @@ code ms ( u -- )
   \
   \ ?frames ( u -- )
   \
-  \ Stop execution during at least _u_ frames of the TV (there
-  \ are 50 frames per second in in Europe and 60 frames per
-  \ second in USA), or until a key is pressed.
+  \ Stop execution during at least _u_ frames of the TV, or
+  \ until a key is pressed.
   \
-  \ See: `frames`, `pause`, `os-frames`, `?seconds`.
+  \ See: `frames`, `pause`, `os-frames`, `?seconds`,
+  \ `frames/second`.
   \
   \ }doc
 
@@ -160,11 +228,10 @@ code ms ( u -- )
   \
   \ frames ( u -- )
   \
-  \ Stop execution during at least _u_ frames of the TV (there
-  \ are 50 frames per second in in Europe and 60 frames per
-  \ second in USA).
+  \ Stop execution during at least _u_ frames of the TV.
   \
-  \ See: `?frames`, `pause`, `os-frames`, `seconds`, `ms`.
+  \ See: `?frames`, `pause`, `os-frames`, `seconds`, `ms`,
+  \ `frames/second`.
   \
   \ }doc
 
@@ -196,14 +263,14 @@ code ms ( u -- )
   \ pause ( u -- )
   \
   \ If _u_ 0 zero, stop execution until a key is pressed.
-  \ Otherwise stop execution during at least _u_ frames of the
-  \ TV (there are 50 frames per second in in Europe and 60
-  \ frames per second in USA), or until a key is pressed.
+  \ Otherwise stop execution during at least _u_ system frames,
+  \ or until a key is pressed.
   \
   \ ``pause`` is a convenience that works like the homonymous
   \ keyword of Sinclair BASIC.
   \
-  \ See: `frames`, `?frames`, `os-frames`, `?seconds`.
+  \ See: `frames`, `?frames`, `os-frames`, `?seconds`,
+  \ `frames/second`.
   \
   \ }doc
 
@@ -399,6 +466,96 @@ code ms ( u -- )
   \
   \ }doc
 
+( bench{ }bench }bench. bench. benched )
+
+  \ Credit:
+  \
+  \ Code adapted from Forth Dimensions (volume 17, number 4
+  \ page 11, 1995-11).
+
+  \ System-dependent timing routines.
+
+need reset-frames need frames@ need frames>cs
+
+: bench{ ( -- ) reset-frames ;
+
+  \ doc{
+  \
+  \ bench{ ( -- )
+  \
+  \ Start timing, setting the system frames counter to zero.
+  \
+  \ See also: `}bench`, `reset-frames`.
+  \
+  \ }doc
+
+: }bench ( -- d ) frames@ ;
+
+  \ doc{
+  \
+  \ }bench ( -- d ) frames@ ;
+  \
+  \ Return the current value of the system frames counter.
+  \
+  \ See also: `bench{`, `frames@`, `bench.`, `}bench.`.
+  \
+  \ }doc
+
+: bench. ( d -- )
+  2dup d. ." frames ("
+  frames>cs <# # # '.' hold #s #> type ."  s) " ;
+
+  \ doc{
+  \
+  \ bench. ( d -- )
+  \
+  \ Display the timing result _d_, which is the number of
+  \ system frames, in frames and seconds.
+  \
+  \ See also: `bench{`, `}bench`, `}bench.`.
+  \
+  \ }doc
+
+: }bench. ( -- ) frames@ bench. ;
+
+  \ doc{
+  \
+  \ }bench. ( -- )
+  \
+  \ Stop timing and display the result.
+  \
+  \ See also: `bench{`, `}bench`, `bench.`.
+  \
+  \ }doc
+
+: benched ( xt n -- d )
+  bench{ 0 ?do  dup execute  loop  }bench rot drop ;
+
+  \ doc{
+  \
+  \ benched ( xt n -- d )
+  \
+  \ Execute _n_ times the benchmark _xt_ and return the timer
+  \ result _d_.
+  \
+  \ See also: `bench{`, `}bench`, `benched.`.
+  \
+  \ }doc
+
+: benched. ( xt n -- )
+  bench{ 0 ?do  dup execute  loop  }bench. drop ;
+
+  \ doc{
+  \
+  \ benched. ( xt n -- d )
+  \
+  \ Execute _n_ times the benchmark _xt_ and display the
+  \ result.
+  \
+  \ See also: `bench{`, `}bench.`, `benched`.
+  \
+  \ }doc
+
   \ ===========================================================
   \ Change log
 
@@ -448,5 +605,12 @@ code ms ( u -- )
   \
   \ 2017-03-29: Fix needing of `frames!`. Improve needing of
   \ time and date words. Improve documentation.
+  \
+  \ 2017-04-27: Move `bench{` and friends here from the
+  \ <benchmark.fs>, which is deleted.
+  \
+  \ 2017-05-06: Add `frames/second`, `frames>seconds`,
+  \ `frames>cs`, `frames>ms`.  Improve `bench.` to display
+  \ seconds with hundrendths precision. Improve documentation.
 
   \ vim: filetype=soloforth

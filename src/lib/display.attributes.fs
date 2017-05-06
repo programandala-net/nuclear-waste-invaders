@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201703291126
+  \ Last modified: 201705052330
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -256,7 +256,7 @@ code brighty ( b1 -- b2 )
   \ : brighty ( b1 -- b2 ) bright-mask or ;
   \ ----
 
-  \ See also: `papery`, `flashy`.
+  \ See also: `bright-mask`, `papery`, `flashy`.
   \
   \ }doc
 
@@ -281,7 +281,7 @@ code flashy ( b1 -- b2 )
   \ : flashy ( b1 -- b2 ) flash-mask or ;
   \ ----
 
-  \ See also: `papery`, `brighty`.
+  \ See also: `flash-mask`, `papery`, `brighty`.
   \
   \ }doc
 
@@ -986,8 +986,8 @@ code paper. ( b -- ) 3E c, 11 c, (0-9-color. jp, end-code ?)
   \
   \ ``paper.`` is much slower than `set-paper` or `attr!`, but
   \ it can handle pseudo-colors 8 (transparent) and 9
-  \ (contrast), setting the correspondent system variables and
-  \ flags accordingly.
+  \ (contrast), setting the corresponding system variables
+  \ accordingly.
   \
   \ See also: `ink.`, `(0-9-color.`.
   \
@@ -1009,8 +1009,7 @@ code ink. ( b -- ) 3E c, 10 c, (0-9-color. jp, end-code ?)
   \
   \ ``ink.`` is much slower than `set-ink` or `attr!`, but it
   \ can handle pseudo-colors 8 (transparent) and 9 (contrast),
-  \ setting the correspondent system variables and flags
-  \ accordingly.
+  \ setting the corresponding system variables accordingly.
   \
   \ See also: `paper.`, `(0-9-color.`.
   \
@@ -1069,7 +1068,8 @@ create (0-9-color. ( -- a ) asm
 
   \
   \ ``flash.`` is much slower than `set-flash` or `attr!`, but
-  \ it can handle pseudo-color 8 (transparent).
+  \ it can handle pseudo-color 8 (transparent), setting the
+  \ corresponding system variables accordingly.
   \
   \ See also: `bright.`, `(0-1-8-color.`.
   \
@@ -1093,7 +1093,8 @@ create (0-9-color. ( -- a ) asm
   \ - Values greater than 8 or less than 0 are converted to 8.
 
   \ ``bright.`` is much slower than `set-bright` or `attr!`,
-  \ but it can handle pseudo-color 8 (transparent).
+  \ but it can handle pseudo-color 8 (transparent), setting the
+  \ corresponding system variables accordingly.
   \
   \ See also: `flash.`, `(0-1-8-color.`.
   \
@@ -1210,5 +1211,9 @@ create (0-9-color. ( -- a ) asm
   \ 2017-03-28: Improve documentation.
   \
   \ 2017-03-29: Fix comments.
+  \
+  \ 2017-04-23: Improve documentation.
+  \
+  \ 2017-05-05: Improve documentation.
 
   \ vim: filetype=soloforth

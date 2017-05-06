@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201704041949
+  \ Last modified: 201705061656
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -38,7 +38,7 @@
   \
   \ Multiply _ud1_ by _ud2_ giving the product _ud3_.
   \
-  \ See also: `d*`, `um*`, `*`.
+  \ See also: `d*`, `um*`, `m*`, `*`.
   \
   \ }doc
 
@@ -59,7 +59,7 @@
   \
   \ Multiply _d1|ud1_ by _d2|ud2_ giving the product _d3|ud3_.
   \
-  \ See also: `ud*`, `um*`, `*`.
+  \ See also: `ud*`, `um*`, `m*`, `*`.
   \
   \ }doc
 
@@ -145,7 +145,7 @@ need tum* need t+ need t- need tum/ need d2* need lshift
   \ Divide _ud1_ by _ud2_, giving the remainder _ud3_ and
   \ the quotient _ud4_.
   \
-  \ See also: `/mod`.
+  \ See also: `um/mod`, `/mod` ,`*/mod`.
   \
   \ }doc
 
@@ -155,9 +155,48 @@ need tum* need t+ need t- need tum/ need d2* need lshift
   \
   \ Code from DZX-Forth.
 
-[unneeded] d0= ?\ : d0= ( d -- f ) or 0= ;
+[unneeded] d0= ?(
+
+code d0= ( d -- f )
+  E1 c, D1 c, 19 c, 78 04 + c, B0 05 + c,
+  \ pop hl
+  \ pop de
+  \ add hl,de
+  \ ld a,h
+  \ or l
+  C2 c, ' false , 2B c, jppushhl, end-code
+  \ jp nz,false_
+  \ dec hl ; HL = true
+  \ _jp_pushhl
+
+  \ doc{
+  \
+  \ d0= ( d -- f )
+  \
+  \ _f_ is true if and only if _d_ is equal to zero.
+  \
+  \ ``d0=`` is written in Z80. Its equivalent definition in
+  \ Forth is the following:
+
+  \ ----
+  \ : d0= ( d -- f ) + 0= ;
+  \ ----
+
+  \ See also: `0=`.
+  \
+  \ }doc
 
 [unneeded] d0< ?\ : d0< ( d -- f ) nip 0< ;
+
+  \ doc{
+  \
+  \ d0< ( d -- f )
+  \
+  \ _f_ is true if and only if _d_ is less than zero.
+  \
+  \ See also: `0<`.
+  \
+  \ }doc
 
 [unneeded] d< ?(
 
@@ -165,6 +204,20 @@ need 2nip
 
 : d< ( d1 d2 -- f )
   rot 2dup = if  2drop u< exit  then  2nip > ; ?)
+
+  \ doc{
+  \
+  \ d< ( d1 d2 -- f )
+  \
+  \ _f_ is true only if and only if _d1_ is less than _d2_.
+  \
+  \ Origin: Forth-79 (Double Number Word Set), Forth-83 (Double
+  \ Number Extension Word Set), Forth-94 (DOUBLE EXT),
+  \ Forth-2012 (DOUBLE EXT).
+  \
+  \ See also: `du<`, `<`, `dmin`.
+  \
+  \ }doc
 
 [unneeded] du< ?(
 
@@ -175,10 +228,34 @@ need 2nip
   u<  if  2drop 2drop true   exit  then
   -   if  2drop       false  exit  then  u< ; ?)
 
+  \ doc{
+  \
+  \ du< ( ud1 ud2 -- f )
+  \
+  \ _f_ is true only if and only if _du1_ is less than _du2_.
+  \
+  \ Origin: Forth-79 (Double Number Word Set), Forth-83 (Double
+  \ Number Extension Word Set), Forth-94 (DOUBLE EXT),
+  \ Forth-2012 (DOUBLE EXT).
+  \
+  \ See also: `d<`, `<`, `dmin`.
+  \
+  \ }doc
+
 ( d= d<> dmin dmax )
 
-[unneeded] d= ?\ : d= ( d1 d2 -- f ) d<> 0= ;
+[unneeded] d= ?\ : d= ( xd1 xd2 -- f ) d<> 0= ;
   \ XXX TODO -- rewrite in Z80
+
+  \ doc{
+  \
+  \ d= ( xd1 xd2 -- f )
+  \
+  \ _f_ is true if and only if _xd1_ is equal to _xd2_.
+  \
+  \ See also: `=`.
+  \
+  \ }doc
 
 [unneeded] d<>
 ?\ : d<> ( d1 d2 -- f ) rot <> if  2drop true exit  then  <> ;
@@ -186,27 +263,66 @@ need 2nip
 
   \ XXX OLD
   \ XXX TODO benchmark
-  \ : d= ( d1 d2 -- f ) rot = >r = r> and ;
-  \ : d<> ( d1 d2 -- f ) d= 0= ;
+  \ : d= ( xd1 xd2 -- f ) rot = >r = r> and ;
+  \ : d<> ( xd1 xd2 -- f ) d= 0= ;
+
+  \ doc{
+  \
+  \ d<> ( xd1 xd2 -- f )
+  \
+  \ _f_ is true if and only if _xd1_ is not bit-for-bit the
+  \ same as _xd2_.
+  \
+  \ See also: `<>`.
+  \
+  \ }doc
+
+[unneeded] dmin ?(
+: dmin ( d1 d2 -- d3 )
+  2over 2over d< 0= if  2swap  then  2drop ; ?)
+  \ XXX TODO -- use `d>` when available
 
   \ Credit:
   \
-  \ Code of `dmin` and `dmax` from DZX-Forth.
+  \ Code from DZX-Forth.
 
-[unneeded] dmin ?(
-: dmin ( d1 d2 -- d1 | d2 )
-  2over 2over d< 0= if  2swap  then  2drop ; ?)
-  \ XXX TODO -- use `d>` when available
+  \ doc{
+  \
+  \ dmin ( d1 d2 -- d3 )
+  \
+  \ _d3_ is the greater of _d1_ and _d2_.
+  \
+  \ Origin: Forth-79 (Double Number Word Set), Forth-83 (Double
+  \ Number Extension Word Set), Forth-94 (DOUBLE), Forth-2012
+  \ (DOUBLE).
+  \
+  \ See also: `dmax`, `min`, `umin`.
+  \
+  \ }doc
 
 [unneeded] dmax ?(
 : dmax ( d1 d2 -- d1 | d2 )
   2over 2over d< if  2swap  then  2drop ; ?)
 
-( d- d2* d2/ )
-
   \ Credit:
   \
-  \ Code of `d-` adapted from Z88 CamelForth.
+  \ Code from DZX-Forth.
+
+  \ doc{
+  \
+  \ dmax ( d1 d2 -- d3 )
+  \
+  \ _d3_ is the lesser of _d1_ and _d2_.
+  \
+  \ Origin: Forth-79 (Double Number Word Set), Forth-83 (Double
+  \ Number Extension Word Set), Forth-94 (DOUBLE), Forth-2012
+  \ (DOUBLE).
+  \
+  \ See also: `dmin`, `max`, `umax`.
+  \
+  \ }doc
+
+( d- d2* d2/ )
 
 [unneeded] d- ?( code d- ( d1|ud1 d2|ud2 -- d3|ud3 )
 
@@ -222,8 +338,22 @@ need 2nip
 
   \ Credit:
   \
-  \ Code of `d2*` and `d2/` converted to Z80 from the 8080
-  \ version of DZX-Forth.
+  \ Code adapted from Z88 CamelForth.
+
+  \ doc{
+  \
+  \ d- ( d1|ud1 d2|ud2 -- d3|ud3 )
+  \
+  \ Subtract _d2|ud2_ from _d1|ud1_, giving the difference
+  \ _d3|ud3_.
+  \
+  \ Origin: Forth-79 (Double Number Word Set), Forth-83 (Double
+  \ Number Extension Word Set), Forth-94 (DOUBLE), Forth-2012
+  \ (DOUBLE).
+  \
+  \ See also: `d+`, `-`, `dmin`.
+  \
+  \ }doc
 
 [unneeded] d2* ?( code d2* ( xd1 -- xd2 )
 
@@ -236,6 +366,23 @@ need 2nip
     \ ex de,hl
   pushhlde jp, end-code ?)
     \ jp pushhlde
+
+  \ Credit:
+  \
+  \ Code converted to Z80 from the 8080 version of DZX-Forth.
+
+  \ doc{
+  \
+  \ d2* ( xd1 -- xd2 )
+  \
+  \ _xd2_ is the result of shifting _xd1_ one bit toward the
+  \ most-significant bit, filling the vacated bit with zero.
+  \
+  \ Origin: Forth-94 (DOUBLE), Forth-2012 (DOUBLE).
+  \
+  \ See also: `d2/`, `2*`, `lshift`.
+  \
+  \ }doc
 
 [unneeded] d2/ ?( code d2/ ( xd1 -- xd2 )
 
@@ -251,22 +398,70 @@ need 2nip
     \ ex de,hl
     \ jp pushhlde
 
-( dxor dor dand d10* m* )
+  \ Credit:
+  \
+  \ Code converted to Z80 from the 8080 version of DZX-Forth.
 
-[unneeded] dxor
-?\ : dxor ( d1 d2 -- d3 ) rot xor -rot xor swap ;
+  \ doc{
+  \
+  \ d2/ ( xd1 -- xd2 )
+  \
+  \ _xd2_ is the result of shifting _xd1_ one bit toward the
+  \ least-significant bit, leaving the most-significant bit
+  \ unchanged.
+  \
+  \ Origin: Forth-94 (DOUBLE), Forth-2012 (DOUBLE).
+  \
+  \ See also: `d2*`, `2/`, `rshift`.
+  \
+  \ }doc
 
-[unneeded] dor
-?\ : dor ( d1 d2 -- d3 ) rot or -rot or swap ;
-
-[unneeded] dand
-?\ : dand ( d1 d2 -- d3 ) rot and -rot and swap ;
+( dxor dor dand d10* )
 
   \ Credit:
   \
   \ Code of `dxor`, `dor` and `dand` written by Everett F.
   \ Carter, published on Forth Dimensions (volume 16, number 2,
   \ page 17, 1994-08).
+
+[unneeded] dxor
+?\ : dxor ( xd1 xd2 -- xd3 ) rot xor -rot xor swap ;
+
+  \ doc{
+  \
+  \ dxor ( xd1 xd2 -- xd3 )
+  \
+  \ _xd3_ is the bit-by-bit exclusive-or of _xd1_ and _xd2_.
+  \
+  \ See also: `xor`, `dor`, `dand`.
+  \
+  \ }doc
+
+[unneeded] dor
+?\ : dor ( xd1 xd2 -- xd3 ) rot or -rot or swap ;
+
+  \ doc{
+  \
+  \ dor ( xd1 xd2 -- xd3 )
+  \
+  \ _xd3_ is the bit-by-bit inclusive-or of _xd1_ and _xd2_.
+  \
+  \ See also: `or`, `dxor`, `dand`.
+  \
+  \ }doc
+
+[unneeded] dand
+?\ : dand ( xd1 xd2 -- xd3 ) rot and -rot and swap ;
+
+  \ doc{
+  \
+  \ dand ( xd1 xd2 -- xd3 )
+  \
+  \ _xd3_ is the bit-by-bit logical "and" of _xd1_ and _xd2_.
+  \
+  \ See also: `and`, `dor`, `dxor`.
+  \
+  \ }doc
 
 [unneeded] d10*
 ?\ : d10* ( ud1 -- ud2 ) d2* 2dup d2* d2* d+ ;
@@ -281,10 +476,9 @@ need 2nip
   \
   \ Multiply _ud1_ per 10, resulting _ud2_.
   \
-  \ See also: `d*`, `2*`, `8*`.
+  \ See also: `d2*`, `d*`, `2*`, `8*`.
   \
   \ }doc
-
 
 ( m+ )
 
@@ -295,13 +489,13 @@ need 2nip
 need assembler
 
 code m+ ( d1|ud1 n -- d2|ud2 )
-  exx,     \ save Forth IP
+  exx,    \ save the Forth IP
   b pop,  \ n
   d pop,  \ d1 hi cell
   h pop,  \ d1 lo cell
   b addp, h push,
   c? rif  d inc, rthen  d push,
-  exx,    \ restore Forth IP
+  exx,    \ restore the Forth IP
   jpnext, end-code
 
   \ doc{
@@ -310,15 +504,18 @@ code m+ ( d1|ud1 n -- d2|ud2 )
   \
   \ Add _n_ to _d1|ud1_, giving the sum _d2|ud2_.
   \
+  \ ``m+`` is written in Z80. An equivalent definition in Forth
+  \ (1.48 slower, but 4 bytes smaller) is the following:
+
+  \ ----
+  \ : m+ ( d1|ud1 n -- d2|ud2 ) s>d d+ ;
+  \ ----
+
   \ Origin: Forth-94 (DOUBLE) Forth-2012 (DOUBLE).
   \
+  \ See also: `+`, `d+`.
+  \
   \ }doc
-
-exit
-
-  \ This alternative is slower (1.48), but saves 4 bytes.
-
-: m+ ( d1|ud1 n -- d2|ud2 ) s>d d+ ;
 
 ( m*/ )
 
@@ -341,6 +538,8 @@ exit
   \ Multiply _d1_ by _n1_ producing the triple-cell
   \ intermediate result _t_.  Divide _t_ by _+n2_ giving the
   \ double-cell quotient _d2_.
+  \
+  \ Origin: Forth-94 (DOUBLE), Forth-2012 (DOUBLE).
   \
   \ See also: `*/`, `m*`.
   \
@@ -418,5 +617,11 @@ need 2nip need cell-bits
   \ 2017-03-29: Update needing of `cell-bits`.
   \
   \ 2017-04-04: Improve documentation.
+  \
+  \ 2017-04-20: Fix index line.
+  \
+  \ 2017-05-05: Improve documentation.
+  \
+  \ 2017-05-06: Rewrite `d0=` in Z80. Improve documentation.
 
   \ vim: filetype=soloforth
