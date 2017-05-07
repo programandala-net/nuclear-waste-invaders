@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.69.0+201704202022" ;
+: version ( -- ca len ) s" 0.70.0+201705061912" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -127,7 +127,7 @@ need type-center-field need gigatype-title need mode-32iso
   \ --------------------------------------------
   cr .(   -Graphics) \ {{{2
 
-need os-chars need os-udg need /udg
+need set-udg need /udg
 need type-udg need columns need rows need row need fade-display
 need last-column need udg-block need udg! need blackout
 
@@ -421,10 +421,10 @@ localized-character start-key ( -- c )
   \ Key to start the game from the main menu.
 
 0
-  here ," River Cess"
-  here ," Tichla" \ XXX TODO -- change
+  here ," Ganta"
+  here ," Kassari"
   here ," Zagora" \ XXX TODO -- change
-  here ," Tomelloso"
+  here ," Las Mesas"
   here ," Châteaubriant"
   here ," Peel"
   here ," Vestmahavn"
@@ -432,10 +432,10 @@ localized-character start-key ( -- c )
 sconstants >town$ ( n -- ca len ) drop
 
 0
-  here ," Rivercess County"
+  here ," Nimba"
   here ," " \ XXX TODO
   here ," " \ XXX TODO
-  here ," Ciudad Real"
+  here ," Cuenca"
   here ," Pays de la Loire" \ XXX TODO -- confirm English name
   here ," Isle of Man"
   here ," Faroe Islands"
@@ -443,10 +443,10 @@ sconstants >town$ ( n -- ca len ) drop
 sconstants >en.region$ ( n -- ca len ) drop
 
 0
-  here ," Rivercess County"
+  here ," Nimba"
   here ," " \ XXX TODO
   here ," " \ XXX TODO
-  here ," Reĝurbo"
+  here ," Kŭenko"
   here ," Luarlandoj"
   here ," Manksinsulo"
   here ," Ferooj"
@@ -454,10 +454,10 @@ sconstants >en.region$ ( n -- ca len ) drop
 sconstants >eo.region$ ( n -- ca len ) drop
 
 0
-  here ," Rivercess County"
+  here ," Nimba"
   here ," " \ XXX TODO
   here ," " \ XXX TODO
-  here ," Ciudad Real"
+  here ," Cuenca"
   here ," Países del Loira"
   here ," Isla de Man"
   here ," Islas Feroes"
@@ -471,7 +471,7 @@ localized-word >region$ ( n -- ca len )
 
 0
   here ," Liberia"
-  here ," Western Sahara"
+  here ," Mauritania"
   here ," Morocco"
   here ," Spain"
   here ," France"
@@ -482,7 +482,7 @@ sconstants >en.country$ ( n -- ca len ) drop
 
 0
   here ," Liberio"
-  here ," Okcidenta Saharo"
+  here ," Mauritanio"
   here ," Maroko"
   here ," Hispanujo"
   here ," Francujo"
@@ -493,7 +493,7 @@ sconstants >eo.country$ ( n -- ca len ) drop
 
 0
   here ," Liberia"
-  here ," Sahara Occidental" \ XXX TODO -- change, too long
+  here ," Mauritania"
   here ," Marruecos"
   here ," España"
   here ," Francia"
@@ -632,7 +632,7 @@ current-controls c@ set-controls
                128 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
-create udg-set /udg-set allot  udg-set os-udg !
+create udg-set /udg-set allot  udg-set set-udg
   \ Reserve space for the UDG set.
 
 : udg>bitmap ( c -- a ) /udg * udg-set + ;
@@ -2364,24 +2364,25 @@ false [if] \ XXX TODO --
 : menu-screen ( -- )
   cls invariable-menu-screen variable-menu-screen ;
 
-: change-language  ( -- )
-  lang 1+ dup langs < abs * c!> lang variable-menu-screen ;
-  \ Change the current language and update the screen.
+: change-language  ( -- ) lang 1+ dup langs < abs * c!> lang ;
+  \ Change the current language.
+
+: quit-game ( -- ) mode-32 quit ;
+  \ XXX TMP --
 
 : menu ( -- )
   begin
-    break-key? if quit then \ XXX TMP
+    break-key? if quit-game then \ XXX TMP
     key lower case
     start-key    of  exit           endof \ XXX TMP --
-    language-key of change-language endof
+    language-key of change-language variable-menu-screen endof
     \ bl  of  next-controls show-controls  endof
     \ 'p' of  change-players show-players  endof
     \ XXX TMP --
     endcase
   again ;
 
-: init-font ( -- )
-  game-font0 set-font ['] mode-32iso-emit ['] emit defer! ;
+: init-font ( -- ) game-font0 set-font mode-32iso ;
 
 : mobilize ( -- )
   init-font init-colors in-text-attr menu-screen menu ;
@@ -2955,7 +2956,9 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   \ ===========================================================
   cr .( Location titles)  debug-point \ {{{1
 
-: .location ( ca len y -- ) 0 swap at-xy 1 gigatype-title ;
+1 gigatype-style c!
+
+: .location ( ca len y -- ) 0 swap at-xy gigatype-title ;
   \ Display location name part _ca len_, centered at row _y_,
   \ using `gigatype` style 1.
 
