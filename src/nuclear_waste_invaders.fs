@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.72.0+201705101237" ;
+: version ( -- ca len ) s" 0.73.0+201705102022" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -1713,8 +1713,7 @@ false [if] \ XXX OLD
 
 1 cconstant status-bar-rows
 
-: .score-label ( -- )
-  score$ dup 1+ score-x c! home type ;
+: .score-label ( -- ) score$ dup 1+ score-x c! home type ;
 
 : >record-label-x ( len -- x )
   [ columns score-digits 1+ - ] cliteral swap - ;
@@ -1726,6 +1725,8 @@ false [if] \ XXX OLD
 : status-bar ( -- )
   in-text-attr .score-label .score .record-label .record ;
 
+[pixel-projectile] [if]
+
 : col>pixel ( n1 -- n2 ) 8 * ;
   \ Convert a row (0..31) to a pixel y coordinate (0..255).
   \ XXX TODO -- Move to Solo Forth and rewrite in Z80
@@ -1733,6 +1734,8 @@ false [if] \ XXX OLD
 : row>pixel ( n1 -- n2 ) 8 * 191 swap - ;
   \ Convert a row (0..23) to a pixel y coordinate (0..191).
   \ XXX TODO -- Move to Solo Forth and rewrite in Z80
+
+[then]
 
   \ ===========================================================
   cr .( Invaders data)  debug-point \ {{{1
@@ -1956,7 +1959,7 @@ cvariable building-left-x     cvariable building-right-x
 cvariable containers-left-x   cvariable containers-right-x
 
 : size-building ( -- )
-  [ columns 2/ 1- ] cliteral \ half of the screen
+  [ columns 2/ 1- ] cliteral  \ half of the screen
   location c@ 1+              \ half width of all containers
   dup 2* 2+ building-width     c!
   2dup 1- - containers-left-x  c!
@@ -2015,13 +2018,15 @@ create containers-half
   loop 2drop tank-y dup building-bottom-y ?do i floor loop
                         dup ground-floor yard ;
   \ Draw the building and the nuclear containers.
+  \
+  \ XXX TODO -- Simpler and faster.
 
   \ ===========================================================
   cr .( Locations)  debug-point \ {{{1
 
 8 cconstant locations
 
-: (next-location ( -- )
+: next-location ( -- )
   location c@ 1+ locations min location c! ;
   \ Increase the location number, but not beyond the maximum.
   \ XXX TMP --
@@ -2034,9 +2039,34 @@ variable used-projectiles  used-projectiles off
   location c@ 100 * used-projectiles @ - 0 max ;
   \ Return bonus _n_ after winning a battle.
 
-: next-location ( -- )
-  battle-bonus update-score (next-location size-building ;
-  \ Change to the next location.
+cvariable old-breachs
+  \ Number of old breachs in the wall, at the start of the
+  \ battle.
+
+cvariable breachs
+  \ Number of new breachs in the wall, during the current
+  \ battle.
+
+false [if]
+
+: .breachs ( -- )
+  in-text-attr 11 0 at-xy
+  ." breachs " breachs c@ 0.r ." /" old-breachs c@ 0.r
+  begin 2 border 0 border key? until key drop ;
+  \ XXX TMP -- for debugging
+
+[then]
+
+: no-breach ( -- ) 0 old-breachs c! 0 breachs c! ;
+
+: prepare-building ( -- ) size-building no-breach ;
+  \ Prepare the building of the new location.
+
+: reward ( -- ) battle-bonus update-score ;
+  \ Add the won battle bonus to the score.
+
+: travel ( -- ) next-location prepare-building ;
+  \ Travel to the next battle location.
 
 : first-location ( -- ) 0 location c! size-building ;
   \ Init the location number and the related variables.
@@ -2049,13 +2079,9 @@ cvariable tank-x \ column
 
 variable transmission-damage
 
-: repair-transmission ( -- ) transmission-damage off ;
-
-: repair-tank ( -- ) repair-transmission ;
+: repair-tank ( -- ) transmission-damage off ;
 
 : park-tank ( -- ) columns udg/tank - 2/ tank-x c! ;
-
-: init-tank ( -- ) repair-tank park-tank ;
 
                     1 cconstant tank-min-x
 columns udg/tank - 1- cconstant tank-max-x
@@ -2132,6 +2158,8 @@ columns udg/tank - 1- cconstant tank-max-x
 : .tank ( -- ) (.tank drop ;
   \ Display the tank at its current position.
 
+: new-tank ( -- ) repair-tank park-tank .tank ;
+
 : <tank ( -- ) -1 tank-x c+! (.tank -tank-extreme drop ;
   \ Move the tank to the left.
 
@@ -2196,7 +2224,7 @@ defer debug-data-pause ( -- )
   0 projectile-y c!  projectile# >x
   .debug-data ;
 
-: init-projectiles ( -- )
+: new-projectiles ( -- )
   used-projectiles off
   'projectile-y #projectiles erase
   xclear #projectiles 0 do i >x loop ;
@@ -2209,6 +2237,7 @@ defer debug-data-pause ( -- )
   cr .( Init)  debug-point \ {{{1
 
 : prepare-war ( -- )
+  catastrophe off
   [pixel-projectile] [ 0= ] [if] init-ocr [then]
   first-location score off cls ;
 
@@ -2218,10 +2247,6 @@ defer debug-data-pause ( -- )
     i invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
                        r> ~sprite c@ .2x1sprite
   loop ;
-
-: init-arena ( -- )  status-bar building .tank parade ;
-  \ XXX REMARK -- `-arena` was used here, but `blackout`, used
-  \ in `enter-location`, made it redundant.
 
   \ ===========================================================
   cr .( Instructions)  debug-point \ {{{1
@@ -2368,11 +2393,14 @@ false [if] \ XXX TODO --
   \ Change the current language.
 
 : quit-game ( -- ) mode-32 quit ;
-  \ XXX TMP --
+  \ XXX TMP -- for debugging
+
+: ?quit-game ( -- ) break-key? if quit-game then ;
+  \ XXX TMP -- for debugging
 
 : menu ( -- )
   begin
-    break-key? if quit-game then \ XXX TMP
+    ?quit-game \ XXX TMP --
     key lower case
     start-key    of  exit           endof \ XXX TMP --
     language-key of change-language variable-menu-screen endof
@@ -2446,7 +2474,7 @@ cvariable invaders \ counter
   \ XXX TODO -- Graphic instead of space.
 
 : broken-wall ( col -- )
-  in-broken-wall-attr  broken-bricks-coordinates
+  broken-bricks-coordinates in-broken-wall-attr
   flying-to-the-right? if   broken-left-wall
                        else broken-right-wall then ;
   \ Show the broken wall of the building.
@@ -2478,15 +2506,7 @@ cvariable invaders \ counter
   then c@ = ;
   \ Has the current invader broken a container?
 
-cvariable old-breachs
-  \ Number of old breachs in the wall.
-  \ XXX TODO --
-
-cvariable breachs
-  \ Number of breachs in the wall.
-  \ XXX TODO --
-
-: hit-wall ( -- ) 1 breachs c1+! invader-active off ;
+: hit-wall ( -- ) invader-active off ;
   \ XXX TMP --
 
 : hit-wall? ( -- f )
@@ -2575,8 +2595,21 @@ cvariable cure-factor  20 cure-factor c!
 : break-the-wall ( -- )
   invader-active on
   invader-x c@ flying-to-the-right? if 2+ else 1- then
-  broken-wall ;
-  \ XXX TODO -- remove `if`, calculate
+  broken-wall breachs c1+! ;
+
+  \ XXX TODO -- remove `if`, calculate:
+
+  \ left?
+  \ -1 --> +2 +
+  \  0 --> -1 +
+  \ -1 --> -2 -
+  \  0 --> +1 -
+
+  \ right?
+  \  0 --> +2 +
+  \ -1 --> -1 +
+  \  0 --> -2 -
+  \ -1 --> +1 -
 
 : require-entering-invader ( -- )
   invaders c@ random 0= if break-the-wall then ;
@@ -2610,7 +2643,6 @@ cvariable cure-factor  20 cure-factor c!
 : (invasion) ( -- ) move-invader next-invader ;
   \ Move the current invader, then choose the next one.
 
-  \ 10. 2const invasion-delay-ms \ XXX TODO --
 8 constant invader-time
 
 defer invasion \ XXX TMP --
@@ -2966,35 +2998,35 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
 1 gigatype-style c!
 
 : .location ( ca len y -- ) 0 swap at-xy gigatype-title ;
-  \ Display location name part _ca len_, centered at row _y_,
-  \ using `gigatype` style 1.
+  \ Display location name part _ca len_, centered at row _y_.
 
 : (location-title) ( n -- )
-  dup >town$    6 .location
+  dup >town$     6 .location
   dup >region$  12 .location
       >country$ 18 .location ;
   \ Display the title of location _n_.
 
 : veiled-location-title ( n -- )
-  blackout attr@ >r black attr! (location-title) r> attr! ;
-  \ Clear the screen and display a veiled (black ink on black
-  \ paper) title of location _n_.
+  attr@ >r black attr! (location-title) r> attr! ;
+  \ Display a veiled (black ink on black paper) title of
+  \ location _n_.
 
-: unveil-location-title ( -- )
-  attributes /attributes white fill ;
-  \ Unveil the location title suddenly, by filling the screen
-  \ attributes with white ink.
+: unveil ( -- ) attributes /attributes white fill ;
+  \ Unveil the contents of the screen, by filling the
+  \ attributes with white ink on black paper.
 
-: location-title ( n -- )
-  veiled-location-title unveil-location-title ;
+: location-title ( n -- ) veiled-location-title unveil ;
   \ Display the title of location _n_.
 
-: enter-location ( n -- )
-  dup location-title 3 seconds blackout landscape>screen ;
-  \ Display the name and landscape of location _n_.
+: announce ( n -- )
+  blackout location-title 3 seconds blackout ;
+  \ Announce arriving to location _n_ by displaying its name.
 
-: enter-current-location ( -- ) location c@ enter-location ;
-  \ Display the name and landscape of the current location.
+: arrive ( n -- ) dup announce landscape>screen building ;
+  \ Arrive to location _n_ by displaying its name and scenery.
+
+: settle ( -- ) location c@ arrive status-bar ;
+  \ Settle in the current location.
 
   \ ===========================================================
   cr .( The end)  debug-point \ {{{1
@@ -3033,29 +3065,41 @@ create attributes-backup /attributes allot
   \ ===========================================================
   cr .( Main loop)  debug-point \ {{{1
 
-: victory? ( -- f ) invaders c@ 0= ;
+: note-breachs ( -- ) breachs c@ old-breachs c! ;
 
-  \ cvariable invasion-delay  8 invasion-delay c!
-  \ XXX TMP -- debugging
+: preserved? ( -- f ) breachs c@ old-breachs c@ = ;
+  \ Has the building been preserved in the current attack?
 
-: prepare-battle ( -- ) enter-current-location catastrophe off
-                        init-invaders init-ufo init-tank
-                        init-projectiles init-arena ;
+: extermination? ( -- f ) invaders c@ 0= ;
 
-: fight ( -- ) fly-projectile driving
-               fly-projectile shooting
-               fly-projectile manage-ufo
-               fly-projectile invasion ;
+: attack-wave ( -- )
+  init-ufo init-invaders parade note-breachs ;
 
-: battle-end? ( -- f ) victory? catastrophe @ or ;
+: fight ( -- )
+  ?quit-game \ XXX TMP --
+  fly-projectile driving
+  fly-projectile shooting
+  fly-projectile manage-ufo
+  fly-projectile invasion ;
 
-: battle ( -- ) begin fight battle-end? until ;
+: end-of-attack? ( -- f ) extermination? catastrophe @ or ;
 
-: campaign ( -- ) begin prepare-battle battle victory?
-                  while next-location repeat ;
+: under-attack ( -- )
+  attack-wave begin fight end-of-attack? until ;
 
-  \ XXX TODO -- `next-location` only if the building is intact.
-  \ Otherwise the invaders try again.
+: end-of-battle? ( -- f )
+  extermination? preserved? and catastrophe @ or ;
+
+: battle ( -- ) begin under-attack end-of-battle? until ;
+
+: weapons ( -- ) new-tank new-projectiles ;
+
+: prepare-battle ( -- ) settle weapons no-breach ;
+
+: prevailed? ( -- f ) catastrophe @ 0= ;
+
+: campaign ( -- ) begin prepare-battle battle prevailed?
+                  while reward travel repeat ;
 
 : war ( -- ) prepare-war campaign defeat ;
 
