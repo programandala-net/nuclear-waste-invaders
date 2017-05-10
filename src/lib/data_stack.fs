@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201703211316
+  \ Last modified: 201705091238
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -26,12 +26,14 @@
 ( 2nip pick roll )
 
 [unneeded] 2nip ?( code 2nip ( x1 x2 x3 x4 -- x3 x4 )
-  E1 c, D1 c, F1 c, F1 c, C3 c, pushhlde , end-code ?)
+  E1 c, D1 c, F1 c, F1 c, D5 c, E5 c, jpnext, end-code ?)
     \ pop hl
     \ pop de
     \ pop af
     \ pop af
-    \ jp pushhlde
+    \ push de
+    \ push hl
+    \ _jp_next
 
   \ Credit:
   \
@@ -234,11 +236,13 @@ code 3dup ( x1 x2 x3 -- x1 x2 x3 x1 x2 x3 )
 ( nup drup dip 0dup -dup )
 
 [unneeded] nup ?( code nup ( x1 x2 -- x1 x1 x2 )
-  E1 c,  D1 c,  D5 c,  C3 c, pushhlde , end-code ?)
+  E1 c,  D1 c,  D5 c,  D5 c, E5 c, jpnext, end-code ?)
     \ pop hl
     \ pop de
     \ push de
-    \ jp pushhlde
+    \ push de
+    \ push hl
+    \ _jp_next
 
   \ Also called `under` in other Forth systems.
 
@@ -308,10 +312,11 @@ code 3dup ( x1 x2 x3 -- x1 x2 x3 x1 x2 x3 )
     \ pop hl
     \ ld a,h
     \ or l
-  C2 c, pushhl ,  E5 c,  jppushhl, end-code ?)
+  C2 c, pushhl , E5 c, E5 c, jpnext, end-code ?)
     \ jp z,push_hl
     \ push hl
-    \ jp push_hl
+    \ push hl
+    \ _jp_next
 
   \ doc{
   \
@@ -324,13 +329,14 @@ code 3dup ( x1 x2 x3 -- x1 x2 x3 x1 x2 x3 )
   \ }doc
 
 [unneeded] -dup ?( code -dup ( x -- x | x x )
-  E1 c,  CB c, 7C c,  C2 c, pushhl ,  E5 c,  jppushhl,
+  E1 c,  CB c, 7C c,  C2 c, pushhl , E5 c, E5 c, jpnext,
   end-code ?)
     \ pop hl
     \ bit 7,h ; negative?
     \ jp z,push_hl
     \ push hl
-    \ jp push_hl
+    \ push hl
+    \ _jp_next
 
   \ doc{
   \
@@ -508,5 +514,7 @@ code >false ( x -- false ) E1 c, ' false jp, end-code ?)
   \ included in the assembler by default.
   \
   \ 2017-03-21: Improve documentation.
+  \
+  \ 2017-05-09: Remove `jp pushhlde`. Remove `jppushhl,`.
 
   \ vim: filetype=soloforth

@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201703161920
+  \ Last modified: 201705092024
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -63,6 +63,7 @@
   \
   \ Found here (2015-12-13):
   \ http://web.archive.org/web/20060707001752/http://www.tinyboot.com/index.html
+  \ http://web.archive.org/web/20060714230130/http://tinyboot.com:80/rng.txt
 
 [unneeded] random-range  ?( need random
 
@@ -97,11 +98,12 @@ code fast-rnd ( -- u )
     \ add hl,hl
     \ add hl,hl
     \ add hl,de
-  24 c, 23 c, 22 c, os-seed , jppushhl, end-code ?)
+  24 c, 23 c, 22 c, os-seed , E5 c, jpnext, end-code ?)
     \ inc h
     \ inc hl
     \ ld (seed),hl
-    \ jp push_hl
+    \ push hl
+    \ _jp_next
 
   \ doc{
   \
@@ -340,5 +342,7 @@ code crnd ( -- b )
   \ 2017-03-16: Compact the code, saving two blocks.  Complete
   \ and improve documentation. Rewrite `fast-rnd` and `crnd`
   \ with Z80 opcodes.
+  \
+  \ 2017-05-09: Remove `jppushhl,`. Improve documentation.
 
   \ vim: filetype=soloforth

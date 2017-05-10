@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.70.0+201705061912" ;
+: version ( -- ca len ) s" 0.71.0+201705080104" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -3122,6 +3122,6 @@ cr cr greeting
 
 cr cr .( Type RUN to start) cr
 
-end-app
+end-program
 
   \ vim: filetype=soloforth:colorcolumn=64

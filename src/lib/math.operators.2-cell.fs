@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201705062050
+  \ Last modified: 201705091519
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -164,10 +164,11 @@ code d0= ( d -- f )
   \ add hl,de
   \ ld a,h
   \ or l
-  C2 c, ' false , 2B c, jppushhl, end-code ?)
+  C2 c, ' false , 2B c, E5 c, jpnext, end-code ?)
   \ jp nz,false_
   \ dec hl ; HL = true
-  \ _jp_pushhl
+  \ push hl
+  \ _jp_next
 
   \ doc{
   \
@@ -242,7 +243,7 @@ code d0= ( d -- f )
 
 ( d= d<> dmin dmax )
 
-[unneeded] d= ?\ : d= ( xd1 xd2 -- f ) d<> 0= ;
+[unneeded] d= ?\ need d<> : d= ( xd1 xd2 -- f ) d<> 0= ;
   \ XXX TODO -- rewrite in Z80
 
   \ doc{
@@ -256,13 +257,8 @@ code d0= ( d -- f )
   \ }doc
 
 [unneeded] d<>
-?\ : d<> ( d1 d2 -- f ) rot <> if  2drop true exit  then  <> ;
+?\ : d<> ( xd1 xd2 -- f ) rot <> if 2drop true exit then <> ;
   \ XXX TODO -- rewrite in Z80
-
-  \ XXX OLD
-  \ XXX TODO benchmark
-  \ : d= ( xd1 xd2 -- f ) rot = >r = r> and ;
-  \ : d<> ( xd1 xd2 -- f ) d= 0= ;
 
   \ doc{
   \
@@ -324,15 +320,17 @@ code d0= ( d -- f )
 
 [unneeded] d- ?( code d- ( d1|ud1 d2|ud2 -- d3|ud3 )
 
-  D1 c,  D9 c,  D1 c,  D9 c,  E1 c,  D9 c,  E1 c,
+  D1 c, D9 c, D1 c, D9 c, E1 c, D9 c, E1 c,
   \ de pop            \ DE=d2hi
   \ exx  de pop       \ DE'=d2lo
   \ exx  hl pop       \ HL=d1hi,DE=d2hi
   \ exx  hl pop       \ HL'=d1lo
-  A0 07 + c,  ED c, 52 c,  E5 c,  D9 c,  ED c,  52 c,
+  A0 07 + c, ED c, 52 c, E5 c, D9 c, ED c, 52 c, E5 c,
   \ de subp  hl push  \ 2OS=d1lo-d2lo
   \ exx de  sbcp      \ HL=d1hi-d2hi-cy
-  jppushhl, end-code ?)
+  \ push hl
+  jpnext, end-code ?)
+  \ _jp_next
 
   \ Credit:
   \
@@ -362,8 +360,10 @@ code d0= ( d -- f )
     \ rl e
     \ rl d
     \ ex de,hl
-  pushhlde jp, end-code ?)
-    \ jp pushhlde
+  D5 c, E5 c, jpnext, end-code ?)
+    \ push de
+    \ push hl
+    \ _jp_next
 
   \ Credit:
   \
@@ -384,17 +384,18 @@ code d0= ( d -- f )
 
 [unneeded] d2/ ?( code d2/ ( xd1 -- xd2 )
 
-  E1 c, D1 c,  CB c, 2C c,  CB c, 1C c,  CB c, 1D c,
+  E1 c, D1 c, CB c, 2C c, CB c, 1C c, CB c, 1D c,
     \ pop hl
     \ pop de
     \ sra h
     \ rr h
     \ rr l
-  CB c, 1A c,  CB c, 1B c,  EB c,  pushhlde jp, end-code ?)
+  CB c, 1A c, CB c, 1B c, D5 c, E5 c, jpnext, end-code ?)
     \ rr d
     \ rr e
-    \ ex de,hl
-    \ jp pushhlde
+    \ push de
+    \ push hl
+    \ _jp_next
 
   \ Credit:
   \
@@ -621,5 +622,11 @@ need 2nip need cell-bits
   \ 2017-05-05: Improve documentation.
   \
   \ 2017-05-06: Rewrite `d0=` in Z80. Improve documentation.
+  \
+  \ 2017-05-08: Fix needing of `d=`.
+  \
+  \ 2017-05-09: Remove `jp pushhlde` from `d2*` and `d2/`. Fix
+  \ `d2/` (the high and low parts of the result were in wrong
+  \ order).  Remove `jppushhl,`.
 
   \ vim: filetype=soloforth
