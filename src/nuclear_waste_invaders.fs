@@ -26,14 +26,16 @@
 \ Dancresp for Jupiter ACE:
 \ http://www.zonadepruebas.com/viewtopic.php?t=4231.
 
+\ =============================================================
+
 only forth definitions
 
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.74.0+201705110029" ;
+: version$ ( -- ca len ) s" 0.75.0+201705110135" ;
 
-cr cr .( Nuclear Waste Invaders) cr version type cr
+cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
   \ ===========================================================
   cr .( Options) \ {{{1
@@ -1976,6 +1978,26 @@ create invader-stamina-attr ( -- ca )
   \ ===========================================================
   cr .( Building)  debug-point \ {{{1
 
+cvariable old-breachs
+  \ Number of breachs in the wall, at the start of the current
+  \ attack.
+
+cvariable breachs
+  \ Number of new breachs in the wall, during the current
+  \ attack.
+
+: note-breachs ( -- ) breachs c@ old-breachs c! ;
+  \ Note the number of new breachs as old.
+
+: no-breach ( -- ) 0 old-breachs c! 0 breachs c! ;
+  \ Reset the number of breachs.
+
+: breachs? ( -- f ) breachs c@ 0<> ;
+  \ Has the building any breach?
+
+: new-breach? ( -- f ) breachs c@ old-breachs c@ > ;
+  \ Has the building any new breach?
+
 building-top-y 11 + cconstant building-bottom-y
   \ XXX TODO -- Rename. This was valid when the building
   \ was "flying".
@@ -2035,6 +2057,10 @@ create containers-half
   [ last-column ] cliteral swap at-xy .brick ;
   \ Draw the yard limits.
 
+variable repaired
+  \ Flag: has the building been repaired at the start of the
+  \ current attack?
+
 : building ( -- )
   building-top
   location c@ 1+  building-left-x c@
@@ -2043,46 +2069,11 @@ create containers-half
                     i 1 and containers-half array> perform
                     .brick
   loop 2drop tank-y dup building-bottom-y ?do i floor loop
-                        dup ground-floor yard ;
+                        dup ground-floor yard
+  no-breach ;
   \ Draw the building and the nuclear containers.
   \
   \ XXX TODO -- Simpler and faster.
-
-cvariable old-breachs
-  \ Number of breachs in the wall, at the start of the current
-  \ attack.
-
-cvariable breachs
-  \ Number of new breachs in the wall, during the current
-  \ attack.
-
-false [if]
-
-: .breachs ( -- )
-  in-text-attr 11 0 at-xy
-  ." breachs " breachs c@ 0.r ." /" old-breachs c@ 0.r
-  begin 2 border 0 border key? until key drop ;
-  \ XXX TMP -- for debugging
-
-[then]
-
-: note-breachs ( -- ) breachs c@ old-breachs c! ;
-  \ Note the number of new breachs as old.
-
-: no-breach ( -- ) 0 old-breachs c! 0 breachs c! ;
-  \ Reset the number of breachs.
-
-: breachs? ( -- f ) breachs c@ 0<> ;
-  \ Has the building any breach?
-
-: new-breach? ( -- f ) breachs c@ old-breachs c@ > ;
-  \ Has the building any new breach?
-
-: prepare-building ( -- ) size-building no-breach ;
-  \ Prepare the building of the new location.
-
-: repair-building ( -- ) building no-breach ;
-  \ Repair a damaged building.
 
   \ ===========================================================
   cr .( Locations)  debug-point \ {{{1
@@ -2105,7 +2096,7 @@ variable used-projectiles  used-projectiles off
 : reward ( -- ) battle-bonus update-score ;
   \ Add the won battle bonus to the score.
 
-: travel ( -- ) next-location prepare-building ;
+: travel ( -- ) next-location size-building ;
   \ Travel to the next battle location.
 
 : first-location ( -- ) 0 location c! size-building ;
@@ -2250,6 +2241,7 @@ create 'projectile-y #projectiles allot
 
 defer .debug-data ( -- )
 ' noop ' .debug-data defer!
+
 defer debug-data-pause ( -- )
 ' wait ' debug-data-pause defer!
 
@@ -2294,7 +2286,7 @@ defer debug-data-pause ( -- )
 : game-title ( -- )
   home game-title$ columns type-center-field ;
 
-: game-version ( -- ) version 1 center-type ;
+: game-version ( -- ) version$ 1 center-type ;
 
 : (c) ( -- ) 127 emit ;
   \ Print the copyright symbol.
@@ -3010,6 +3002,10 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   flying-projectile? if move-projectile then next-projectile ;
   \ Manage the shoot.
 
+: lose-projectiles ( -- )
+  begin fly-projectile xdepth #projectiles = until ;
+  \ Lose all flying projectiles.
+
 : shooting ( -- )
   update-trigger
   trigger-pressed?    0exit
@@ -3062,7 +3058,8 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   blackout location-title 3 seconds blackout ;
   \ Announce arriving to location _n_ by displaying its name.
 
-: arrive ( n -- ) dup announce landscape>screen building ;
+: arrive ( n -- )
+  dup announce landscape>screen building repaired off ;
   \ Arrive to location _n_ by displaying its name and scenery.
 
 : settle ( -- ) location c@ arrive status-bar ;
@@ -3111,24 +3108,21 @@ create attributes-backup /attributes allot
   ." se acerca para aprovechar la" cr
   ." oportunidad." cr ;
    \ <------------------------------>
-  \ XXX TMP -- Draft.
-  \ XXX TODO -- Write the definitive text.
+  \ XXX TODO -- Use a window.
 
 :noname ( -- )
    \ <------------------------------>
    ." Nova invadantaro prokisimiĝas" cr
    ." por profiti la ŝancon." cr ;
    \ <------------------------------>
-  \ XXX TMP -- Draft.
-  \ XXX TODO -- Write the definitive text.
+  \ XXX TODO -- Use a window.
 
 :noname ( -- )
    \ <------------------------------>
   ." A new attack wave is on its way" cr
   ." to finish the work." cr ;
    \ <------------------------------>
-  \ XXX TMP -- Draft.
-  \ XXX TODO -- Write the definitive text.
+  \ XXX TODO -- Use a window.
 
 localized-word warn-about-new-attack ( -- )
 
@@ -3137,24 +3131,21 @@ localized-word warn-about-new-attack ( -- )
   ." El ataque ha sido rechazado," cr
   ." pero los muros han sido dañados." cr ;
    \ <------------------------------>
-  \ XXX TMP -- Draft.
-  \ XXX TODO -- Write the definitive text.
+  \ XXX TODO -- Use a window.
 
 :noname ( -- )
    \ <------------------------------>
    ." La atako estis forpelita, sed" cr
    ." la muroj estas damaĝitaj." cr ;
    \ <------------------------------>
-  \ XXX TMP -- Draft.
-  \ XXX TODO -- Write the definitive text.
+  \ XXX TODO -- Use a window.
 
 :noname ( -- )
    \ <------------------------------>
   ." The attack has been repelled," cr
   ." but the walls have been damaged." cr ;
    \ <------------------------------>
-  \ XXX TMP -- Draft.
-  \ XXX TODO -- Write the definitive text.
+  \ XXX TODO -- Use a window.
 
 localized-word warn-about-new-damages ( -- )
 
@@ -3165,8 +3156,7 @@ localized-word warn-about-new-damages ( -- )
   ." muros aún están dañados y deben" cr
   ." ser reparados." ; cr
    \ <------------------------------>
-  \ XXX TMP -- Draft.
-  \ XXX TODO -- Write the definitive text.
+  \ XXX TODO -- Use a window.
 
 :noname ( -- )
    \ <------------------------------>
@@ -3175,8 +3165,7 @@ localized-word warn-about-new-damages ( -- )
    ." muroj ankoraŭ estas damaĝitaj" cr
    ." kaj devas esti riparitaj." cr ;
    \ <------------------------------>
-  \ XXX TMP -- Draft.
-  \ XXX TODO -- Write the definitive text.
+  \ XXX TODO -- Use a window.
 
 :noname ( -- )
    \ <------------------------------>
@@ -3185,8 +3174,7 @@ localized-word warn-about-new-damages ( -- )
   ." the walls are still damaged and" cr
   ." must be repaired." cr ;
    \ <------------------------------>
-  \ XXX TMP -- Draft.
-  \ XXX TODO -- Write the definitive text.
+  \ XXX TODO -- Use a window.
 
 localized-word warn-about-old-damages ( -- )
 
@@ -3196,12 +3184,11 @@ localized-word warn-about-old-damages ( -- )
   press-any-key$ type cr no-keys key drop ;
 
 : warn-about-damages ( -- )
-  new-breach? if   warn-about-new-damages
+  new-breach? if   warn-about-new-damages warn-about-new-attack
               else warn-about-old-damages then ;
 
 : (report ( -- ) home in-text-attr
                   warn-about-damages
-                  warn-about-new-attack
                   2 seconds cr press-any-key ;
 
 : report ( -- ) preserve-screen (report restore-screen ;
@@ -3221,16 +3208,17 @@ localized-word warn-about-old-damages ( -- )
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
 
 : under-attack ( -- )
-  attack-wave begin fight end-of-attack? until ;
+  attack-wave begin fight end-of-attack? until
+  lose-projectiles ;
 
 : another-attack? ( -- f ) breachs? catastrophe? 0= and ;
 
 : weapons ( -- ) new-tank new-projectiles ;
 
-: prepare-battle ( -- ) settle weapons no-breach ;
+: prepare-battle ( -- ) settle weapons ;
 
 : interlude ( -- )
-  new-breach? ?exit repair-building note-breachs ;
+  new-breach? ?exit building repaired on note-breachs ;
 
 : battle ( -- )
   prepare-battle begin under-attack another-attack?
@@ -3304,7 +3292,7 @@ localized-word warn-about-old-damages ( -- )
   cr .( Greeting)  debug-point \ {{{1
 
 cls .( Nuclear Waste Invaders)
-cr version type
+cr version$ type
 cr .( Loaded)
 
 cr cr greeting
