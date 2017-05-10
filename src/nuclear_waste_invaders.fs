@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.71.0+201705080104" ;
+: version ( -- ca len ) s" 0.72.0+201705101237" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -97,7 +97,7 @@ need case need 0exit need +perform need do need abort"
   \ --------------------------------------------
   cr .(   -Memory) \ {{{2
 
-need c+! need dzx7t
+need c+! need c1+! need dzx7t
 
   \ --------------------------------------------
   cr .(   -Math) \ {{{2
@@ -2419,13 +2419,11 @@ cvariable invaders \ counter
   invader-proper-attr attr! invader-udg .2x1sprite ;
   \ Print the current invader.
 
-cvariable broken-wall-x
-  \ Column of the wall broken by the current alien.
-
-: broken-bricks-coordinates ( -- x1 y1 x2 y2 x3 y3 )
-  broken-wall-x c@ invader-y c@ 2dup 1+ 2dup 2- ;
-  \ Coordinates of the broken brick above the invader, _x3 y3_,
-  \ below it, _x3 y3_, and if front of it, _x1 y1_.
+: broken-bricks-coordinates ( x1 -- x1 y1 x2 y2 x3 y3 )
+  invader-y c@ 2dup 1+ 2dup 2- ;
+  \ Convert the x coordinate _x1_ of the broken wall to the
+  \ coordinates of the broken brick above the invader, _x3 y3_,
+  \ below it, _x3 y3_, and in front of it, _x1 y1_.
 
 : broken-left-wall ( x1 y1 x2 y2 -- )
   at-xy broken-top-left-brick .1x1sprite
@@ -2447,7 +2445,7 @@ cvariable broken-wall-x
   \
   \ XXX TODO -- Graphic instead of space.
 
-: broken-wall ( -- )
+: broken-wall ( col -- )
   in-broken-wall-attr  broken-bricks-coordinates
   flying-to-the-right? if   broken-left-wall
                        else broken-right-wall then ;
@@ -2480,7 +2478,15 @@ cvariable broken-wall-x
   then c@ = ;
   \ Has the current invader broken a container?
 
-: hit-wall ( -- ) invader-active off ;
+cvariable old-breachs
+  \ Number of old breachs in the wall.
+  \ XXX TODO --
+
+cvariable breachs
+  \ Number of breachs in the wall.
+  \ XXX TODO --
+
+: hit-wall ( -- ) 1 breachs c1+! invader-active off ;
   \ XXX TMP --
 
 : hit-wall? ( -- f )
@@ -2569,7 +2575,8 @@ cvariable cure-factor  20 cure-factor c!
 : break-the-wall ( -- )
   invader-active on
   invader-x c@ flying-to-the-right? if 2+ else 1- then
-  broken-wall-x c! broken-wall ;
+  broken-wall ;
+  \ XXX TODO -- remove `if`, calculate
 
 : require-entering-invader ( -- )
   invaders c@ random 0= if break-the-wall then ;
