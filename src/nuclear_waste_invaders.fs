@@ -31,7 +31,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version ( -- ca len ) s" 0.73.0+201705102022" ;
+: version ( -- ca len ) s" 0.74.0+201705110029" ;
 
 cr cr .( Nuclear Waste Invaders) cr version type cr
 
@@ -174,10 +174,10 @@ nuclear-waste-invaders-wordlist set-current
 
 defer debug-point  defer special-debug-point
 
-defer ((debug-point))  ' noop ' ((debug-point)) defer!
+defer ((debug-point  ' noop ' ((debug-point defer!
 
-: (debug-point) ( -- )
-  ((debug-point))
+: (debug-point ( -- )
+  ((debug-point
 
   \ order
   \ depth ?exit
@@ -202,11 +202,11 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
   \ XXX TMP -- for debugging
 
   ' noop ' debug-point defer!
-  \ ' (debug-point) ' debug-point defer!
+  \ ' (debug-point ' debug-point defer!
   \ XXX TMP -- for debugging
 
   ' noop ' special-debug-point defer!
-  \ ' (debug-point) ' special-debug-point defer!
+  \ ' (debug-point ' special-debug-point defer!
   \ XXX TMP -- for debugging
 
   \ : :
@@ -247,6 +247,24 @@ defer ((debug-point))  ' noop ' ((debug-point)) defer!
 21 [landscape] abs 6 * - cconstant tank-y
 
 tank-y cconstant arena-bottom-y
+
+  \ ===========================================================
+  cr .( Screen)  debug-point \ {{{1
+
+/sys-screen negate farlimit +!
+farlimit @ constant screen-copy
+  \ Buffer to save a copy of the screen, at the top of the far
+  \ memory.
+
+far-banks 3 + c@ cconstant screen-copy-bank
+  \ The 4th far-memory bank, where `screen-copy` is.
+
+: move-screen ( a1 a2 -- )
+  screen-copy-bank bank /sys-screen cmove default-bank ;
+
+: preserve-screen ( -- ) sys-screen screen-copy move-screen ;
+
+: restore-screen ( -- ) screen-copy sys-screen move-screen ;
 
   \ ===========================================================
   cr .( Landscapes)  debug-point \ {{{1
@@ -332,34 +350,36 @@ game-font 256 - constant game-font0
 
 en cconstant lang  \ current language
 
+: localized, ( x[langs]..x[1] -- ) langs 0 ?do , loop ;
+
 : localized-word ( xt[langs]..xt[1] "name" -- )
-  create langs 0 ?do , loop
+  create localized,
   does> ( -- ) ( pfa ) lang +perform ;
   \ Create a word _name_ that will execute an execution token
   \ from _xt[langs]..xt[1]_, depending on the current language.
   \ _xt[langs]..xt[1]_, are the execution tokens of the
-  \ localized versions, in reverse order of ISO language code,
-  \ i.e.: es, eo, en.
+  \ localized versions.  _xt[langs]..xt[1]_, are ordered by ISO
+  \ language code, being TOS the first one.
 
-: localized-string ( ca[n]..ca[1] "name" -- n )
-  create langs 0 ?do , loop
+: localized-string ( ca[langs]..ca[1] "name" -- n )
+  create localized,
   \ does> ( -- ca len ) ( pfa ) lang cells + @ count ;
   does> ( -- ca len ) ( pfa ) lang swap array> @ count ;
   \ Create a word _name_ that will return a counted string
   \ from _ca[langs]..ca[1]_, depending on the current language.
-  \ _ca[langs]..ca[1]_, are the addresses where the
-  \ localized strings have been compiled, in reverse order of
-  \ ISO language code, i.e.: es, eo, en.
+  \ _ca[langs]..ca[1]_, are the addresses where the localized
+  \ strings have been compiled.  _ca[langs]..ca[1]_, are
+  \ ordered by ISO language code, being TOS the first one.
   \
   \ XXX TODO -- Benchmark `cells +` vs `swap array>`.
 
-: localized-character ( c[n]..c[1] "name" -- c )
+: localized-character ( c[langs]..c[1] "name" -- c )
   create langs 0 ?do c, loop
   does> ( -- c ) ( pfa ) lang + c@ ;
   \ Create a word _name_ that will return a character
   \ from _c[langs]..c[1]_, depending on the current language.
-  \ _c[langs]..c[1]_, are sorted in reverse order of ISO
-  \ language code, i.e.: es, eo, en.
+  \ _c[langs]..c[1]_ are ordered by ISO language code, being
+  \ TOS the first one.
 
   \ ===========================================================
   cr .( Texts)  debug-point \ {{{1
@@ -510,6 +530,11 @@ localized-word >(country)$ ( n -- ca len )
 : >country$ ( n -- ca len )
   s" (" rot >(country)$ s+ s" )" s+ ;
 
+here ," Pulsa una tecla."
+here ," Premu klavon."
+here ," Press any key."
+localized-string press-any-key$ ( -- ca len )
+
   \ ===========================================================
   cr .( Colors)  debug-point \ {{{1
 
@@ -550,6 +575,8 @@ cvariable current-invader \ element of table (0..9)
  variable catastrophe     \ flag (game end condition)
 
 record off
+
+: catastrophe? ( -- f ) catastrophe @ ;
 
   \ ===========================================================
   cr .( Keyboard)  debug-point \ {{{1
@@ -704,7 +731,7 @@ cvariable player   1 player  c! \ 1..max-player
 : ?[#] ( n -- ) 0 ?do postpone # loop ; immediate compile-only
   \ Compile `#` _n_ times.
 
-: (.score) ( n x y -- )
+: (.score ( n x y -- )
   at-xy s>d <# [ score-digits ] ?[#] #> in-text-attr type ;
   \ Print score _n_ at coordinates _x y_.
 
@@ -714,10 +741,10 @@ cvariable player   1 player  c! \ 1..max-player
 : at-score ( -- ) score-xy at-xy ;
   \ Set the cursor position at the score.
 
-: .score ( -- ) score @ score-xy (.score) ;
+: .score ( -- ) score @ score-xy (.score ;
   \ Print the score.
 
-: .record ( -- ) record @ record-x score-y (.score) ;
+: .record ( -- ) record @ record-x score-y (.score ;
   \ Print the record.
 
 : update-score ( n -- ) score +! .score ;
@@ -2021,6 +2048,42 @@ create containers-half
   \
   \ XXX TODO -- Simpler and faster.
 
+cvariable old-breachs
+  \ Number of breachs in the wall, at the start of the current
+  \ attack.
+
+cvariable breachs
+  \ Number of new breachs in the wall, during the current
+  \ attack.
+
+false [if]
+
+: .breachs ( -- )
+  in-text-attr 11 0 at-xy
+  ." breachs " breachs c@ 0.r ." /" old-breachs c@ 0.r
+  begin 2 border 0 border key? until key drop ;
+  \ XXX TMP -- for debugging
+
+[then]
+
+: note-breachs ( -- ) breachs c@ old-breachs c! ;
+  \ Note the number of new breachs as old.
+
+: no-breach ( -- ) 0 old-breachs c! 0 breachs c! ;
+  \ Reset the number of breachs.
+
+: breachs? ( -- f ) breachs c@ 0<> ;
+  \ Has the building any breach?
+
+: new-breach? ( -- f ) breachs c@ old-breachs c@ > ;
+  \ Has the building any new breach?
+
+: prepare-building ( -- ) size-building no-breach ;
+  \ Prepare the building of the new location.
+
+: repair-building ( -- ) building no-breach ;
+  \ Repair a damaged building.
+
   \ ===========================================================
   cr .( Locations)  debug-point \ {{{1
 
@@ -2038,29 +2101,6 @@ variable used-projectiles  used-projectiles off
 : battle-bonus ( -- n )
   location c@ 100 * used-projectiles @ - 0 max ;
   \ Return bonus _n_ after winning a battle.
-
-cvariable old-breachs
-  \ Number of old breachs in the wall, at the start of the
-  \ battle.
-
-cvariable breachs
-  \ Number of new breachs in the wall, during the current
-  \ battle.
-
-false [if]
-
-: .breachs ( -- )
-  in-text-attr 11 0 at-xy
-  ." breachs " breachs c@ 0.r ." /" old-breachs c@ 0.r
-  begin 2 border 0 border key? until key drop ;
-  \ XXX TMP -- for debugging
-
-[then]
-
-: no-breach ( -- ) 0 old-breachs c! 0 breachs c! ;
-
-: prepare-building ( -- ) size-building no-breach ;
-  \ Prepare the building of the new location.
 
 : reward ( -- ) battle-bonus update-score ;
   \ Add the won battle bonus to the score.
@@ -2213,7 +2253,7 @@ defer .debug-data ( -- )
 defer debug-data-pause ( -- )
 ' wait ' debug-data-pause defer!
 
-: (.debug-data) ( -- )
+: (.debug-data ( -- )
   9 23 at-xy ." Ammo:" xdepth .
              ." Depth:" depth .
              ." Curr.:" projectile# .
@@ -2614,14 +2654,14 @@ cvariable cure-factor  20 cure-factor c!
 : require-entering-invader ( -- )
   invaders c@ random 0= if break-the-wall then ;
 
-: (nonflying-invader) ( -- )
+: (nonflying-invader ( -- )
   docked? if   require-docked-invader
           else require-entering-invader
           then at-invader .invader ;
   \ Require the current invader, either inactive or wounded.
 
 : nonflying-invader ( -- )
-  invader-stamina c@ if (nonflying-invader) then ;
+  invader-stamina c@ if (nonflying-invader then ;
 
 : last-invader? ( -- f )
   \ current-invader c@ [ actual-invaders 1- ] literal = ;
@@ -2640,7 +2680,7 @@ cvariable cure-factor  20 cure-factor c!
   \ Move the current invader if it's active; else
   \ just try to activate it, if it's alive.
 
-: (invasion) ( -- ) move-invader next-invader ;
+: (invasion ( -- ) move-invader next-invader ;
   \ Move the current invader, then choose the next one.
 
 8 constant invader-time
@@ -2648,7 +2688,7 @@ cvariable cure-factor  20 cure-factor c!
 defer invasion \ XXX TMP --
 
 : invasion-wait ( -- )
-  frames@ invader-time s>d d+ (invasion)
+  frames@ invader-time s>d d+ (invasion
   begin  frames@ 2over d< 0=  until  2drop ;
   \ Move the current invader, if there are units left of it,
   \ and then choose the next one.
@@ -2663,7 +2703,7 @@ defer invasion \ XXX TMP --
   \ do `frames@ invader-interval dmod ?exit` at the start.
 
 : invasion-check ( -- )
-  os-frames c@ invader-time mod ?exit (invasion) ;
+  os-frames c@ invader-time mod ?exit (invasion ;
   \ XXX TMP --
   \ XXX REMARK --
   \ invader-time = 10 -- they hardly move
@@ -2671,7 +2711,7 @@ defer invasion \ XXX TMP --
   \ invader-time = 3 -- they dont move
   \ invader-time = 2 -- they dont move
 
-' (invasion) ' invasion defer! \ XXX TMP --
+' (invasion ' invasion defer! \ XXX TMP --
 
   \ ===========================================================
   cr .( UFO)  debug-point \ {{{1
@@ -2839,7 +2879,7 @@ constant ufo-movements ( -- a )
   \ true.
   \ XXX TODO -- Reduce the chances.
 
-: (invader-impacted) ( -- )
+: (invader-impacted ( -- )
   wounded mortal? if   explode
                   else attacking? if retreat then then ;
   \ The current invader has been impacted by the projectile.
@@ -2847,8 +2887,8 @@ constant ufo-movements ( -- a )
   \ retreats.
 
 : invader-impacted ( -- )
-  current-invader c@  >r impacted-invader current-invader c!
-  (invader-impacted)  r> current-invader c! ;
+  current-invader c@ >r impacted-invader current-invader c!
+  (invader-impacted  r> current-invader c! ;
   \ An invader has been impacted by the projectile.
   \ Make it the current one and manage it.
   \
@@ -2959,7 +2999,7 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   \ Is the trigger ready?
 
 : trigger-pressed? ( -- f ) kk-fire pressed? ;
-  \ Is the fire key pressed?
+  \ Is the trigger pressed?
 
 : next-projectile ( -- )
   projectile# 1+ max-projectile# and c!> projectile# ;
@@ -3000,14 +3040,14 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
 : .location ( ca len y -- ) 0 swap at-xy gigatype-title ;
   \ Display location name part _ca len_, centered at row _y_.
 
-: (location-title) ( n -- )
+: (location-title ( n -- )
   dup >town$     6 .location
   dup >region$  12 .location
       >country$ 18 .location ;
   \ Display the title of location _n_.
 
 : veiled-location-title ( n -- )
-  attr@ >r black attr! (location-title) r> attr! ;
+  attr@ >r black attr! (location-title r> attr! ;
   \ Display a veiled (black ink on black paper) title of
   \ location _n_.
 
@@ -3056,7 +3096,7 @@ create attributes-backup /attributes allot
 
 : defeat ( -- )
   save-attributes
-  radiation defeat-tune  2000 ms  fade-display
+  radiation defeat-tune 2 seconds fade-display
   restore-attributes
   check-record ;
   \ XXX TODO -- Finish.
@@ -3065,10 +3105,106 @@ create attributes-backup /attributes allot
   \ ===========================================================
   cr .( Main loop)  debug-point \ {{{1
 
-: note-breachs ( -- ) breachs c@ old-breachs c! ;
+:noname ( -- )
+   \ <------------------------------>
+  ." Una nueva oleada de invasores" cr
+  ." se acerca para aprovechar la" cr
+  ." oportunidad." cr ;
+   \ <------------------------------>
+  \ XXX TMP -- Draft.
+  \ XXX TODO -- Write the definitive text.
 
-: preserved? ( -- f ) breachs c@ old-breachs c@ = ;
-  \ Has the building been preserved in the current attack?
+:noname ( -- )
+   \ <------------------------------>
+   ." Nova invadantaro prokisimiĝas" cr
+   ." por profiti la ŝancon." cr ;
+   \ <------------------------------>
+  \ XXX TMP -- Draft.
+  \ XXX TODO -- Write the definitive text.
+
+:noname ( -- )
+   \ <------------------------------>
+  ." A new attack wave is on its way" cr
+  ." to finish the work." cr ;
+   \ <------------------------------>
+  \ XXX TMP -- Draft.
+  \ XXX TODO -- Write the definitive text.
+
+localized-word warn-about-new-attack ( -- )
+
+:noname ( -- )
+   \ <------------------------------>
+  ." El ataque ha sido rechazado," cr
+  ." pero los muros han sido dañados." cr ;
+   \ <------------------------------>
+  \ XXX TMP -- Draft.
+  \ XXX TODO -- Write the definitive text.
+
+:noname ( -- )
+   \ <------------------------------>
+   ." La atako estis forpelita, sed" cr
+   ." la muroj estas damaĝitaj." cr ;
+   \ <------------------------------>
+  \ XXX TMP -- Draft.
+  \ XXX TODO -- Write the definitive text.
+
+:noname ( -- )
+   \ <------------------------------>
+  ." The attack has been repelled," cr
+  ." but the walls have been damaged." cr ;
+   \ <------------------------------>
+  \ XXX TMP -- Draft.
+  \ XXX TODO -- Write the definitive text.
+
+localized-word warn-about-new-damages ( -- )
+
+:noname ( -- )
+   \ <------------------------------>
+  ." El ataque ha sido rechazado sin" cr
+  ." causar nuevos daños, pero los" cr
+  ." muros aún están dañados y deben" cr
+  ." ser reparados." ; cr
+   \ <------------------------------>
+  \ XXX TMP -- Draft.
+  \ XXX TODO -- Write the definitive text.
+
+:noname ( -- )
+   \ <------------------------------>
+   ." La atako estis forpelita sen" cr
+   ." kaŭzi novajn damaĝojn, sed la" cr
+   ." muroj ankoraŭ estas damaĝitaj" cr
+   ." kaj devas esti riparitaj." cr ;
+   \ <------------------------------>
+  \ XXX TMP -- Draft.
+  \ XXX TODO -- Write the definitive text.
+
+:noname ( -- )
+   \ <------------------------------>
+  ." The attack has been repelled" cr
+  ." without causing new damages, but"
+  ." the walls are still damaged and" cr
+  ." must be repaired." cr ;
+   \ <------------------------------>
+  \ XXX TMP -- Draft.
+  \ XXX TODO -- Write the definitive text.
+
+localized-word warn-about-old-damages ( -- )
+
+: no-keys ( -- ) begin key? while key drop repeat ;
+
+: press-any-key ( -- )
+  press-any-key$ type cr no-keys key drop ;
+
+: warn-about-damages ( -- )
+  new-breach? if   warn-about-new-damages
+              else warn-about-old-damages then ;
+
+: (report ( -- ) home in-text-attr
+                  warn-about-damages
+                  warn-about-new-attack
+                  2 seconds cr press-any-key ;
+
+: report ( -- ) preserve-screen (report restore-screen ;
 
 : extermination? ( -- f ) invaders c@ 0= ;
 
@@ -3082,23 +3218,25 @@ create attributes-backup /attributes allot
   fly-projectile manage-ufo
   fly-projectile invasion ;
 
-: end-of-attack? ( -- f ) extermination? catastrophe @ or ;
+: end-of-attack? ( -- f ) extermination? catastrophe? or ;
 
 : under-attack ( -- )
   attack-wave begin fight end-of-attack? until ;
 
-: end-of-battle? ( -- f )
-  extermination? preserved? and catastrophe @ or ;
-
-: battle ( -- ) begin under-attack end-of-battle? until ;
+: another-attack? ( -- f ) breachs? catastrophe? 0= and ;
 
 : weapons ( -- ) new-tank new-projectiles ;
 
 : prepare-battle ( -- ) settle weapons no-breach ;
 
-: prevailed? ( -- f ) catastrophe @ 0= ;
+: interlude ( -- )
+  new-breach? ?exit repair-building note-breachs ;
 
-: campaign ( -- ) begin prepare-battle battle prevailed?
+: battle ( -- )
+  prepare-battle begin under-attack another-attack?
+                 while report interlude repeat ;
+
+: campaign ( -- ) begin battle catastrophe? 0=
                   while reward travel repeat ;
 
 : war ( -- ) prepare-war campaign defeat ;
@@ -3163,7 +3301,7 @@ create attributes-backup /attributes allot
   \ Show the graphics of the broken containers.
 
   \ ===========================================================
-  cr .( Boot)  debug-point \ {{{1
+  cr .( Greeting)  debug-point \ {{{1
 
 cls .( Nuclear Waste Invaders)
 cr version type

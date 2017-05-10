@@ -5,7 +5,7 @@
 \ This file is part of Nuclear Waste Invaders
 \ http://programandala.net/en.program.nuclear_waste_invaders.html
 
-\ Last modified: 201704201651
+\ Last modified: 201705102211
 \ See change log at the end of the file
 
 \ ==============================================================
@@ -15,8 +15,8 @@
 \ editor for ZX Spectrum written by Einar Saukas & Eduardo Ito,
 \ ZX-SOFT Brasil Ltda, 1989.
 \
-\ The font was extracted to a TAP file, then converted to binary
-\ grids by FantomoUDG
+\ The font was extracted from a TAP file, then converted to
+\ binary grids by FantomoUDG
 \ (http://programandala.net/en.program.fantomoudg.html), and
 \ finally manually edited, in order to integrate it into the
 \ build chain of the project.
@@ -39,7 +39,6 @@
 \ retain the copyright/authorship/acknowledgment/credit
 \ notice(s) and this license in all redistributed copies and
 \ derived works.  There is no warranty.
-
 
 \ ==============================================================
 
@@ -1318,3 +1317,5 @@ bye
 \ 2017-04-18: Start.
 \
 \ 2017-04-20: Add non-English characters.
+\
+\ 2017-05-10: Fix typo.
