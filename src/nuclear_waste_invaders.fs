@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.77.0+201705111826" ;
+: version$ ( -- ca len ) s" 0.78.0+201705111856" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -250,19 +250,28 @@ sky-bottom-y cconstant tank-y
   cr .( Screen)  debug-point \ {{{1
 
 /sys-screen negate farlimit +!
-farlimit @ constant screen-copy
-  \ Buffer to save a copy of the screen, at the top of the far
-  \ memory.
+farlimit @ constant preserved
+  \ Preservation buffer at the top of the far memory.
 
-far-banks 3 + c@ cconstant screen-copy-bank
-  \ The 4th far-memory bank, where `screen-copy` is.
+far-banks 3 + c@ cconstant preservation-bank
+  \ The 4th far-memory bank, where `preserved` is.
 
-: move-screen ( a1 a2 -- )
-  screen-copy-bank bank /sys-screen cmove default-bank ;
+: preservation ( ca1 ca2 len -- )
+  preservation-bank bank cmove default-bank ;
+  \ Copy _len_ bytes from _ca1_ to _ca2_,
+  \ with the preservation buffer paged in.
 
-: preserve-screen ( -- ) sys-screen screen-copy move-screen ;
+: preserve-screen ( -- )
+  sys-screen preserved /sys-screen preservation ;
 
-: restore-screen ( -- ) screen-copy sys-screen move-screen ;
+: restore-screen ( -- )
+  preserved sys-screen /sys-screen preservation ;
+
+: preserve-attributes ( -- )
+  attributes preserved /attributes preservation ;
+
+: restore-attributes ( -- )
+  preserved attributes /attributes preservation ;
 
   \ ===========================================================
   cr .( Landscapes)  debug-point \ {{{1
@@ -3057,14 +3066,6 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   \ Solo Forth's `bleep`
   \
   \ XXX TODO -- 128 sound
-
-create attributes-backup /attributes allot
-
-: preserve-attributes ( -- )
-  attributes attributes-backup /attributes cmove ;
-
-: restore-attributes ( -- )
-  attributes-backup attributes /attributes cmove ;
 
 : radiation ( -- )
   [  attributes /status-bar + ] literal
