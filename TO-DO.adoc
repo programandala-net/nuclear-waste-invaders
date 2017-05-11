@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-04-17
+:revdate: 2017-05-11
 
 Older first:
 
@@ -103,7 +103,10 @@ Write Z80 code to print 2x1 sprites faster.
 
 Simplify the status bar, remove the texts, display only "0000/0000".
 
-.2017-04-18:
+.2017-05-11:
 
-In `campaign`, do `next-location` only if the building is intact.
-Otherwise the invaders try again.
+Remove `attr-setter`. Use `a-constant-attr attr!` instead, faster.
+
+.2017-05-11:
+
+Move `attributes-backup` to `farlimit`, to save data space.

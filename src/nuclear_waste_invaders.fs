@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.75.0+201705110135" ;
+: version$ ( -- ca len ) s" 0.76.0+201705111753" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -46,9 +46,6 @@ cr cr .( Nuclear Waste Invaders) cr version$ type cr
 false constant [pixel-projectile] immediate
   \ Pixel projectiles (new) instead of UDG projectiles (old)?
   \ XXX TODO -- finish support for pixel projectiles
-
-true constant [landscape] immediate
-  \ Show 8-line landscape. Experimental.
 
   \ ===========================================================
   cr .( Library) \ {{{1
@@ -132,6 +129,8 @@ need type-center-field need gigatype-title need mode-32iso
 need set-udg need /udg
 need type-udg need columns need rows need row need fade-display
 need last-column need udg-block need udg! need blackout
+
+need window need wltype need wcr need wcls
 
 [pixel-projectile]
 [if]   need set-pixel need reset-pixel need gxy>attra
@@ -239,16 +238,14 @@ defer ((debug-point  ' noop ' ((debug-point defer!
 16384 constant sys-screen  6912 constant /sys-screen
                            6144 constant /sys-screen-bitmap
   \ Address and size of the screen.
-  \ XXX TODO -- not used yet
 
 22528 constant attributes  768 constant /attributes
   \ Address and size of the screen attributes.
 
-     2 cconstant arena-top-y
+ 2 cconstant sky-top-y
+15 cconstant sky-bottom-y
 
-21 [landscape] abs 6 * - cconstant tank-y
-
-tank-y cconstant arena-bottom-y
+sky-bottom-y cconstant tank-y
 
   \ ===========================================================
   cr .( Screen)  debug-point \ {{{1
@@ -509,8 +506,8 @@ sconstants >en.country$ ( n -- ca len ) drop
   here ," Hispanujo"
   here ," Francujo"
   here ," Britujo"
-  here ," Danlando"
-  here ," Norvegio"
+  here ," Danujo"
+  here ," Norvegujo"
 sconstants >eo.country$ ( n -- ca len ) drop
 
 0
@@ -540,19 +537,23 @@ localized-string press-any-key$ ( -- ca len )
   \ ===========================================================
   cr .( Colors)  debug-point \ {{{1
 
-             green cconstant invader-attr
+               green cconstant invader-attr
 
-             green cconstant sane-invader-attr
-            yellow cconstant wounded-invader-attr
-               red cconstant dying-invader-attr
+               green cconstant sane-invader-attr
+              yellow cconstant wounded-invader-attr
+                 red cconstant dying-invader-attr
 
-           magenta cconstant ufo-attr
-             black cconstant arena-attr
-    yellow brighty cconstant radiation-attr
-            yellow cconstant projectile-attr
+             magenta cconstant ufo-attr
+               black cconstant sky-attr
+      yellow brighty cconstant radiation-attr
+              yellow cconstant projectile-attr
+
+        green papery cconstant unfocus-attr
+white papery brighty cconstant report-attr
+
 
               white attr-setter in-text-attr
-         arena-attr attr-setter in-arena-attr
+           sky-attr attr-setter in-sky-attr
  white papery red + attr-setter in-brick-attr
               white attr-setter in-door-attr
                 red attr-setter in-broken-wall-attr
@@ -1711,36 +1712,20 @@ sprite-string fire-button$ ( -- ca len )
   \ Overwrite string _ca len_ with blanks, centered on the
   \ given row.
 
-4 [landscape] + cconstant building-top-y
-
-building-top-y 1- cconstant message-y \ row for game messages
-
-: message ( ca len -- )
-  2dup message-y in-text-attr center-type  1500 ms
-       message-y center-type-blank ;
-  \ Print a game message _ca len_.
-
   \ ===========================================================
   cr .( Game screen)  debug-point \ {{{1
 
-arena-bottom-y arena-top-y - 1+ columns * constant /arena
-  \ Number of characters and attributes of the arena.
-arena-top-y columns * attributes + constant arena-top-attribute
-  \ Address of the first attribute of the arena.
+sky-bottom-y sky-top-y - 1+ columns * constant /sky
+  \ Number of characters and attributes of the sky.
 
-false [if] \ XXX OLD
+sky-top-y columns * attributes + constant sky-top-attribute
+  \ Address of the first attribute of the sky.
 
-: black-arena ( -- ) arena-top-attribute /arena erase ;
-  \ Make the arena black.
-
-: wipe-arena ( -- ) 0 arena-top-y at-xy /arena spaces ;
-  \ Clear the arena (the whole screen except the status bars).
-
-: -arena ( -- ) black-arena wipe-arena ;
-
-[then]
+3 cconstant building-top-y
 
 1 cconstant status-bar-rows
+
+status-bar-rows columns * cconstant /status-bar
 
 : .score-label ( -- ) score$ dup 1+ score-x c! home type ;
 
@@ -1986,8 +1971,8 @@ cvariable breachs
   \ Number of new breachs in the wall, during the current
   \ attack.
 
-: note-breachs ( -- ) breachs c@ old-breachs c! ;
-  \ Note the number of new breachs as old.
+: check-breachs ( -- ) breachs c@ old-breachs c! ;
+  \ Remember the current number of breachs.
 
 : no-breach ( -- ) 0 old-breachs c! 0 breachs c! ;
   \ Reset the number of breachs.
@@ -2074,6 +2059,8 @@ variable repaired
   \ Draw the building and the nuclear containers.
   \
   \ XXX TODO -- Simpler and faster.
+
+: repair-building ( -- ) building repaired on check-breachs ;
 
   \ ===========================================================
   cr .( Locations)  debug-point \ {{{1
@@ -2172,7 +2159,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ outside the building).
 
 : -tank-extreme ( col1 -- col2 )
-  in-arena-attr bl-udg ?emit-outside ;
+  in-sky-attr bl-udg ?emit-outside ;
 
 : at-tank@ ( -- col ) tank-x c@ dup tank-y at-xy ;
   \ Set the cursor position at the tank's coordinates
@@ -2579,11 +2566,11 @@ cvariable invaders \ counter
   \ If the current invader is at home, dock it.
 
 : left-flying-invader ( -- )
-  -1 invader-x c+! at-invader .invader in-arena-attr space ;
+  -1 invader-x c+! at-invader .invader in-sky-attr space ;
   \ Move the current invader, which is flying to the left.
 
 : right-flying-invader ( -- )
-  at-invader in-arena-attr space .invader 1 invader-x c+! ;
+  at-invader in-sky-attr space .invader 1 invader-x c+! ;
   \ Move the current invader, which is flying to the right.
 
 : flying-invader ( -- )
@@ -2764,10 +2751,10 @@ columns udg/ufo - cconstant ufo-max-x
 0 [if] \ XXX OLD
 
 : move-ufo-to-the-right ( -- )
-  at-ufo in-arena-attr space .ufo ;
+  at-ufo in-sky-attr space .ufo ;
 
 : move-ufo-to-the-left ( -- )
-  at-ufo .ufo in-arena-attr space ;
+  at-ufo .ufo in-sky-attr space ;
 
       ' move-ufo-to-the-left ,
 here  ' noop ,
@@ -2827,7 +2814,7 @@ constant ufo-movements ( -- a )
   at-invader invader-explosion$ type-udg ;
   \ Show the current invader on fire.
 
-: -invader ( -- ) in-arena-attr at-invader 2 spaces ;
+: -invader ( -- ) in-sky-attr at-invader 2 spaces ;
   \ Delete the current invader.
 
 : invader-explosion ( -- )
@@ -2897,7 +2884,7 @@ constant ufo-movements ( -- a )
 
 : hit-something? ( -- f )
   projectile-coords  [pixel-projectile]
-  [if]   gxy>attra c@ arena-attr <>
+  [if]   gxy>attra c@ sky-attr <>
   [else] ocr 0<> [then] ;
   \ Did the projectile hit something?
 
@@ -2934,15 +2921,15 @@ constant ufo-movements ( -- a )
   [pixel-projectile]
   [if]    projectile-coords reset-pixel
   [else]  projectile-coords xy>attr projectile-attr <> ?exit
-          at-projectile in-arena-attr space
+          at-projectile in-sky-attr space
   [then] ;
   \ Delete the projectile.
 
 : projectile-lost? ( -- f )
   projectile-y c@
   [pixel-projectile]
-  [if]    [ arena-top-y row>pixel ] cliteral >
-  [else]  [ arena-top-y 1+ ] cliteral <
+  [if]    [ sky-top-y row>pixel ] cliteral >
+  [else]  [ sky-top-y 1+ ] cliteral <
   [then] ;
   \ Is the projectile lost?
 
@@ -3081,18 +3068,20 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
 
 create attributes-backup /attributes allot
 
-: save-attributes ( -- )
+: preserve-attributes ( -- )
   attributes attributes-backup /attributes cmove ;
 
 : restore-attributes ( -- )
   attributes-backup attributes /attributes cmove ;
 
 : radiation ( -- )
-  [ attributes columns status-bar-rows * + ] literal
-  [ /attributes ] literal radiation-attr fill ;
+  [  attributes /status-bar + ] literal
+  [ /attributes /status-bar - ] literal radiation-attr fill ;
+  \ Fill the screen with the radiation color, except the status
+  \ bar.
 
 : defeat ( -- )
-  save-attributes
+  preserve-attributes
   radiation defeat-tune 2 seconds fade-display
   restore-attributes
   check-record ;
@@ -3100,103 +3089,101 @@ create attributes-backup /attributes allot
   \ XXX TODO -- Factor.
 
   \ ===========================================================
-  cr .( Main loop)  debug-point \ {{{1
+  cr .( Reports)  debug-point \ {{{1
 
-:noname ( -- )
-   \ <------------------------------>
-  ." Una nueva oleada de invasores" cr
-  ." se acerca para aprovechar la" cr
-  ." oportunidad." cr ;
-   \ <------------------------------>
-  \ XXX TODO -- Use a window.
+7 3 18 18 window paper-report-window
+8 4 16 16 window report-window
 
-:noname ( -- )
-   \ <------------------------------>
-   ." Nova invadantaro prokisimiĝas" cr
-   ." por profiti la ŝancon." cr ;
-   \ <------------------------------>
-  \ XXX TODO -- Use a window.
+here \ es (Spanish)
+  s" ¡Bien hecho!" s,
 
-:noname ( -- )
-   \ <------------------------------>
-  ." A new attack wave is on its way" cr
-  ." to finish the work." cr ;
-   \ <------------------------------>
-  \ XXX TODO -- Use a window.
+here \ eo (Esperanto)
+   s" Bone farita!" s,
 
-localized-word warn-about-new-attack ( -- )
+here \ en (English)
+  s" Well done!" s,
 
-:noname ( -- )
-   \ <------------------------------>
-  ." El ataque ha sido rechazado," cr
-  ." pero los muros han sido dañados." cr ;
-   \ <------------------------------>
-  \ XXX TODO -- Use a window.
+localized-string well-done$ ( -- ca len )
 
-:noname ( -- )
-   \ <------------------------------>
-   ." La atako estis forpelita, sed" cr
-   ." la muroj estas damaĝitaj." cr ;
-   \ <------------------------------>
-  \ XXX TODO -- Use a window.
 
-:noname ( -- )
-   \ <------------------------------>
-  ." The attack has been repelled," cr
-  ." but the walls have been damaged." cr ;
-   \ <------------------------------>
-  \ XXX TODO -- Use a window.
+here \ es (Spanish)
+  s" Se prevé un nuevo ataque inminente." s,
 
-localized-word warn-about-new-damages ( -- )
+here \ eo (Esperanto)
+   s" Nova tuja atako antaŭvideblas." s,
 
-:noname ( -- )
-   \ <------------------------------>
-  ." El ataque ha sido rechazado sin" cr
-  ." causar nuevos daños, pero los" cr
-  ." muros aún están dañados y deben" cr
-  ." ser reparados." ; cr
-   \ <------------------------------>
-  \ XXX TODO -- Use a window.
+here \ en (English)
+  s" A new imminent attack is expected." s,
 
-:noname ( -- )
-   \ <------------------------------>
-   ." La atako estis forpelita sen" cr
-   ." kaŭzi novajn damaĝojn, sed la" cr
-   ." muroj ankoraŭ estas damaĝitaj" cr
-   ." kaj devas esti riparitaj." cr ;
-   \ <------------------------------>
-  \ XXX TODO -- Use a window.
+localized-string about-new-attack$ ( -- ca len )
 
-:noname ( -- )
-   \ <------------------------------>
-  ." The attack has been repelled" cr
-  ." without causing new damages, but"
-  ." the walls are still damaged and" cr
-  ." must be repaired." cr ;
-   \ <------------------------------>
-  \ XXX TODO -- Use a window.
+here \ es (Spanish)
+  s" El ataque ha sido rechazado, "
+  s" pero los muros han sido dañados." s+ s,
 
-localized-word warn-about-old-damages ( -- )
+here \ eo (Esperanto)
+   s" La atako estis repuŝita, sed "
+   s" la muroj estas damaĝitaj." s+ s,
+
+here \ en (English)
+  s" The attack has been repelled, "
+  s" but the walls have been damaged." s+ s,
+
+localized-string about-new-damages$ ( -- ca len )
+
+here \ es (Spanish)
+  s" El ataque ha sido rechazado sin "
+  s" causar nuevos daños, pero los " s+
+  s" muros aún están dañados y deben " s+
+  s" ser reparados." s+ s,
+  \ XXX TODO -- Improve.
+
+here \ eo (Esperanto)
+   s" La atako estis repuŝita sen "
+   s" kaŭzi novajn damaĝojn, sed la " s+
+   s" muroj ankoraŭ estas damaĝitaj " s+
+   s" kaj devas esti riparitaj." s+ s,
+  \ XXX TODO -- Improve.
+
+here \ en (English)
+  s" The attack has been repelled "
+  s" without causing new damages, but " s+
+  s" the walls are still damaged and " s+
+  s" must be repaired." s+ s,
+  \ XXX TODO -- Improve.
+
+localized-string about-old-damages$ ( -- ca len )
 
 : no-keys ( -- ) begin key? while key drop repeat ;
 
-: press-any-key ( -- )
-  press-any-key$ type cr no-keys key drop ;
+: paragraph ( ca len -- ) wltype wcr wcr ;
 
-: warn-about-damages ( -- )
-  new-breach? if   warn-about-new-damages warn-about-new-attack
-              else warn-about-old-damages then ;
+: about-attack ( -- )
+                   well-done$              paragraph
+  new-breach? if   about-new-damages$      paragraph
+                   about-new-attack$
+              else about-old-damages$ then paragraph ;
 
-: (report ( -- ) home in-text-attr
-                  warn-about-damages
-                  2 seconds cr press-any-key ;
+: unfocus ( -- ) attributes /attributes unfocus-attr fill ;
+  \ Fill the screen with a color, to contrast the report window.
+
+: end-report ( -- ) press-any-key$ wltype no-keys key drop ;
+
+: open-report ( -- )
+  unfocus paper-report-window set-window report-attr attr! wcls
+                report-window set-window whome ;
+
+: (report ( -- )
+  open-report about-attack 2 seconds end-report ;
 
 : report ( -- ) preserve-screen (report restore-screen ;
 
+  \ ===========================================================
+  cr .( Main loop)  debug-point \ {{{1
+
 : extermination? ( -- f ) invaders c@ 0= ;
 
-: attack-wave ( -- )
-  init-ufo init-invaders parade note-breachs ;
+: attack-wave ( -- ) init-ufo init-invaders parade ;
 
 : fight ( -- )
   ?quit-game \ XXX TMP --
@@ -3207,9 +3194,9 @@ localized-word warn-about-old-damages ( -- )
 
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
 
-: under-attack ( -- )
-  attack-wave begin fight end-of-attack? until
-  lose-projectiles ;
+: under-attack ( -- ) check-breachs attack-wave
+                      begin fight end-of-attack? until
+                      lose-projectiles ;
 
 : another-attack? ( -- f ) breachs? catastrophe? 0= and ;
 
@@ -3217,8 +3204,7 @@ localized-word warn-about-old-damages ( -- )
 
 : prepare-battle ( -- ) settle weapons ;
 
-: interlude ( -- )
-  new-breach? ?exit building repaired on note-breachs ;
+: interlude ( -- ) new-breach? ?exit repair-building ;
 
 : battle ( -- )
   prepare-battle begin under-attack another-attack?
@@ -3245,11 +3231,11 @@ localized-word warn-about-old-damages ( -- )
 : mi ( -- ) move-invader ;
 : ini ( -- ) prepare-war prepare-battle ;
 
-: h ( -- ) 7 attr! home ; \ Home
-: a ( -- ) cls building h ; \ Arena
+: h ( -- ) 7 attr! home ; \ home
+: b ( -- ) cls building h ; \ building
 : t ( -- ) .tank h ;
-: tl ( -- ) <tank h ; \ Move tank left
-: tr ( -- ) tank> h ; \ Move tank right
+: tl ( -- ) <tank h ; \ move tank left
+: tr ( -- ) tank> h ; \ move tank right
 
 : .i ( n -- )
   >r
