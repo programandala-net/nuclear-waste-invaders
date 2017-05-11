@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.76.0+201705111753" ;
+: version$ ( -- ca len ) s" 0.77.0+201705111826" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -136,8 +136,7 @@ need window need wltype need wcr need wcls
 [if]   need set-pixel need reset-pixel need gxy>attra
 [else] need ocr [then]
 
-need inverse-off need overprint-off need attr-setter need attr!
-need attr@ need xy>attra
+need inverse-off need overprint-off need attr!  need attr@
 
 need black need blue   need red   need magenta need green
 need cyan  need yellow need white
@@ -537,32 +536,26 @@ localized-string press-any-key$ ( -- ca len )
   \ ===========================================================
   cr .( Colors)  debug-point \ {{{1
 
-               green cconstant invader-attr
+               black cconstant sky-attr
 
+               green cconstant invader-attr
                green cconstant sane-invader-attr
               yellow cconstant wounded-invader-attr
                  red cconstant dying-invader-attr
-
              magenta cconstant ufo-attr
-               black cconstant sky-attr
-      yellow brighty cconstant radiation-attr
+
+               white cconstant tank-attr
               yellow cconstant projectile-attr
 
         green papery cconstant unfocus-attr
 white papery brighty cconstant report-attr
+               white cconstant text-attr
 
-
-              white attr-setter in-text-attr
-           sky-attr attr-setter in-sky-attr
- white papery red + attr-setter in-brick-attr
-              white attr-setter in-door-attr
-                red attr-setter in-broken-wall-attr
-              white attr-setter in-tank-attr
-               blue attr-setter in-life-attr
-       invader-attr attr-setter in-invader-attr
-     yellow brighty attr-setter in-container-attr
-    projectile-attr attr-setter in-projectile-attr
-           ufo-attr attr-setter in-ufo-attr
+  white papery red + cconstant brick-attr
+               white cconstant door-attr
+                 red cconstant broken-wall-attr
+      yellow brighty cconstant container-attr
+      yellow brighty cconstant radiation-attr
 
 : init-colors ( -- )
   [ white black papery + ] cliteral attr!
@@ -735,7 +728,7 @@ cvariable player   1 player  c! \ 1..max-player
   \ Compile `#` _n_ times.
 
 : (.score ( n x y -- )
-  at-xy s>d <# [ score-digits ] ?[#] #> in-text-attr type ;
+  at-xy s>d <# [ score-digits ] ?[#] #> text-attr attr! type ;
   \ Print score _n_ at coordinates _x y_.
 
 : score-xy ( -- x y ) score-x c@ score-y ;
@@ -1737,7 +1730,7 @@ status-bar-rows columns * cconstant /status-bar
 : .record-label ( -- ) record$ dup >record-label-x at-x type ;
 
 : status-bar ( -- )
-  in-text-attr .score-label .score .record-label .record ;
+  text-attr attr! .score-label .score .record-label .record ;
 
 [pixel-projectile] [if]
 
@@ -2004,30 +1997,30 @@ cvariable containers-left-x   cvariable containers-right-x
 
 : floor ( y -- )
   building-left-x c@ swap at-xy
-  in-brick-attr brick building-width c@ .1x1sprites ;
+  brick-attr attr! brick building-width c@ .1x1sprites ;
   \ Draw a floor of the building at row _y_.
 
 : ground-floor ( y -- )
   building-left-x c@ 1+ swap at-xy
-  in-door-attr  left-door emit-udg
-  in-brick-attr brick building-width c@ 4 - .1x1sprites
-  in-door-attr  right-door emit-udg ;
+  door-attr attr!  left-door emit-udg
+  brick-attr attr! brick building-width c@ 4 - .1x1sprites
+  door-attr attr!  right-door emit-udg ;
   \ Draw the ground floor of the building at row _y_.
 
 : building-top ( -- ) building-top-y floor ;
   \ Draw the top of the building.
 
 : containers-bottom ( n -- )
-  in-container-attr
+  container-attr attr!
   0 ?do  container-bottom .2x1sprite  loop ;
   \ Draw a row of _n_ bottom parts of containers.
 
 : containers-top ( n -- )
-  in-container-attr
+  container-attr attr!
   0 ?do  container-top .2x1sprite  loop ;
   \ Draw a row of _n_ top parts of containers.
 
-: .brick ( -- ) in-brick-attr brick .1x1sprite ;
+: .brick ( -- ) brick-attr attr! brick .1x1sprite ;
   \ Draw a brick.
 
 create containers-half
@@ -2152,14 +2145,14 @@ columns udg/tank - 1- cconstant tank-max-x
   \ return it as _col2_.
 
 : tank-parts ( col1 -- col2 )
-  in-tank-attr left-tank-udg   ?emit-outside
-               middle-tank-udg ?emit-outside
-               right-tank-udg  ?emit-outside ;
+  tank-attr attr! left-tank-udg   ?emit-outside
+                  middle-tank-udg ?emit-outside
+                  right-tank-udg  ?emit-outside ;
   \ Display every visible part of the tank (the parts that are
   \ outside the building).
 
 : -tank-extreme ( col1 -- col2 )
-  in-sky-attr bl-udg ?emit-outside ;
+  sky-attr attr! bl-udg ?emit-outside ;
 
 : at-tank@ ( -- col ) tank-x c@ dup tank-y at-xy ;
   \ Set the cursor position at the tank's coordinates
@@ -2261,7 +2254,7 @@ defer debug-data-pause ( -- )
   first-location score off cls ;
 
 : parade ( -- )
-  in-invader-attr
+  invader-attr attr!
   max-invaders 0 do
     i invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
                        r> ~sprite c@ .2x1sprite
@@ -2321,26 +2314,26 @@ defer debug-data-pause ( -- )
 true [if] \ XXX OLD
 
 : .score-item ( ca1 len1 ca2 len2 -- )
-  type-udg in-text-attr ."  = " type ;
+  type-udg text-attr attr! ."  = " type ;
   \ Print an item of the score table, with sprite string _ca2
   \ len2_ and description _ca1 len1_
 
 : .score-table ( -- )
   xy 2dup  at-xy s" 10 " points$ s+
-           in-invader-attr docked-invader-0$ .score-item
+           invader-attr attr! docked-invader-0$ .score-item
   2dup 1+  at-xy s" 20 " points$ s+
-           in-invader-attr docked-invader-1$ .score-item
+           invader-attr attr! docked-invader-1$ .score-item
   2dup 2+  at-xy s" 30 " points$ s+
-           in-invader-attr docked-invader-2$ .score-item
+           invader-attr attr! docked-invader-2$ .score-item
        3 + at-xy bonus$
-           in-ufo-attr ufo$ .score-item ;
+           ufo-attr attr! ufo$ .score-item ;
    \ Print the score table at the current coordinates.
 
 [else] \ XXX TODO --
 
 : .score-item ( c1 c2 n3 n4 -- )
   attr! drop swap .2x1sprite
-  in-text-attr ." = " . points$ type drop ;
+  text-attr attr! ." = " . points$ type drop ;
   \ XXX TODO -- Rewrite. Parameters changed.
   \ Print an item of the score table:
   \   c1 = docked sprite;
@@ -2432,7 +2425,7 @@ false [if] \ XXX TODO --
 : init-font ( -- ) game-font0 set-font mode-32iso ;
 
 : mobilize ( -- )
-  init-font init-colors in-text-attr menu-screen menu ;
+  init-font init-colors text-attr attr! menu-screen menu ;
 
   \ ===========================================================
   cr .( Invasion)  debug-point \ {{{1
@@ -2493,7 +2486,7 @@ cvariable invaders \ counter
   \ XXX TODO -- Graphic instead of space.
 
 : broken-wall ( col -- )
-  broken-bricks-coordinates in-broken-wall-attr
+  broken-bricks-coordinates broken-wall-attr attr!
   flying-to-the-right? if   broken-left-wall
                        else broken-right-wall then ;
   \ Show the broken wall of the building.
@@ -2513,16 +2506,15 @@ cvariable invaders \ counter
   \ Broke the container on its right side.
 
 : broken-container ( -- )
-  in-container-attr
+  container-attr attr!
   flying-to-the-right? if   broken-left-container
                        else broken-right-container then ;
   \ Broke the container.
 
 : broken-container? ( -- f )
-  invader-x c@ flying-to-the-right?
-  if   1+ containers-left-x
-  else    containers-right-x
-  then c@ = ;
+  invader-x c@ flying-to-the-right? if   1+ containers-left-x
+                                    else    containers-right-x
+                                    then c@ = ;
   \ Has the current invader broken a container?
 
 : hit-wall ( -- ) invader-active off ;
@@ -2566,11 +2558,11 @@ cvariable invaders \ counter
   \ If the current invader is at home, dock it.
 
 : left-flying-invader ( -- )
-  -1 invader-x c+! at-invader .invader in-sky-attr space ;
+  -1 invader-x c+! at-invader .invader sky-attr attr! space ;
   \ Move the current invader, which is flying to the left.
 
 : right-flying-invader ( -- )
-  at-invader in-sky-attr space .invader 1 invader-x c+! ;
+  at-invader sky-attr attr! space .invader 1 invader-x c+! ;
   \ Move the current invader, which is flying to the right.
 
 : flying-invader ( -- )
@@ -2746,15 +2738,15 @@ columns udg/ufo - cconstant ufo-max-x
 : ufo-in-range? ( -- f ) ufo-limit-x ufo-x @ abs < ;
   \ Is the UFO in the range of its flying limit?
 
-: .ufo ( -- ) in-ufo-attr ufo-udg .2x1sprite ;
+: .ufo ( -- ) ufo-attr attr! ufo-udg .2x1sprite ;
 
 0 [if] \ XXX OLD
 
 : move-ufo-to-the-right ( -- )
-  at-ufo in-sky-attr space .ufo ;
+  at-ufo sky-attr attr! space .ufo ;
 
 : move-ufo-to-the-left ( -- )
-  at-ufo .ufo in-sky-attr space ;
+  at-ufo .ufo sky-attr attr! space ;
 
       ' move-ufo-to-the-left ,
 here  ' noop ,
@@ -2814,7 +2806,7 @@ constant ufo-movements ( -- a )
   at-invader invader-explosion$ type-udg ;
   \ Show the current invader on fire.
 
-: -invader ( -- ) in-sky-attr at-invader 2 spaces ;
+: -invader ( -- ) sky-attr attr! at-invader 2 spaces ;
   \ Delete the current invader.
 
 : invader-explosion ( -- )
@@ -2910,7 +2902,7 @@ constant ufo-movements ( -- a )
 : .projectile ( -- )
   [pixel-projectile]
   [if]    projectile-coords set-pixel
-  [else]  in-projectile-attr
+  [else]  projectile-attr attr!
           at-projectile projectile .1x1sprite
   [then] ;
   \ Show the projectile.
@@ -2921,7 +2913,7 @@ constant ufo-movements ( -- a )
   [pixel-projectile]
   [if]    projectile-coords reset-pixel
   [else]  projectile-coords xy>attr projectile-attr <> ?exit
-          at-projectile in-sky-attr space
+          at-projectile sky-attr attr! space
   [then] ;
   \ Delete the projectile.
 

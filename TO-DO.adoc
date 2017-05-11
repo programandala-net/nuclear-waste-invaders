@@ -105,8 +105,4 @@ Simplify the status bar, remove the texts, display only "0000/0000".
 
 .2017-05-11:
 
-Remove `attr-setter`. Use `a-constant-attr attr!` instead, faster.
-
-.2017-05-11:
-
 Move `attributes-backup` to `farlimit`, to save data space.
