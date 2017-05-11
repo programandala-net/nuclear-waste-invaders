@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.78.0+201705111856" ;
+: version$ ( -- ca len ) s" 0.79.0+201705120018" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -96,7 +96,7 @@ need case need 0exit need +perform need do need abort"
   \ --------------------------------------------
   cr .(   -Memory) \ {{{2
 
-need c+! need c1+! need dzx7t
+need c+! need c1+! need dzx7t need bank-start
 
   \ --------------------------------------------
   cr .(   -Math) \ {{{2
@@ -3147,6 +3147,29 @@ here \ en (English)
 
 localized-string about-old-damages$ ( -- ca len )
 
+here \ es (Spanish)
+  s" Los invasores han sido aniquilados "
+  s" antes de que pudieran dañar el edificio. " s+
+  s" Ahora su nave nodriza se dirige al sur, " s+
+  s" hacia su próximo objetivo." s+ s,
+  \ XXX TODO -- Improve.
+
+here \ eo (Esperanto)
+  s" La invadantoj estis destruitaj "
+  s" antaŭ ol ili povis damaĝi la konstruaĵon. " s+
+  s" Nun ilia ĉefŝipo flugas suden " s+
+  s" al ilia posta celo." s+ s,
+  \ XXX TODO -- Improve.
+
+here \ en (English)
+  s" The invaders have been destroyed "
+  s" before they were able to damage the building. " s+
+  s" Now their mothership flies south " s+
+  s" toward their next objective." s+ s,
+  \ XXX TODO -- Improve.
+
+localized-string about-battle$ ( -- ca len )
+
 : no-keys ( -- ) begin key? while key drop repeat ;
 
 : paragraph ( ca len -- ) wltype wcr wcr ;
@@ -3160,16 +3183,24 @@ localized-string about-old-damages$ ( -- ca len )
 : unfocus ( -- ) attributes /attributes unfocus-attr fill ;
   \ Fill the screen with a color, to contrast the report window.
 
-: end-report ( -- ) press-any-key$ wltype no-keys key drop ;
+: end-report ( -- )
+  2 seconds press-any-key$ wltype no-keys key drop ;
 
 : open-report ( -- )
   unfocus paper-report-window set-window report-attr attr! wcls
                 report-window set-window whome ;
 
-: (report ( -- )
-  open-report about-attack 2 seconds end-report ;
+: (attack-report ( -- ) open-report about-attack end-report ;
 
-: report ( -- ) preserve-screen (report restore-screen ;
+: attack-report ( -- )
+  preserve-screen (attack-report restore-screen ;
+
+: about-battle ( -- )
+  well-done$ paragraph about-battle$ paragraph ;
+
+: (battle-report ( -- ) open-report about-battle end-report ;
+
+: battle-report ( -- ) preserve-screen (battle-report ;
 
   \ ===========================================================
   cr .( Main loop)  debug-point \ {{{1
@@ -3200,11 +3231,11 @@ localized-string about-old-damages$ ( -- ca len )
 : interlude ( -- ) new-breach? ?exit repair-building ;
 
 : battle ( -- )
-  prepare-battle begin under-attack another-attack?
-                 while report interlude repeat ;
+  prepare-battle begin  under-attack another-attack?
+                 while  attack-report interlude repeat ;
 
 : campaign ( -- ) begin battle catastrophe? 0=
-                  while reward travel repeat ;
+                  while battle-report reward travel repeat ;
 
 : war ( -- ) prepare-war campaign defeat ;
 
