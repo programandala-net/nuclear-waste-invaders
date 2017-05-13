@@ -1,6 +1,8 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-05-11
+:revdate: 2017-05-12
+
+// Last modified 201705120148
 
 Older first:
 
@@ -103,3 +105,11 @@ Write Z80 code to print 2x1 sprites faster.
 
 Simplify the status bar, remove the texts, display only "0000/0000".
 
+.2017-05-12:
+
+Don't repair the building automatically. Use the tank.
+
+.2017-05-12:
+
+Improve the start of the attack: Make the mothership drop the
+invaders.

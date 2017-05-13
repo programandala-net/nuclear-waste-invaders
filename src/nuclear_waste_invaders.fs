@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.79.0+201705120018" ;
+: version$ ( -- ca len ) s" 0.80.0+201705122214" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -556,7 +556,7 @@ localized-string press-any-key$ ( -- ca len )
                white cconstant tank-attr
               yellow cconstant projectile-attr
 
-        green papery cconstant unfocus-attr
+        white papery cconstant unfocus-attr
 white papery brighty cconstant report-attr
                white cconstant text-attr
 
@@ -3084,8 +3084,8 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   \ ===========================================================
   cr .( Reports)  debug-point \ {{{1
 
-7 3 18 18 window paper-report-window
-8 4 16 16 window report-window
+7 3 18 18 window constant paper-report-window
+8 4 16 16 window constant report-window
 
 here \ es (Spanish)
   s" ¡Bien hecho!" s,
@@ -3097,7 +3097,6 @@ here \ en (English)
   s" Well done!" s,
 
 localized-string well-done$ ( -- ca len )
-
 
 here \ es (Spanish)
   s" Se prevé un nuevo ataque inminente." s,
@@ -3149,26 +3148,37 @@ localized-string about-old-damages$ ( -- ca len )
 
 here \ es (Spanish)
   s" Los invasores han sido aniquilados "
-  s" antes de que pudieran dañar el edificio. " s+
-  s" Ahora su nave nodriza se dirige al sur, " s+
-  s" hacia su próximo objetivo." s+ s,
+  s" antes de que pudieran dañar el edificio. " s+ s,
   \ XXX TODO -- Improve.
 
 here \ eo (Esperanto)
   s" La invadantoj estis destruitaj "
-  s" antaŭ ol ili povis damaĝi la konstruaĵon. " s+
-  s" Nun ilia ĉefŝipo flugas suden " s+
-  s" al ilia posta celo." s+ s,
+  s" antaŭ ol ili povis damaĝi la konstruaĵon. " s+ s,
   \ XXX TODO -- Improve.
 
 here \ en (English)
   s" The invaders have been destroyed "
-  s" before they were able to damage the building. " s+
-  s" Now their mothership flies south " s+
-  s" toward their next objective." s+ s,
+  s" before they were able to damage the building. " s+ s,
   \ XXX TODO -- Improve.
 
 localized-string about-battle$ ( -- ca len )
+
+here \ es (Spanish)
+  s" Ahora su nave nodriza se dirige al sur, "
+  s" hacia su próximo objetivo." s+ s,
+  \ XXX TODO -- Improve.
+
+here \ eo (Esperanto)
+  s" Nun ilia ĉefŝipo flugas suden "
+  s" al ilia posta celo." s+ s,
+  \ XXX TODO -- Improve.
+
+here \ en (English)
+  s" Now their mothership flies south "
+  s" toward their next objective." s+ s,
+  \ XXX TODO -- Improve.
+
+localized-string about-next-location$ ( -- ca len )
 
 : no-keys ( -- ) begin key? while key drop repeat ;
 
@@ -3187,8 +3197,9 @@ localized-string about-battle$ ( -- ca len )
   2 seconds press-any-key$ wltype no-keys key drop ;
 
 : open-report ( -- )
-  unfocus paper-report-window set-window report-attr attr! wcls
-                report-window set-window whome ;
+  unfocus paper-report-window current-window !
+                              report-attr attr! wcls
+                report-window current-window ! whome ;
 
 : (attack-report ( -- ) open-report about-attack end-report ;
 
@@ -3196,7 +3207,8 @@ localized-string about-battle$ ( -- ca len )
   preserve-screen (attack-report restore-screen ;
 
 : about-battle ( -- )
-  well-done$ paragraph about-battle$ paragraph ;
+  well-done$ paragraph about-battle$ paragraph
+  about-next-location$ paragraph ;
 
 : (battle-report ( -- ) open-report about-battle end-report ;
 
