@@ -3,14 +3,14 @@
 " This file is part of Nuclear Waste Invaders
 " http://programandala.net/en.program.nuclear_waste_invaders.html
 
-" Last modified 201704201706
+" Last modified 201705122354
 " See change log at the end of the file
 
 " ==============================================================
 " Description
 
-" This program converts the UTF-8 characters in the sources to ZX Spectrum
-" User Defined Graphic codes.
+" This program converts the UTF-8 characters in the sources to
+" ZX Spectrum User Defined Graphic codes.
 
 " ==============================================================
 " Author
@@ -22,8 +22,8 @@
 
 echo "Converting Spanish UTF-8 characters to ZX Spectrum codes"
 
-%s/¡/\=nr2char(128)/gIe
-%s/¿/\=nr2char(129)/gIe
+%s/¿/\=nr2char(128)/gIe
+%s/¡/\=nr2char(129)/gIe
 %s/Á/\=nr2char(130)/gIe
 %s/É/\=nr2char(131)/gIe
 %s/Í/\=nr2char(132)/gIe
@@ -73,4 +73,6 @@ echo "Converting French UTF-8 characters to ZX Spectrum codes"
 " 2017-04-18: Add French character. Update all character codes.
 "
 " 2017-04-20: Change the order of the Spanish chars.
+"
+" 2017-05-12: Fix the UDG codes of '¡' and  '?'.
 
