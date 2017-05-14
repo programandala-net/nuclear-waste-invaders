@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.80.0+201705122214" ;
+: version$ ( -- ca len ) s" 0.81.0+201705141420" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -71,41 +71,44 @@ here 512 dup allot !> /stringer !> stringer empty-stringer
   \ Create a new 512-byte `stringer` in data space.
 
   \ --------------------------------------------
-  cr .(   -Development tools) \ {{{2
+  cr .(   -Development tools) .s \ {{{2
 
 need [if] need ~~
 need warn.message need order need see need rdepth need where
 need evaluate
 
+: ?depth ( -- ) depth if decimal cr .s #-258 throw then ;
+  \ Check stack imbalance during compilation.
+
   \ --------------------------------------------
-  cr .(   -Definers) \ {{{2
+  cr .(   -Definers) ?depth \ {{{2
 
 need defer need alias need cvariable
 need 2const need cenum
 
   \ --------------------------------------------
-  cr .(   -Strings) \ {{{2
+  cr .(   -Strings) ?depth \ {{{2
 
 need upper need s+ need char>string need s\"
 
   \ --------------------------------------------
-  cr .(   -Control structures) \ {{{2
+  cr .(   -Control structures) ?depth \ {{{2
 
 need case need 0exit need +perform need do need abort"
 
   \ --------------------------------------------
-  cr .(   -Memory) \ {{{2
+  cr .(   -Memory) ?depth \ {{{2
 
 need c+! need c1+! need dzx7t need bank-start
 
   \ --------------------------------------------
-  cr .(   -Math) \ {{{2
+  cr .(   -Math) ?depth \ {{{2
 
 need d< need -1|1 need 2/ need between need random need binary
 need within need even? need crnd need 8*
 
   \ --------------------------------------------
-  cr .(   -Data structures) \ {{{2
+  cr .(   -Data structures) ?depth \ {{{2
 
 need roll need cfield: need field: need +field-opt-0124
 need array> need !> need c!> need 2!>
@@ -118,13 +121,13 @@ need xclear
 need .xs \ XXX TMP -- for debuging
 
   \ --------------------------------------------
-  cr .(   -Display) \ {{{2
+  cr .(   -Display) ?depth \ {{{2
 
 need at-y need at-x need type-left-field need type-right-field
 need type-center-field need gigatype-title need mode-32iso
 
   \ --------------------------------------------
-  cr .(   -Graphics) \ {{{2
+  cr .(   -Graphics) ?depth \ {{{2
 
 need set-udg need /udg
 need type-udg need columns need rows need row need fade-display
@@ -132,9 +135,11 @@ need last-column need udg-block need udg! need blackout
 
 need window need wltype need wcr need wcls
 
-[pixel-projectile]
-[if]   need set-pixel need reset-pixel need gxy>attra
-[else] need ocr [then]
+need ocr
+
+[pixel-projectile] [if]
+  need plot need set-pixel need reset-pixel need gxy>attra
+[then]
 
 need inverse-off need overprint-off need attr!  need attr@
 
@@ -144,18 +149,18 @@ need cyan  need yellow need white
 need papery need brighty need xy>attr
 
   \ --------------------------------------------
-  cr .(   -Keyboard) \ {{{2
+  cr .(   -Keyboard) ?depth \ {{{2
 
 need kk-ports need kk-1# need pressed? need kk-chars
 need #>kk need inkey
 
   \ --------------------------------------------
-  cr .(   -Time) \ {{{2
+  cr .(   -Time) ?depth \ {{{2
 
 need frames@ need ms need seconds need ?seconds
 
   \ --------------------------------------------
-  cr .(   -Sound) \ {{{2
+  cr .(   -Sound) ?depth \ {{{2
 
 need bleep need dhz>bleep need shoot
 need whip need lightning1
@@ -170,7 +175,7 @@ need tape-file> need last-tape-header
 nuclear-waste-invaders-wordlist set-current
 
   \ ===========================================================
-  cr .( Debug) \ {{{1
+  cr .( Debug) ?depth \ {{{1
 
 defer debug-point  defer special-debug-point
 
@@ -180,29 +185,24 @@ defer ((debug-point  ' noop ' ((debug-point defer!
   ((debug-point
 
   \ order
-  \ depth ?exit
   \ ." block:" blk ?  ."  latest:" latest .name ." hp:" hp@ u.
   \ order
   \ s" ' -1|1 .( -1|1 =) u." evaluate
 
   \ XXX TMP -- 2017-04-16: To discover the problem with
   \ `shoot`:
-  cr ."  latest: " latest .name ." shoot nt:"
-  s" ' shoot u." evaluate
+  \ cr ."  latest: " latest .name ." shoot nt:"
+  \ s" ' shoot u." evaluate
 
-  \ depth if decimal cr .s then
-
-  \ depth if decimal cr .s #-258 throw then \ stack imbalance
+  depth
+  if decimal cr .s #-258 throw then \ stack imbalance
 
   \ key drop
 
   ;
 
-  \ Abort if the stack is not empty.
-  \ XXX TMP -- for debugging
-
-  ' noop ' debug-point defer!
-  \ ' (debug-point ' debug-point defer!
+  \ ' noop ' debug-point defer!
+  ' (debug-point ' debug-point defer!
   \ XXX TMP -- for debugging
 
   ' noop ' special-debug-point defer!
@@ -232,7 +232,7 @@ defer ((debug-point  ' noop ' ((debug-point defer!
   \ XXX TMP -- for debugging
 
   \ ===========================================================
-  cr .( Constants)  debug-point \ {{{1
+  cr .( Constants) ?depth debug-point \ {{{1
 
 16384 constant sys-screen  6912 constant /sys-screen
                            6144 constant /sys-screen-bitmap
@@ -247,7 +247,7 @@ defer ((debug-point  ' noop ' ((debug-point defer!
 sky-bottom-y cconstant tank-y
 
   \ ===========================================================
-  cr .( Screen)  debug-point \ {{{1
+  cr .( Screen) ?depth debug-point \ {{{1
 
 /sys-screen negate farlimit +!
 farlimit @ constant preserved
@@ -274,7 +274,7 @@ far-banks 3 + c@ cconstant preservation-bank
   preserved attributes /attributes preservation ;
 
   \ ===========================================================
-  cr .( Landscapes)  debug-point \ {{{1
+  cr .( Landscapes) ?depth debug-point \ {{{1
 
 sys-screen /sys-screen-bitmap 3 / 2 * + constant landscape-scra
   \ Screen address of the landscape.
@@ -338,7 +338,7 @@ variable landscape> bank-start landscape> !
 load-landscapes
 
   \ ===========================================================
-  cr .( Font)  debug-point \ {{{1
+  cr .( Font) ?depth debug-point \ {{{1
 
 1000 constant /game-font
 create game-font /game-font allot
@@ -348,7 +348,7 @@ create game-font /game-font allot
 game-font 256 - constant game-font0
 
   \ ===========================================================
-  cr .( Localization)  debug-point \ {{{1
+  cr .( Localization) ?depth debug-point \ {{{1
 
 0 cenum en         \ English
   cenum eo         \ Esperanto
@@ -389,7 +389,7 @@ en cconstant lang  \ current language
   \ TOS the first one.
 
   \ ===========================================================
-  cr .( Texts)  debug-point \ {{{1
+  cr .( Texts) ?depth debug-point \ {{{1
 
 here ," Invasores de Residuos Nucleares"
 here ," Atomrubaĵaj Invadantoj"
@@ -543,9 +543,11 @@ here ," Press any key."
 localized-string press-any-key$ ( -- ca len )
 
   \ ===========================================================
-  cr .( Colors)  debug-point \ {{{1
+  cr .( Colors) ?depth debug-point \ {{{1
 
-               black cconstant sky-attr
+[pixel-projectile]    black and
+[pixel-projectile] 0= white and +
+                    cconstant sky-attr
 
                green cconstant invader-attr
                green cconstant sane-invader-attr
@@ -571,7 +573,7 @@ white papery brighty cconstant report-attr
   overprint-off  inverse-off  black border ;
 
   \ ===========================================================
-  cr .( Global variables)  debug-point \ {{{1
+  cr .( Global variables) ?depth debug-point \ {{{1
 
 cvariable location        \ counter
  variable score           \ counter
@@ -584,7 +586,7 @@ record off
 : catastrophe? ( -- f ) catastrophe @ ;
 
   \ ===========================================================
-  cr .( Keyboard)  debug-point \ {{{1
+  cr .( Keyboard) ?depth debug-point \ {{{1
 
 13 cconstant enter-key
 
@@ -659,7 +661,7 @@ current-controls c@ set-controls
   \ Change the current controls.
 
   \ ===========================================================
-  cr .( UDG)  debug-point \ {{{1
+  cr .( UDG) ?depth debug-point \ {{{1
 
                128 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
@@ -690,7 +692,7 @@ cvariable used-udgs  0 used-udgs c!
   \ Abort if there is not free space to define _n_ UDG.
 
   \ ===========================================================
-  cr .( Font)  debug-point \ {{{1
+  cr .( Font) ?depth debug-point \ {{{1
 
 [pixel-projectile] 0= [if]
 
@@ -720,7 +722,7 @@ cvariable ocr-last-udg
 [then]
 
   \ ===========================================================
-  cr .( Score)  debug-point \ {{{1
+  cr .( Score) ?depth debug-point \ {{{1
 
                      0 cconstant status-bar-y
                      4 cconstant score-digits
@@ -755,7 +757,7 @@ cvariable player   1 player  c! \ 1..max-player
 : update-score ( n -- ) score +! .score ;
 
   \ ===========================================================
-  cr .( Graphics)  debug-point \ {{{1
+  cr .( Graphics) ?depth debug-point \ {{{1
 
     cvariable >udg  0 >udg c! \ next free UDG
 
@@ -1310,6 +1312,130 @@ XXXXXXXXXXXXXXXX
 ...X........X...
 
   \ -----------------------------------------------------------
+  \ Projectile
+
+[pixel-projectile] 0= [if]
+
+  >udg c@ \ next free UDG
+  dup cconstant first-projectile-frame
+
+  1 1 sprite: projectile-frame-0
+
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
+
+  1 1 sprite
+
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
+  .....X..
+  ..X.....
+
+  1 1 sprite
+
+  ..X.....
+  ..X..X..
+  .....X..
+  ..X.....
+  ..X..X..
+  .....X..
+  ..X.....
+  ..X..X..
+
+  1 1 sprite
+
+  .....X..
+  ..X..X..
+  ..X.....
+  .....X..
+  ..X..X..
+  ..X.....
+  .....X..
+  ..X..X..
+
+  1 1 sprite
+
+  ..X.....
+  ........
+  ..X..X..
+  ........
+  .....X..
+  ..X.....
+  ........
+  ..X..X..
+
+  1 1 sprite
+
+  .....X..
+  ........
+  ..X..X..
+  ........
+  ..X.....
+  .....X..
+  ........
+  ..X..X..
+
+  1 1 sprite
+
+  ..X..X..
+  .....X..
+  ..X.....
+  ........
+  ..X..X..
+  .....X..
+  ..X.....
+  ........
+
+  1 1 sprite
+
+  ..X..X..
+  ..X.....
+  .....X..
+  ........
+  ..X..X..
+  ..X.....
+  .....X..
+  ........
+
+  1 1 sprite
+
+  ..X.....
+  ..X..X..
+  ........
+  ..X..X..
+  ..X.....
+  .....X..
+  ..X.....
+  ..X..X..
+
+  1 1 sprite
+
+  .....X..
+  ..X..X..
+  ........
+  ..X..X..
+  .....X..
+  ..X.....
+  .....X..
+  ..X..X..
+
+  >udg c@ swap - cconstant frames/projectile
+
+  >udg c@ 1- cconstant last-projectile-frame
+
+[then]
+
+  \ -----------------------------------------------------------
   \ Building
 
 1 1 sprite: brick
@@ -1445,124 +1571,6 @@ cenum right-tank-udg  ( -- c ) drop
 
 sprite-string invader-explosion$ ( -- ca len )
 
-[pixel-projectile] 0= [if]
-
-  >udg c@ \ next free UDG
-
-  1 1 sprite: projectile-frame-0
-
-  ..X.....
-  .....X..
-  ..X.....
-  .....X..
-  ..X.....
-  .....X..
-  ..X.....
-  .....X..
-
-  1 1 sprite
-
-  .....X..
-  ..X.....
-  .....X..
-  ..X.....
-  .....X..
-  ..X.....
-  .....X..
-  ..X.....
-
-  1 1 sprite
-
-  ..X.....
-  ..X..X..
-  .....X..
-  ..X.....
-  ..X..X..
-  .....X..
-  ..X.....
-  ..X..X..
-
-  1 1 sprite
-
-  .....X..
-  ..X..X..
-  ..X.....
-  .....X..
-  ..X..X..
-  ..X.....
-  .....X..
-  ..X..X..
-
-  1 1 sprite
-
-  ..X.....
-  ........
-  ..X..X..
-  ........
-  .....X..
-  ..X.....
-  ........
-  ..X..X..
-
-  1 1 sprite
-
-  .....X..
-  ........
-  ..X..X..
-  ........
-  ..X.....
-  .....X..
-  ........
-  ..X..X..
-
-  1 1 sprite
-
-  ..X..X..
-  .....X..
-  ..X.....
-  ........
-  ..X..X..
-  .....X..
-  ..X.....
-  ........
-
-  1 1 sprite
-
-  ..X..X..
-  ..X.....
-  .....X..
-  ........
-  ..X..X..
-  ..X.....
-  .....X..
-  ........
-
-  1 1 sprite
-
-  ..X.....
-  ..X..X..
-  ........
-  ..X..X..
-  ..X.....
-  .....X..
-  ..X.....
-  ..X..X..
-
-  1 1 sprite
-
-  .....X..
-  ..X..X..
-  ........
-  ..X..X..
-  .....X..
-  ..X.....
-  .....X..
-  ..X..X..
-
-  >udg c@ swap - cconstant frames/projectile
-
-[then]
-
   \ -----------------------------------------------------------
   \ Containers
 
@@ -1690,7 +1698,7 @@ XXXXXXXXXXXXXXXX
 sprite-string fire-button$ ( -- ca len )
 
   \ ===========================================================
-  cr .( Type)  debug-point \ {{{1
+  cr .( Type) ?depth debug-point \ {{{1
 
 : centered ( len -- col ) columns swap - 2/ ;
   \ Convert a string length to the column required
@@ -1715,7 +1723,7 @@ sprite-string fire-button$ ( -- ca len )
   \ given row.
 
   \ ===========================================================
-  cr .( Game screen)  debug-point \ {{{1
+  cr .( Game screen) ?depth debug-point \ {{{1
 
 sky-bottom-y sky-top-y - 1+ columns * constant /sky
   \ Number of characters and attributes of the sky.
@@ -1754,7 +1762,7 @@ status-bar-rows columns * cconstant /status-bar
 [then]
 
   \ ===========================================================
-  cr .( Invaders data)  debug-point \ {{{1
+  cr .( Invaders data) ?depth debug-point \ {{{1
 
   \ --------------------------------------------
   \ Invader species
@@ -1963,7 +1971,7 @@ create invader-stamina-attr ( -- ca )
   \ Invader proper color for its stamina.
 
   \ ===========================================================
-  cr .( Building)  debug-point \ {{{1
+  cr .( Building) ?depth debug-point \ {{{1
 
 cvariable old-breachs
   \ Number of breachs in the wall, at the start of the current
@@ -2065,7 +2073,7 @@ variable repaired
 : repair-building ( -- ) building repaired on check-breachs ;
 
   \ ===========================================================
-  cr .( Locations)  debug-point \ {{{1
+  cr .( Locations) ?depth debug-point \ {{{1
 
 8 cconstant locations
 
@@ -2092,7 +2100,7 @@ variable used-projectiles  used-projectiles off
   \ Init the location number and the related variables.
 
   \ ===========================================================
-  cr .( Tank)  debug-point \ {{{1
+  cr .( Tank) ?depth debug-point \ {{{1
 
 cvariable tank-x \ column
   \ XXX TODO -- cvariable
@@ -2202,7 +2210,7 @@ constant tank-movements ( -- a )
 : driving ( -- ) tank-movement perform ;
 
   \ ===========================================================
-  cr .( Projectiles)  debug-point \ {{{1
+  cr .( Projectiles) ?depth debug-point \ {{{1
 
 %111 cconstant max-projectile#
   \ Bitmask for the projectile counter (0..7).
@@ -2255,7 +2263,7 @@ defer debug-data-pause ( -- )
   \ Coordinates of the projectile.
 
   \ ===========================================================
-  cr .( Init)  debug-point \ {{{1
+  cr .( Init) ?depth debug-point \ {{{1
 
 : prepare-war ( -- )
   catastrophe off
@@ -2270,7 +2278,7 @@ defer debug-data-pause ( -- )
   loop ;
 
   \ ===========================================================
-  cr .( Instructions)  debug-point \ {{{1
+  cr .( Instructions) ?depth debug-point \ {{{1
 
 : game-title ( -- )
   home game-title$ columns type-center-field ;
@@ -2280,16 +2288,16 @@ defer debug-data-pause ( -- )
 : (c) ( -- ) 127 emit ;
   \ Print the copyright symbol.
 
-: .copyright ( -- )
+: (.copyright ( -- )
   row 1 over    at-xy (c) ."  2016,2017 Marcos Cruz"
       8 swap 1+ at-xy           ." (programandala.net)" ;
   \ Print the copyright notice at the current coordinates.
 
-: show-copyright ( -- ) 0 22 at-xy .copyright ;
+: .copyright ( -- ) 0 22 at-xy (.copyright ;
 
   \ XXX OLD -- maybe useful in a future version
   \ : .control ( n -- ) ."  = " .kk# 4 spaces ;
-  \ : .controls ( -- )
+  \ : (.controls ( -- )
   \   row dup s" [Space] to change controls:" rot center-type
   \   9 over 2+  at-xy ." Left " kk-left#  .control
   \   9 over 3 + at-xy ." Right" kk-right# .control
@@ -2314,7 +2322,7 @@ defer debug-data-pause ( -- )
   20 at-x right-key$ 2 type-left-field ;
   \ Print control keys at the current row.
 
-: .controls ( -- )
+: (.controls ( -- )
   \ s" [Space] to change controls:" row dup >r center-type
     \ XXX TODO --
   .controls-legend cr .control-keys ;
@@ -2327,7 +2335,7 @@ true [if] \ XXX OLD
   \ Print an item of the score table, with sprite string _ca2
   \ len2_ and description _ca1 len1_
 
-: .score-table ( -- )
+: (.score-table ( -- )
   xy 2dup  at-xy s" 10 " points$ s+
            invader-attr attr! docked-invader-0$ .score-item
   2dup 1+  at-xy s" 20 " points$ s+
@@ -2362,7 +2370,7 @@ true [if] \ XXX OLD
   \ This is word mimics the correspondent invader words,
   \ in order to use `.score-item` also with the UFO.
 
-: .score-table ( -- )
+: (.score-table ( -- )
   xy 2dup  at-xy 0 invader-attr .score-item
   2dup 1+  at-xy 1 invader-attr .score-item
   2dup 2+  at-xy 2 invader-attr .score-item
@@ -2372,38 +2380,37 @@ true [if] \ XXX OLD
 
 [then]
 
-: show-score-table ( -- ) 9 4 at-xy .score-table ;
+: .score-table ( -- ) 9 4 at-xy (.score-table ;
 
 : change-players ( -- )
   players c@ 1+ dup max-player > if drop 1 then players c! ;
 
 false [if] \ XXX TODO --
 
-: .players ( -- ) players$ type players c@ . ;
+: (.players ( -- ) players$ type players c@ . ;
    \ Print the number of players at the current coordinates.
 
-: show-players ( -- ) 0 8 at-xy .players ;
+: .players ( -- ) 0 8 at-xy (.players ;
 
 [else]  \ XXX TMP --
 
-: show-players ( -- ) ;
+: .players ( -- ) ;
 
 [then]
 
-: show-controls ( -- )
-  0 12 at-xy .controls
+: .controls ( -- )
+  0 12 at-xy (.controls
   \ s" SPACE: change - ENTER: start" 18 center-type  ; XXX TMP
   0 16 at-xy not-in-this-language$ columns type-center-field
   0 19 at-xy start$ columns type-center-field ;
   \ XXX TMP --
 
-: invariable-menu-screen ( -- )
-  game-version show-copyright ;
+: invariable-menu-screen ( -- ) game-version .copyright ;
   \ Display the parts of the menu screen that are invariable,
   \ i.e., don't depend on the current language.
 
 : variable-menu-screen ( -- )
-  game-title show-players show-score-table show-controls ;
+  game-title .players .score-table .controls ;
   \ Display the parts of the menu screen that are variable,
   \ i.e., depend on the current language.
 
@@ -2425,8 +2432,8 @@ false [if] \ XXX TODO --
     key lower case
     start-key    of  exit           endof \ XXX TMP --
     language-key of change-language variable-menu-screen endof
-    \ bl  of  next-controls show-controls  endof
-    \ 'p' of  change-players show-players  endof
+    \ bl  of  next-controls .controls  endof
+    \ 'p' of  change-players .players  endof
     \ XXX TMP --
     endcase
   again ;
@@ -2437,7 +2444,7 @@ false [if] \ XXX TODO --
   init-font init-colors text-attr attr! menu-screen menu ;
 
   \ ===========================================================
-  cr .( Invasion)  debug-point \ {{{1
+  cr .( Invasion) ?depth debug-point \ {{{1
 
 cvariable invaders \ counter
 
@@ -2526,7 +2533,21 @@ cvariable invaders \ counter
                                     then c@ = ;
   \ Has the current invader broken a container?
 
-: hit-wall ( -- ) invader-active off ;
+: healthy? ( -- f ) invader-stamina c@ max-stamina = ;
+  \ Is the current invader healthy? Has it got maximum stamina?
+
+: change-direction ( -- )
+  invader-x-inc @ negate invader-x-inc ! ;
+  \ XXX TODO -- Write `negate! ( a -- )` in Z80.
+
+: turn-back ( -- )
+  change-direction set-flying-sprite invader-active on ;
+  \ Make the current invader turn back.  Also activate it, in
+  \ case it's temporarily inactive at the wall of the building.
+
+: hit-wall ( -- )
+  healthy? if   invader-active off
+           else turn-back then ;
   \ XXX TMP --
 
 : hit-wall? ( -- f )
@@ -2543,15 +2564,6 @@ cvariable invaders \ counter
 : at-home? ( -- f ) invader-x c@ invader-initial-x c@ = ;
   \ Is the current invader at its start position?
 
-: change-direction ( -- )
-  invader-x-inc @ negate invader-x-inc ! ;
-  \ XXX TODO -- Write `negate! ( a -- )` in Z80.
-
-: turn-back ( -- )
-  change-direction set-flying-sprite invader-active on ;
-  \ Make the current invader turn back.  Also activate it, in
-  \ case it's temporarily inactive at the wall of the building.
-
 : dock ( -- )
   invader-active off invader-x-inc off set-docked-sprite ;
   \ Dock the current invader.
@@ -2566,11 +2578,18 @@ cvariable invaders \ counter
 : ?dock ( -- ) at-home? 0exit dock ;
   \ If the current invader is at home, dock it.
 
+: at-projectile? ( col row -- f )
+  ocr first-projectile-frame last-projectile-frame between ;
+
 : left-flying-invader ( -- )
+  invader-x c@ 1- invader-y c@ at-projectile?
+  if turn-back exit then
   -1 invader-x c+! at-invader .invader sky-attr attr! space ;
   \ Move the current invader, which is flying to the left.
 
 : right-flying-invader ( -- )
+  invader-x c@ 1+ invader-y c@ at-projectile?
+  if turn-back exit then
   at-invader sky-attr attr! space .invader 1 invader-x c+! ;
   \ Move the current invader, which is flying to the right.
 
@@ -2598,9 +2617,6 @@ cvariable cure-factor  20 cure-factor c!
 
 : ?cure ( -- ) difficult-cure? ?exit cure ;
   \ Cure the current invader, depending on its status.
-
-: healthy? ( -- f ) invader-stamina c@ max-stamina = ;
-  \ Is the current invader healthy? Has it got maximum stamina?
 
 : ?undock ( -- ) invaders c@ random ?exit undock ;
   \ Undock the current invader randomly, depending on the
@@ -2694,7 +2710,7 @@ defer invasion \ XXX TMP --
 ' (invasion ' invasion defer! \ XXX TMP --
 
   \ ===========================================================
-  cr .( UFO)  debug-point \ {{{1
+  cr .( UFO) ?depth debug-point \ {{{1
 
   \ XXX UNDER DEVELOPMENT
   \ XXX FIXME --
@@ -2785,7 +2801,7 @@ constant ufo-movements ( -- a )
   \ Manage the UFO.
 
   \ ===========================================================
-  cr .( Impact)  debug-point \ {{{1
+  cr .( Impact) ?depth debug-point \ {{{1
 
 : ufo-bang ( -- )  ;
   \ Make the explosion sound of the UFO.
@@ -2879,14 +2895,15 @@ constant ufo-movements ( -- a )
   [if]   projectile-coords gxy>attra c@ ufo-attr =
   [else] projectile-y c@ ufo-y =  [then] ;
 
-: impact ( -- ) ufo-impacted? if ufo-impacted
-                                 else invader-impacted
-                                 then destroy-projectile ;
+: impact ( -- ) ufo-impacted? if   ufo-impacted
+                              else invader-impacted
+                              then destroy-projectile ;
 
 : hit-something? ( -- f )
-  projectile-coords  [pixel-projectile]
-  [if]   gxy>attra c@ sky-attr <>
-  [else] ocr 0<> [then] ;
+  projectile-coords
+  [pixel-projectile] [if]   \ gxy>attra c@ sky-attr <>
+                            get-pixel \ XXX NEW
+                     [else] ocr 0<> [then] ;
   \ Did the projectile hit something?
 
 : impacted? ( -- f ) hit-something? dup if impact then ;
@@ -2894,7 +2911,7 @@ constant ufo-movements ( -- a )
   \ If so, do manage the impact.
 
   \ ===========================================================
-  cr .( Shoot)  debug-point \ {{{1
+  cr .( Shoot) ?depth debug-point \ {{{1
 
 [pixel-projectile] 0= [if]
 
@@ -2909,12 +2926,11 @@ constant ufo-movements ( -- a )
 [then]
 
 : .projectile ( -- )
-  [pixel-projectile]
-  [if]    projectile-coords set-pixel
-  [else]  projectile-attr attr!
-          at-projectile projectile .1x1sprite
-  [then] ;
-  \ Show the projectile.
+  projectile-attr attr!
+  [pixel-projectile] [if]   projectile-coords plots
+                     [else] at-projectile projectile .1x1sprite
+                     [then] ;
+  \ Display the projectile.
 
 ' whip alias fire-sound ( -- )
 
@@ -3012,12 +3028,12 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   \ Set the new record, if needed.
 
   \ ===========================================================
-  cr .( Players config)  debug-point \ {{{1
+  cr .( Players config) ?depth debug-point \ {{{1
 
   \ XXX TODO --
 
   \ ===========================================================
-  cr .( Location titles)  debug-point \ {{{1
+  cr .( Location titles) ?depth debug-point \ {{{1
 
 1 gigatype-style c!
 
@@ -3054,7 +3070,7 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   \ Settle in the current location.
 
   \ ===========================================================
-  cr .( The end)  debug-point \ {{{1
+  cr .( The end) ?depth debug-point \ {{{1
 
   \ : defeat-tune ( -- )
   \   100 200 do  i 20 beep  -5 +loop ;
@@ -3082,7 +3098,7 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   \ XXX TODO -- Factor.
 
   \ ===========================================================
-  cr .( Reports)  debug-point \ {{{1
+  cr .( Reports) ?depth debug-point \ {{{1
 
 7 3 18 18 window constant paper-report-window
 8 4 16 16 window constant report-window
@@ -3215,7 +3231,7 @@ localized-string about-next-location$ ( -- ca len )
 : battle-report ( -- ) preserve-screen (battle-report ;
 
   \ ===========================================================
-  cr .( Main loop)  debug-point \ {{{1
+  cr .( Main loop) ?depth debug-point \ {{{1
 
 : extermination? ( -- f ) invaders c@ 0= ;
 
@@ -3254,7 +3270,7 @@ localized-string about-next-location$ ( -- ca len )
 : run ( -- ) begin mobilize war again ;
 
   \ ===========================================================
-  cr .( Debugging tools)  debug-point \ {{{1
+  cr .( Debugging tools) ?depth debug-point \ {{{1
 
 : half ( -- )
   [ max-invaders 2/ ] literal !> actual-invaders ;
@@ -3262,6 +3278,10 @@ localized-string about-next-location$ ( -- ca len )
 
 : .udgs ( -- ) cr last-udg 1+ 0 do i emit-udg loop ;
   \ Print all game UDGs.
+
+: fi ( -- ) fly-projectile ;
+: fi? ( -- ?) flying-projectile? ;
+: mp ( -- ) move-projectile ;
 
 : ni ( -- ) next-invader ;
 : mi ( -- ) move-invader ;
@@ -3308,10 +3328,10 @@ localized-string about-next-location$ ( -- ca len )
   container-bottom .2x1sprite
   container-bottom .2x1sprite 8 emit
   broken-bottom-right-container .1x1sprite cr ;
-  \ Show the graphics of the broken containers.
+  \ Display the graphics of the broken containers.
 
   \ ===========================================================
-  cr .( Greeting)  debug-point \ {{{1
+  cr .( Greeting) ?depth debug-point \ {{{1
 
 cls .( Nuclear Waste Invaders)
 cr version$ type
