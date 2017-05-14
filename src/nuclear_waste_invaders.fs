@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.82.0+201705141522" ;
+: version$ ( -- ca len ) s" 0.83.0+201705141812" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1776,8 +1776,6 @@ status-bar-rows columns * cconstant /status-bar
   cfield: ~flying-right-sprite-frames
   cfield: ~docked-sprite
   cfield: ~docked-sprite-frames
-  cfield: ~destroy-points
-  cfield: ~retreat-points
 cconstant /species
 
 create species #species /species * allot
@@ -1785,33 +1783,26 @@ create species #species /species * allot
 
 : species~ ( n -- a ) /species * species + ;
 
-: set-species ( c1 c2 c3 c4 c5 c6 -- )
-  species~ >r r@ ~retreat-points c!
-              r@ ~destroy-points c!
-              r@ ~flying-right-sprite c!
+: set-species ( c1 c2 c3 c4 -- )
+  species~ >r r@ ~flying-right-sprite c!
             4 r@ ~flying-right-sprite-frames c!
               r@ ~flying-left-sprite c!
             4 r@ ~flying-left-sprite-frames c!
               r@ ~docked-sprite c!
             3 r> ~docked-sprite-frames c! ;
-  \ Init the data of invaders species _c6_:
+  \ Init the data of invaders species _c4_:
   \   c1 = docked sprite
   \   c2 = left flying sprite
   \   c3 = right flying sprite
-  \   c4 = points for destroy
-  \   c5 = points for retreat
 
 docked-invader-0
-left-flying-invader-0 right-flying-invader-0
-10 1 0 set-species
+left-flying-invader-0 right-flying-invader-0 0 set-species
 
 docked-invader-1
-left-flying-invader-1 right-flying-invader-1
-20 2 1 set-species
+left-flying-invader-1 right-flying-invader-1 1 set-species
 
 docked-invader-2
-left-flying-invader-2 right-flying-invader-2
-30 3 2 set-species
+left-flying-invader-2 right-flying-invader-2 2 set-species
 
   \ --------------------------------------------
 
@@ -1863,11 +1854,29 @@ create invaders-data /invaders allot
   current-invader~ ~initial-x-inc ;
 : invader-y             ( -- ca ) current-invader~ ~y ;
 
-: invader-destroy-points ( -- a )
-  invader-species @ ~destroy-points ;
+max-invaders 2 / 1- cconstant top-invader-layer
+  \ The number of the highest invader "layer". The pair
+  \ of invaders that fly nearest the ground are layer 0.
+  \ The pair above them are layer 1, and so on.
 
-: invader-retreat-points ( -- a )
-  invader-species @ ~retreat-points ;
+2 cconstant rows/layer
+
+building-top-y 1+ cconstant invader-top-y
+
+: layer>y ( n -- y )
+  top-invader-layer swap - rows/layer * invader-top-y + ;
+  \ Convert invader "layer" _n_ to its equivalent row _y_. The
+  \ pair of invaders that fly nearest the ground are layer 0.
+  \ The pair above them are layer 1, and so on.
+
+: y>layer ( y -- n ) rows/layer / 1- top-invader-layer swap - ;
+  \ Convert invader row _y_ to its equilavent "layer" _n_. The
+  \ pair of invaders that fly nearest the ground are layer 0.
+  \ The pair above them are layer 1, and so on.
+
+: invader-retreat-points ( -- n ) invader-y c@ y>layer 1+ ;
+
+: invader-destroy-points ( -- n ) invader-retreat-points 10 * ;
 
 : flying-to-the-right? ( -- f ) invader-x-inc @ 0> ;
   \ Is the current invader flying to the right?
@@ -1935,29 +1944,18 @@ create invaders-data /invaders allot
   \ Other fields don't need initialization, because they
   \ contain zero (default) or a constant.
 
-max-invaders 2 / 1- cconstant top-invader-layer
-  \ The number of the highest invader "layer". The pair
-  \ of invaders that fly nearest the ground are layer 0.
-  \ The pair above them are layer 1, and so on.
-
-: altitude ( n -- row )
-  top-invader-layer swap - 2* building-top-y + 1+ ;
-  \ Convert invader "layer" _n_ to its actual _row_.  The pair
-  \ of invaders that fly nearest the ground are layer 0.  The
-  \ pair above them are layer 1, and so on.
-
 : init-invaders-data ( -- )
   invaders-data /invaders erase
-  0 altitude invaders-max-x -1 0 9 set-invader
-  1 altitude invaders-max-x -1 0 8 set-invader
-  2 altitude invaders-max-x -1 1 7 set-invader
-  3 altitude invaders-max-x -1 1 6 set-invader
-  4 altitude invaders-max-x -1 2 5 set-invader
-  0 altitude invaders-min-x  1 0 4 set-invader
-  1 altitude invaders-min-x  1 0 3 set-invader
-  2 altitude invaders-min-x  1 1 2 set-invader
-  3 altitude invaders-min-x  1 1 1 set-invader
-  4 altitude invaders-min-x  1 2 0 set-invader ;
+  0 layer>y invaders-max-x -1 0 9 set-invader
+  1 layer>y invaders-max-x -1 0 8 set-invader
+  2 layer>y invaders-max-x -1 1 7 set-invader
+  3 layer>y invaders-max-x -1 1 6 set-invader
+  4 layer>y invaders-max-x -1 2 5 set-invader
+  0 layer>y invaders-min-x  1 0 4 set-invader
+  1 layer>y invaders-min-x  1 0 3 set-invader
+  2 layer>y invaders-min-x  1 1 2 set-invader
+  3 layer>y invaders-min-x  1 1 1 set-invader
+  4 layer>y invaders-min-x  1 2 0 set-invader ;
   \ Init the data of all invaders.
 
 create invader-stamina-attr ( -- ca )
@@ -2852,8 +2850,8 @@ constant ufo-movements ( -- a )
   \ right; etc..
 
 : explode ( -- )
-  invader-destroy-points c@  update-score  invader-explosion
-  -1 invaders c+!  0 invader-stamina c!  invader-active off ;
+  invader-destroy-points update-score invader-explosion
+  -1 invaders c+! 0 invader-stamina c! invader-active off ;
   \ The current invader explodes.
 
 ' lightning1 alias retreat-sound
@@ -2861,8 +2859,7 @@ constant ufo-movements ( -- a )
   \ XXX TODO -- look for a proper sound
 
 : retreat ( -- )
-  retreat-sound
-  invader-retreat-points c@ update-score turn-back ;
+  retreat-sound invader-retreat-points update-score turn-back ;
   \ The current invader retreats.
 
 : wounded ( -- ) -1 invader-stamina c+! ;
@@ -3307,9 +3304,6 @@ localized-string about-next-location$ ( -- ca len )
   ." species             " r@ invader~ ~species dup u. cr @
   ." SPECIES DATA:" cr
   rdrop >r
-  ." retreat-points      " r@ ~retreat-points c@ . cr
-  ." destroy-points      " r@ ~destroy-points c@ . cr
-  ." flying-left-sprite  " r@ ~flying-left-sprite c@ . cr
   ." flying-right-sprite " r@ ~flying-right-sprite c@ . cr
   ." docked-sprite       " r@ ~docked-sprite c@ . cr
   rdrop ;
