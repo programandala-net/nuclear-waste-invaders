@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.83.0+201705141812" ;
+: version$ ( -- ca len ) s" 0.84.0+201705142030" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1958,14 +1958,14 @@ building-top-y 1+ cconstant invader-top-y
   4 layer>y invaders-min-x  1 2 0 set-invader ;
   \ Init the data of all invaders.
 
-create invader-stamina-attr ( -- ca )
+create stamina-attributes ( -- ca )
   dying-invader-attr    c,
   wounded-invader-attr  c,
   sane-invader-attr     c,
   \ Table to index the invader stamina to its proper attribute.
 
 : invader-proper-attr ( -- c )
-  invader-stamina c@ [ invader-stamina-attr 1- ] literal + c@ ;
+  invader-stamina c@ [ stamina-attributes 1- ] literal + c@ ;
   \ Invader proper color for its stamina.
 
   \ ===========================================================
@@ -2057,7 +2057,7 @@ variable repaired
 : building ( -- )
   building-top
   location c@ 1+  building-left-x c@
-  building-bottom-y [ building-top-y 1+ ] literal
+  building-bottom-y [ building-top-y 1+ ] cliteral
   do   2dup i at-xy .brick
                     i 1 and containers-half array> perform
                     .brick
@@ -2115,7 +2115,7 @@ columns udg/tank - 1- cconstant tank-max-x
 
 : new-projectile-x ( -- col|x )
   [pixel-projectile]
-  [if]    tank-x c@ col>pixel [ udg/tank 8 * 2/ ] literal +
+  [if]    tank-x c@ col>pixel [ udg/tank 8 * 2/ ] cliteral +
   [else]  tank-x c@ 1+
   [then] ;
   \ Return the column _col_ or graphic coordinate _x_ for the
@@ -2658,7 +2658,7 @@ cvariable cure-factor  20 cure-factor c!
   invader-stamina c@ if (nonflying-invader then ;
 
 : last-invader? ( -- f )
-  \ current-invader c@ [ actual-invaders 1- ] literal = ;
+  \ current-invader c@ [ actual-invaders 1- ] cliteral = ;
   current-invader c@ actual-invaders 1- = ;
   \ XXX TMP -- for debugging, calculate at run-time
   \ Is the current invader the last one?
@@ -2837,7 +2837,7 @@ constant ufo-movements ( -- a )
   \ Show the explosion of the current invader.
 
 : impacted-invader ( -- n )
-  projectile-y c@ [ building-top-y 1+ ] cliteral - 2/
+  projectile-y c@ invader-top-y - 2/
   projectile-x c@ [ columns 2/ ] cliteral > abs 5 * + ;
   \ Return the impacted invader (0..9), calculated from the
   \ projectile coordinates: Invaders 0 and 5 are at the top,
@@ -2862,22 +2862,19 @@ constant ufo-movements ( -- a )
   retreat-sound invader-retreat-points update-score turn-back ;
   \ The current invader retreats.
 
-: wounded ( -- ) -1 invader-stamina c+! ;
+: wounded ( -- )
+  invader-stamina c@ 1- 1 max invader-stamina ! ;
   \ Reduce the invader's stamina after being shoot.
 
 : mortal? ( -- f ) invader-stamina c@ 2* random 0= ;
   \ Is it a mortal impact?  _f_ depends on a random calculation
   \ based on the stamina: The more stamina, the less chances to
-  \ be a mortal impact.  If stamina is zero, _f_ is always
-  \ true.
-  \ XXX TODO -- Reduce the chances.
+  \ be a mortal impact.
 
-: (invader-impacted ( -- )
-  wounded mortal? if   explode
-                  else attacking? if retreat then then ;
+: (invader-impacted ( -- ) mortal? if explode exit then
+                           wounded attacking? 0exit retreat ;
   \ The current invader has been impacted by the projectile.
-  \ If the wound is mortal, it explodes; else, if attacking, it
-  \ retreats.
+  \ It explodes or retreats.
 
 : invader-impacted ( -- )
   current-invader c@ >r impacted-invader current-invader c!
@@ -2970,8 +2967,8 @@ cvariable trigger-delay-counter  0 trigger-delay-counter c!
   x> c!> projectile#  .debug-data
   new-projectile-x projectile-x c!
   [pixel-projectile]
-  [if]    [ tank-y row>pixel 1+ ] literal
-  [else]  [ tank-y 1- ] literal
+  [if]    [ tank-y row>pixel 1+ ] cliteral
+  [else]  [ tank-y 1- ] cliteral
   [then]  projectile-y c!
   .projectile fire-sound delay-trigger damage-transmission ;
   \ The tank fires.
@@ -3268,8 +3265,7 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Debugging tools) ?depth debug-point \ {{{1
 
-: half ( -- )
-  [ max-invaders 2/ ] literal !> actual-invaders ;
+: half ( -- ) [ max-invaders 2/ ] cliteral !> actual-invaders ;
   \ Reduce the actual invaders to the left half.
 
 : .udgs ( -- ) cr last-udg 1+ 0 do i emit-udg loop ;
