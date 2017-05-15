@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.84.0+201705142030" ;
+: version$ ( -- ca len ) s" 0.85.0+201705160027" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -345,7 +345,7 @@ create game-font /game-font allot
 
 0 0 game-font /game-font tape-file>
 
-game-font 256 - constant game-font0
+game-font mode-32iso-font !
 
   \ ===========================================================
   cr .( Localization) ?depth debug-point \ {{{1
@@ -2436,10 +2436,8 @@ false [if] \ XXX TODO --
     endcase
   again ;
 
-: init-font ( -- ) game-font0 set-font mode-32iso ;
-
 : mobilize ( -- )
-  init-font init-colors text-attr attr! menu-screen menu ;
+  mode-32iso init-colors text-attr attr! menu-screen menu ;
 
   \ ===========================================================
   cr .( Invasion) ?depth debug-point \ {{{1

@@ -1,8 +1,8 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-05-12
+:revdate: 2017-05-16
 
-// Last modified 201705120148
+// Last modified 201705160045
 
 Older first:
 
@@ -48,9 +48,11 @@ Fix: sometimes the projectile erases half of the invader.
 Rename UFO to mothership.
 Make the UFO woundable like the invaders: same levels of stamina.
 
-.2017-02-26:
+.2017-02-26, 2017-05-14:
 
 Max ammo, with a method or place to get more.
+
+Get more ammo by firing below the building.
 
 .2017-02-26:
 
@@ -68,12 +70,6 @@ Make a hit invader randomly move up to the next layer, if it's free.
 .2017-01-13:
 
 Improve the visibility of the projectile right above the tank.
-
-.2017-03-01:
-
-Make the detection on the wall depend on its actual presence, not on
-the x position. This way the wall will not be detected when it's
-broken.
 
 .2017-03-01:
 
@@ -113,3 +109,8 @@ Don't repair the building automatically. Use the tank.
 
 Improve the start of the attack: Make the mothership drop the
 invaders.
+
+.2017-05-16:
+
+Increase the level bonus to compensate it's harder to complete each
+level. Reduce the score for every breach.
