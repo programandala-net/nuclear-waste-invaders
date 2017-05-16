@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.85.0+201705160027" ;
+: version$ ( -- ca len ) s" 0.86.0+201705161204" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2344,7 +2344,13 @@ true [if] \ XXX OLD
            ufo-attr attr! ufo$ .score-item ;
    \ Print the score table at the current coordinates.
 
-[else] \ XXX TODO --
+: .score-table ( -- ) 9 4 at-xy (.score-table ;
+
+[then]
+
+false [if] \ XXX NEW
+
+  \ XXX UNDER DEVELOPMENT
 
 : .score-item ( c1 c2 n3 n4 -- )
   attr! drop swap .2x1sprite
@@ -2376,9 +2382,9 @@ true [if] \ XXX OLD
    \ Print the score table at the current coordinates.
   \ XXX TODO -- Rewrite. Parameters of `.score-item` changed.
 
-[then]
-
 : .score-table ( -- ) 9 4 at-xy (.score-table ;
+
+[then]
 
 : change-players ( -- )
   players c@ 1+ dup max-player > if drop 1 then players c! ;
@@ -2407,8 +2413,7 @@ false [if] \ XXX TODO --
   \ Display the parts of the menu screen that are invariable,
   \ i.e., don't depend on the current language.
 
-: variable-menu-screen ( -- )
-  game-title .players .score-table .controls ;
+: variable-menu-screen ( -- ) game-title .players .controls ;
   \ Display the parts of the menu screen that are variable,
   \ i.e., depend on the current language.
 
