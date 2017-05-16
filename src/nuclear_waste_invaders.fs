@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.86.0+201705161204" ;
+: version$ ( -- ca len ) s" 0.87.0+201705161701" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -725,7 +725,7 @@ cvariable ocr-last-udg
   cr .( Score) ?depth debug-point \ {{{1
 
                      0 cconstant status-bar-y
-                     4 cconstant score-digits
+                     5 cconstant score-digits
           status-bar-y cconstant score-y
                        cvariable score-x
 columns score-digits - cconstant record-x
@@ -1979,17 +1979,23 @@ cvariable breachs
   \ Number of new breachs in the wall, during the current
   \ attack.
 
+cvariable battle-breachs
+  \ Total number of breachs in the wall, during the current
+  \ battle.
+
 : check-breachs ( -- ) breachs c@ old-breachs c! ;
   \ Remember the current number of breachs.
 
-: no-breach ( -- ) 0 old-breachs c! 0 breachs c! ;
+: no-breach ( -- )
+  0 old-breachs c! 0 breachs c! 0 battle-breachs c! ;
   \ Reset the number of breachs.
 
 : breachs? ( -- f ) breachs c@ 0<> ;
-  \ Has the building any breach?
+  \ Has the building any breach caused during an attack?
 
 : new-breach? ( -- f ) breachs c@ old-breachs c@ > ;
-  \ Has the building any new breach?
+  \ Has got the building any new breach during the current
+  \ attack?
 
 building-top-y 11 + cconstant building-bottom-y
   \ XXX TODO -- Rename. This was valid when the building
@@ -2084,9 +2090,11 @@ variable repaired
 variable used-projectiles  used-projectiles off
   \ Counter.
 
-: battle-bonus ( -- n )
-  location c@ 100 * used-projectiles @ - 0 max ;
-  \ Return bonus _n_ after winning a battle.
+: battle-bonus ( -- n ) location c@ 1+ 500 *
+                        battle-breachs c@ 100 * -
+                        used-projectiles @ -
+                        0 max ;
+  \ Calculate bonus _n_ after winning a battle.
 
 : reward ( -- ) battle-bonus update-score ;
   \ Add the won battle bonus to the score.
@@ -2629,10 +2637,12 @@ cvariable cure-factor  20 cure-factor c!
 : docked? ( -- f ) invader-x c@ invader-initial-x c@ = ;
   \ Is the current invader docked?
 
+: new-breach ( -- ) breachs c1+! battle-breachs c1+! ;
+
 : break-the-wall ( -- )
   invader-active on
   invader-x c@ flying-to-the-right? if 2+ else 1- then
-  broken-wall breachs c1+! ;
+  broken-wall new-breach ;
 
   \ XXX TODO -- remove `if`, calculate:
 

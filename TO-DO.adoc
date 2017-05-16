@@ -2,7 +2,7 @@
 :author: Marcos Cruz (programandala.net)
 :revdate: 2017-05-16
 
-// Last modified 201705160111
+// Last modified 201705161755
 
 Older first:
 
@@ -112,5 +112,5 @@ invaders.
 
 .2017-05-16:
 
-Increase the level bonus to compensate it's harder to complete each
-level. Reduce the score for every breach, depending on its altitude.
+Improve `battle-bonus`: Make the breach penalty depend on the altitude
+of the breachs.
