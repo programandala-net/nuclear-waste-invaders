@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.88.0+201705181640" ;
+: version$ ( -- ca len ) s" 0.89.0+201705190055" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2729,38 +2729,38 @@ defer invasion \ XXX TMP --
 
 1 cconstant mothership-y
 
-cvariable mothership-x
-cvariable mothership-x-inc  -1|1 mothership-x-inc c!
+variable mothership-x
+variable mothership-x-inc  -1|1 mothership-x-inc !
 
 cvariable mothership-frame \ counter (0..3)
 
 : ~~mothership-info ( -- )
-  home ." x:" mothership-x c@ .
-       ." inc.:" mothership-x-inc c@ . ;
+  home ." x:" mothership-x ?
+       ." inc.:" mothership-x-inc ? ;
   \ ' ~~mothership-info ' ~~app-info defer!
   \ XXX TMP -- for debugging
 
 : mothership-returns ( -- )
-  mothership-x-inc c@ %11111110 xor mothership-x-inc c! ;
+  mothership-x-inc @ negate mothership-x-inc ! ;
 
-5 cconstant mothership-range
+32 cconstant mothership-range
   \ Allowed x coordinate positions of the mothership out of the
   \ screen, in either direction.
   \
   \ XXX TMP -- small value for debugging
 
-: init-mothership ( -- ) mothership-range mothership-x c! ;
+: init-mothership ( -- ) mothership-range mothership-x ! ;
   \ Init the mothership.
 
 columns udg/mothership - cconstant mothership-max-x
                        0 cconstant mothership-min-x
 
 : visible-mothership? ( -- f )
-  mothership-x c@ mothership-min-x mothership-max-x between ;
+  mothership-x @ mothership-min-x mothership-max-x between ;
   \ Is the mothership visible?
 
 : mothership-coordinates ( -- row col )
-  mothership-x c@ 0 max mothership-max-x min mothership-y ;
+  mothership-x @ 0 max mothership-max-x min mothership-y ;
   \ Return the cursor coordinates of the mothership.
 
 : at-mothership ( -- ) mothership-coordinates at-xy ;
@@ -2777,12 +2777,12 @@ columns udg/mothership - cconstant mothership-max-x
   \ UDG _c_ of the mothership.
 
 : advance-mothership ( -- )
-  mothership-x-inc c@ mothership-x c+! ;
+  mothership-x-inc @ mothership-x +! ;
   \ Advance the mothership on its current direction,
   \ adding its x increment to its x coordinate.
 
 : mothership-in-range? ( -- f )
-  mothership-x c@
+  mothership-x @
   [ mothership-range negate    ] literal
   [ mothership-range columns + ] literal within ;
   \ Is the mothership in the range of its flying limit?
@@ -2807,7 +2807,7 @@ constant mothership-movements ( -- a )
   \ Execution table to move the mothership.
 
 : move-mothership ( -- )
-  mothership-movements mothership-x-inc c@ +perform ;
+  mothership-movements mothership-x-inc @ +perform ;
   \ Execute the proper movement.
 
 [then]
@@ -2838,7 +2838,7 @@ constant mothership-movements ( -- a )
   \ XXX TODO -- 128 sound
 
 : mothership-on-fire ( -- )
-  mothership-x c@ 1+ mothership-y at-xy
+  mothership-x @ 1+ mothership-y at-xy
   mothership-explosion$ type-udg ;
   \ Show the mothership on fire.
 
@@ -3324,10 +3324,12 @@ localized-string about-next-location$ ( -- ca len )
 : ms ( -- ) manage-mothership ;
 : ims ( -- ) invisible-mothership ;
 : vms ( -- ) visible-mothership ;
+: ams ( -- ) advance-mothership ;
 : vms? ( -- f ) visible-mothership? ;
 : .ms ( -- ) .mothership ;
 : ms? ( -- f ) mothership-in-range? ;
 : -ms ( -- ) -mothership ;
+: msx ( -- x ) mothership-x @ ;
 
 : .i ( n -- )
   >r
