@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.87.0+201705161701" ;
+: version$ ( -- ca len ) s" 0.88.0+201705181640" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -553,7 +553,7 @@ localized-string press-any-key$ ( -- ca len )
                green cconstant sane-invader-attr
               yellow cconstant wounded-invader-attr
                  red cconstant dying-invader-attr
-             magenta cconstant ufo-attr
+             magenta cconstant mothership-attr
 
                white cconstant tank-attr
               yellow cconstant projectile-attr
@@ -800,7 +800,7 @@ cvariable latest-sprite-udg
   (sprite dup cconstant udg-block ;
 
 2 cconstant udg/invader
-2 cconstant udg/ufo
+2 cconstant udg/mothership
 
 0 0 0 0 0 0 0 0 1 free-udg dup cconstant bl-udg udg!
 
@@ -1257,9 +1257,9 @@ sprite-string docked-invader-2$ ( -- ca len )
   \ -----------------------------------------------------------
   \ Mothership
 
-  \ ufo, frame 0:
+  \ mothership, frame 0:
 
-2 1 sprite: ufo
+2 1 sprite: mothership
 
 ................
 .....XXXXXX.....
@@ -1270,9 +1270,9 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
 
-sprite-string ufo$ ( -- ca len )
+sprite-string mothership$ ( -- ca len )
 
-  \ ufo, frame 1:
+  \ mothership, frame 1:
 
 2 1 sprite
 
@@ -1285,7 +1285,7 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
 
-  \ ufo, frame 2:
+  \ mothership, frame 2:
 
 2 1 sprite
 
@@ -1298,7 +1298,7 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
 
-  \ ufo, frame 3:
+  \ mothership, frame 3:
 
 2 1 sprite
 
@@ -1587,7 +1587,7 @@ sprite-string invader-explosion$ ( -- ca len )
 X....XXXXX...X..
 ..X...XX...X..X.
 
-sprite-string ufo-explosion$ ( -- ca len )
+sprite-string mothership-explosion$ ( -- ca len )
 
 2 1 sprite: container-top
 
@@ -2349,7 +2349,7 @@ true [if] \ XXX OLD
   2dup 2+  at-xy s" 30 " points$ s+
            invader-attr attr! docked-invader-2$ .score-item
        3 + at-xy bonus$
-           ufo-attr attr! ufo$ .score-item ;
+           mothership-attr attr! mothership$ .score-item ;
    \ Print the score table at the current coordinates.
 
 : .score-table ( -- ) 9 4 at-xy (.score-table ;
@@ -2371,22 +2371,22 @@ false [if] \ XXX NEW
   \   n4 = points for retreat.
   \   n5 = color
 
-: ufo-data ( -- x1 c2 n3 x4 )
+: mothership-data ( -- x1 c2 n3 x4 )
   docked-invader-0 left-flying-invader-0 10 1 ;
-  \ Data specific to the UFO:
+  \ Data specific to the mothership:
   \   x1 = fake datum;
   \   c2 = sprite;
   \   n3 = points for destroy;
   \   x4 = fake datum.
   \
   \ This is word mimics the correspondent invader words,
-  \ in order to use `.score-item` also with the UFO.
+  \ in order to use `.score-item` also with the mothership.
 
 : (.score-table ( -- )
   xy 2dup  at-xy 0 invader-attr .score-item
   2dup 1+  at-xy 1 invader-attr .score-item
   2dup 2+  at-xy 2 invader-attr .score-item
-       3 + at-xy ufo-data ufo-attr .score-item ;
+       3 + at-xy mothership-data mothership-attr .score-item ;
    \ Print the score table at the current coordinates.
   \ XXX TODO -- Rewrite. Parameters of `.score-item` changed.
 
@@ -2721,118 +2721,140 @@ defer invasion \ XXX TMP --
 ' (invasion ' invasion defer! \ XXX TMP --
 
   \ ===========================================================
-  cr .( UFO) ?depth debug-point \ {{{1
+  cr .( Mothership) ?depth debug-point \ {{{1
 
   \ XXX UNDER DEVELOPMENT
-  \ XXX FIXME --
 
-  \ XXX TODO -- simplify: the UFO can be always visible
+  \ XXX TODO -- simplify: the mothership can be always visible
 
-3 cconstant ufo-y
+1 cconstant mothership-y
 
-variable ufo-x
-variable ufo-x-inc  -1|1 ufo-x-inc !
-cvariable ufo-frame \ counter (0..3)
+cvariable mothership-x
+cvariable mothership-x-inc  -1|1 mothership-x-inc c!
 
-: ~~ufo-info ( -- )
-  home ." x:" ufo-x ? ." inc.:" ufo-x-inc ? ;
-  \ ' ~~ufo-info ' ~~app-info defer!
+cvariable mothership-frame \ counter (0..3)
+
+: ~~mothership-info ( -- )
+  home ." x:" mothership-x c@ .
+       ." inc.:" mothership-x-inc c@ . ;
+  \ ' ~~mothership-info ' ~~app-info defer!
   \ XXX TMP -- for debugging
 
-: ufo-returns ( -- ) ufo-x-inc @ negate ufo-x-inc ! ;
+: mothership-returns ( -- )
+  mothership-x-inc c@ %11111110 xor mothership-x-inc c! ;
 
-96 cconstant ufo-limit-x
-  \ Limit of the x coordinate of the UFO in either direction.
+5 cconstant mothership-range
+  \ Allowed x coordinate positions of the mothership out of the
+  \ screen, in either direction.
+  \
+  \ XXX TMP -- small value for debugging
 
-: init-ufo ( -- ) ufo-limit-x ufo-x ! ;
-  \ Init the UFO.
+: init-mothership ( -- ) mothership-range mothership-x c! ;
+  \ Init the mothership.
 
-columns udg/ufo - cconstant ufo-max-x
-                0 cconstant ufo-min-x
+columns udg/mothership - cconstant mothership-max-x
+                       0 cconstant mothership-min-x
 
-: visible-ufo? ( -- f )
-  ufo-x @ ufo-min-x ufo-max-x between ;
-  \ Is the UFO visible?
+: visible-mothership? ( -- f )
+  mothership-x c@ mothership-min-x mothership-max-x between ;
+  \ Is the mothership visible?
 
-: at-ufo ( -- ) ufo-x @ 0 max ufo-max-x min ufo-y at-xy ;
-  \ Set the cursor position at the coordinates of the visible
-  \ part of the UFO.
+: mothership-coordinates ( -- row col )
+  mothership-x c@ 0 max mothership-max-x min mothership-y ;
+  \ Return the cursor coordinates of the mothership.
 
-: -ufo ( -- ) at-ufo udg/ufo spaces ;
-  \ Delete the visible part of the UFO.
+: at-mothership ( -- ) mothership-coordinates at-xy ;
+  \ Set the cursor position at the coordinates of the
+  \ the mothership.
 
-: ufo-udg ( -- c )
-  ufo-frame c@ dup next-frame ufo-frame c!
-  [ udg/ufo 2 = ] [if]  2*  [else]  udg/ufo *  [then]
-  ufo + ;
-  \ UDG _c_ of the UFO.
+: -mothership ( -- ) at-mothership udg/mothership spaces ;
+  \ Delete the visible part of the mothership.
 
-: advance-ufo ( -- ) ufo-x-inc @ ufo-x +! ;
-  \ Advance the UFO on its current direction,
+: mothership-udg ( -- c )
+  mothership-frame c@ dup next-frame mothership-frame c!
+  [ udg/mothership 2 = ] [if] 2* [else] udg/mothership * [then]
+  mothership + ;
+  \ UDG _c_ of the mothership.
+
+: advance-mothership ( -- )
+  mothership-x-inc c@ mothership-x c+! ;
+  \ Advance the mothership on its current direction,
   \ adding its x increment to its x coordinate.
 
-: ufo-in-range? ( -- f ) ufo-limit-x ufo-x @ abs < ;
-  \ Is the UFO in the range of its flying limit?
+: mothership-in-range? ( -- f )
+  mothership-x c@
+  [ mothership-range negate    ] literal
+  [ mothership-range columns + ] literal within ;
+  \ Is the mothership in the range of its flying limit?
 
-: .ufo ( -- ) ufo-attr attr! ufo-udg .2x1sprite ;
+: .mothership ( -- )
+  mothership-attr attr!
+  at-mothership mothership-udg .2x1sprite ;
 
 0 [if] \ XXX OLD
 
-: move-ufo-to-the-right ( -- )
-  at-ufo sky-attr attr! space .ufo ;
+: move-mothership-to-the-right ( -- )
+  at-mothership sky-attr attr! space .mothership ;
 
-: move-ufo-to-the-left ( -- )
-  at-ufo .ufo sky-attr attr! space ;
+: move-mothership-to-the-left ( -- )
+  at-mothership .mothership sky-attr attr! space ;
 
-      ' move-ufo-to-the-left ,
+      ' move-mothership-to-the-left ,
 here  ' noop ,
-      ' move-ufo-to-the-right ,
+      ' move-mothership-to-the-right ,
 
-constant ufo-movements ( -- a )
-  \ Execution table to move the UFO.
+constant mothership-movements ( -- a )
+  \ Execution table to move the mothership.
 
-: move-ufo ( -- ) ufo-movements ufo-x-inc @ +perform ;
+: move-mothership ( -- )
+  mothership-movements mothership-x-inc c@ +perform ;
   \ Execute the proper movement.
 
 [then]
 
-: manage-visible-ufo ( -- )
-  -ufo advance-ufo visible-ufo? 0= ?exit .ufo ;
-  \ Manage the UFO, when it's visible.
-  \ XXX TODO -- improve: don't delete the whole UFO
+: visible-mothership ( -- )
+  -mothership advance-mothership
+  visible-mothership? 0= ?exit .mothership ;
+  \ Manage the mothership, when it's visible.
+  \ XXX TODO -- improve: don't delete the whole mothership
 
-: manage-invisible-ufo ( -- )
-  advance-ufo visible-ufo? if .ufo exit then
-  ufo-in-range? ?exit ufo-returns ;
-  \ Manage the UFO, when it's invisible.
+: invisible-mothership ( -- )
+  advance-mothership
+  visible-mothership? if .mothership exit then
+  mothership-in-range? ?exit
+  mothership-returns advance-mothership ;
+  \ Manage the mothership, when it's invisible.
 
-: manage-ufo ( -- )
-  visible-ufo? if   manage-visible-ufo exit
-               then manage-invisible-ufo ;
-  \ Manage the UFO.
+: manage-mothership ( -- )
+  visible-mothership? if   visible-mothership exit
+                      then invisible-mothership ;
+  \ Manage the mothership.
 
   \ ===========================================================
   cr .( Impact) ?depth debug-point \ {{{1
 
-: ufo-bang ( -- )  ;
-  \ Make the explosion sound of the UFO.
+: mothership-bang ( -- )  ;
+  \ Make the explosion sound of the mothership.
   \ XXX TODO -- 128 sound
 
-: ufo-on-fire ( -- )
-  ufo-x @ 1+ ufo-y at-xy ufo-explosion$ type-udg ;
-  \ Show the UFO on fire.
+: mothership-on-fire ( -- )
+  mothership-x c@ 1+ mothership-y at-xy
+  mothership-explosion$ type-udg ;
+  \ Show the mothership on fire.
 
-: ufo-explosion ( -- ) ufo-on-fire ufo-bang -ufo ;
-  \ Show the explosion of the UFO.
+: mothership-explosion ( -- )
+  mothership-on-fire mothership-bang -mothership ;
+  \ Show the explosion of the mothership.
 
-: ufo-points ( -- n ) 5 random 1+ 10 * 50 + ;
-  \ Random points for impacting the UFO.
+: mothership-points ( -- n ) 5 random 1+ 10 * 50 + ;
+  \ Random points for impacting the mothership.
 
-: ufo-bonus ( -- ) ufo-points update-score ;
-  \ Update the score with the UFO bonus.
+: mothership-bonus ( -- ) mothership-points update-score ;
+  \ Update the score with the mothership bonus.
 
-: ufo-impacted ( -- ) ufo-explosion ufo-bonus ;
-  \ The UFO has been impacted.
+: mothership-impacted ( -- )
+  mothership-explosion mothership-bonus ;
+  \ The mothership has been impacted.
 
 ' shoot alias invader-bang ( -- )
   \ XXX TMP --
@@ -2897,14 +2919,15 @@ constant ufo-movements ( -- a )
   \
   \ XXX TODO -- Don't use the return stack.
 
-: ufo-impacted? ( -- f )
+: mothership-impacted? ( -- f )
   [pixel-projectile]
-  [if]   projectile-coords gxy>attra c@ ufo-attr =
-  [else] projectile-y c@ ufo-y =  [then] ;
+  [if]   projectile-coords gxy>attra c@ mothership-attr =
+  [else] projectile-y c@ mothership-y =  [then] ;
 
-: impact ( -- ) ufo-impacted? if   ufo-impacted
-                              else invader-impacted
-                              then destroy-projectile ;
+: impact ( -- )
+  mothership-impacted? if   mothership-impacted
+                       else invader-impacted
+                       then destroy-projectile ;
 
 : hit-something? ( -- f )
   projectile-coords
@@ -3241,13 +3264,13 @@ localized-string about-next-location$ ( -- ca len )
 
 : extermination? ( -- f ) invaders c@ 0= ;
 
-: attack-wave ( -- ) init-ufo init-invaders parade ;
+: attack-wave ( -- ) init-mothership init-invaders parade ;
 
 : fight ( -- )
   ?quit-game \ XXX TMP --
   fly-projectile driving
   fly-projectile shooting
-  fly-projectile manage-ufo
+  fly-projectile manage-mothership
   fly-projectile invasion ;
 
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
@@ -3284,8 +3307,8 @@ localized-string about-next-location$ ( -- ca len )
 : .udgs ( -- ) cr last-udg 1+ 0 do i emit-udg loop ;
   \ Print all game UDGs.
 
-: fi ( -- ) fly-projectile ;
-: fi? ( -- ?) flying-projectile? ;
+: fp ( -- ) fly-projectile ;
+: fp? ( -- f ) flying-projectile? ;
 : mp ( -- ) move-projectile ;
 
 : ni ( -- ) next-invader ;
@@ -3297,6 +3320,14 @@ localized-string about-next-location$ ( -- ca len )
 : t ( -- ) .tank h ;
 : tl ( -- ) <tank h ; \ move tank left
 : tr ( -- ) tank> h ; \ move tank right
+
+: ms ( -- ) manage-mothership ;
+: ims ( -- ) invisible-mothership ;
+: vms ( -- ) visible-mothership ;
+: vms? ( -- f ) visible-mothership? ;
+: .ms ( -- ) .mothership ;
+: ms? ( -- f ) mothership-in-range? ;
+: -ms ( -- ) -mothership ;
 
 : .i ( n -- )
   >r

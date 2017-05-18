@@ -43,10 +43,9 @@ accordingly.
 
 Fix: sometimes the projectile erases half of the invader.
 
-.2016-12-04:
+.2016-12-04, 2017-05-17:
 
-Rename UFO to mothership.
-Make the UFO woundable like the invaders: same levels of stamina.
+Use stamina to calculate the damages to the mothership.
 
 .2017-02-26, 2017-05-14:
 
