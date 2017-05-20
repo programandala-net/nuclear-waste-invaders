@@ -1,8 +1,8 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-05-16
+:revdate: 2017-05-20
 
-// Last modified 201705161755
+// Last modified 201705201620
 
 Older first:
 
@@ -113,3 +113,9 @@ invaders.
 
 Improve `battle-bonus`: Make the breach penalty depend on the altitude
 of the breachs.
+
+.2017-05-20:
+
+Replace the UDG codes with the UDG addresses and write a new faster
+version of `.2x1sprite`, in Z80, without the conversion from code to
+address.

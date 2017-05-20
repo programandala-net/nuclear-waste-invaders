@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.89.0+201705190055" ;
+: version$ ( -- ca len ) s" 0.90.0+201705201842" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -789,15 +789,13 @@ cvariable latest-sprite-udg
 ' emit-udg alias .1x1sprite ( c -- )
 ' emits-udg alias .1x1sprites ( c n -- )
 
-: .2x1sprite ( c -- ) dup emit-udg 1+ emit-udg ;
+: .2x1-udg-sprite ( c -- ) dup emit-udg 1+ emit-udg ;
 
-: (sprite ( width height -- width height c )
+: (udg-sprite ( width height -- width height c )
   2dup set-latest-sprite-size 2dup * free-udg ;
 
-: sprite ( width height -- ) (sprite udg-block ;
-
-: sprite: ( width height "name" -- )
-  (sprite dup cconstant udg-block ;
+: udg-sprite ( width height -- c )
+  (udg-sprite dup >r udg-block r> ;
 
 2 cconstant udg/invader
 2 cconstant udg/mothership
@@ -815,7 +813,7 @@ cvariable latest-sprite-udg
 
   \ invader species 0, left flying, frame 0:
 
-2 1 sprite: left-flying-invader-0
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -824,11 +822,11 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX..
+..XX........XX.. cconstant left-flying-invader-0
 
   \ invader species 0, left flying, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -837,11 +835,11 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-...XX.......XX..
+...XX.......XX.. drop
 
   \ invader species 0, left flying, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -850,11 +848,11 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-....XX......XX..
+....XX......XX.. drop
 
   \ invader species 0, left flying, frame 3:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -863,11 +861,11 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-...XX.......XX..
+...XX.......XX.. drop
 
   \ invader species 0, right flying, frame 0:
 
-2 1 sprite: right-flying-invader-0
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -876,11 +874,11 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX..
+..XX........XX.. cconstant right-flying-invader-0
 
   \ invader species 0, right flying, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -889,11 +887,11 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-..XX.......XX...
+..XX.......XX... drop
 
   \ invader species 0, right flying, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -902,11 +900,11 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-..XX......XX....
+..XX......XX.... drop
 
   \ invader species 0, right flying, frame 3:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -915,11 +913,11 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-..XX.......XX...
+..XX.......XX... drop
 
   \ invader species 0, docked, frame 0:
 
-2 1 sprite: docked-invader-0
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -928,13 +926,13 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX..
+..XX........XX.. cconstant docked-invader-0
 
 sprite-string docked-invader-0$ ( -- ca len )
 
   \ invader species 0, docked, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -943,11 +941,11 @@ sprite-string docked-invader-0$ ( -- ca len )
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX..
+..XX........XX.. drop
 
   \ invader species 0, docked, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -956,14 +954,14 @@ sprite-string docked-invader-0$ ( -- ca len )
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX..
+..XX........XX.. drop
 
   \ -----------------------------------------------------------
   \ Invader species 1
 
   \ invader species 1, left flying, frame 0:
 
-2 1 sprite: left-flying-invader-1
+2 1 udg-sprite
 
 ......X...X.....
 .....X...X......
@@ -972,11 +970,11 @@ sprite-string docked-invader-0$ ( -- ca len )
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-....X.....X.....
+....X.....X..... cconstant left-flying-invader-1
 
   \ invader species 1, left flying, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......X...X.....
 .....X...X......
@@ -985,11 +983,11 @@ XXXX.XXX.XXXXXX.
 ..XXXXXXXXXXX...
 ...XXXXXXXXX....
 ....X.....X.....
-.....X.....X....
+.....X.....X.... drop
 
   \ invader species 1, left flying, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......X...X.....
 ..X..X...X..X...
@@ -998,11 +996,11 @@ XXXX.XXX.XXXXXX.
 ..XXXXXXXXXXX...
 ...XXXXXXXXX....
 ....X.....X.....
-....X.....X.....
+....X.....X..... drop
 
   \ invader species 1, left flying, frame 3:
 
-2 1 sprite
+2 1 udg-sprite
 
 ......X...X.....
 .....X...X......
@@ -1011,11 +1009,11 @@ XXXX.XXX.XXXXXX.
 ..XXXXXXXXXXX...
 ...XXXXXXXXX....
 ....X.....X.....
-.....X.....X....
+.....X.....X.... drop
 
   \ invader species 1, right flying, frame 0:
 
-2 1 sprite: right-flying-invader-1
+2 1 udg-sprite
 
 .....X...X......
 ......X...X.....
@@ -1024,11 +1022,11 @@ XXXX.XXX.XXXXXX.
 ...XXXXXXXXXXX..
 ...XXXXXXXXXXX..
 ...X.X.....X.X..
-.....X.....X....
+.....X.....X.... cconstant right-flying-invader-1
 
   \ invader species 1, right flying, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 .....X...X......
 ......X...X.....
@@ -1037,11 +1035,11 @@ XXXX.XXX.XXXXXX.
 ...XXXXXXXXXXX..
 ....XXXXXXXXX...
 .....X.....X....
-....X.....X.....
+....X.....X..... drop
 
   \ invader species 1, right flying, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 .....X...X......
 ...X..X...X..X..
@@ -1050,11 +1048,11 @@ XXXX.XXX.XXXXXX.
 ...XXXXXXXXXXX..
 ....XXXXXXXXX...
 .....X.....X....
-.....X.....X....
+.....X.....X.... drop
 
   \ invader species 1, right flying, frame 3:
 
-2 1 sprite
+2 1 udg-sprite
 
 .....X...X......
 ......X...X.....
@@ -1063,11 +1061,11 @@ XXXX.XXX.XXXXXX.
 ...XXXXXXXXXXX..
 ....XXXXXXXXX...
 .....X.....X....
-....X.....X.....
+....X.....X..... drop
 
   \ invader species 1, docked, frame 0:
 
-2 1 sprite: docked-invader-1
+2 1 udg-sprite
 
 ....X.....X.....
 .....X...X......
@@ -1076,13 +1074,13 @@ XXXX.XXX.XXXXXX.
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-.....XX.XX......
+.....XX.XX...... cconstant docked-invader-1
 
 sprite-string docked-invader-1$ ( -- ca len )
 
   \ invader species 1, docked, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 ....X.....X.....
 .....X...X......
@@ -1091,11 +1089,11 @@ sprite-string docked-invader-1$ ( -- ca len )
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-.....XX.XX......
+.....XX.XX...... drop
 
   \ invader species 1, docked, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 ....X.....X.....
 .....X...X......
@@ -1104,14 +1102,14 @@ sprite-string docked-invader-1$ ( -- ca len )
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-.....XX.XX......
+.....XX.XX...... drop
 
   \ -----------------------------------------------------------
   \ Invader species 2
 
   \ invader species 2, left flying, frame 0:
 
-2 1 sprite: left-flying-invader-2
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1120,11 +1118,11 @@ sprite-string docked-invader-1$ ( -- ca len )
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X....
+....X.X..X.X.... cconstant left-flying-invader-2
 
   \ invader species 2, left flying, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1133,11 +1131,11 @@ sprite-string docked-invader-1$ ( -- ca len )
 ....XXXXXXXX....
 .....X.XX.X.....
 ....X......X....
-....X......X....
+....X......X.... drop
 
   \ invader species 2, left flying, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1146,11 +1144,11 @@ sprite-string docked-invader-1$ ( -- ca len )
 ....XXXXXXXX....
 .....X.XX.X.....
 ....X......X....
-.....X......X...
+.....X......X... drop
 
   \ invader species 2, left flying, frame 3:
 
-2 1 sprite
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1159,11 +1157,11 @@ sprite-string docked-invader-1$ ( -- ca len )
 ....XXXXXXXX....
 .....X.XX.X.....
 ....X......X....
-....X......X....
+....X......X.... drop
 
   \ invader species 2, right flying, frame 0:
 
-2 1 sprite: right-flying-invader-2
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1172,11 +1170,11 @@ sprite-string docked-invader-1$ ( -- ca len )
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X....
+....X.X..X.X.... cconstant right-flying-invader-2
 
   \ invader species 2, right flying, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1185,11 +1183,11 @@ sprite-string docked-invader-1$ ( -- ca len )
 ....XXXXXXXX....
 .....X.XX.X.....
 ....X......X....
-....X......X....
+....X......X.... drop
 
   \ invader species 2, right flying, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1198,11 +1196,11 @@ sprite-string docked-invader-1$ ( -- ca len )
 ....XXXXXXXX....
 .....X.XX.X.....
 ....X......X....
-...X......X.....
+...X......X..... drop
 
   \ invader species 2, right flying, frame 3:
 
-2 1 sprite
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1211,11 +1209,11 @@ sprite-string docked-invader-1$ ( -- ca len )
 ....XXXXXXXX....
 .....X.XX.X.....
 ....X......X....
-....X......X....
+....X......X.... drop
 
   \ invader species 2, docked, frame 0:
 
-2 1 sprite: docked-invader-2
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1224,13 +1222,13 @@ sprite-string docked-invader-1$ ( -- ca len )
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X....
+....X.X..X.X.... cconstant docked-invader-2
 
 sprite-string docked-invader-2$ ( -- ca len )
 
   \ invader species 2, docked, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1239,11 +1237,11 @@ sprite-string docked-invader-2$ ( -- ca len )
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X....
+....X.X..X.X.... drop
 
   \ invader species 2, docked, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1252,14 +1250,14 @@ sprite-string docked-invader-2$ ( -- ca len )
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X....
+....X.X..X.X.... drop
 
   \ -----------------------------------------------------------
   \ Mothership
 
   \ mothership, frame 0:
 
-2 1 sprite: mothership
+2 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1268,13 +1266,13 @@ sprite-string docked-invader-2$ ( -- ca len )
 .XX.XX.XX.XX.XX.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X...
+...X........X... cconstant mothership
 
 sprite-string mothership$ ( -- ca len )
 
   \ mothership, frame 1:
 
-2 1 sprite
+2 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1283,11 +1281,11 @@ sprite-string mothership$ ( -- ca len )
 ..XX.XX.XX.XX.X.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X...
+...X........X... drop
 
   \ mothership, frame 2:
 
-2 1 sprite
+2 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1296,11 +1294,11 @@ XXXXXXXXXXXXXXXX
 .X.XX.XX.XX.XX..
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X...
+...X........X... drop
 
   \ mothership, frame 3:
 
-2 1 sprite
+2 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1309,7 +1307,7 @@ XXXXXXXXXXXXXXXX
 ..X.XX.XX.XX.XX.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X...
+...X........X... drop
 
   \ -----------------------------------------------------------
   \ Projectile
@@ -1319,7 +1317,7 @@ XXXXXXXXXXXXXXXX
   >udg c@ \ next free UDG
   dup cconstant first-projectile-frame
 
-  1 1 sprite: projectile-frame-0
+  1 1 udg-sprite
 
   ..X.....
   .....X..
@@ -1328,9 +1326,9 @@ XXXXXXXXXXXXXXXX
   ..X.....
   .....X..
   ..X.....
-  .....X..
+  .....X.. cconstant projectile-frame-0
 
-  1 1 sprite
+  1 1 udg-sprite
 
   .....X..
   ..X.....
@@ -1339,9 +1337,9 @@ XXXXXXXXXXXXXXXX
   .....X..
   ..X.....
   .....X..
-  ..X.....
+  ..X..... drop
 
-  1 1 sprite
+  1 1 udg-sprite
 
   ..X.....
   ..X..X..
@@ -1350,9 +1348,9 @@ XXXXXXXXXXXXXXXX
   ..X..X..
   .....X..
   ..X.....
-  ..X..X..
+  ..X..X.. drop
 
-  1 1 sprite
+  1 1 udg-sprite
 
   .....X..
   ..X..X..
@@ -1361,9 +1359,9 @@ XXXXXXXXXXXXXXXX
   ..X..X..
   ..X.....
   .....X..
-  ..X..X..
+  ..X..X.. drop
 
-  1 1 sprite
+  1 1 udg-sprite
 
   ..X.....
   ........
@@ -1372,9 +1370,9 @@ XXXXXXXXXXXXXXXX
   .....X..
   ..X.....
   ........
-  ..X..X..
+  ..X..X.. drop
 
-  1 1 sprite
+  1 1 udg-sprite
 
   .....X..
   ........
@@ -1383,9 +1381,9 @@ XXXXXXXXXXXXXXXX
   ..X.....
   .....X..
   ........
-  ..X..X..
+  ..X..X.. drop
 
-  1 1 sprite
+  1 1 udg-sprite
 
   ..X..X..
   .....X..
@@ -1394,9 +1392,9 @@ XXXXXXXXXXXXXXXX
   ..X..X..
   .....X..
   ..X.....
-  ........
+  ........ drop
 
-  1 1 sprite
+  1 1 udg-sprite
 
   ..X..X..
   ..X.....
@@ -1405,9 +1403,9 @@ XXXXXXXXXXXXXXXX
   ..X..X..
   ..X.....
   .....X..
-  ........
+  ........ drop
 
-  1 1 sprite
+  1 1 udg-sprite
 
   ..X.....
   ..X..X..
@@ -1416,9 +1414,9 @@ XXXXXXXXXXXXXXXX
   ..X.....
   .....X..
   ..X.....
-  ..X..X..
+  ..X..X.. drop
 
-  1 1 sprite
+  1 1 udg-sprite
 
   .....X..
   ..X..X..
@@ -1427,7 +1425,7 @@ XXXXXXXXXXXXXXXX
   .....X..
   ..X.....
   .....X..
-  ..X..X..
+  ..X..X.. drop
 
   >udg c@ swap - cconstant frames/projectile
 
@@ -1438,7 +1436,7 @@ XXXXXXXXXXXXXXXX
   \ -----------------------------------------------------------
   \ Building
 
-1 1 sprite: brick
+1 1 udg-sprite
 
 XXXXX.XX
 XXXXX.XX
@@ -1447,7 +1445,7 @@ XXXXX.XX
 XX.XXXXX
 XX.XXXXX
 XX.XXXXX
-........
+........ cconstant brick
 
 [pixel-projectile] 0= [if]
   >udg c@ 1- ocr-last-udg c!
@@ -1455,7 +1453,7 @@ XX.XXXXX
     \ of the latest sprite.
 [then]
 
-1 1 sprite: left-door
+1 1 udg-sprite
 
 XXXXXXXX
 .XXXXXXX
@@ -1464,9 +1462,9 @@ XXXXXXXX
 ..XXXXXX
 ..XXXXXX
 ..XXXXXX
-..XXXXXX
+..XXXXXX cconstant left-door
 
-1 1 sprite: right-door
+1 1 udg-sprite
 
 XXXXXXXX
 XXXXXXX.
@@ -1475,9 +1473,9 @@ XXXXXX..
 XXXXXX..
 XXXXXX..
 XXXXXX..
-XXXXXX..
+XXXXXX.. cconstant right-door
 
-1 1 sprite: broken-top-left-brick
+1 1 udg-sprite
 
 XXXXXXXX
 .XXXXXXX
@@ -1486,9 +1484,9 @@ XXXXXXXX
 ......XX
 .....XXX
 ......X.
-........
+........ cconstant broken-top-left-brick
 
-1 1 sprite: broken-bottom-left-brick
+1 1 udg-sprite
 
 ........
 ........
@@ -1497,9 +1495,9 @@ XXXXXXXX
 ...XX.XX
 .XXXXXXX
 XXXXXXXX
-XXXXXXXX
+XXXXXXXX cconstant broken-bottom-left-brick
 
-1 1 sprite: broken-top-right-brick
+1 1 udg-sprite
 
 XXXXXXXX
 XXXXXXXX
@@ -1508,9 +1506,9 @@ XXXXXX..
 XXX..X..
 X.......
 ........
-........
+........ cconstant broken-top-right-brick
 
-1 1 sprite: broken-bottom-right-brick
+1 1 udg-sprite
 
 ........
 X.......
@@ -1519,7 +1517,7 @@ XXX..X..
 XXXXXX..
 XXXXX...
 XXXXXX.X
-XXXXXXXX
+XXXXXXXX cconstant broken-bottom-right-brick
 
   \ -----------------------------------------------------------
   \ Tank
@@ -1530,7 +1528,7 @@ XXXXXXXX
 
   false [if] \ XXX OLD
 
-  udg/tank 1 sprite
+  udg/tank 1 udg-sprite
   ..........X..X..........
   ..........X..X..........
   .........XX..XX.........
@@ -1538,11 +1536,11 @@ XXXXXXXX
   .XXXXXXXXXXXXXXXXXXXXXX.
   XXXXXXXXXXXXXXXXXXXXXXXX
   XXXXXXXXXXXXXXXXXXXXXXXX
-  .XXXXXXXXXXXXXXXXXXXXXX.
+  .XXXXXXXXXXXXXXXXXXXXXX. drop
 
   [else] \ XXX NEW
 
-  udg/tank 1 sprite
+  udg/tank 1 udg-sprite
   ..........X..X..........
   ...XXXXXX.X..X.XXXXXXX..
   ..XXXXXXXXXXXXXXXXXXXXX.
@@ -1550,7 +1548,7 @@ XXXXXXXX
   .XX.X.X.X.X.X.X.X.X.X.XX
   ..XX.XXX.XXX.XXX.XXX.XX.
   ...X.XXX.XXX.XXX.XXX.X..
-  ....X.X.X.X.X.X.X.X.X...
+  ....X.X.X.X.X.X.X.X.X... drop
 
   [then]
 
@@ -1558,7 +1556,7 @@ cenum left-tank-udg   ( -- c )
 cenum middle-tank-udg ( -- c )
 cenum right-tank-udg  ( -- c ) drop
 
-2 1 sprite
+2 1 udg-sprite
 
 .....X...X......
 ..X...X.X...X...
@@ -1567,7 +1565,7 @@ cenum right-tank-udg  ( -- c ) drop
 .XX.........XX..
 .....X....X.....
 ...X..X.X..X....
-..X..X...X..X...
+..X..X...X..X... drop
 
 sprite-string invader-explosion$ ( -- ca len )
 
@@ -1576,7 +1574,7 @@ sprite-string invader-explosion$ ( -- ca len )
 
   \ XXX TODO -- Move to the building section.
 
-2 1 sprite
+2 1 udg-sprite
 
 ..............X.
 ..X......XX..X..
@@ -1585,11 +1583,11 @@ sprite-string invader-explosion$ ( -- ca len )
 ...XXXX.XX.XX..X
 .X..XX..XXXX....
 X....XXXXX...X..
-..X...XX...X..X.
+..X...XX...X..X. drop
 
 sprite-string mothership-explosion$ ( -- ca len )
 
-2 1 sprite: container-top
+2 1 udg-sprite
 
 ......XXXXX.....
 ...XXX.....XXX..
@@ -1598,31 +1596,31 @@ sprite-string mothership-explosion$ ( -- ca len )
 ..X....XXX....X.
 ..X...XXXXX...X.
 ..X....XXX....X.
-..X.....X.....X.
+..X.....X.....X. cconstant container-top
 
-1 1 sprite: broken-top-left-container
-
-........
-...XXX..
-..X...X.
-..X...X.
-..X...X.
-..X....X
-..X....X
-..X....X
-
-1 1 sprite: broken-top-right-container
+1 1 udg-sprite
 
 ........
 ...XXX..
 ..X...X.
 ..X...X.
-.X....X.
-.X....X.
-.X....X.
-X.....X.
+..X...X.
+..X....X
+..X....X
+..X....X cconstant broken-top-left-container
 
-2 1 sprite: container-bottom
+1 1 udg-sprite
+
+........
+...XXX..
+..X...X.
+..X...X.
+.X....X.
+.X....X.
+.X....X.
+X.....X. cconstant broken-top-right-container
+
+2 1 udg-sprite
 
 ..X..X.X.X.X..X.
 ..X.XXXX.XXXX.X.
@@ -1631,9 +1629,9 @@ X.....X.
 ..X...........X.
 ...XXX.....XXX..
 ......XXXXX.....
-................
+................ cconstant container-bottom
 
-1 1 sprite: broken-bottom-left-container
+1 1 udg-sprite
 
 .......X
 .....XXX
@@ -1642,9 +1640,9 @@ X.....X.
 ..X.....
 ...XXX..
 ......XX
-........
+........ cconstant broken-bottom-left-container
 
-1 1 sprite: broken-bottom-right-container
+1 1 udg-sprite
 
 XX......
 .XXX....
@@ -1653,12 +1651,12 @@ XX......
 ......X.
 ...XXX..
 XXX.....
-........
+........ cconstant broken-bottom-right-container
 
   \ -----------------------------------------------------------
   \ Icons
 
-2 1 sprite: right-arrow
+2 1 udg-sprite
 
 ................
 ............X...
@@ -1667,11 +1665,11 @@ XXX.....
 ....XXXXXXXXXXXX
 ....XXXXXXXXXXX.
 ............XX..
-............X...
+............X... cconstant right-arrow
 
 sprite-string right-arrow$ ( -- ca len )
 
-2 1 sprite: left-arrow
+2 1 udg-sprite
 
 ................
 ...X............
@@ -1680,11 +1678,11 @@ sprite-string right-arrow$ ( -- ca len )
 XXXXXXXXXXXX....
 .XXXXXXXXXXX....
 ..XX............
-...X............
+...X............ cconstant left-arrow
 
 sprite-string left-arrow$ ( -- ca len )
 
-2 1 sprite: fire-button
+2 1 udg-sprite
 
 ....XXXXXXXX....
 ..XX........XX..
@@ -1693,7 +1691,7 @@ sprite-string left-arrow$ ( -- ca len )
 ..X..........X..
 ..X..........X..
 ..X..........X..
-XXXXXXXXXXXXXXXX
+XXXXXXXXXXXXXXXX cconstant fire-button
 
 sprite-string fire-button$ ( -- ca len )
 
@@ -2033,12 +2031,12 @@ cvariable containers-left-x   cvariable containers-right-x
 
 : containers-bottom ( n -- )
   container-attr attr!
-  0 ?do  container-bottom .2x1sprite  loop ;
+  0 ?do  container-bottom .2x1-udg-sprite  loop ;
   \ Draw a row of _n_ bottom parts of containers.
 
 : containers-top ( n -- )
   container-attr attr!
-  0 ?do  container-top .2x1sprite  loop ;
+  0 ?do  container-top .2x1-udg-sprite  loop ;
   \ Draw a row of _n_ top parts of containers.
 
 : .brick ( -- ) brick-attr attr! brick .1x1sprite ;
@@ -2280,7 +2278,7 @@ defer debug-data-pause ( -- )
   invader-attr attr!
   max-invaders 0 do
     i invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
-                       r> ~sprite c@ .2x1sprite
+                       r> ~sprite c@ .2x1-udg-sprite
   loop ;
 
   \ ===========================================================
@@ -2361,7 +2359,7 @@ false [if] \ XXX NEW
   \ XXX UNDER DEVELOPMENT
 
 : .score-item ( c1 c2 n3 n4 -- )
-  attr! drop swap .2x1sprite
+  attr! drop swap .2x1-udg-sprite
   text-attr attr! ." = " . points$ type drop ;
   \ XXX TODO -- Rewrite. Parameters changed.
   \ Print an item of the score table:
@@ -2379,8 +2377,8 @@ false [if] \ XXX NEW
   \   n3 = points for destroy;
   \   x4 = fake datum.
   \
-  \ This is word mimics the correspondent invader words,
-  \ in order to use `.score-item` also with the mothership.
+  \ This word mimics the corresponding invader words, in order
+  \ to use `.score-item` also with the mothership.
 
 : (.score-table ( -- )
   xy 2dup  at-xy 0 invader-attr .score-item
@@ -2481,7 +2479,7 @@ cvariable invaders \ counter
   \ deactivate this for docked invaders.
 
 : .invader ( -- )
-  invader-proper-attr attr! invader-udg .2x1sprite ;
+  invader-proper-attr attr! invader-udg .2x1-udg-sprite ;
   \ Print the current invader.
 
 : broken-bricks-coordinates ( x1 -- x1 y1 x2 y2 x3 y3 )
@@ -2789,7 +2787,7 @@ columns udg/mothership - cconstant mothership-max-x
 
 : .mothership ( -- )
   mothership-attr attr!
-  at-mothership mothership-udg .2x1sprite ;
+  at-mothership mothership-udg .2x1-udg-sprite ;
 
 0 [if] \ XXX OLD
 
@@ -3354,14 +3352,14 @@ localized-string about-next-location$ ( -- ca len )
   cls
   \ top:
   space broken-top-right-container .1x1sprite
-  container-top .2x1sprite
+  container-top .2x1-udg-sprite
   broken-top-left-container .1x1sprite space cr
   \ bottom:
-  container-bottom .2x1sprite 8 emit 8 emit
+  container-bottom .2x1-udg-sprite 8 emit 8 emit
   broken-bottom-left-container .1x1sprite
   xy swap 1+ swap at-xy
-  container-bottom .2x1sprite
-  container-bottom .2x1sprite 8 emit
+  container-bottom .2x1-udg-sprite
+  container-bottom .2x1-udg-sprite 8 emit
   broken-bottom-right-container .1x1sprite cr ;
   \ Display the graphics of the broken containers.
 
