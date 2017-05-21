@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.90.0+201705201842" ;
+: version$ ( -- ca len ) s" 0.91.0+201705212152" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -241,7 +241,7 @@ defer ((debug-point  ' noop ' ((debug-point defer!
 22528 constant attributes  768 constant /attributes
   \ Address and size of the screen attributes.
 
- 2 cconstant sky-top-y
+ 1 cconstant sky-top-y
 15 cconstant sky-bottom-y
 
 sky-bottom-y cconstant tank-y
@@ -2725,7 +2725,11 @@ defer invasion \ XXX TMP --
 
   \ XXX TODO -- simplify: the mothership can be always visible
 
+1 cconstant mothership-y0
+  \ Default y coordinate of the mothership.
+
 1 cconstant mothership-y
+  \ Current y coordinate of the mothership (0 if destroyed).
 
 variable mothership-x
 variable mothership-x-inc  -1|1 mothership-x-inc !
@@ -2747,7 +2751,8 @@ cvariable mothership-frame \ counter (0..3)
   \
   \ XXX TMP -- small value for debugging
 
-: init-mothership ( -- ) mothership-range mothership-x ! ;
+: init-mothership ( -- ) mothership-range mothership-x !
+                         mothership-y0 c!> mothership-y ;
   \ Init the mothership.
 
 columns udg/mothership - cconstant mothership-max-x
@@ -2824,37 +2829,38 @@ constant mothership-movements ( -- a )
   \ Manage the mothership, when it's invisible.
 
 : manage-mothership ( -- )
+  mothership-y 0exit
   visible-mothership? if   visible-mothership exit
                       then invisible-mothership ;
-  \ Manage the mothership.
+  \ Manage the mothership, if not destroyed.
 
   \ ===========================================================
   cr .( Impact) ?depth debug-point \ {{{1
 
-: mothership-bang ( -- )  ;
+' shoot alias mothership-bang ( -- )
   \ Make the explosion sound of the mothership.
-  \ XXX TODO -- 128 sound
+  \ XXX TMP --
+  \ XXX TODO -- look for a better sound
 
-: mothership-on-fire ( -- )
-  mothership-x @ 1+ mothership-y at-xy
-  mothership-explosion$ type-udg ;
+: mothership-on-fire ( -- ) mothership-x @ mothership-y at-xy
+                            mothership-explosion$ type-udg ;
   \ Show the mothership on fire.
 
 : mothership-explosion ( -- )
-  mothership-on-fire mothership-bang -mothership ;
-  \ Show the explosion of the mothership.
+  mothership-on-fire mothership-bang -mothership
+  0 c!> mothership-y ;
+  \ The mothership explodes.
+  \ XXX TODO -- Improve the effect.
 
-: mothership-points ( -- n ) 5 random 1+ 10 * 50 + ;
-  \ Random points for impacting the mothership.
-
-: mothership-bonus ( -- ) mothership-points update-score ;
-  \ Update the score with the mothership bonus.
+: mothership-bonus ( -- n ) location c@ 1+ 250 * ;
+  \ Bonus points for impacting the mothership.
 
 : mothership-impacted ( -- )
-  mothership-explosion mothership-bonus ;
+  mothership-explosion mothership-bonus update-score ;
   \ The mothership has been impacted.
 
 ' shoot alias invader-bang ( -- )
+  \ Make the explosion sound of an invader.
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
@@ -3208,17 +3214,17 @@ here \ en (English)
 localized-string about-battle$ ( -- ca len )
 
 here \ es (Spanish)
-  s" Ahora su nave nodriza se dirige al sur, "
+  s" Ahora se dirigen al sur, "
   s" hacia su próximo objetivo." s+ s,
   \ XXX TODO -- Improve.
 
 here \ eo (Esperanto)
-  s" Nun ilia ĉefŝipo flugas suden "
+  s" Nun ili flugas suden "
   s" al ilia posta celo." s+ s,
   \ XXX TODO -- Improve.
 
 here \ en (English)
-  s" Now their mothership flies south "
+  s" Now they fly south "
   s" toward their next objective." s+ s,
   \ XXX TODO -- Improve.
 
