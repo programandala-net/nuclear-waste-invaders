@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.91.0+201705212152" ;
+: version$ ( -- ca len ) s" 0.92.0+201707272034" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -130,7 +130,7 @@ need type-center-field need gigatype-title need mode-32iso
   cr .(   -Graphics) ?depth \ {{{2
 
 need set-udg need /udg
-need type-udg need columns need rows need row need fade-display
+need columns need rows need row need fade-display
 need last-column need udg-block need udg! need blackout
 
 need window need wltype need wcr need wcls
@@ -395,11 +395,13 @@ here ," Invasores de Residuos Nucleares"
 here ," Atomrubaĵaj Invadantoj"
 here ," Nuclear Waste Invaders"
 localized-string game-title$ ( -- ca len )
+  \ Return game title _ca len_ in the current language.
 
 here ," [N]o en español"
 here ," [N]e en Esperanto"
 here ," [N]ot in English"
 localized-string not-in-this-language$ ( -- ca len )
+  \ Return string _ca len_ in the current language.
 
 'n' cconstant language-key
   \ Key to change the current language.
@@ -408,21 +410,25 @@ here ," puntos "
 here ," poentoj"
 here ," points "
 localized-string points$ ( -- ca len )
+  \ Return string _ca len_ in the current language.
 
 here ," puntos extra"
 here ," krompoentoj "
 here ," bonus       "
 localized-string bonus$ ( -- ca len )
+  \ Return string _ca len_ in the current language.
 
 here ," PUNTUACIÓN"
 here ," POENTARO"
 here ," SCORE"
 localized-string score$ ( -- ca len )
+  \ Return string _ca len_ in the current language.
 
 here ," RÉCOR"
 here ," RIKORDO"
 here ," RECORD"
 localized-string record$ ( -- ca len )
+  \ Return string _ca len_ in the current language.
 
   \ XXX TODO -- Simplify: use `sconstants` instead, using the
   \ language as index and a wrapper word to provide it.
@@ -440,12 +446,14 @@ here ," [E]mpezar"
 here ," [E]ki"
 here ," [S]tart"
 localized-string start$ ( -- ca len )
+  \ Return string _ca len_ in the current language.
 
 'e' \ [e]mpezar
 'e' \ [e]ki
 's' \ [s]tart
 localized-character start-key ( -- c )
-  \ Key to start the game from the main menu.
+  \ Return key _c_ to start the game from the main menu
+  \ in the current language.
 
 0
   here ," Ganta"
@@ -457,6 +465,7 @@ localized-character start-key ( -- c )
   here ," Vestmahavn"
   here ," Longyearbyen"
 sconstants >town$ ( n -- ca len ) drop
+  \ Return name _ca len_ of town _n_.
 
 0
   here ," Nimba"
@@ -468,6 +477,7 @@ sconstants >town$ ( n -- ca len ) drop
   here ," Faroe Islands"
   here ," Svalbard"
 sconstants >en.region$ ( n -- ca len ) drop
+  \ Return English name _ca len_ of region _n_.
 
 0
   here ," Nimba"
@@ -479,6 +489,7 @@ sconstants >en.region$ ( n -- ca len ) drop
   here ," Ferooj"
   here ," Svalbardo"
 sconstants >eo.region$ ( n -- ca len ) drop
+  \ Return Esperanto name _ca len_ of region _n_.
 
 0
   here ," Nimba"
@@ -490,6 +501,7 @@ sconstants >eo.region$ ( n -- ca len ) drop
   here ," Islas Feroes"
   here ," Svalbard"
 sconstants >es.region$ ( n -- ca len ) drop
+  \ Return Spanish name _ca len_ of region _n_.
 
 ' >es.region$
 ' >eo.region$
@@ -506,6 +518,7 @@ localized-word >region$ ( n -- ca len )
   here ," Denmark"
   here ," Norway"
 sconstants >en.country$ ( n -- ca len ) drop
+  \ Return English name _ca len_ of country _n_.
 
 0
   here ," Liberio"
@@ -517,6 +530,7 @@ sconstants >en.country$ ( n -- ca len ) drop
   here ," Danujo"
   here ," Norvegujo"
 sconstants >eo.country$ ( n -- ca len ) drop
+  \ Return Esperanto name _ca len_ of country _n_.
 
 0
   here ," Liberia"
@@ -528,14 +542,18 @@ sconstants >eo.country$ ( n -- ca len ) drop
   here ," Dinamarca"
   here ," Noruega"
 sconstants >es.country$ ( n -- ca len ) drop
+  \ Return Spanish name _ca len_ of country _n_.
 
 ' >es.country$
 ' >eo.country$
 ' >en.country$
 localized-word >(country)$ ( n -- ca len )
+  \ Return name _ca len_ of country _n_ in the current language.
 
 : >country$ ( n -- ca len )
   s" (" rot >(country)$ s+ s" )" s+ ;
+  \ Return name _ca len_ (in parens) of country _n_ in the
+  \ current language.
 
 here ," Pulsa una tecla."
 here ," Premu klavon."
@@ -778,12 +796,6 @@ cvariable latest-sprite-udg
   latest-sprite-height c!  latest-sprite-width c! ;
   \ Update the size of the latest sprited defined.
 
-: sprite-string ( "name" -- )
-  here latest-sprite-udg c@  latest-sprite-width c@ dup >r
-  0 ?do  dup c, 1+  loop  drop  r> 2constant ;
-  \ Create a definition "name" that will return a string
-  \ containing all UDGs of the lastest sprite defined.
-
 : emits-udg ( c n -- ) 0 ?do dup emit-udg loop drop ;
 
 ' emit-udg alias .1x1sprite ( c -- )
@@ -927,8 +939,6 @@ cvariable latest-sprite-udg
 .....XX..XX.....
 ....XX.XX.XX....
 ..XX........XX.. cconstant docked-invader-0
-
-sprite-string docked-invader-0$ ( -- ca len )
 
   \ invader species 0, docked, frame 1:
 
@@ -1076,8 +1086,6 @@ XXXX.XXX.XXXXXX.
 ..X.X.....X.X...
 .....XX.XX...... cconstant docked-invader-1
 
-sprite-string docked-invader-1$ ( -- ca len )
-
   \ invader species 1, docked, frame 1:
 
 2 1 udg-sprite
@@ -1224,8 +1232,6 @@ sprite-string docked-invader-1$ ( -- ca len )
 .....X.XX.X.....
 ....X.X..X.X.... cconstant docked-invader-2
 
-sprite-string docked-invader-2$ ( -- ca len )
-
   \ invader species 2, docked, frame 1:
 
 2 1 udg-sprite
@@ -1267,8 +1273,6 @@ sprite-string docked-invader-2$ ( -- ca len )
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X... cconstant mothership
-
-sprite-string mothership$ ( -- ca len )
 
   \ mothership, frame 1:
 
@@ -1565,9 +1569,7 @@ cenum right-tank-udg  ( -- c ) drop
 .XX.........XX..
 .....X....X.....
 ...X..X.X..X....
-..X..X...X..X... drop
-
-sprite-string invader-explosion$ ( -- ca len )
+..X..X...X..X... cconstant invader-explosion-udg
 
   \ -----------------------------------------------------------
   \ Containers
@@ -1583,9 +1585,7 @@ sprite-string invader-explosion$ ( -- ca len )
 ...XXXX.XX.XX..X
 .X..XX..XXXX....
 X....XXXXX...X..
-..X...XX...X..X. drop
-
-sprite-string mothership-explosion$ ( -- ca len )
+..X...XX...X..X. cconstant mothership-explosion-udg
 
 2 1 udg-sprite
 
@@ -1667,8 +1667,6 @@ XXX.....
 ............XX..
 ............X... cconstant right-arrow
 
-sprite-string right-arrow$ ( -- ca len )
-
 2 1 udg-sprite
 
 ................
@@ -1680,8 +1678,6 @@ XXXXXXXXXXXX....
 ..XX............
 ...X............ cconstant left-arrow
 
-sprite-string left-arrow$ ( -- ca len )
-
 2 1 udg-sprite
 
 ....XXXXXXXX....
@@ -1692,8 +1688,6 @@ sprite-string left-arrow$ ( -- ca len )
 ..X..........X..
 ..X..........X..
 XXXXXXXXXXXXXXXX cconstant fire-button
-
-sprite-string fire-button$ ( -- ca len )
 
   \ ===========================================================
   cr .( Type) ?depth debug-point \ {{{1
@@ -1707,10 +1701,6 @@ sprite-string fire-button$ ( -- ca len )
   \ on the given row.
 
 : center-type ( ca len row -- ) over centered-at type ;
-  \ Print string _ca len_ centered on the given row.
-
-: center-type-udg ( ca len row -- )
-  over centered-at type-udg ;
   \ Print string _ca len_ centered on the given row.
 
 : type-blank ( ca len -- ) nip spaces ;
@@ -2315,9 +2305,9 @@ defer debug-data-pause ( -- )
 : fire-key$ ( -- ca len ) kk-fire# kk#>string ;
 
 : .controls-legend ( -- )
-  10 at-x left-arrow$  type-udg
-  15 at-x fire-button$ type-udg
-  20 at-x right-arrow$ type-udg ;
+  10 at-x left-arrow  .2x1-udg-sprite
+  15 at-x fire-button .2x1-udg-sprite
+  20 at-x right-arrow .2x1-udg-sprite ;
   \ Print controls legend at the current row.
 
 : .control-keys ( -- )
@@ -2331,66 +2321,6 @@ defer debug-data-pause ( -- )
     \ XXX TODO --
   .controls-legend cr .control-keys ;
   \ Print controls at the current row.
-
-true [if] \ XXX OLD
-
-: .score-item ( ca1 len1 ca2 len2 -- )
-  type-udg text-attr attr! ."  = " type ;
-  \ Print an item of the score table, with sprite string _ca2
-  \ len2_ and description _ca1 len1_
-
-: (.score-table ( -- )
-  xy 2dup  at-xy s" 10 " points$ s+
-           invader-attr attr! docked-invader-0$ .score-item
-  2dup 1+  at-xy s" 20 " points$ s+
-           invader-attr attr! docked-invader-1$ .score-item
-  2dup 2+  at-xy s" 30 " points$ s+
-           invader-attr attr! docked-invader-2$ .score-item
-       3 + at-xy bonus$
-           mothership-attr attr! mothership$ .score-item ;
-   \ Print the score table at the current coordinates.
-
-: .score-table ( -- ) 9 4 at-xy (.score-table ;
-
-[then]
-
-false [if] \ XXX NEW
-
-  \ XXX UNDER DEVELOPMENT
-
-: .score-item ( c1 c2 n3 n4 -- )
-  attr! drop swap .2x1-udg-sprite
-  text-attr attr! ." = " . points$ type drop ;
-  \ XXX TODO -- Rewrite. Parameters changed.
-  \ Print an item of the score table:
-  \   c1 = docked sprite;
-  \   c2 = flying sprite;
-  \   n3 = points for destroy;
-  \   n4 = points for retreat.
-  \   n5 = color
-
-: mothership-data ( -- x1 c2 n3 x4 )
-  docked-invader-0 left-flying-invader-0 10 1 ;
-  \ Data specific to the mothership:
-  \   x1 = fake datum;
-  \   c2 = sprite;
-  \   n3 = points for destroy;
-  \   x4 = fake datum.
-  \
-  \ This word mimics the corresponding invader words, in order
-  \ to use `.score-item` also with the mothership.
-
-: (.score-table ( -- )
-  xy 2dup  at-xy 0 invader-attr .score-item
-  2dup 1+  at-xy 1 invader-attr .score-item
-  2dup 2+  at-xy 2 invader-attr .score-item
-       3 + at-xy mothership-data mothership-attr .score-item ;
-   \ Print the score table at the current coordinates.
-  \ XXX TODO -- Rewrite. Parameters of `.score-item` changed.
-
-: .score-table ( -- ) 9 4 at-xy (.score-table ;
-
-[then]
 
 : change-players ( -- )
   players c@ 1+ dup max-player > if drop 1 then players c! ;
@@ -2842,8 +2772,9 @@ constant mothership-movements ( -- a )
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
-: mothership-on-fire ( -- ) mothership-x @ mothership-y at-xy
-                            mothership-explosion$ type-udg ;
+: mothership-on-fire ( -- )
+  mothership-x @ mothership-y at-xy
+  mothership-explosion-udg .2x1-udg-sprite ;
   \ Show the mothership on fire.
 
 : mothership-explosion ( -- )
@@ -2865,7 +2796,7 @@ constant mothership-movements ( -- a )
   \ XXX TODO -- look for a better sound
 
 : invader-on-fire ( -- )
-  at-invader invader-explosion$ type-udg ;
+  at-invader invader-explosion-udg .2x1-udg-sprite ;
   \ Show the current invader on fire.
 
 : -invader ( -- ) sky-attr attr! at-invader 2 spaces ;
@@ -3292,8 +3223,8 @@ localized-string about-next-location$ ( -- ca len )
 : interlude ( -- ) new-breach? ?exit repair-building ;
 
 : battle ( -- )
-  prepare-battle begin  under-attack another-attack?
-                 while  attack-report interlude repeat ;
+  prepare-battle begin under-attack another-attack?
+                 while attack-report interlude repeat ;
 
 : campaign ( -- ) begin battle catastrophe? 0=
                   while battle-report reward travel repeat ;
@@ -3368,6 +3299,35 @@ localized-string about-next-location$ ( -- ca len )
   container-bottom .2x1-udg-sprite 8 emit
   broken-bottom-right-container .1x1sprite cr ;
   \ Display the graphics of the broken containers.
+
+  \ ===========================================================
+  cr .( Development benchmarks) ?depth debug-point \ {{{1
+
+0 [if]
+
+need bench{ need }bench.
+
+: sprite-string-bench ( n -- )
+  dup page ." type-udg :"
+  bench{ 0 ?do 18 0 at-xy right-arrow$ type-udg
+            loop }bench.
+  0 1 at-xy ." .2x1-udg-sprite :"
+  bench{ 0 ?do 18 1 at-xy right-arrow .2x1-udg-sprite
+           loop }bench. ;
+
+  \ 2017-07-27:
+  \
+  \ |===================================
+  \ |       | Frames
+  \ |       | ==========================
+  \ | Times | type-udg | .2x1-udg-sprite
+  \
+  \ |  1000 |      112 |              94
+  \ | 10000 |     1122 |             937
+  \ | 65535 |     7353 |            6142
+  \ |===================================
+
+[then]
 
   \ ===========================================================
   cr .( Greeting) ?depth debug-point \ {{{1
