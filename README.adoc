@@ -1,5 +1,5 @@
 = Nuclear Waste Invaders
-:revdate: 2017-04-20
+:revdate: 2017-11-21
 
 // This document is written in AsciiDoc/Asciidoctor format.
 // See: <http://asciidoctor.org>.
@@ -33,7 +33,8 @@ http://programandala.net/en.program.nuclear_waste_invaders.html.
 . Enter 128 BASIC.
 . Insert the Solo Forth's <disk_0_boot.mgt> disk image into drive 1.
 . Type `run` to load G+DOS and Solo Forth from drive 1.
-. Insert the <disk_2_nuclear_invaders.mgt> disk image into drive 1.
+. Insert the <disk_2_nuclear_waste_invaders.mgt> disk image into drive
+  1.
 . Open the <graphics_and_font.tap> tape image as the input tape of
   your emulator.
 . Type `1 load` to load block 1 from the current drive. This will
