@@ -34,8 +34,8 @@ http://programandala.net/en.program.nuclear_waste_invaders.html.
 . Insert the Solo Forth's <disk_0_boot.mgt> disk image into drive 1.
 . Type `run` to load G+DOS and Solo Forth from drive 1.
 . Insert the <disk_2_nuclear_invaders.mgt> disk image into drive 1.
-. Open the <graphics.tap> tape image as the input tape of your
-  emulator.
+. Open the <graphics_and_font.tap> tape image as the input tape of
+  your emulator.
 . Type `1 load` to load block 1 from the current drive. This will
   start the compilation. Messages will be shown during the process.
 . Set your emulator to its maximum speed and wait. When the

@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201703281058
+  \ Last modified: 201709091459
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -82,56 +82,56 @@ DD cconstant ix-op  FD cconstant iy-op
 
 : (c ( b "name" -- ) create c, ;
 
-: m1 ( 8b "name" -- ) (c does> ( -- ) ( pfa ) c@ c, ;
+: m1 ( 8b "name" -- ) (c does> ( -- ) ( dfa ) c@ c, ;
   \ 1-byte opcode without parameters.
 
-: m2 ( 8b "name" -- ) (c does> ( reg -- ) ( reg pfa ) c@ + c, ;
+: m2 ( 8b "name" -- ) (c does> ( reg -- ) ( reg dfa ) c@ + c, ;
   \ 1-byte opcode with register encoded in bits 0-3.
 
 : m3 ( 8b "name" -- )
-  (c does> ( reg -- ) ( reg pfa ) c@ swap 8* + c, ;
+  (c does> ( reg -- ) ( reg dfa ) c@ swap 8* + c, ;
   \ 1-byte opcode with register encoded in bits 3-5.
 
-: m4 ( 8b "name" -- ) (c does> ( 8b -- ) ( 8b pfa ) c@ c, c, ;
+: m4 ( 8b "name" -- ) (c does> ( 8b -- ) ( 8b dfa ) c@ c, c, ;
   \ 1-byte opcode with 1-byte parameter.
 
-: m5 ( 8b "name" -- ) (c does> ( 16b -- ) ( 16b pfa ) c@ c, , ;
+: m5 ( 8b "name" -- ) (c does> ( 16b -- ) ( 16b dfa ) c@ c, , ;
   \ 1-byte opcode with 2-byte parameter.
 
 : m6 ( 8b "name" -- )
-  (c does> ( reg -- ) ( reg pfa ) CB c, c@ + c, ;
+  (c does> ( reg -- ) ( reg dfa ) CB c, c@ + c, ;
   \ Rotation of registers.
 
 : m7 ( 8b "name" -- )
   (c does> ( reg bit -- )
-    ( reg bit pfa ) CB c, c@ swap 8* + + c, ;  -->
+    ( reg bit dfa ) CB c, c@ swap 8* + + c, ;  -->
   \ Bit manipulation of registers.
 
 ( assembler )
 
   \ Defining words for z80 instructions
 
-: m8 ( 16b "name" -- ) create , does> ( -- ) ( pfa ) @ , ;
+: m8 ( 16b "name" -- ) create , does> ( -- ) ( dfa ) @ , ;
   \ 2-byte opcodes.
 
 : (jr,) ( a op -- ) c, here 1+ - dup ?rel c, ;
   \ Compile a relative jump _op_ to absolute address _a_.
   \ XXX TODO -- use `<rresolve`
 
-: m9 ( 8b "name" -- ) (c does> ( a -- ) ( a pfa ) c@ (jr,) ;
+: m9 ( 8b "name" -- ) (c does> ( a -- ) ( a dfa ) c@ (jr,) ;
   \ Relative jumps.
 
 : ma ( 8b "name" -- )
-  (c does> ( disp regph -- ) ( disp regph pfa ) c@ c, drop c, ;
+  (c does> ( disp regph -- ) ( disp regph dfa ) c@ c, drop c, ;
   \ Index registers with register.
 
 : mb ( 8b "name" -- )
-  (c does> ( disp regph -- ) ( disp regph pfa )
+  (c does> ( disp regph -- ) ( disp regph dfa )
   CB c, c@ c, drop c, ;
   \ Rotation with index registers.
 
 : mc ( 8b "name" -- )
-  (c does> ( disp regph bit -- ) ( disp regph bit pfa )
+  (c does> ( disp regph bit -- ) ( disp regph bit dfa )
   CB c, c@ rot drop rot c, swap 8* + c, ;  -->
   \ Bit manipulation with index registers.
 
@@ -160,7 +160,7 @@ B0 m2 or, A8 m2 xor, -->
   \ Opcodes
 
 : jpix, ( -- ) ix-op c, jphl, ;
-  \ XXX TODO -- study changes needed to use `ix jpp` or similar
+  \ XXX TODO -- study changes needed to use `ix jp,` or similar
   \ instead.
 
 : ldp#, ( 16b regp -- ) 8* 1+ c, , ;
@@ -224,6 +224,11 @@ F2 cconstant p?   FA cconstant m?
   \
   \ z? ( -- op )
   \
+  \ Return the opcode _op_ of the Z80 instruction ``jp z``,
+  \ to be used as condition and consumed by
+  \ `?ret,`, `?jp,`, `?call`, `?jr`, `aif`, `rif`, `awhile`,
+  \ `rwhile`, `auntil, or `runtil`.
+  \
   \ See also: `nz?`, `c?`, `nc?`, `po?`, `pe?`, `p?`, `m?`.
   \
   \ }doc
@@ -232,17 +237,25 @@ F2 cconstant p?   FA cconstant m?
   \
   \ nz? ( -- op )
   \
+  \ Return the opcode _op_ of the Z80 instruction ``jp nz``,
+  \ to be used as condition and consumed by
+  \ `?ret,`, `?jp,`, `?call`, `?jr`, `aif`, `rif`, `awhile`,
+  \ `rwhile`, `auntil, or `runtil`.
+  \
   \ See also: `z?`, `c?`, `nc?`, `po?`, `pe?`, `p?`, `m?`,
   \ `?ret,`, `?jp,`, `?jr`, `?call`, `rif`, `rwhile`, `runtil`,
   \ `aif`, `awhile`, `auntil`.
   \
   \ }doc
 
-  \ XXX TODO -- Finish documentation.
-
   \ doc{
   \
   \ c? ( -- op )
+  \
+  \ Return the opcode _op_ of the Z80 instruction ``jp c``,
+  \ to be used as condition and consumed by
+  \ `?ret,`, `?jp,`, `?call`, `?jr`, `aif`, `rif`, `awhile`,
+  \ `rwhile`, `auntil, or `runtil`.
   \
   \ See also: `z?`, `nz?`, `nc?`, `po?`, `pe?`, `p?`, `m?`.
   \
@@ -252,6 +265,11 @@ F2 cconstant p?   FA cconstant m?
   \
   \ nc? ( -- op )
   \
+  \ Return the opcode _op_ of the Z80 instruction ``jp nc``,
+  \ to be used as condition and consumed by
+  \ `?ret,`, `?jp,`, `?call`, `?jr`, `aif`, `rif`, `awhile`,
+  \ `rwhile`, `auntil, or `runtil`.
+  \
   \ See also: `z?`, `nz?`, `c?`, `po?`, `pe?`, `p?`, `m?`.
   \
   \ }doc
@@ -259,6 +277,10 @@ F2 cconstant p?   FA cconstant m?
   \ doc{
   \
   \ po? ( -- op )
+  \
+  \ Return the opcode _op_ of the Z80 instruction ``jp op``,
+  \ to be used as condition and consumed by
+  \ `?ret,`, `?jp,`, `?call`, `aif`, `awhile` or `auntil`.
   \
   \ See also: `z?`, `nz?`, `c?`, `nc?`, `pe?`, `p?`, `m?`.
   \
@@ -268,6 +290,10 @@ F2 cconstant p?   FA cconstant m?
   \
   \ pe? ( -- op )
   \
+  \ Return the opcode _op_ of the Z80 instruction ``jp pe``,
+  \ to be used as condition and consumed by
+  \ `?ret,`, `?jp,`, `?call`, `aif`, `awhile` or `auntil`.
+  \
   \ See also: `z?`, `nz?`, `c?`, `nc?`, `po?`, `p?`, `m?`.
   \
   \ }doc
@@ -276,6 +302,10 @@ F2 cconstant p?   FA cconstant m?
   \
   \ p? ( -- op )
   \
+  \ Return the opcode _op_ of the Z80 instruction ``jp p``,
+  \ to be used as condition and consumed by
+  \ `?ret,`, `?jp,`, `?call`, `aif`, `awhile` or `auntil`.
+  \
   \ See also: `z?`, `nz?`, `c?`, `nc?`, `po?`, `pe?`, `m?`.
   \
   \ }doc
@@ -283,6 +313,10 @@ F2 cconstant p?   FA cconstant m?
   \ doc{
   \
   \ m? ( -- op )
+  \
+  \ Return the opcode _op_ of the Z80 instruction ``jp m``,
+  \ to be used as condition and consumed by
+  \ `?ret,`, `?jp,`, `?call`, `aif`, `awhile` or `auntil`.
   \
   \ See also: `z?`, `nz?`, `c?`, `nc?`, `po?`, `pe?`, `p?`.
   \
@@ -297,16 +331,62 @@ F2 cconstant p?   FA cconstant m?
   \ Note: Opcodes: $C3 is `jp`; $18 is `jr`.
 
 : ?ret, ( op -- ) 2- c, ;
-  \ Conditional return.
+
+  \ doc{
+  \
+  \ ?ret, ( op -- )
+  \
+  \ Compile a Z80 conditional return instruction, being _op_
+  \ the identifier of the condition, which has been put on the
+  \ stack by `nz?`, `c?`, `nc?`, `po?`, `pe?`, `p?`, or `m?`.
+  \
+  \ See also: `?jp,`, `?call,`.
+  \
+  \ }doc
 
 : ?jp, ( a op -- ) c, , ;
-  \ Conditional absolute jump.
+
+  \ doc{
+  \
+  \ ?jp, ( a op -- )
+  \
+  \ Compile a Z80 conditional absolute jump instruction to
+  \ address _a_, being _op_ the identifier of the condition,
+  \ which has been put on the stack by `nz?`, `c?`, `nc?`,
+  \ `po?`, `pe?`, `p?`, or `m?`.
+  \
+  \ See also: `?jr,`, `?ret,`, `?call,`.
+  \
+  \ }doc
 
 : ?call, ( a op -- ) 2+ ?jp, ;
-  \ Conditional call.
+
+  \ doc{
+  \
+  \ ?call, ( a op -- )
+  \
+  \ Compile a Z80 conditional absolute call instruction to
+  \ address _a_, being _op_ the identifier of the condition,
+  \ which has been put on the stack by `nz?`, `c?`, `nc?`,
+  \ `po?`, `pe?`, `p?`, or `m?`.
+  \
+  \ See also: `?ret,`, `?jp,`.
+  \
+  \ }doc
 
 : ?jr, ( a op -- ) jp>jr (jr,) ;
-  \ Conditional relative jump.
+
+  \ doc{
+  \
+  \ ?jp, ( a op -- )
+  \
+  \ Compile a Z80 conditional relative jump instruction to
+  \ address _a_, being _op_ the identifier of the condition,
+  \ which has been put on the stack by `nz?`, `c?`, or `nc?`.
+  \
+  \ See also: `?jp,`.
+  \
+  \ }doc
 
   \ Control structures with relative jumps
 
@@ -414,12 +494,13 @@ set-current set-order
 
   \ doc{
   \
-  \ inverse-cond ( op1 -- op2)
+  \ inverse-cond ( op1 -- op2 )
   \
   \ Convert an assembler condition flag (actually, an absolute
   \ jump opcode) to its opposite.
   \
-  \ Examples: `c?` is converted to `nc?`; `nz?` to `z?`, etc.
+  \ Examples: The opcode returned by `c?` is converted to the
+  \ opcode returned by `nc?`; `nz?` to `z?`, etc.
   \
   \ }doc
 
@@ -650,5 +731,9 @@ macro call-xt, ( xt -- ) 21 c, , execute-hl, endm
   \
   \ 2017-03-28: Fix code typo in `execute-hl`. Rewrite
   \ `call-xt,` with Z80 opcodes. Improve documentation.
+  \
+  \ 2017-09-09: Update notation "pfa" to the standard "dfa".
+  \ Finish documentation of conditions (`z?`, `nz?`...).
+  \ Document `?ret,`, `?call`, `?jp,`, `?jr,`.
 
   \ vim: filetype=soloforth
