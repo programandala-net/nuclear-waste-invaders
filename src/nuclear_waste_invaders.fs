@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.92.0+201707272034" ;
+: version$ ( -- ca len ) s" 0.93.0+201711281211" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -157,7 +157,7 @@ need #>kk need inkey
   \ --------------------------------------------
   cr .(   -Time) ?depth \ {{{2
 
-need frames@ need ms need seconds need ?seconds
+need ticks need ms need seconds need ?seconds
 
   \ --------------------------------------------
   cr .(   -Sound) ?depth \ {{{2
@@ -2623,8 +2623,8 @@ cvariable cure-factor  20 cure-factor c!
 defer invasion \ XXX TMP --
 
 : invasion-wait ( -- )
-  frames@ invader-time s>d d+ (invasion
-  begin  frames@ 2over d< 0=  until  2drop ;
+  ticks invader-time s>d d+ (invasion
+  begin  ticks 2over d< 0=  until  2drop ;
   \ Move the current invader, if there are units left of it,
   \ and then choose the next one.
   \ XXX TMP --
@@ -2635,7 +2635,7 @@ defer invasion \ XXX TMP --
 
   \ XXX TODO -- alternative to
   \ make sure the action takes always a fixed time:
-  \ do `frames@ invader-interval dmod ?exit` at the start.
+  \ do `ticks invader-interval dmod ?exit` at the start.
 
 : invasion-check ( -- )
   os-frames c@ invader-time mod ?exit (invasion ;
