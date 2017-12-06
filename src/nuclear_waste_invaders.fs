@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.94.0+201712061504" ;
+: version$ ( -- ca len ) s" 0.95.0+201712061920" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -81,7 +81,7 @@ need evaluate need ?depth
   cr .(   -Definers) ?depth \ {{{2
 
 need defer need alias need cvariable
-need 2const need cenum
+need 2const need cenum need c!>
 
   \ --------------------------------------------
   cr .(   -Strings) ?depth \ {{{2
@@ -2612,38 +2612,13 @@ cvariable cure-factor  20 cure-factor c!
   \ Move the current invader if it's active; else
   \ just try to activate it, if it's alive.
 
-: (invasion ( -- ) move-invader next-invader ;
-  \ Move the current invader, then choose the next one.
+%1 cconstant calm
 
-8 constant invader-time
+: calm? ( -- f ) ticks calm and ;
 
-defer invasion \ XXX TMP --
-
-: invasion-wait ( -- )
-  ticks invader-time s>d d+ (invasion
-  begin  ticks 2over d< 0=  until  2drop ;
-  \ Move the current invader, if there are units left of it,
-  \ and then choose the next one.
-  \ XXX TMP --
-  \ XXX REMARK --
-  \ invader-time = 4 -- works, but too slow
-  \ invader-time = 3 -- works a bit, but too slow
-  \ invader-time = 2 -- no effect
-
-  \ XXX TODO -- alternative to
-  \ make sure the action takes always a fixed time:
-  \ do `ticks invader-interval dmod ?exit` at the start.
-
-: invasion-check ( -- )
-  os-frames c@ invader-time mod ?exit (invasion ;
-  \ XXX TMP --
-  \ XXX REMARK --
-  \ invader-time = 10 -- they hardly move
-  \ invader-time = 4 -- they move very slowly
-  \ invader-time = 3 -- they dont move
-  \ invader-time = 2 -- they dont move
-
-' (invasion ' invasion defer! \ XXX TMP --
+: invasion ( -- ) calm? ?exit move-invader next-invader ;
+  \ If it's the right time, move the current invader, then
+  \ choose the next one.
 
   \ ===========================================================
   cr .( Mothership) ?depth debug-point \ {{{1

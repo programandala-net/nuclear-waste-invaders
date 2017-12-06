@@ -28,10 +28,6 @@ Change the color of explosions.
 
 Animate the explosions with several frames.
 
-.2016-10-18:
-
-Make the speed of the invaders regular, no matter the number of them.
-
 .2016-10-22:
 
 Detect if a wall is already broken, and change the graphic
@@ -134,3 +130,16 @@ loop:
 .2017-12-06:
 
 Make `defeat-tune` an alarm and use it when an alien touches the wall.
+
+.2017-12-06:
+
+If the mother ship is visible wait until it's gone before displaying
+the attack report.
+
+.2017-12-06:
+
+Make the tank chains move, use two or three graphics.
+
+.2017-12-06:
+
+Fix: Crash when `location` is greater than 5?
