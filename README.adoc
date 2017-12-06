@@ -1,23 +1,28 @@
 = Nuclear Waste Invaders
-:revdate: 2017-11-21
+:revdate: 2017-12-06
+:linkattrs:
 
-// This document is written in AsciiDoc/Asciidoctor format.
-// See: <http://asciidoctor.org>.
+// This file is part of Nuclear Waste Invaders
+// http://programandala.net/en.program.nuclear_waste_invaders.html
+
+// This document is written in Asciidoctor format
+// http://asciidoctor.org
 
 // You may do whatever you want with this work, so long as you retain
 // the copyright/authorship/acknowledgment/credit notice(s) and this
 // license in all redistributed copies and derived works.  There is no
 // warranty.
 
-_Nuclear Waste Invaders_ is a ZX Spectrum 128 version, under
+_Nuclear Waste Invaders_ is a ZX Spectrum 128 remake, under
 development, of
 http://www.zonadepruebas.com/viewtopic.php?t=4231[Jupiter ACE's
-Nuclear Invaders (by Dancresp, 2013)].
+Nuclear Invaders (by Dancresp, 2013),role="external"].
 
-This version is written in http://standard-forth.org[Forth] with
+This version is written in
+http://standard-forth.org[Forth,role="external"] with
 http://programandala.net/en.program.solo_forth.html[Solo Forth]
 (http://github.com/programandala-net/solo-forth[Solo Forth in
-GitHub]).
+GitHub,role="external"]).
 
 Project home page:
 http://programandala.net/en.program.nuclear_waste_invaders.html.
@@ -31,10 +36,11 @@ http://programandala.net/en.program.nuclear_waste_invaders.html.
   <graphics.tap> tape image.
 . Start a ZX Spectrum 128 emulator with the Plus D interface.
 . Enter 128 BASIC.
-. Insert the Solo Forth's <disk_0_boot.mgt> disk image into drive 1.
-. Type `run` to load G+DOS and Solo Forth from drive 1.
-. Insert the <disk_2_nuclear_waste_invaders.mgt> disk image into drive
+. Insert the Solo Forth's <disk_0_boot.mgt> disk image into disk drive
   1.
+. Type `run` to load G+DOS and Solo Forth from disk drive 1.
+. Insert the <disk_2_nuclear_waste_invaders.mgt> disk image into disk
+  drive 1.
 . Open the <graphics_and_font.tap> tape image as the input tape of
   your emulator.
 . Type `1 load` to load block 1 from the current drive. This will
@@ -42,5 +48,6 @@ http://programandala.net/en.program.nuclear_waste_invaders.html.
 . Set your emulator to its maximum speed and wait. When the
   compilation is finished, the screen is cleared and a message is
   displayed.
+. In order to save the compiled game, create a SZX snapshot with your
+  emulator.
 . Type `run` to start the game.
-. Save a SZX snapshot with your emulator.
