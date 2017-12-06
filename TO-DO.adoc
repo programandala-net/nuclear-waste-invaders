@@ -54,11 +54,8 @@ it moves inside the building.
 
 .2017-02-28:
 
-Make the tank delay through the doors.
-
-.2017-02-28:
-
-Make a hit invader randomly move up to the next layer, if it's free.
+- Make the tank delay through the doors.
+- Make a hit invader randomly move up to the next layer, if it's free.
 
 .2017-01-13:
 
@@ -66,16 +63,11 @@ Improve the visibility of the projectile right above the tank.
 
 .2017-03-01:
 
-Now two data fields are used for the invader status: `~active` and
-`~retreating`.
-
-Use only one datum instead, to hold the identifier of the current
-status (attacking, docked, breaking the wall, retreating...). This
-will be simpler to use and more versatile.
-
-.2017-03-01:
-
-Change the graphics of the invaders that are delayed at the wall.
+- Now two data fields are used for the invader status: `~active` and
+  `~retreating`.  Use only one datum instead, to hold the identifier
+  of the current status (attacking, docked, breaking the wall,
+  retreating...). This will be simpler to use and more versatile.
+- Change the graphics of the invaders that are delayed at the wall.
 
 .2017-03-01:
 
@@ -88,20 +80,14 @@ remove duplicated frames from the UDG set.
 
 .2017-04-18:
 
-Write Z80 code to print 2x1 sprites faster.
-
-.2017-04-18:
-
-Simplify the status bar, remove the texts, display only "0000/0000".
+- Write Z80 code to print 2x1 sprites faster.
+- Simplify the status bar, remove the texts, display only "0000/0000".
 
 .2017-05-12:
 
-Don't repair the building automatically. Use the tank.
-
-.2017-05-12:
-
-Improve the start of the attack: Make the mothership drop the
-invaders.
+- Don't repair the building automatically. Use the tank.
+- Improve the start of the attack: Make the mothership drop the
+  invaders.
 
 .2017-05-16:
 
@@ -129,17 +115,14 @@ loop:
 
 .2017-12-06:
 
-Make `defeat-tune` an alarm and use it when an alien touches the wall.
+- Make `defeat-tune` an alarm and use it when an alien touches the
+  wall.
+- If the mothership is visible wait until it's gone before displaying
+  the attack report.
+- Make the tank chains move, use two or three graphics.
+- Fix: Crash when `location` is greater than 5? It happened only once.
+- Fix: the mothership still moves faster when there are few invaders.
+- Improve: make the mothership halt and change direction above the
+  building, randomly.
 
-.2017-12-06:
 
-If the mother ship is visible wait until it's gone before displaying
-the attack report.
-
-.2017-12-06:
-
-Make the tank chains move, use two or three graphics.
-
-.2017-12-06:
-
-Fix: Crash when `location` is greater than 5?

@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.95.0+201712061920" ;
+: version$ ( -- ca len ) s" 0.96.0+201712062005" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2731,7 +2731,7 @@ constant mothership-movements ( -- a )
   \ Manage the mothership, when it's invisible.
 
 : manage-mothership ( -- )
-  mothership-y 0exit
+  calm? ?exit  mothership-y 0exit
   visible-mothership? if   visible-mothership exit
                       then invisible-mothership ;
   \ Manage the mothership, if not destroyed.
