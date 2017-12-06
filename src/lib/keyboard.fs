@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201705071835
+  \ Last modified: 201711281730
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -185,7 +185,7 @@ noop noop noop noop noop noop noop noop noop noop noop noop [
   \ : ax ( -- ) ['] acceptx ['] accept defer! ;
   \ : a0 ( -- ) ['] default-accept ['] accept defer! ;
 
-( nuf? aborted? break? )
+( nuf? aborted? break? -keys new-key new-key- )
 
 [unneeded] nuf? dup
 
@@ -216,7 +216,7 @@ noop noop noop noop noop noop noop noop noop noop noop noop [
   \   begin  ." bla " nuf?  until  ." Aborted" ;
   \ ----
   \
-  \ See also: `aborted?`.
+  \ See: `aborted?`.
   \
   \ }doc
 
@@ -250,6 +250,54 @@ noop noop noop noop noop noop noop noop noop noop noop noop [
   \ XXX TODO try
 
 : break? ( -- f ) key? dup if  key 2drop break-key?  then ; ?)
+
+[unneeded] -keys ?(
+code -keys ( -- )
+  FD c, CB c, 01 c, 86 08 05 * + c, jpnext, end-code ?)
+    \ 01 iy 5 resx, \ res 5,(iy+$01)
+    \ Reset bit 5 of system variable FLAGS.
+
+  \ Credit:
+  \ Adapted from Galope.
+
+  \ doc{
+  \
+  \ -keys ( -- )
+  \
+  \ Remove all keys from the keyboard buffer.
+  \
+  \ See: `key?`, `new-key`, `new-key-`, `key`, `xkey`.
+  \
+  \ }doc
+
+[unneeded] new-key need -keys ?\ : new-key ( -- c ) -keys key ;
+
+  \ doc{
+  \
+  \ new-key ( -- c )
+  \
+  \ Remove all keys from the keyboard buffer, then return
+  \ character _c_ of the key struck, a member of the a member
+  \ of the defined character set.
+  \
+  \ See: `new-key-`, `key`, `xkey`, `-keys`.
+  \
+  \ }doc
+
+[unneeded] new-key- ?( need new-key need -keys
+: new-key- ( -- ) new-key drop -keys ; ?)
+
+  \ doc{
+  \
+  \ new-key- ( -- )
+  \
+  \ Remove all keys from the keyboard buffer, then wait for a
+  \ key press and discard it. Finally remove all keys from the
+  \ keyboard buffer.
+  \
+  \ See: `new-key`, `key`, `xkey`, `-keys`.
+  \
+  \ }doc
 
 ( /kk kk-ports kk, kk@ )
 
@@ -327,7 +375,7 @@ noop noop noop noop noop noop noop noop noop noop noop noop [
   \
   \ Store a key definition into the keys table.
   \
-  \ See also: `kk@`, `/kk`, `kk-ports`.
+  \ See: `kk@`, `/kk`, `kk-ports`.
   \
   \ }doc
 
@@ -337,7 +385,7 @@ noop noop noop noop noop noop noop noop noop noop noop noop [
   \
   \ Fetch a key definition from the keys table.
   \
-  \ See also: `kk,`, `/kk`, `kk-ports`.
+  \ See: `kk,`, `/kk`, `kk-ports`.
   \
   \ }doc
 
@@ -426,7 +474,7 @@ kk-sp kk,  kk-ss kk,  kk-m kk,  kk-n kk,  kk-b kk,
   \ Every item occupies 3 or 4 bytes, depending on the value of
   \ `/kk`.
   \
-  \ See also: `kk,`, `kk@`.
+  \ See: `kk,`, `kk@`.
   \
   \ }doc
 
@@ -509,7 +557,7 @@ create kk-chars
   \ Is a key pressed?  _bitmask_ is the key bitmask and _port_
   \ is the keyboard row port.
   \
-  \ See also: `pressed`, `only-one-pressed`.
+  \ See: `pressed`, `only-one-pressed`.
   \
   \ }doc
 
@@ -529,7 +577,7 @@ create kk-chars
   \ table that happens to be pressed.  _bitmask_ is the key
   \ bitmask and _port_ is the keyboard row port.
   \
-  \ See also: `kk-ports`, `only-one-pressed`, `pressed?`.
+  \ See: `kk-ports`, `only-one-pressed`, `pressed?`.
   \
   \ }doc
 
@@ -565,7 +613,7 @@ need kk-ports
   \ only one key pressed.  _bitmask_ is the key bitmask and
   \ _port_ is the keyboard row port.
   \
-  \ See also: `kk-ports`, `pressed`, `pressed?`.
+  \ See: `kk-ports`, `pressed`, `pressed?`.
   \
   \ }doc
 
@@ -629,5 +677,7 @@ need kk-ports
   \ 2017-05-04: Improve documentation.
   \
   \ 2017-05-07: Improve documentation.
+  \
+  \ 2017-11-28: Add `-keys`, `new-key`, `new-key-`.
 
   \ vim: filetype=soloforth

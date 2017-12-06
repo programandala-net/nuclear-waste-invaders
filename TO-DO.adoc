@@ -1,8 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-05-21
-
-// Last modified 201705211841
+:revdate: 2017-12-06
 
 Older first:
 
@@ -132,3 +130,7 @@ loop:
 - Update its detection accordingly.
 - Change its y coordinate to zero only when the explosion has
   finished.
+
+.2017-12-06:
+
+Make `defeat-tune` an alarm and use it when an alien touches the wall.

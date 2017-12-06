@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201711272149
+  \ Last modified: 201712032231
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -39,7 +39,7 @@
   \
   \ If the execution token is zero, do nothing.
   \
-  \ See also: `perform`, `execute`.
+  \ See: `perform`, `execute`.
   \
   \ }doc
 
@@ -101,6 +101,15 @@ code call ( a -- )
   \ alternative to `?do`, when the do-loop structure is
   \ factored in its own word.
   \
+  \ Usage example:
+
+  \ ----
+  \ : (.range) ( n1 n2 -- ) don't do i . loop ;
+  \ : .range ( n1 n2 -- ) (.range) ;
+  \ ----
+
+  \ ``don't`` is superseded by the standard word `?do`.
+  \
   \ }doc
 
 [unneeded] executions ?( need 2rdrop
@@ -110,8 +119,8 @@ code call ( a -- )
   \ Code from Galope (module times.fs).
 
 : executions ( xt n -- )
-  2>r begin   2r@   while
-        2r> 1- 2>r execute  repeat  drop 2rdrop ; ?)
+  2>r begin  2r@ while 2r> 1- 2>r execute
+      repeat drop 2rdrop ; ?)
 
   \ doc{
   \
@@ -119,7 +128,7 @@ code call ( a -- )
   \
   \ Execute _xt_ _n_ times.
   \
-  \ See also: `times`, `dtimes`.
+  \ See: `times`, `dtimes`.
   \
   \ }doc
 
@@ -130,7 +139,7 @@ code call ( a -- )
 : ?repeat
   \ Compilation: ( dest -- dest )
   \ Run-time:    ( f -- )
-  cs-dup  postpone until ; immediate ?)
+  cs-dup postpone until ; immediate ?)
 
   \ Credit:
   \
@@ -307,7 +316,7 @@ code call ( a -- )
   \
   \ ``retry`` is an `immediate` and `compile-only` word.
   \
-  \ See also: `?retry`.
+  \ See: `?retry`.
   \
   \ }doc
 
@@ -329,7 +338,7 @@ code call ( a -- )
   \
   \ ``?retry`` is an `immediate` and `compile-only` word.
   \
-  \ See also: `retry`.
+  \ See: `retry`.
   \
   \ }doc
 
@@ -353,7 +362,7 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \ immediately following the innermost syntactically enclosing
   \ `loop` or `+loop`.
   \
-  \ See also: `leave`, `unloop`, `do`, `?do`.
+  \ See: `leave`, `unloop`, `do`, `?do`.
   \
   \ }doc
 
@@ -374,6 +383,8 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \ structure.  Leave _0_ on the control-flow stack, as a mark
   \ for `thens`.
   \
+  \ Run-time: Continue execution.
+  \
   \ ``cond`` is an `immediate` and `compile-only` word.
   \
   \ Usage example:
@@ -388,7 +399,7 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \   thens ;
   \ ----
 
-  \ See also: `case`.
+  \ See: `case`.
   \
   \ }doc
 
@@ -402,17 +413,18 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
 
   \ doc{
   \
-  \ thens
-  \   Compilation: ( C: 0 orig#1 .. orig#n -- )
-  \   Run-time:    ( -- )
+  \ thens Compilation: ( C: 0 orig#1 .. orig#n -- ) Run-time:
+  \ ( -- )
   \
-  \ Resolve all forward references _orig#1 .. orign#n_ with
-  \ `then` until _0_ is found.
+  \ Compilation: Resolve all forward references _orig#1 ..
+  \ orign#n_ with `then` until _0_ is found.
+  \
+  \ Run-time: Continue execution.
   \
   \ ``thens`` is an `immediate` and `compile-only` word.
   \
   \ ``thens`` is a factor of `endcase` and other control
-  \ structures, but it's also the end of a `cond` .. ``thens``
+  \ structures, but it's also the end of the `cond` .. ``thens``
   \ structure.
 
   \ }doc
@@ -466,5 +478,11 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \
   \ 2017-11-27: Move `cond` and `thens` from <flow.select.fs>
   \ and document them. Improve documentation.
+  \
+  \ 2017-11-28: Improve source layout of `executions`.
+  \
+  \ 2017-12-02: Improve documentation.
+  \
+  \ 2017-12-03: Improve documentation.
 
   \ vim: filetype=soloforth

@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.93.0+201711281211" ;
+: version$ ( -- ca len ) s" 0.94.0+201712061504" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -75,10 +75,7 @@ here 512 dup allot !> /stringer !> stringer empty-stringer
 
 need [if] need ~~
 need warn.message need order need see need rdepth need where
-need evaluate
-
-: ?depth ( -- ) depth if decimal cr .s #-258 throw then ;
-  \ Check stack imbalance during compilation.
+need evaluate need ?depth
 
   \ --------------------------------------------
   cr .(   -Definers) ?depth \ {{{2

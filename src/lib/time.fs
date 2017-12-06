@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201711281200
+  \ Last modified: 201712041740
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -33,11 +33,12 @@
   \
   \ Wait at least _u_ seconds.
   \
-  \ See also: `?seconds`, `ms`, `ticks`.
+  \ See: `?seconds`, `ms`, `ticks`.
   \
   \ }doc
 
 [unneeded] ?seconds ?( need ?ticks-pause need ticks/second
+
 : ?seconds ( u -- ) ticks/second * ?ticks-pause ; ?)
 
   \ doc{
@@ -46,7 +47,7 @@
   \
   \ Wait at least _u_ seconds or until a key is pressed.
   \
-  \ See also: `seconds`, `ms`, `?ticks`.
+  \ See: `seconds`, `ms`, `?ticks`.
   \
   \ }doc
 
@@ -74,64 +75,134 @@ code ms ( u -- )
   \ Origin: Forth-94 (FACILITY EXT), Forth-202 (FACILITY
   \ EXT).
   \
-  \ See also: `seconds`, `ticks-pause`.
+  \ See: `seconds`, `ticks-pause`.
   \
   \ }doc
 
-( ticks set-ticks reset-ticks )
+( ticks dticks set-ticks set-dticks reset-ticks reset-dticks )
 
 [unneeded] ticks ?( need os-frames
 
-: ticks ( -- d )
+: ticks ( -- u ) os-frames @ ; ?)
+
+  \ doc{
+  \
+  \ ticks ( -- n )
+  \
+  \ Return the current count of clock ticks _n_, which is
+  \ updated by the OS.
+  \
+  \ NOTE: ``ticks``returns the low 16 bits of the OS frames
+  \ counter, which is increased by the OS interrupts routine
+  \ every 20th ms. The counter is actually a 24-bit value,
+  \ which can be fetched by `dticks`.
+  \
+  \ Origin: Comus.
+  \
+  \ See: `set-ticks`, `reset-ticks`, `ticks/second`,
+  \ `ticks>seconds`, `os-frames`, `bench{`.
+  \
+  \ }doc
+
+[unneeded] dticks ?( need os-frames
+
+: dticks ( -- ud )
   os-frames @ [ os-frames cell+ ] literal c@ ; ?)
 
   \ doc{
   \
-  \ ticks ( -- d )
+  \ dticks ( -- ud )
   \
-  \ Return the current count of clock ticks _d_, which is
+  \ Return the current count of clock ticks _ud_, which is
   \ updated by the OS.
   \
-  \ See also: `set-ticks`, `reset-ticks`, `os-frames`,
-  \ `ticks/second`, `bench{`.
+  \ NOTE: ``dticks``returns the OS frames counter, which is
+  \ increased by the OS interrupts routine every 20th ms. The
+  \ counter is a 24-bit value.
+  \
+  \ See: `ticks`, `set-dticks`, `reset-dticks`,
+  \ `ticks/second`, `dticks>seconds`, `bench{`.
   \
   \ }doc
 
 [unneeded] set-ticks ?( need os-frames
 
-: set-ticks ( d -- )
-  [ os-frames cell+ ] literal c! os-frames ! ; ?)
+: set-ticks ( n -- ) os-frames ! ; ?)
 
   \ doc{
   \
   \ set-ticks ( d -- )
   \
+  \ Set the system clock to _n_ ticks.
+  \
+  \ See: `set-dticks`, `ticks`, `reset-ticks`,
+  \ `ticks/second`, `bench{`.
+  \
+  \ }doc
+
+[unneeded] set-dticks ?( need os-frames
+
+: set-dticks ( d -- )
+  [ os-frames cell+ ] literal c! os-frames ! ; ?)
+
+  \ doc{
+  \
+  \ set-dticks ( d -- )
+  \
   \ Set the system clock to _d_ ticks.
   \
-  \ See also: `ticks`, `reset-ticks`, `os-frames`,
+  \ See: `set-ticks`, `dticks`, `reset-dticks`,
   \ `ticks/second`, `bench{`.
   \
   \ }doc
 
 [unneeded] reset-ticks
 
-?\ need set-ticks : reset-ticks ( -- ) 0. set-ticks ;
+?\ need set-ticks : reset-ticks ( -- ) 0 set-ticks ;
 
   \ doc{
   \
   \ reset-ticks ( -- )
   \
+  \ Reset the low 16 bits of the OS clock to zero ticks.
+  \
+  \ See: `ticks`, `set-dticks`, `ticks/second`, `bench{`.
+  \
+  \ }doc
+
+[unneeded] reset-dticks
+
+?\ need set-dticks : reset-dticks ( -- ) 0. set-dticks ;
+
+  \ doc{
+  \
+  \ reset-dticks ( -- )
+  \
   \ Reset the system clock to zero ticks.
   \
-  \ See: `ticks`, `set-ticks`, `os-frames`, `ticks/second`,
+  \ See: `reset-ticks`, `dticks`, `set-dticks`, `ticks/second`,
   \ `bench{`.
   \
   \ }doc
 
-( ticks/second ticks>cs ticks>ms ticks>seconds )
+( ms/tick ticks/second dticks>cs dticks>ms dticks>seconds )
 
-[unneeded] ticks/second ?\ 50 cconstant ticks/second
+[unneeded] ms/tick ?\ 20 cconstant ms/tick
   \ XXX TODO -- Calculate after the lina Forth system.
+
+  \ doc{
+  \
+  \ ms/tick ( -- n )
+  \
+  \ Return the duration _n_ of one clock tick in miliseconds.
+  \
+  \ See: ticsk/second`, `ticks`.
+  \
+  \ }doc
+
+[unneeded] ticks/second ?( need ms/tick
+
+1000 ms/tick / cconstant ticks/second ?)
 
   \ doc{
   \
@@ -139,68 +210,221 @@ code ms ( u -- )
   \
   \ Return the number _n_ of clock ticks per second.
   \
-  \ See also: `ticks>seconds`, `ticks>cs`, `ticks>ms`, `ticks`.
+  \ See: `ms/tick`, `dticks>seconds`, `dticks>cs`,
+  \ `dticks>ms`, `ticks`.
   \
   \ }doc
 
-[unneeded] ticks>cs ?( need ticks/second need % need m+
+[unneeded] dticks>cs ?( need ms/tick need d*
 
-: ticks>cs ( d1 -- d2 )
-  ticks/second m/ 100 m* rot ticks/second % m+ ; ?)
-  \ XXX TODO -- Improve after the lina Forth system.
+: dticks>cs ( d1 -- d2 ) [ ms/tick 10 / s>d ] 2literal d* ; ?)
 
   \ doc{
   \
-  \ ticks>cs ( d1 -- d2 )
+  \ dticks>cs ( d1 -- d2 )
   \
   \ Convert clock ticks _d1_ to centiseconds _d2_.
   \
-  \ See also: `ticks>seconds`, `ticks>ms`, `ticks/seconds`,
-  \ `ticks`.
+  \ See: `ticks>cs`, `dticks>seconds`, `dticks>ms`,
+  \ `ticks/second`, `ticks`.
   \
   \ }doc
 
-[unneeded] ticks>ms ?( need ticks/second
+[unneeded] dticks>ms ?( need ms/tick need d*
 
-: ticks>ms ( d1 -- d2 )
-  ticks/second m/ 1000 m*
-  rot ticks/second 1000 swap */ m+ ; ?)
-  \ XXX TODO -- Improve after the lina Forth system.
+: dticks>ms ( d1 -- d2 ) [ ms/tick s>d ] 2literal d* ; ?)
 
   \ doc{
   \
-  \ ticks>ms ( d1 -- d2 )
+  \ dticks>ms ( d1 -- d2 )
   \
   \ Convert clock ticks _d1_ to milliseconds _d2_.
   \
-  \ See also: `ticks>seconds`, `ticks>cs`, `ticks/seconds`,
-  \ `ticks`.
+  \ See: `ticks>ms`, `dticks>seconds`, `dticks>cs`,
+  \ `ticks/second`, `ticks`.
   \
   \ }doc
 
-[unneeded] ticks>seconds ?( need ticks/second need m*/
+[unneeded] dticks>seconds ?( need ticks/second need m/
 
-: ticks>seconds ( d1 -- d2 ) 1 ticks/second m*/ ; ?)
-  \ XXX TODO -- Improve after the lina Forth system.
+: dticks>seconds ( d -- n ) ticks/second m/ nip ; ?)
 
   \ doc{
   \
-  \ ticks>seconds ( d -- n )
+  \ dticks>seconds ( d -- n )
   \
   \ Convert clock ticks _d_ to seconds _n_.
   \
-  \ See also: `ticks>cs`, `ticks>ms`, `ticks/seconds`,
-  \ `ticks`.
+  \ See: `ticks>seconds`, `dticks>cs`, `dticks>ms`,
+  \ `ticks/second`, `ticks`.
   \
   \ }doc
 
-( ?ticks-pause ticks-pause pause )
+( elapsed delapsed timer dtimer expired dexpired )
 
-[unneeded] ?ticks-pause ?( need os-frames
+[unneeded] elapsed ?( need ticks
+
+: elapsed ( u1 -- u2 ) ticks swap - ; ?)
+
+  \ doc{
+  \
+  \ elapsed ( u1 -- u2 )
+  \
+  \ For the time _u1_ in `ticks` return the elapsed time _u2_
+  \ since then, also in `ticks`.
+  \
+  \ See: `timer`, `delapsed`, `ticks>seconds`, `ticks>cs`,
+  \ `ticks>ms`.
+  \
+  \ }doc
+
+[unneeded] delapsed ?( need dticks
+
+: delapsed ( d1 -- d2 ) dnegate dticks d+ ; ?)
+
+  \ doc{
+  \
+  \ delapsed ( d1 -- d2 )
+  \
+  \ For the time _d1_ in `dticks` return the elapsed time _d2_
+  \ since then, also in `dticks`.
+  \
+  \ See: `timer`, `delapsed`, `dticks>seconds`, `dticks>cs`,
+  \ `dticks>ms`.
+  \
+  \ }doc
+
+[unneeded] timer ?\ need elapsed : timer ( n -- ) elapsed u. ;
+
+  \ doc{
+  \
+  \ timer ( u -- )
+  \
+  \ For the time _u_ in `ticks` display the elapsed time
+  \ since then, also in `ticks`.
+  \
+  \ Origin: Comus.
+  \
+  \ See: `dtimer`, `elapsed`.
+  \
+  \ }doc
+
+[unneeded] dtimer
+
+?\ need delapsed need ud. : dtimer ( d -- ) delapsed ud. ;
+
+  \ doc{
+  \
+  \ dtimer ( d -- )
+  \
+  \ For the time _d_ in `dticks` display the elapsed time
+  \ since then, also in `dticks`.
+  \
+  \ See: `timer`, `delapsed`.
+  \
+  \ }doc
+
+[unneeded] expired
+
+?\ need ticks : expired ( u -- f ) ticks u< ;
+
+  \ doc{
+  \
+  \ expired ( u -- f )
+  \
+  \ Return true if the `ticks` clock has passed _u_.
+  \
+  \ Usage example: The following word will execute the
+  \ hypothetical word ``test`` for _u_ clock `ticks`:
+
+  \ ----
+  \ : try ( u -- ) ticks + begin test dup expired until drop ;
+  \ ----
+
+  \ Origin: SwiftForth.
+  \
+  \ See: `dexpired`, `elapsed`, `timer`.
+  \
+  \ }doc
+
+[unneeded] dexpired
+
+?\ need dticks need du< : dexpired ( ud -- f ) dticks du< ;
+
+  \ doc{
+  \
+  \ dexpired ( ud -- f )
+  \
+  \ Return true if the `dticks` clock has passed _ud_.
+  \
+  \ Usage example: The following word will execute the
+  \ hypothetical word ``test`` for _ud_ clock `dticks`:
+
+  \ ----
+  \ : dtry ( ud -- )
+  \   dticks + begin test 2dup dexpired until 2drop ;
+  \ ----
+
+  \ Origin: SwiftForth's ``expired``.
+  \
+  \ See: `expired`, `delapsed`, `dtimer`.
+  \
+  \ }doc
+
+( ticks>cs ticks>ms ticks>seconds )
+
+[unneeded] ticks>cs ?( need ms/tick
+
+: ticks>cs ( n1 -- n2 ) [ ms/tick 10 / ] 1literal * ; ?)
+
+  \ doc{
+  \
+  \ ticks>cs ( n1 -- n2 )
+  \
+  \ Convert clock `ticks` _n1_ to centiseconds _n2_.
+  \
+  \ See: `dticks>cs`, `ticks>seconds`, `ticks>ms`,
+  \ `ticks/second`.
+  \
+  \ }doc
+
+[unneeded] ticks>ms ?( need ms/tick
+
+: ticks>ms ( n1 -- n2 ) ms/tick ; ?)
+
+  \ doc{
+  \
+  \ ticks>ms ( n1 -- n2 )
+  \
+  \ Convert clock ticks _n1_ to milliseconds _n2_.
+  \
+  \ See: `dticks>ms`, `ticks>seconds`, `ticks>cs`,
+  \ `ticks/second`, `ticks`.
+  \
+  \ }doc
+
+[unneeded] ticks>seconds ?( need ticks/second
+
+: ticks>seconds ( n1 -- n2 ) ticks/second / ; ?)
+
+  \ doc{
+  \
+  \ ticks>seconds ( n1 -- n2 )
+  \
+  \ Convert clock ticks _n1_ to seconds _n2_.
+  \
+  \ See: `dticks>seconds`, `ticks>cs`, `ticks>ms`,
+  \ `ticks/second`, `ticks`.
+  \
+  \ }doc
+
+( ?ticks-pause ticks-pause basic-pause )
+
+[unneeded] ?ticks-pause ?( need ticks
 
 : ?ticks-pause ( u -- )
-  os-frames @ +
-  begin  dup os-frames @ u< key? or  until drop ; ?)
+  ticks + begin dup ticks u< key? dup if key drop then
+                                  or until drop ; ?)
 
   \ XXX TODO -- multitasking
 
@@ -211,15 +435,15 @@ code ms ( u -- )
   \ Stop execution during at least _u_ clock ticks, or until a
   \ key is pressed.
   \
-  \ See: `ticks-pause`, `pause`, `os-frames`, `?seconds`,
+  \ See: `ticks-pause`, `basic-pause`, `?seconds`,
   \ `ticks/second`.
   \
   \ }doc
 
-[unneeded] ticks-pause ?( need os-frames
+[unneeded] ticks-pause ?( need ticks
 
 : ticks-pause ( u -- )
-  os-frames @ +  begin  dup os-frames @ u<  until drop ; ?)
+  ticks + begin dup ticks u< until drop ; ?)
 
   \ XXX TODO -- multitasking
 
@@ -229,7 +453,7 @@ code ms ( u -- )
   \
   \ Stop execution during at least _u_ clock ticks.
   \
-  \ See: `?ticks-pause`, `pause`, `os-frames`, `seconds`, `ms`,
+  \ See: `?ticks-pause`, `basic-pause`, `seconds`, `ms`,
   \ `ticks/second`.
   \
   \ }doc
@@ -244,37 +468,34 @@ code ms ( u -- )
   \   d pop, b push,
   \   rbegin  halt, d decp, d tstp,  z? runtil
   \   b pop, jpnext, end-code ?)
+  \ XXX FIXME -- `0 ticks-pause` does `$FFFF ticks-pause`
 
   \ Credit:
   \
   \ Code adapted from Spectrum Forth-83.
 
-  \ XXX FIXME -- `0 ticks-pause` does `$FFFF ticks-pause`
   \ XXX TODO -- multitasking
 
-[unneeded] pause ?( need ?ticks-pause
+[unneeded] basic-pause ?( need ?ticks-pause need new-key
 
-: pause ( u -- )
-  ?dup if ?ticks-pause exit then  begin key? until ; ?)
+: basic-pause ( u -- )
+  ?dup if ?ticks-pause else new-key drop then ; ?)
 
   \ doc{
   \
-  \ pause ( u -- )
+  \ basic-pause ( u -- )
   \
-  \ If _u_ 0 zero, stop execution until a key is pressed.
-  \ Otherwise stop execution during at least _u_ clock ticks,
+  \ If _u_ is zero, stop execution until a key is pressed.
+  \ Otherwise stop execution during at least _u_ clock `ticks`,
   \ or until a key is pressed.
   \
-  \ ``pause`` is a convenience that works like the homonymous
-  \ keyword of Sinclair BASIC.
+  \ ``basic-pause`` is a convenience that works like Sinclair
+  \ BASIC's ``PAUSE``.
   \
-  \ See: `ticks-pause`, `?ticks-pause`, `os-frames`,
-  \ `?seconds`, `ticks/second`.
+  \ See: `ticks-pause`, `?ticks-pause`, `?seconds`,
+  \ `ticks/second`.
   \
   \ }doc
-
-  \ XXX TODO -- Rename `pause` to `basic-pause` or something,
-  \ when the multitasking `pause` will be implemented.
 
 ( leapy-year? date set-date get-date )
 
@@ -296,7 +517,7 @@ code ms ( u -- )
   \
   \ Is _n_ a leapy year?
   \
-  \ See also: `set-date`.
+  \ See: `set-date`.
   \
   \ }doc
 
@@ -379,12 +600,13 @@ code ms ( u -- )
   \ Return the current time.
   \
   \ NOTE: The computer doesn't have a real clock. The OS frames
-  \ counter is used instead, which is increased by the
+  \ counter is used instead, which is increased by the OS
   \ interrupts routine every 20th ms. The counter is a 24-bit
-  \ value, so its maximum is $FFFFFF ticks of 20 ms (5592
-  \ minutes, 93 hours), then it starts again from zero.
+  \ value, so its maximum is $FFFFFF ticks of 20 ms (335544
+  \ seconds or 5592 minutes or 93 hours), then it starts again
+  \ from zero.
   \
-  \ See also: `set-time`, `time&date`, `.time`.
+  \ See: `set-time`, `time&date`, `.time`.
   \
   \ }doc
 
@@ -392,7 +614,7 @@ code ms ( u -- )
 
 : set-time ( second minute hour -- )
   3600 um* rot 60 * m+ rot m+ ( seconds )
-  ticks/second s>d ud* set-ticks ; ?)
+  [ ticks/second s>d ] 2literal ud* set-ticks ; ?)
 
   \ doc{
   \
@@ -400,11 +622,12 @@ code ms ( u -- )
   \
   \ Set the current time.
   \
-  \ See also: `get-time`.
+  \ See: `get-time`.
   \
   \ }doc
 
 [unneeded] reset-time ?( need reset-ticks need alias
+
 ' reset-ticks alias reset-time ( -- ) ?)
 
   \ doc{
@@ -413,7 +636,7 @@ code ms ( u -- )
   \
   \ Reset the current time to 00:00:00.
   \
-  \ See also: `get-time`.
+  \ See: `get-time`.
   \
   \ }doc
 
@@ -435,7 +658,7 @@ code ms ( u -- )
   \
   \ Display the given time in ISO 8601 extended format.
   \
-  \ See also: `.date`, `.time&date`, `time&date`.
+  \ See: `.date`, `.time&date`, `time&date`.
   \
   \ }doc
 
@@ -453,7 +676,7 @@ code ms ( u -- )
   \
   \ Display the given time in ISO 8601 extended format.
   \
-  \ See also: `.time`, `.time&date`, `time&date`.
+  \ See: `.time`, `.time&date`, `time&date`.
   \
   \ }doc
 
@@ -468,7 +691,6 @@ code ms ( u -- )
 : .time&date ( second minute hour day month year -- )
   .date ." T" .time ; ?)
 
-
   \ doc{
   \
   \ .time&date ( second minute hour day month year -- )
@@ -476,7 +698,7 @@ code ms ( u -- )
   \ Display the given time and date in ISO 8601 extended
   \ format.
   \
-  \ See also: `.date`, `.time`, `time&date`.
+  \ See: `.date`, `.time`, `time&date`.
   \
   \ }doc
 
@@ -494,7 +716,7 @@ code ms ( u -- )
   \
   \ Origin: Forth-94 (FACILITY EXT), Forth-201 (FACILITY EXT).
   \
-  \ See also: `get-time`, `get-date`, `set-time`, `set-date`,
+  \ See: `get-time`, `get-date`, `set-time`, `set-date`,
   \ `.time&date`.
   \
   \ }doc
@@ -508,9 +730,9 @@ code ms ( u -- )
 
   \ System-dependent timing routines.
 
-need reset-ticks need ticks need ticks>cs
+need reset-dticks need dticks need dticks>cs
 
-: bench{ ( -- ) reset-ticks ;
+: bench{ ( -- ) reset-dticks ;
 
   \ doc{
   \
@@ -518,25 +740,25 @@ need reset-ticks need ticks need ticks>cs
   \
   \ Start timing, setting the clock ticks to zero.
   \
-  \ See also: `}bench`, `reset-ticks`.
+  \ See: `}bench`, `reset-dticks`.
   \
   \ }doc
 
-: }bench ( -- d ) ticks ;
+: }bench ( -- d ) dticks ;
 
   \ doc{
   \
-  \ }bench ( -- d ) ticks ;
+  \ }bench ( -- d )
   \
   \ Return the current value of the clock ticks.
   \
-  \ See also: `bench{`, `ticks`, `bench.`, `}bench.`.
+  \ See: `bench{`, `dticks`, `bench.`, `}bench.`.
   \
   \ }doc
 
 : bench. ( d -- )
   2dup d. ." ticks ("
-  ticks>cs <# # # '.' hold #s #> type ."  s) " ;
+  dticks>cs <# # # '.' hold #s #> type ."  s) " ;
 
   \ doc{
   \
@@ -545,11 +767,11 @@ need reset-ticks need ticks need ticks>cs
   \ Display the timing result _d_, which is a number of
   \ clock ticks, in ticks and seconds.
   \
-  \ See also: `bench{`, `}bench`, `}bench.`.
+  \ See: `bench{`, `}bench`, `}bench.`.
   \
   \ }doc
 
-: }bench. ( -- ) ticks bench. ;
+: }bench. ( -- ) dticks bench. ;
 
   \ doc{
   \
@@ -557,12 +779,12 @@ need reset-ticks need ticks need ticks>cs
   \
   \ Stop timing and display the result.
   \
-  \ See also: `bench{`, `}bench`, `bench.`.
+  \ See: `bench{`, `}bench`, `bench.`.
   \
   \ }doc
 
 : benched ( xt n -- d )
-  bench{ 0 ?do  dup execute  loop  }bench rot drop ;
+  bench{ 0 ?do dup execute loop }bench rot drop ;
 
   \ doc{
   \
@@ -571,12 +793,12 @@ need reset-ticks need ticks need ticks>cs
   \ Execute _n_ times the benchmark _xt_ and return the timer
   \ result _d_.
   \
-  \ See also: `bench{`, `}bench`, `benched.`.
+  \ See: `bench{`, `}bench`, `benched.`.
   \
   \ }doc
 
 : benched. ( xt n -- )
-  bench{ 0 ?do  dup execute  loop  }bench. drop ;
+  bench{ 0 ?do dup execute loop }bench. drop ;
 
   \ doc{
   \
@@ -585,7 +807,7 @@ need reset-ticks need ticks need ticks>cs
   \ Execute _n_ times the benchmark _xt_ and display the
   \ result.
   \
-  \ See also: `bench{`, `}bench.`, `benched`.
+  \ See: `bench{`, `}bench.`, `benched`.
   \
   \ }doc
 
@@ -649,6 +871,16 @@ need reset-ticks need ticks need ticks>cs
   \ 2017-11-27: Improve documentation.
   \
   \ 2017-11-28: Replace the "frames" naming convention with
-  \ "ticks". Use `ticks/second` instead of literals.
+  \ "ticks". Use `ticks/second` instead of literals. Rename
+  \ `pause` `basic-pause` and fix it. Improve documentation.
+  \ Fix `?ticks-pause` with `key`. Add 1-cell versions of
+  \ "tick" words and rename all of them accordingly.
+  \
+  \ 2017-12-03: Improve conversions between ticks and time
+  \ units.
+  \
+  \ 2017-12-04: Add `elapsed`, `delapsed`, `timer` and
+  \ `dtimer`.  Fix and improve documentation. Make `dticks>ms`
+  \ and `set-time` faster. Add `expired` and `dexpired`.
 
   \ vim: filetype=soloforth
