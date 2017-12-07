@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-12-06
+:revdate: 2017-12-07
 
 Older first:
 
@@ -120,9 +120,6 @@ loop:
 - If the mothership is visible wait until it's gone before displaying
   the attack report.
 - Make the tank chains move, use two or three graphics.
-- Fix: Crash when `location` is greater than 5? It happened only once.
 - Fix: the mothership still moves faster when there are few invaders.
 - Improve: make the mothership halt and change direction above the
   building, randomly.
-
-

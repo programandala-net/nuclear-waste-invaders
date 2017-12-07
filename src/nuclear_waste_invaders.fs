@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.96.0+201712062005" ;
+: version$ ( -- ca len ) s" 0.97.0+201712070037" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2634,7 +2634,10 @@ cvariable cure-factor  20 cure-factor c!
   \ Current y coordinate of the mothership (0 if destroyed).
 
 variable mothership-x
-variable mothership-x-inc  -1|1 mothership-x-inc !
+variable mothership-x-inc
+
+variable mothership-stopped  mothership-stopped off
+  \ Flag: did the mothership stopped in the current flight?
 
 cvariable mothership-frame \ counter (0..3)
 
@@ -2645,6 +2648,7 @@ cvariable mothership-frame \ counter (0..3)
   \ XXX TMP -- for debugging
 
 : mothership-returns ( -- )
+  mothership-stopped off
   mothership-x-inc @ negate mothership-x-inc ! ;
 
 32 cconstant mothership-range
@@ -2653,8 +2657,12 @@ cvariable mothership-frame \ counter (0..3)
   \
   \ XXX TMP -- small value for debugging
 
+: start-mothership ( -- ) -1|1 mothership-x-inc ! ;
+
 : init-mothership ( -- ) mothership-range mothership-x !
-                         mothership-y0 c!> mothership-y ;
+                         mothership-y0 c!> mothership-y
+                         mothership-stopped off
+                         start-mothership ;
   \ Init the mothership.
 
 columns udg/mothership - cconstant mothership-max-x
@@ -2717,11 +2725,36 @@ constant mothership-movements ( -- a )
 
 [then]
 
-: visible-mothership ( -- )
+: above-building? ( -- f )
+  mothership-x @
+  building-left-x c@
+  building-right-x c@ [ udg/mothership 1- ] cliteral -
+  between ;
+  \ Is the mothership above the building?
+
+: stopped-mothership? ( -- f ) mothership-x-inc @ 0= ;
+
+: stop-mothership ( -- ) mothership-x-inc off
+                         mothership-stopped on ;
+
+: ?stop-mothership ( -- ) mothership-stopped @ ?exit
+                            above-building? 0= ?exit
+                                      3 random ?exit
+                               stop-mothership ;
+
+: ?start-mothership ( -- ) 9 random ?exit start-mothership ;
+
+: flying-mothership ( -- )
   -mothership advance-mothership
-  visible-mothership? 0= ?exit .mothership ;
-  \ Manage the mothership, when it's visible.
+  visible-mothership? if .mothership then ?stop-mothership ;
+  \ Manage the mothership, which is visible and flying,
+  \ but maybe could stop above the building.
   \ XXX TODO -- improve: don't delete the whole mothership
+  \ XXX TODO -- improve with fast `unvisible-mothership? ?exit`
+
+: visible-mothership ( -- )
+  stopped-mothership? if   ?start-mothership exit
+                      then flying-mothership ;
 
 : invisible-mothership ( -- )
   advance-mothership
@@ -2729,10 +2762,11 @@ constant mothership-movements ( -- a )
   mothership-in-range? ?exit
   mothership-returns advance-mothership ;
   \ Manage the mothership, when it's invisible.
+  \ XXX TODO -- try removing the last `advance-mothership`
 
 : manage-mothership ( -- )
-  calm? ?exit  mothership-y 0exit
-  visible-mothership? if   visible-mothership exit
+  mothership-y 0exit  calm? ?exit
+  visible-mothership? if   visible-mothership   exit
                       then invisible-mothership ;
   \ Manage the mothership, if not destroyed.
 
@@ -2896,9 +2930,9 @@ constant mothership-movements ( -- a )
 
 cvariable trigger-delay-counter  0 trigger-delay-counter c!
 
-[pixel-projectile] [if]    8
-                   [else]  6
-                   [then]  cconstant trigger-delay
+[pixel-projectile] [if]   8
+                   [else] 6
+                   [then] cconstant trigger-delay
 
 : delay-trigger ( -- )
   trigger-delay trigger-delay-counter c! ;
@@ -3229,6 +3263,7 @@ localized-string about-next-location$ ( -- ca len )
 : tr ( -- ) tank> h ; \ move tank right
 
 : ms ( -- ) manage-mothership ;
+: fms ( -- ) flying-mothership ;
 : ims ( -- ) invisible-mothership ;
 : vms ( -- ) visible-mothership ;
 : ams ( -- ) advance-mothership ;
