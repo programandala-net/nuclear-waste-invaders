@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201712041740
+  \ Last modified: 201712102002
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -537,8 +537,9 @@ code ms ( u -- )
   \
   \ date ( -- a )
   \
-  \ Address of a variable that holds the date used by
-  \ `set-date` and `get-date`, with the following structure:
+  \ _a_ is the address of a 3-cell table containing the date
+  \ used by `set-date` and `get-date`, with the following
+  \ structure:
 
   \ ....
   \ +0 day   (1 byte)
@@ -640,13 +641,7 @@ code ms ( u -- )
   \
   \ }doc
 
-( .00 .0000 .time .system-time .date .system-date )
-
-  \ XXX TODO document
-
-[unneeded] .00 ?\ : .00 ( n -- ) s>d <# # # #> type ;
-
-[unneeded] .0000 ?\ : .0000 ( n -- ) s>d <# # # # # #> type ;
+( .time .date .time&date time&date )
 
 [unneeded] .time ?( need .00
 
@@ -658,13 +653,9 @@ code ms ( u -- )
   \
   \ Display the given time in ISO 8601 extended format.
   \
-  \ See: `.date`, `.time&date`, `time&date`.
+  \ See: `.date`, `.time&date`, `time&date`, `.00`.
   \
   \ }doc
-
-[unneeded] .system-time ?( need get-time need .time
-
-: .system-time ( -- ) get-time .time ; ?)
 
 [unneeded] .date ?( need .0000 need .00
 
@@ -676,15 +667,9 @@ code ms ( u -- )
   \
   \ Display the given time in ISO 8601 extended format.
   \
-  \ See: `.time`, `.time&date`, `time&date`.
+  \ See: `.time`, `.time&date`, `time&date`, `.0000`, `.00`.
   \
   \ }doc
-
-[unneeded] .system-date ?( need get-date need .date
-
-: .system-date ( -- ) get-date  .date ; ?)
-
-( .time&date time&date )
 
 [unneeded] .time&date ?( need .date need .time
 
@@ -882,5 +867,11 @@ need reset-dticks need dticks need dticks>cs
   \ 2017-12-04: Add `elapsed`, `delapsed`, `timer` and
   \ `dtimer`.  Fix and improve documentation. Make `dticks>ms`
   \ and `set-time` faster. Add `expired` and `dexpired`.
+  \
+  \ 2017-12-09: Improve documentation.
+  \
+  \ 2017-12-10: Move `.00` and `.0000` to <display.numbers.fs>.
+  \ Improve documentation. Remove `.system-time` and
+  \ `.system-date`.
 
   \ vim: filetype=soloforth

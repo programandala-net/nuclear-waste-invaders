@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201705071743
+  \ Last modified: 201712092318
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -106,8 +106,7 @@ dup >order set-current case-sensitive @ case-sensitive on
   \ \x = hex character code
   \ Parse the 8-bit hex number of a character code.
 
-[defined]   alias ?\ '"' 1 2constant "  13 1 2constant n
-[undefined] alias ?\ ' q alias "       ' r alias n
+'"' 1 2constant "  13 1 2constant n
   \ \" = double quote
   \ \n = new line
 
@@ -146,12 +145,13 @@ variable case-sensitive-esc-chars  case-sensitive-esc-chars on
   \
   \ case-sensitive-esc-chars ( -- a )
   \
-  \ A variable that holds a flag that turns case-sensitive mode
-  \ on and off only during the parsing of escaped strings, e.g.
-  \ `s\"` and `.\"`.  The contents of this variable are
-  \ temporarily stored into `case-sensitive` by
-  \ `parse-esc-string`. The current contents of
-  \ `case-sensitive` are preserved and restored at the end.
+  \ A variable. _a_ is the address of a cell containing a flag
+  \ that turns case-sensitive mode on and off only during the
+  \ parsing of escaped strings, e.g.  `s\"` and `.\"`.  The
+  \ contents of this variable are temporarily stored into
+  \ `case-sensitive` by `parse-esc-string`. The current
+  \ contents of `case-sensitive` are preserved and restored at
+  \ the end.
   \
   \ When the contents of `case-sensitive` are non-zero, escaped
   \ characters case-sensitive mode is on (this is the default):
@@ -169,8 +169,8 @@ variable case-sensitive-esc-chars  case-sensitive-esc-chars on
   \
   \ NOTE: In order to create upper-case case-sensitive escaped
   \ chars, their correspondent words must be created when
-  \ `case-sensitive` is on.
-  \ See the words defined in `esc-udg-chars-wordlist`.
+  \ `case-sensitive` is on.  See the words defined in
+  \ `esc-udg-chars-wordlist`.
   \
   \ }doc
 
@@ -303,8 +303,8 @@ variable #esc-order  #esc-order off
   \
   \ #esc-order ( -- a )
   \
-  \ A variable that holds the number of word lists in the
-  \ escaped strings search order.
+  \ A variable. _a_ is the address of a cell containing the
+  \ number of word lists in the escaped strings search order.
   \
   \ See: `esc-context`, `esc-max-order`, `esc-get-order`,
   \ `esc-set-order`, `>esc-order`.
@@ -517,5 +517,11 @@ need parse-char need char>string
   \ 2017-05-05: Improve documentation.
   \
   \ 2017-05-07: Improve documentation.
+  \
+  \ 2017-12-09: Don't use `alias` as an alternative to define
+  \ `"` and `n`, since `[defined]` and `[undefined]` are moved
+  \ to the library.
+  \
+  \ 2017-12-09: Improve documentation.
 
   \ vim: filetype=soloforth

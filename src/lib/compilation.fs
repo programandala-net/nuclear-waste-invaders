@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201709091154
+  \ Last modified: 201712100130
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -23,9 +23,9 @@
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( [false] [true] [if] [else] [then] )
+( [false] [true] [if] )
 
-[unneeded] [true]  ?\  0 constant [false] immediate
+[unneeded] [true] ?\ 0 constant [false] immediate
 
   \ doc{
   \
@@ -37,7 +37,7 @@
   \
   \ }doc
 
-[unneeded] [false] ?\ -1 constant [true]  immediate
+[unneeded] [false] ?\ -1 constant [true] immediate
 
   \ doc{
   \
@@ -49,21 +49,19 @@
   \
   \ }doc
 
-  \ Note: `[if]` uses 132 bytes of data space (not including
-  \ `str=`).
+[unneeded] [if] ?(
 
-[unneeded] [if] [unneeded] [then] [unneeded] [else] and and ?(
+  \ Note: `[if]` uses 120 bytes of data space.
 
 : [else] ( "ccc" -- )
-  1 begin  begin  parse-name dup while  2dup s" [if]" str=
-                  if    2drop 1+
-                  else  2dup s" [else]" str=
-                        if    2drop 1- dup if  1+  then
-                        else  s" [then]" str= if  1-  then
-                        then
-                  then  ?dup 0= if exit then
-           repeat  2drop
-    refill 0= until  drop ; immediate
+  1 begin begin  parse-name dup while 2dup s" [if]" str=
+                 if   2drop 1+
+                 else 2dup s" [else]" str=
+                      if   2drop 1- dup 0<> abs +
+                      else s" [then]" str= + then
+                 then ?dup 0= ?exit
+          repeat 2drop
+    refill 0= until drop ; immediate
 
   \ doc{
   \
@@ -82,7 +80,7 @@
   \
   \ }doc
 
-: [if] ( f "ccc" -- ) 0= if postpone [else] then ; immediate
+: [if] ( f "ccc" -- ) ?exit postpone [else] ; immediate
 
   \ doc{
   \
@@ -128,7 +126,7 @@
   \
   \ Get _nt_ from its _dfa_.
   \
-  \ See: `name>body`, `link>name`.
+  \ See: `name>body`, `link>name`, `>name`.
   \
   \ }doc
 
@@ -141,7 +139,7 @@
   \
   \ Get _dfa_ from its _nt_.
   \
-  \ See: `body>name`.
+  \ See: `body>name`, `>body`, `name>`, `name>>`, `name>name`.
   \
   \ }doc
 
@@ -165,9 +163,10 @@
   \
   \ name>link ( nt -- lfa )
   \
-  \ Get _lfa_ from its _nt_.
+  \ Convert _nt_ into its corresponding _lfa_.
   \
-  \ See: `link>name`.
+  \ See: `link>name`, `name>`, `name>body`, `name>>`,
+  \ `name>name`.
   \
   \ }doc
 
@@ -193,20 +192,50 @@
   \
   \ Get the next _nt2_ from _nt1_.
   \
-  \ See: `name<name`.
+  \ See: `name<name`, `name>`, `name>body`, `name>>`.
   \
   \ }doc
 
 ( >>link name>> >>name >body body> '' [''] )
 
 [unneeded] >>link
-?\ need alias  ' cell+ alias >>link ( xtp -- lfa )
+?\ need alias ' cell+ alias >>link ( xtp -- lfa )
+
+  \ doc{
+  \
+  \ >>link ( xtp -- lfa )
+  \
+  \ Convert _xtp_ into its corresponding _lfa_.
+  \
+  \ See: `>>name`, `name>link`.
+  \
+  \ }doc
 
 [unneeded] name>>
 ?\ : name>> ( nt -- xtp ) cell- cell- ;
 
+  \ doc{
+  \
+  \ name>> ( nt -- xtp )
+  \
+  \ Convert _nt_ into its corresponding _xtp_.
+  \
+  \ See: `>>name`, `name>`, `name>body`, `name>name`.
+  \
+  \ }doc
+
 [unneeded] >>name
 ?\ : >>name ( xtp -- nt ) cell+ cell+ ;
+
+  \ doc{
+  \
+  \ >>name ( xtp -- nt )
+  \
+  \ Convert _xtp_ into its corresponding _nt_.
+  \
+  \ See: `name>>`, `>>link`, `>name`.
+  \
+  \ }doc
 
 [unneeded] >body
 ?\ code >body  E1 c, 23 c, 23 c, 23 c, E5 c, jpnext, end-code
@@ -222,7 +251,7 @@
   \
   \ >body  ( xt -- dfa )
   \
-  \ _dfa_ is the data-field address corresponding to _xt_.
+  \ Convert _xt_ into its corresponding _dfa_.
   \
   \ If _xt_ is for a word defined by `create`, _dfa_ is the
   \ address that `here` would have returned had it been
@@ -231,7 +260,7 @@
   \
   \ If _xt_ is for a word defined by `variable`, `2variable`,
   \ `cvariable`, `constant`, `2constant` and `cconstant`, _dfa_
-  \ is the address that holds their value.
+  \ is the address containing their value.
   \
   \ If _xt_ is for a word defined by `:`, _dfa_ is the address
   \ of its compiled definition.
@@ -244,7 +273,7 @@
   \ Origin: Forth-83 (Required Word Set), Forth-94 (CORE),
   \ Forth-2012 (CORE).
   \
-  \ See: `body>`.
+  \ See: `body>`, `name>body`, `>name`.
   \
   \ }doc
 
@@ -262,10 +291,9 @@
   \
   \ body>  ( dfa -- xt )
   \
-  \ _xt_ is the execution token corresponding to the data-field
-  \ address _dfa_.
+  \ Convert _dfa_ into its correspoding _xt_.
   \
-  \ See: `>body`.
+  \ See: `>body`, `body>name`.
   \
   \ }doc
 
@@ -314,7 +342,9 @@
   \
   \ }doc
 
-( >name )
+( >name [defined] [undefined] )
+
+[unneeded] >name ?(
 
 need >>name need name>name need name>>
 
@@ -323,7 +353,7 @@ need >>name need name>name need name>>
     dup >>name >r
     far@ over = if  drop r> exit  then
     r> name>name name>>
-  np@ over u< until  2drop false ;
+  np@ over u< until  2drop false ; ?)
 
   \ 2017-01-20 Note:
   \
@@ -349,10 +379,54 @@ need >>name need name>name need name>>
   \ original name is found first.
   \
   \ Origin: Gforth.
+  \
+  \ See: `>>name`.
+
+[unneeded] [defined]
+
+?\ : [defined] ( "name" -- f ) defined 0<> ; immediate
+
+  \ doc{
+  \
+  \ [defined] ( "name" -- f )
+  \
+  \ Parse _name_. Return a true flag if _name_ is the name of a
+  \ word that can be found in the current search order; else
+  \ return a false flag.
+  \
+  \ ``[defined]`` is an `immediate` word.
+  \
+  \ Origin: Forth-2012 (TOOLS EXT).
+  \
+  \ See: `defined`, `[undefined]`.
+  \
+  \ }doc
+
+[unneeded] [undefined] ?( need [defined]
+
+: [undefined] ( "name" -- f )
+  postpone [defined] 0= ; immediate ?)
+
+  \ doc{
+  \
+  \ [undefined] ( "name" -- f )
+  \
+  \ Parse _name_. Return a false flag if _name_ is the name of a
+  \ word that can be found in the current search order; else
+  \ return a true flag.
+  \
+  \ ``[undefined]`` is an `immediate` word.
+  \
+  \ Origin: Forth-2012 (TOOLS EXT).
+  \
+  \ See: `[defined]`.
+  \
+  \ }doc
 
 ( name>interpret name>compile comp' [comp'] )
 
 [unneeded] name>interpret ?(
+
 : name>interpret ( nt -- xt | 0 )
   dup name> swap compile-only? 0= and ; ?)
 
@@ -463,6 +537,7 @@ need >>name need name>name need name>>
   \ }doc
 
 [unneeded] [compile]
+
 ?\ : [compile] ( "name" -- ) ' compile, ; immediate
 
   \ doc{
@@ -491,6 +566,7 @@ need >>name need name>name need name>>
   \ }doc
 
 [unneeded] smudged
+
 ?\ : smudged ( nt -- ) dup farc@ smudge-mask xor swap farc! ;
 
   \ doc{
@@ -507,6 +583,7 @@ need >>name need name>name need name>>
   \ }doc
 
 [unneeded] smudge
+
 ?\ need smudged  : smudge ( -- ) latest smudged ;
 
   \ doc{
@@ -645,7 +722,9 @@ need >>name need name>name need name>>
 [unneeded] save-here [unneeded] restore-here and ?( need there
 
 variable here-backup
+
 : save-here ( -- ) here here-backup ! ;
+
 : restore-here ( -- ) here-backup @ there ; ?)
 
   \ XXX TODO -- behead `here-backup`
@@ -828,9 +907,10 @@ variable warnings  warnings on
   \
   \ warnings ( -- a )
   \
-  \ User variable that holds a flag. If it's zero, no warning
-  \ is shown when a compiled word is not unique in the
-  \ compilation word list.  Its default value is _true_.
+  \ A user variable. _a_ is the address of a cell containing a
+  \ flag. If it's zero, no warning is shown when a compiled
+  \ word is not unique in the compilation word list.  Its
+  \ default value is _true_.
   \
   \ }doc
 
@@ -1155,5 +1235,12 @@ variable warnings  warnings on
   \ 2017-05-10: Add `no-exit`.
   \
   \ 2017-09-09: Update notation "pfa" to the standard "dfa".
+  \
+  \ 2017-12-09: Improve `[if]` and `[else]` replacing
+  \ conditionals with calculations and using `?exit`. This
+  \ saves 12 bytes.  Move `[defined]` and `[undefined]` from
+  \ the kernel.
+  \
+  \ 2017-12-10: Improve documentation.
 
   \ vim: filetype=soloforth

@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201712032231
+  \ Last modified: 201712111905
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -62,8 +62,8 @@
 [unneeded] call ?(
 
 code call ( a -- )
-  E1 c,  C5 c,  CD c, >mark  C1 c,  DD c, 21 c, next , jpnext,
-                      >resolve E9 c, end-code ?)
+  E1 c, C5 c, CD c, >mark C1 c, DD c, 21 c, next , jpnext,
+                    >resolve E9 c, end-code ?)
 
   \   pop hl
   \   push bc
@@ -80,12 +80,14 @@ code call ( a -- )
   \
   \ Call a machine code subroutine at _a_.
   \
+  \ See: `execute-hl,`, `call-xt,`.
+  \
   \ }doc
 
 [unneeded] don't ?(
 
 : don't ( n1 n2 -- | n1 n2 )
-  2dup = if  2drop unnest unnest  then ; compile-only ?)
+  2dup = if 2drop unnest unnest then ; compile-only ?)
 
   \ doc{
   \
@@ -132,65 +134,94 @@ code call ( a -- )
   \
   \ }doc
 
-( ?repeat recurse ?? )
+( ?repeat 0repeat recurse ?? )
 
-[unneeded] ?repeat ?( need cs-dup
+[unneeded] ?repeat ?( need cs-dup need 0until
 
 : ?repeat
   \ Compilation: ( dest -- dest )
   \ Run-time:    ( f -- )
-  cs-dup postpone until ; immediate ?)
+  cs-dup postpone 0until ; immediate compile-only ?)
 
   \ Credit:
   \
-  \ Code from the documentation of Forth-2012 and Forth-94.
-
-  \ Old history:
-  \
-  \ 2016-03-04: Copy the code of `?repeat` from the Forth-2012
-  \ documentation.
-  \ 2016-04-28: Fix the stack notation of `?repeat`.
-  \ 2016-11-26: Move to <flow.misc.fsb>.
+  \ Adapted from the documentation of Forth-2012 and Forth-94.
 
   \ doc{
   \
   \ ?repeat
   \   Compilation: ( dest -- dest )
   \   Run-time:    ( f -- )
+
   \
-  \ An alternative exit point for `begin until` loops.
+  \ An alternative exit point for `begin` ... `until` loops: If
+  \ _f_ is non-zero, continue execution at `begin`, otherwise
+  \ continue execution after `until`.
   \
-  \ ``?repeat`` is an `immediate` word.
+  \ ``?repeat`` is an `immediate` and `compile-only` word.
   \
   \ Usage example:
-  \
+
   \ ----
-  \ : xx ( -- )
+  \ : test ( -- )
   \     begin
   \       ...
-  \     flag ?repeat  \ Go back to `begin` if flag is false
+  \     flag ?repeat  \ Go back to `begin` if flag is non-zero
   \       ...
-  \     flag ?repeat  \ Go back to `begin` if flag is false
+  \     flag 0repeat  \ Go back to `begin` if flag is zero
   \       ...
   \     flag until    \ Go back to `begin` if flag is false
   \     ...
-  \ ;
+  \   ;
   \ ----
 
+  \ See: `0repeat`.
+  \
   \ }doc
 
-[unneeded] recurse ?(
+[unneeded] 0repeat ?( need cs-dup
 
-: recurse ( -- )
-  latestxt compile, ; immediate compile-only ?)
+: 0repeat
+  \ Compilation: ( dest -- dest )
+  \ Run-time:    ( f -- )
+  cs-dup postpone until ; immediate compile-only ?)
 
-  \ Old history:
+  \ Credit:
   \
-  \ 2015-06-05: Written in the kernel.
-  \ 2016-04-17: Moved to the library.
-  \ 2016-04-24: Fixed with `latestxt`: now it can be used
-  \ in words created with `:noname`.
-  \ 2016-11-26: Move to <flow.misc.fsb>.
+  \ Adapted from the documentation of Forth-2012 and Forth-94.
+
+  \ doc{
+  \
+  \ 0repeat Compilation: ( dest -- dest ) Run-time:    ( f -- )
+  \
+  \ An alternative exit point for `begin` ... `until` loops: If
+  \ _f_ is zero, continue execution at `begin`, otherwise
+  \ continue execution after `until`.
+  \
+  \ ``0repeat`` is an `immediate` word.
+  \
+  \ Usage example:
+
+  \ ----
+  \ : test ( -- )
+  \     begin
+  \       ...
+  \     flag 0repeat  \ Go back to `begin` if flag is zero
+  \       ...
+  \     flag ?repeat  \ Go back to `begin` if flag is non-zero
+  \       ...
+  \     flag until    \ Go back to `begin` if flag is false
+  \     ...
+  \   ;
+  \ ----
+
+  \ See: `?repeat`.
+  \
+  \ }doc
+
+[unneeded] recurse
+
+?\ : recurse ( -- ) latestxt compile, ; immediate compile-only
 
   \ doc{
   \
@@ -297,12 +328,6 @@ code call ( a -- )
   \ Factoring", by Richard Astle, published on Forth Dimensions
   \ (volume 17, number 4, page 19, 1995-11).
 
-  \ Old history:
-  \
-  \ 2015-11-07: First version.
-  \ 2016-04-26: Documented.
-  \ 2016-11-26: Move to <flow.misc.fsb>.
-
 [unneeded] retry ?( need name>body
 
 : retry ( -- )
@@ -325,7 +350,7 @@ code call ( a -- )
 : ?retry
   \ Compilation: ( -- )
   \ Run-time: ( f -- )
-  postpone if  postpone retry  postpone then
+  postpone if postpone retry postpone then
   ; immediate compile-only ?)
 
   \ doc{
@@ -338,7 +363,7 @@ code call ( a -- )
   \
   \ ``?retry`` is an `immediate` and `compile-only` word.
   \
-  \ See: `retry`.
+  \ See: `retry`, `?repeat`, `0repeat`.
   \
   \ }doc
 
@@ -368,20 +393,23 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
 
 ( cond thens )
 
-[unneeded] cond ?( need thens
+[unneeded] cond ?( need cs-mark need thens
 
-0 constant cond immediate compile-only ?)
+: cond
+  \ Compilation: ( C: -- cs-mark )
+  \ Run-time:    ( -- )
+  cs-mark ; immediate compile-only ?)
 
   \ doc{
   \
   \ cond
-  \   Compilation: ( C: -- 0 )
+  \   Compilation: ( C: -- cs-mark )
   \   Run-time:    ( -- )
 
   \
   \ Compilation: Mark the start of a ``cond`` .. `thens`
-  \ structure.  Leave _0_ on the control-flow stack, as a mark
-  \ for `thens`.
+  \ structure.  Leave _cs-mark_ on the control-flow stack, to
+  \ be checked by `thens`.
   \
   \ Run-time: Continue execution.
   \
@@ -399,22 +427,24 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \   thens ;
   \ ----
 
-  \ See: `case`.
+  \ See: `case`, `cs-mark`.
   \
   \ }doc
 
-[unneeded] thens ?(
+[unneeded] thens ?( need cs-test
 
 : thens
-  \ Compilation: ( C: 0 orig#1 .. orig#n -- )
+  \ Compilation: ( C: cs-mark orig#1 .. orig#n -- )
   \ Run-time:    ( -- )
-  begin ?dup while postpone then repeat
+  begin cs-test while postpone then repeat drop
   ; immediate compile-only ?)
 
   \ doc{
   \
-  \ thens Compilation: ( C: 0 orig#1 .. orig#n -- ) Run-time:
-  \ ( -- )
+  \ thens
+  \   Compilation: ( C: cs-mark orig#1 .. orig#n -- )
+  \   Run-time:    ( -- )
+
   \
   \ Compilation: Resolve all forward references _orig#1 ..
   \ orign#n_ with `then` until _0_ is found.
@@ -424,9 +454,11 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \ ``thens`` is an `immediate` and `compile-only` word.
   \
   \ ``thens`` is a factor of `endcase` and other control
-  \ structures, but it's also the end of the `cond` .. ``thens``
-  \ structure.
-
+  \ structures, but it's also the end of the `cond` ..
+  \ ``thens`` structure.
+  \
+  \ See: `cs-mark`, `cs-test`.
+  \
   \ }doc
 
   \ Credit of the `cond thens` structure:
@@ -436,9 +468,36 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \ Newsgroups: comp.lang.forth
   \ Message-ID: <260620020959020469%neilbawd@earthlink.net>
   \ Date: Wed, 26 Jun 2002 16:58:18 GMT
+  \
+  \ The usage of `cs-mark` and `cs-test` was borrowed from:
+  \
+  \ Control-Flow Stack Extensions
+  \ http://dxforth.netbay.com.au/cfsext.html
 
   \ ===========================================================
   \ Change log
+
+  \ --------------------------------------------
+  \ Old
+
+  \ 2015-06-05: Write `recurse` in the kernel.
+  \
+  \ 2015-11-07: First version of `retry`.
+  \
+  \ 2016-03-04: Copy the code of `?repeat` from the Forth-2012
+  \ documentation.
+  \
+  \ 2016-04-17: Move `recurse` to the library.
+  \
+  \ 2016-04-24: Fix `recurse` with `latestxt`: now it can be used
+  \ in words created with `:noname`.
+  \
+  \ 2016-04-26: Document `retry`.
+  \
+  \ 2016-04-28: Fix the stack notation of `?repeat`.
+
+  \ --------------------------------------------
+  \ New
 
   \ 2016-11-26: Create this module to combine the modules that
   \ contain small control flow structures, in order to save
@@ -484,5 +543,10 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \ 2017-12-02: Improve documentation.
   \
   \ 2017-12-03: Improve documentation.
+  \
+  \ 2017-12-11: Update `cond` and `thens` with `cs-mark` and
+  \ `cs-test`. Update the change log with the old changes of
+  \ the former modules. Rewrite `?repeat`. Add `0repeat`.
+  \ Improve documentation.
 
   \ vim: filetype=soloforth
