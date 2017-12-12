@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.98.0+201712121834" ;
+: version$ ( -- ca len ) s" 0.99.0+201712122202" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -154,7 +154,8 @@ need #>kk need inkey
   \ --------------------------------------------
   cr .(   -Time) ?depth \ {{{2
 
-need ticks need ms need seconds need ?seconds
+need ticks need ms need seconds need ?seconds need past?
+need ms>ticks
 
   \ --------------------------------------------
   cr .(   -Sound) ?depth \ {{{2
@@ -2612,11 +2613,16 @@ cvariable cure-factor  20 cure-factor c!
   \ Move the current invader if it's active; else
   \ just try to activate it, if it's alive.
 
-%1 cconstant calm
+40 ms>ticks cconstant invader-interval
 
-: calm? ( -- f ) ticks calm and ;
+variable invader-time invader-time off
 
-: invasion ( -- ) calm? ?exit move-invader next-invader ;
+: schedule-invader ( -- )
+  ticks invader-interval + invader-time ! ;
+
+: invasion ( -- ) invader-time @ past? 0exit
+                  move-invader next-invader
+                  schedule-invader ;
   \ If it's the right time, move the current invader, then
   \ choose the next one.
 
@@ -2764,10 +2770,19 @@ constant mothership-movements ( -- a )
   \ Manage the mothership, when it's invisible.
   \ XXX TODO -- try removing the last `advance-mothership`
 
+100 ms>ticks cconstant mothership-interval
+
+variable mothership-time mothership-time off
+
+: schedule-mothership ( -- )
+  ticks mothership-interval + mothership-time ! ;
+
 : manage-mothership ( -- )
-  mothership-y 0exit  calm? ?exit
-  visible-mothership? if   visible-mothership   exit
-                      then invisible-mothership ;
+  mothership-y 0exit
+  mothership-time @ past? 0exit
+  visible-mothership? if   visible-mothership
+                      else invisible-mothership
+                      then schedule-mothership ;
   \ Manage the mothership, if not destroyed.
 
   \ ===========================================================

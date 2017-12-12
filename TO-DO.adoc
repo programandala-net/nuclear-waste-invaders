@@ -4,20 +4,20 @@
 
 Older first:
 
-.2016-08-01:
+== 2016-08-01
 
 Several players, say 1..4. Simply, save their controls number and score in a
 table.
 
-.2016-10-12:
+== 2016-10-12
 
 Use pixels instead of characters as projectiles.
 
-.2016-10-15:
+== 2016-10-15
 
 Show a graphic of the ammo left.
 
-.2016-10-16:
+== 2016-10-16
 
 Effect: the invaders eat the containers.
 
@@ -28,40 +28,40 @@ Change the color of explosions.
 
 Animate the explosions with several frames.
 
-.2016-10-22:
+== 2016-10-22
 
 Detect if a wall is already broken, and change the graphic
 accordingly.
 
-.2016-12-02:
+== 2016-12-02
 
 Fix: sometimes the projectile erases half of the invader.
 
-.2016-12-04, 2017-05-17:
+== 2016-12-04, 2017-05-17
 
 Use stamina to calculate the damages to the mothership.
 
-.2017-02-26, 2017-05-14:
+== 2017-02-26, 2017-05-14
 
 Max ammo, with a method or place to get more.
 
 Get more ammo by firing below the building.
 
-.2017-02-26:
+== 2017-02-26
 
 Make the building touch the ground. Then make the tank invisible when
 it moves inside the building.
 
-.2017-02-28:
+== 2017-02-28
 
 - Make the tank delay through the doors.
 - Make a hit invader randomly move up to the next layer, if it's free.
 
-.2017-01-13:
+== 2017-01-13
 
 Improve the visibility of the projectile right above the tank.
 
-.2017-03-01:
+== 2017-03-01
 
 - Now two data fields are used for the invader status: `~active` and
   `~retreating`.  Use only one datum instead, to hold the identifier
@@ -69,38 +69,38 @@ Improve the visibility of the projectile right above the tank.
   retreating...). This will be simpler to use and more versatile.
 - Change the graphics of the invaders that are delayed at the wall.
 
-.2017-03-01:
+== 2017-03-01
 
 Add some inertia to the tank.
 
-.2017-03-17:
+== 2017-03-17
 
 Create a sprite frames table to point to UDG frames, in order to
 remove duplicated frames from the UDG set.
 
-.2017-04-18:
+== 2017-04-18
 
 - Write Z80 code to print 2x1 sprites faster.
 - Simplify the status bar, remove the texts, display only "0000/0000".
 
-.2017-05-12:
+== 2017-05-12
 
 - Don't repair the building automatically. Use the tank.
 - Improve the start of the attack: Make the mothership drop the
   invaders.
 
-.2017-05-16:
+== 2017-05-16
 
 Improve `battle-bonus`: Make the breach penalty depend on the altitude
 of the breachs.
 
-.2017-05-20:
+== 2017-05-20
 
 Replace the UDG codes with the UDG addresses and write a new faster
 version of `.2x1sprite`, in Z80, without the conversion from code to
 address.
 
-.2017-05-21:
+== 2017-05-21
 
 Improve the explosion of the mothership. Now it's almost unobservable.
 
@@ -113,7 +113,7 @@ loop:
 - Change its y coordinate to zero only when the explosion has
   finished.
 
-.2017-12-06:
+== 2017-12-06
 
 - Make `defeat-tune` an alarm and use it when an alien touches the
   wall.
