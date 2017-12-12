@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.97.0+201712070037" ;
+: version$ ( -- ca len ) s" 0.98.0+201712121834" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -96,7 +96,7 @@ need case need 0exit need +perform need do need abort"
   \ --------------------------------------------
   cr .(   -Memory) ?depth \ {{{2
 
-need c+! need c1+! need dzx7t need bank-start
+need c+! need c1+! need dzx7t need bank-start need coff
 
   \ --------------------------------------------
   cr .(   -Math) ?depth \ {{{2
@@ -666,7 +666,7 @@ max-controls 1- cconstant last-control
 cvariable current-controls
   \ Index of the current controls in `controls` table.
 
-0 current-controls c!
+current-controls coff
 current-controls c@ set-controls
   \ Default controls.
 
@@ -694,7 +694,7 @@ create udg-set /udg-set allot  udg-set set-udg
   \ Store scan _b_ into scan number _n_ of char _c_,
   \ and return _c_ back for further processing.
 
-cvariable used-udgs  0 used-udgs c!
+cvariable used-udgs  used-udgs coff
   \ Counter of UDGs defined.
 
 : udg-overflow? ( -- f ) used-udgs c@ last-udg 1+ > ;
@@ -774,7 +774,7 @@ cvariable player   1 player  c! \ 1..max-player
   \ ===========================================================
   cr .( Graphics) ?depth debug-point \ {{{1
 
-    cvariable >udg  0 >udg c! \ next free UDG
+    cvariable >udg  >udg coff \ next free UDG
 
 cvariable latest-sprite-width
 cvariable latest-sprite-height
@@ -1895,7 +1895,7 @@ building-top-y 1+ cconstant invader-top-y
   else ~flying-right-sprite c@ swap
        ~flying-right-sprite-frames c@
   then invader-frames c! invader-sprite c!
-  0 invader-frame c! ;
+  invader-frame coff ;
   \ XXX REMARK -- Left and right are  the same at the moment.
   \
   \ XXX TODO -- Use double-cell fields to copy both fields with
@@ -1907,7 +1907,7 @@ building-top-y 1+ cconstant invader-top-y
   invader-species @ dup
   ~docked-sprite c@ invader-sprite c!
   ~docked-sprite-frames c@ invader-frames c!
-  0 invader-frame c! ;
+  invader-frame coff ;
   \
   \ XXX TODO -- Rename.
 
@@ -1972,7 +1972,7 @@ cvariable battle-breachs
   \ Remember the current number of breachs.
 
 : no-breach ( -- )
-  0 old-breachs c! 0 breachs c! 0 battle-breachs c! ;
+  old-breachs coff breachs coff battle-breachs coff ;
   \ Reset the number of breachs.
 
 : breachs? ( -- f ) breachs c@ 0<> ;
@@ -2087,7 +2087,7 @@ variable used-projectiles  used-projectiles off
 : travel ( -- ) next-location size-building ;
   \ Travel to the next battle location.
 
-: first-location ( -- ) 0 location c! size-building ;
+: first-location ( -- ) location coff size-building ;
   \ Init the location number and the related variables.
 
   \ ===========================================================
@@ -2241,7 +2241,7 @@ defer debug-data-pause ( -- )
   \ XXX INFORMER
 
 : destroy-projectile ( -- )
-  0 projectile-y c!  projectile# >x
+  projectile-y coff  projectile# >x
   .debug-data ;
 
 : new-projectiles ( -- )
@@ -2383,7 +2383,7 @@ false [if] \ XXX TODO --
 cvariable invaders \ counter
 
 : init-invaders ( -- )
-  init-invaders-data  0 current-invader c!
+  init-invaders-data  current-invader coff
   actual-invaders invaders c! ;
   \ Init the invaders.
 
@@ -2602,7 +2602,7 @@ cvariable cure-factor  20 cure-factor c!
   \ Is the current invader the last one?
 
 : next-invader ( -- )
-  last-invader? if   0 current-invader c! exit
+  last-invader? if     current-invader coff exit
                 then 1 current-invader c+! ;
   \ Update the invader to the next one.
 
@@ -2827,7 +2827,7 @@ constant mothership-movements ( -- a )
 
 : explode ( -- )
   invader-destroy-points update-score invader-explosion
-  -1 invaders c+! 0 invader-stamina c! invader-active off ;
+  -1 invaders c+! invader-stamina coff invader-active off ;
   \ The current invader explodes.
 
 ' lightning1 alias retreat-sound
@@ -2928,7 +2928,7 @@ constant mothership-movements ( -- a )
   \ Manage the projectile.
   \ XXX TODO -- Move `[if]` out and set a constant.
 
-cvariable trigger-delay-counter  0 trigger-delay-counter c!
+cvariable trigger-delay-counter trigger-delay-counter coff
 
 [pixel-projectile] [if]   8
                    [else] 6
