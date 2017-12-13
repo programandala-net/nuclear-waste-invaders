@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.99.0+201712122202" ;
+: version$ ( -- ca len ) s" 0.100.0+201712130228" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -155,7 +155,6 @@ need #>kk need inkey
   cr .(   -Time) ?depth \ {{{2
 
 need ticks need ms need seconds need ?seconds need past?
-need ms>ticks
 
   \ --------------------------------------------
   cr .(   -Sound) ?depth \ {{{2
@@ -2099,7 +2098,7 @@ cvariable tank-x \ column
 
 variable transmission-damage
 
-: repair-tank ( -- ) transmission-damage off ;
+: repair-tank ( -- ) transmission-damage off tank-time off ;
 
 : park-tank ( -- ) columns udg/tank - 2/ tank-x c! ;
 
@@ -2199,7 +2198,15 @@ constant tank-movements ( -- a )
 
 : tank-movement ( -- a ) tank-rudder tank-movements array> ;
 
-: driving ( -- ) tank-movement perform ;
+7 cconstant tank-interval \ ticks
+
+variable tank-time
+
+: schedule-tank ( -- ) ticks tank-interval + tank-time ! ;
+
+: driving ( -- ) tank-time @ past? 0exit
+                 tank-movement perform
+                 schedule-tank ;
 
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
@@ -2383,9 +2390,10 @@ false [if] \ XXX TODO --
 
 cvariable invaders \ counter
 
-: init-invaders ( -- )
-  init-invaders-data  current-invader coff
-  actual-invaders invaders c! ;
+: init-invaders ( -- ) init-invaders-data
+                       current-invader coff
+                       invader-time off
+                       actual-invaders invaders c! ;
   \ Init the invaders.
 
 : at-invader ( -- ) invader-x c@ invader-y c@ at-xy ;
@@ -2613,9 +2621,9 @@ cvariable cure-factor  20 cure-factor c!
   \ Move the current invader if it's active; else
   \ just try to activate it, if it's alive.
 
-40 ms>ticks cconstant invader-interval
+0 cconstant invader-interval \ ticks
 
-variable invader-time invader-time off
+variable invader-time
 
 : schedule-invader ( -- )
   ticks invader-interval + invader-time ! ;
@@ -2668,6 +2676,7 @@ cvariable mothership-frame \ counter (0..3)
 : init-mothership ( -- ) mothership-range mothership-x !
                          mothership-y0 c!> mothership-y
                          mothership-stopped off
+                         mothership-time off
                          start-mothership ;
   \ Init the mothership.
 
@@ -2770,9 +2779,9 @@ constant mothership-movements ( -- a )
   \ Manage the mothership, when it's invisible.
   \ XXX TODO -- try removing the last `advance-mothership`
 
-100 ms>ticks cconstant mothership-interval
+5 cconstant mothership-interval \ ticks
 
-variable mothership-time mothership-time off
+variable mothership-time
 
 : schedule-mothership ( -- )
   ticks mothership-interval + mothership-time ! ;
