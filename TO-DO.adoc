@@ -117,15 +117,9 @@ loop:
 
 - Make `defeat-tune` an alarm and use it when an alien touches the
   wall.
-- If the mothership is visible wait until it's gone before displaying
-  the attack report.
-- Make the tank chains move, use two or three graphics.
-- Fix: the mothership still moves faster when there are few invaders.
-- Improve: make the mothership halt and change direction above the
-  building, randomly.
 
 == 2017-12-13
 
-- Fix: `mothership-udg` uses `next-frame`, which is for invaders.
-  Rename `next-frame` after `tank-frame+`.
 - Fix: the mothership is not removed at the end of the attack.
+  Solution: If the mothership is visible wait until it's gone before
+  displaying the attack report.

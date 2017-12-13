@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.101.0+201712131906" ;
+: version$ ( -- ca len ) s" 0.101.1+201712132005" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1258,6 +1258,10 @@ XXXX.XXX.XXXXXX.
   \ -----------------------------------------------------------
   \ Mothership
 
+4 cconstant mothership-frames
+
+cvariable mothership-frame \ counter (0..3)
+
   \ mothership, frame 0:
 
 2 1 udg-sprite
@@ -2430,12 +2434,12 @@ variable invader-time
 : at-invader ( -- ) invader-x c@ invader-y c@ at-xy ;
   \ Set the cursor position at the coordinates of the invader.
 
-: next-frame ( n1 -- n2 ) 1+ dup invader-frames c@ < and ;
+: invader-frame+ ( n1 -- n2 ) 1+ dup invader-frames c@ < and ;
   \ Increase frame _n1_ resulting frame _n2_.
   \ If the limit was reached, _n2_ is zero.
 
 : invader-udg ( -- c )
-  invader-frame c@ dup next-frame invader-frame c!
+  invader-frame c@ dup invader-frame+ invader-frame c!
   [ udg/invader 2 = ] [if] 2* [else] udg/invader * [then]
   invader-sprite c@ + ;
   \ First UDG _c_ of the current invader sprite, calculated
@@ -2682,8 +2686,6 @@ variable mothership-x-inc
 variable mothership-stopped  mothership-stopped off
   \ Flag: did the mothership stopped in the current flight?
 
-cvariable mothership-frame \ counter (0..3)
-
 : ~~mothership-info ( -- )
   home ." x:" mothership-x ?
        ." inc.:" mothership-x-inc ? ;
@@ -2731,8 +2733,13 @@ columns udg/mothership - cconstant mothership-max-x
 : -mothership ( -- ) at-mothership udg/mothership spaces ;
   \ Delete the visible part of the mothership.
 
+: mothership-frame+ ( n1 -- n2 )
+  1+ dup mothership-frames < and ;
+  \ Increase mothership frame _n1_ resulting frame _n2_.
+  \ If the limit was reached, _n2_ is zero.
+
 : mothership-udg ( -- c )
-  mothership-frame c@ dup next-frame mothership-frame c!
+  mothership-frame c@ dup mothership-frame+ mothership-frame c!
   [ udg/mothership 2 = ] [if] 2* [else] udg/mothership * [then]
   mothership + ;
   \ UDG _c_ of the mothership.
