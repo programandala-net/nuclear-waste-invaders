@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.100.0+201712130228" ;
+: version$ ( -- ca len ) s" 0.101.0+201712131906" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1523,39 +1523,51 @@ XXXXXXXX cconstant broken-bottom-right-brick
   \ -----------------------------------------------------------
   \ Tank
 
-  \ XXX TODO -- second frame of the tank
+4 cconstant tank-frames
 
-  3 cconstant udg/tank  >udg c@
+cvariable tank-frame \ counter (0..3)
 
-  false [if] \ XXX OLD
+3 cconstant udg/tank
 
-  udg/tank 1 udg-sprite
-  ..........X..X..........
-  ..........X..X..........
-  .........XX..XX.........
-  ..XXXXXXXXXXXXXXXXXXXX..
-  .XXXXXXXXXXXXXXXXXXXXXX.
-  XXXXXXXXXXXXXXXXXXXXXXXX
-  XXXXXXXXXXXXXXXXXXXXXXXX
-  .XXXXXXXXXXXXXXXXXXXXXX. drop
+udg/tank 1 udg-sprite
+..........X..X..........
+...XXXXXX.X..X.XXXXXXX..
+..XXXXXXXXXXXXXXXXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XX.X.X.X.X.X.X.X.X.X.XX
+..XX..XX..XX..XX..XX.XX.
+...X.XXX.XXX.XXX.XXX.X..
+....X.X.X.X.X.X.X.X.X... cconstant tank
 
-  [else] \ XXX NEW
+udg/tank 1 udg-sprite
+..........X..X..........
+...XXXXXX.X..X.XXXXXXX..
+..XXXXXXXXXXXXXXXXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XXX.X.X.X.X.X.X.X.X.XXX
+..XX.XX..XX..XX..XX..XX.
+...X.XXX.XXX.XXX.XXX.X..
+...X.X.X.X.X.X.X.X.X.X.. drop
 
-  udg/tank 1 udg-sprite
-  ..........X..X..........
-  ...XXXXXX.X..X.XXXXXXX..
-  ..XXXXXXXXXXXXXXXXXXXXX.
-  .XXXXXXXXXXXXXXXXXXXXXXX
-  .XX.X.X.X.X.X.X.X.X.X.XX
-  ..XX.XXX.XXX.XXX.XXX.XX.
-  ...X.XXX.XXX.XXX.XXX.X..
-  ....X.X.X.X.X.X.X.X.X... drop
+udg/tank 1 udg-sprite
+..........X..X..........
+...XXXXXX.X..X.XXXXXXX..
+..XXXXXXXXXXXXXXXXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XX.X.X.X.X.X.X.X.X.X.XX
+..XX.XXX.XXX.XXX.XXX.XX.
+...X.XX..XX..XX..XX..X..
+....X.X.X.X.X.X.X.X.X... drop
 
-  [then]
-
-cenum left-tank-udg   ( -- c )
-cenum middle-tank-udg ( -- c )
-cenum right-tank-udg  ( -- c ) drop
+udg/tank 1 udg-sprite
+..........X..X..........
+...XXXXXX.X..X.XXXXXXX..
+..XXXXXXXXXXXXXXXXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XXX.X.X.X.X.X.X.X.X.XXX
+..XX.XXX.XXX.XXX.XXX.XX.
+...X..XX..XX..XX..XX.X..
+...X.X.X.X.X.X.X.X.X.X.. drop
 
 2 1 udg-sprite
 
@@ -2094,13 +2106,17 @@ variable used-projectiles  used-projectiles off
   cr .( Tank) ?depth debug-point \ {{{1
 
 cvariable tank-x \ column
-  \ XXX TODO -- cvariable
 
 variable transmission-damage
 
+variable tank-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the tank will move.
+
 : repair-tank ( -- ) transmission-damage off tank-time off ;
 
-: park-tank ( -- ) columns udg/tank - 2/ tank-x c! ;
+: park-tank ( -- )
+  columns udg/tank - 2/ tank-x c!  tank-frame coff ;
 
                     1 cconstant tank-min-x
 columns udg/tank - 1- cconstant tank-max-x
@@ -2152,12 +2168,25 @@ columns udg/tank - 1- cconstant tank-max-x
   \ _c_ at the current cursor position.  Increment _col1_ and
   \ return it as _col2_.
 
+: left-tank-udg   ( -- c ) tank-frame c@ udg/tank * tank + ;
+: middle-tank-udg ( -- c ) left-tank-udg 1+ ;
+: right-tank-udg  ( -- c ) left-tank-udg 2+ ;
+
+: tank-frame+ ( n1 -- n2 ) 1+ dup tank-frames < and ;
+  \ Increase tank frame _n1_ resulting frame _n2_.
+  \ If the limit was reached, _n2_ is zero.
+
+: tank-next-frame ( -- )
+  tank-frame c@ tank-frame+ tank-frame c! ;
+  \ Update the tank frame.
+
 : tank-parts ( col1 -- col2 )
   tank-attr attr! left-tank-udg   ?emit-outside
                   middle-tank-udg ?emit-outside
-                  right-tank-udg  ?emit-outside ;
+                  right-tank-udg  ?emit-outside
+  tank-next-frame ;
   \ Display every visible part of the tank (the parts that are
-  \ outside the building).
+  \ outside the building) and update the frame.
 
 : -tank-extreme ( col1 -- col2 )
   sky-attr attr! bl-udg ?emit-outside ;
@@ -2199,8 +2228,6 @@ constant tank-movements ( -- a )
 : tank-movement ( -- a ) tank-rudder tank-movements array> ;
 
 7 cconstant tank-interval \ ticks
-
-variable tank-time
 
 : schedule-tank ( -- ) ticks tank-interval + tank-time ! ;
 
@@ -2389,6 +2416,10 @@ false [if] \ XXX TODO --
   cr .( Invasion) ?depth debug-point \ {{{1
 
 cvariable invaders \ counter
+
+variable invader-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the current invader will move.
 
 : init-invaders ( -- ) init-invaders-data
                        current-invader coff
@@ -2623,8 +2654,6 @@ cvariable cure-factor  20 cure-factor c!
 
 0 cconstant invader-interval \ ticks
 
-variable invader-time
-
 : schedule-invader ( -- )
   ticks invader-interval + invader-time ! ;
 
@@ -2672,6 +2701,10 @@ cvariable mothership-frame \ counter (0..3)
   \ XXX TMP -- small value for debugging
 
 : start-mothership ( -- ) -1|1 mothership-x-inc ! ;
+
+variable mothership-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the mothership will move.
 
 : init-mothership ( -- ) mothership-range mothership-x !
                          mothership-y0 c!> mothership-y
@@ -2780,8 +2813,6 @@ constant mothership-movements ( -- a )
   \ XXX TODO -- try removing the last `advance-mothership`
 
 5 cconstant mothership-interval \ ticks
-
-variable mothership-time
 
 : schedule-mothership ( -- )
   ticks mothership-interval + mothership-time ! ;
