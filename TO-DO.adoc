@@ -117,3 +117,8 @@ loop:
 
 - Make `defeat-tune` an alarm and use it when an alien touches the
   wall.
+
+== 2017-12-17
+
+- Make the mothership dodge the projectiles, like invaders do in
+  `left-flying-invader` and `right-flying-invader`.

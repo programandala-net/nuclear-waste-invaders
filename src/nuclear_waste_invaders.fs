@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.101.2+201712172018" ;
+: version$ ( -- ca len ) s" 0.102.0+201712172138" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1270,7 +1270,7 @@ cvariable mothership-frame \ counter (0..3)
 .....XXXXXX.....
 ...XXXXXXXXXX...
 ..XXXXXXXXXXXX..
-.XX.XX.XX.XX.XX.
+.XX..XX..XX..XX.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X... cconstant mothership
@@ -1283,7 +1283,7 @@ XXXXXXXXXXXXXXXX
 .....XXXXXX.....
 ...XXXXXXXXXX...
 ..XXXXXXXXXXXX..
-..XX.XX.XX.XX.X.
+.X..XX..XX..XX..
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X... drop
@@ -1296,7 +1296,7 @@ XXXXXXXXXXXXXXXX
 .....XXXXXX.....
 ...XXXXXXXXXX...
 ..XXXXXXXXXXXX..
-.X.XX.XX.XX.XX..
+...XX..XX..XX...
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X... drop
@@ -1309,7 +1309,7 @@ XXXXXXXXXXXXXXXX
 .....XXXXXX.....
 ...XXXXXXXXXX...
 ..XXXXXXXXXXXX..
-..X.XX.XX.XX.XX.
+..XX..XX..XX..X.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X... drop
