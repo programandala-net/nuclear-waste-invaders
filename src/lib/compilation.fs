@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201712171630
+  \ Last modified: 201712172159
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -397,8 +397,9 @@ need array> need name>> need name<name need wordlist>link
   \
   \ Origin: Gforth.
   \
-  \ See: `>name/order`, `>oldest-name/order`, `name>`, `>body`,
-  \ `name>body`, `name>name`, `>>name`.
+  \ See: `>name/order`, `>oldest-name`, `>oldest-name/order`,
+  \ `>oldest-name/fast`, `name>`, `>body`, `name>body`,
+  \ `name>name`, `>>name`.
   \
   \ }doc
 
@@ -433,8 +434,9 @@ need array> need name>> need name<name
   \ alias or synonym in the current search order is found
   \ first.
   \
-  \ See: `>name`, `>oldest-name/order`, `name>`, `>body`,
-  \ `name>body`, `name>name`, `name>>`.
+  \ See: `>name`, `>oldest-name/order`, `>oldest-name`,
+  \ `>oldest-name/fast`, `name>`, `>body`, `name>body`,
+  \ `name>name`, `name>>`.
   \
   \ }doc
 
@@ -481,8 +483,6 @@ need array> need name>> need name<name
 
 ( >oldest-name )
 
-  \ XXX UNDER DEVELOPMENT
-
 [unneeded] >oldest-name ?(
 
 need array> need name>> need name<name
@@ -493,9 +493,9 @@ need array> need name>> need name<name
   begin  dup
   while  tuck @ ( wid xt nt1 )
 
-    begin  dup
-    while  2dup name>> far@ = if rot drop tuck then name<name
-    repeat drop
+    begin  ?dup
+    while  2dup name>> far@ = if rdrop dup >r then name<name
+    repeat ( wid xt ) swap wordlist>link @ ( xt wid|0 )
 
   repeat 2drop r> ; ?)
 
@@ -515,8 +515,9 @@ need array> need name>> need name<name
   \ created by `alias` or `synonym`, the _nt_ of the original
   \ word is returned.
   \
-  \ See: `>oldest-name`, `>name`, `name>`, `>body`,
-  \ `name>body`, `name>name`, `name>>`.
+  \ See: `>oldest-name/order`, `>oldest-name/fast`, `>name`,
+  \ `>name/order`, `name>`, `>body`, `name>body`, `name>name`,
+  \ `name>>`.
   \
   \ }doc
 
@@ -551,14 +552,15 @@ need array> need name>> need name<name
   \ created by `alias` or `synonym`, the _nt_ of the original
   \ word is returned.
   \
-  \ See: `>oldest-name`, `>name`, `name>`, `>body`,
-  \ `name>body`, `name>name`, `name>>`.
+  \ See: `>oldest-name`, `>oldest-name/fast`, `>name`,
+  \ `>name/order`, `name>`, `>body`, `name>body`, `name>name`,
+  \ `name>>`.
   \
   \ }doc
 
 ( >oldest-name/fast )
 
-[unneeded] >name/fast ?(
+[unneeded] >oldest-name/fast ?(
 
 need >>name need name>name need name>>
 
@@ -591,8 +593,9 @@ need >>name need name>name need name>>
   \
   \ Origin: Gforth.
   \
-  \ See: `>>name`.  See: `name>`, `>body`, `name>body`,
-  \ `name>name`, `>>name`.
+  \ See: `>oldest-name`, `>oldest-name/order`, `>name`,
+  \ `>name/order`, `name>`, `>body`, `name>body`, `name>name`,
+  \ `>>name`.
   \
   \ }doc
 
@@ -1435,5 +1438,8 @@ variable warnings  warnings on
   \ `>oldest-name/order`.
   \
   \ 2017-12-16: Improve documentation.
+  \
+  \ 2017-12-17: Add `>oldest-name`, `>oldest-name/fast`.
+  \ Improve documentation.
 
   \ vim: filetype=soloforth

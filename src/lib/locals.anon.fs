@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201712160149
+  \ Last modified: 201712172225
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -36,7 +36,7 @@ variable anon> ( -- a )
 
   \ doc{
   \
-  \ anon>  ( -- a )
+  \ anon>  ( -- a ) "anon-to"
   \
   \ A variable. _a_ contains the address of the buffer used by
   \ local variables defined by `set-anon` and accessed by
@@ -135,5 +135,7 @@ variable anon> ( -- a )
   \ documentation.
   \
   \ 2017-12-16: Improve documentation.
+  \
+  \ 2017-12-17: Improve documentation.
 
   \ vim: filetype=soloforth
