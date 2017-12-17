@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-12-13
+:revdate: 2017-12-17
 
 Older first:
 
@@ -117,9 +117,3 @@ loop:
 
 - Make `defeat-tune` an alarm and use it when an alien touches the
   wall.
-
-== 2017-12-13
-
-- Fix: the mothership is not removed at the end of the attack.
-  Solution: If the mothership is visible wait until it's gone before
-  displaying the attack report.

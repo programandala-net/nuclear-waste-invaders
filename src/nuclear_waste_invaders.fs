@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.101.1+201712132005" ;
+: version$ ( -- ca len ) s" 0.101.2+201712172018" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3278,9 +3278,30 @@ localized-string about-next-location$ ( -- ca len )
 
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
 
-: under-attack ( -- ) check-breachs attack-wave
-                      begin fight end-of-attack? until
-                      lose-projectiles ;
+: mothership-alive? ( -- f ) mothership-y 0<> ;
+
+: mothership-gone? ( -- f )
+  mothership-alive? 0= visible-mothership? 0= or ;
+
+: mothership-survived? ( -- f )
+  extermination? mothership-alive? and ;
+
+: (chase-mothership) ( -- )
+  begin fight mothership-gone? until ;
+  \ Figth until the mothership is gone or destroyed.
+
+: chase-mothership? ( -- f )
+  mothership-survived? visible-mothership? and ;
+
+: chase-mothership ( -- )
+  chase-mothership? 0exit (chase-mothership) ;
+  \ If the mothership survived and it's visible, figth until
+  \ it's gone or destroyed. This is the epilogue of the attack.
+
+: under-attack ( -- )
+  check-breachs attack-wave
+  begin fight end-of-attack? until
+  chase-mothership lose-projectiles ;
 
 : another-attack? ( -- f ) breachs? catastrophe? 0= and ;
 
