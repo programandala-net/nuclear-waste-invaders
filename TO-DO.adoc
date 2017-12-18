@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-12-17
+:revdate: 2017-12-18
 
 Older first:
 
@@ -122,3 +122,13 @@ loop:
 
 - Make the mothership dodge the projectiles, like invaders do in
   `left-flying-invader` and `right-flying-invader`.
+
+== 2017-12-18
+
+- Improve scoring: reduce the score with each movement and projectile.
+- Move the localization tools to Solo Forth.
+- Include the mothership into `extermination?`.  This way
+  `chase-mothership` can be removed. But first the mothership should
+  be dangerous, e.g. it could drop new invaders.
+- Make the mothership drop and cure invaders.
+ 

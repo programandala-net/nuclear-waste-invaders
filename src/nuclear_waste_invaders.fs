@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.102.0+201712172138" ;
+: version$ ( -- ca len ) s" 0.103.0+201712181912" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -102,7 +102,7 @@ need c+! need c1+! need dzx7t need bank-start need coff
   cr .(   -Math) ?depth \ {{{2
 
 need d< need -1|1 need 2/ need between need random need binary
-need within need even? need crnd need 8*
+need within need even? need crnd need 8* need random-between
 
   \ --------------------------------------------
   cr .(   -Data structures) ?depth \ {{{2
@@ -347,6 +347,8 @@ game-font mode-32iso-font !
   \ ===========================================================
   cr .( Localization) ?depth debug-point \ {{{1
 
+  \ XXX TODO -- Move to Solo Forth.
+
 0 cenum en         \ English
   cenum eo         \ Esperanto
   cenum es         \ Spanish
@@ -354,7 +356,9 @@ game-font mode-32iso-font !
 
 en cconstant lang  \ current language
 
-: localized, ( x[langs]..x[1] -- ) langs 0 ?do , loop ;
+need n,
+
+: localized, ( x[langs]..x[1] -- ) langs n, ;
 
 : localized-word ( xt[langs]..xt[1] "name" -- )
   create localized,
@@ -365,7 +369,7 @@ en cconstant lang  \ current language
   \ localized versions.  _xt[langs]..xt[1]_, are ordered by ISO
   \ language code, being TOS the first one.
 
-: localized-string ( ca[langs]..ca[1] "name" -- n )
+: localized-string ( ca[langs]..ca[1] "name" -- )
   create localized,
   \ does> ( -- ca len ) ( pfa ) lang cells + @ count ;
   does> ( -- ca len ) ( pfa ) lang swap array> @ count ;
@@ -755,7 +759,7 @@ cvariable player   1 player  c! \ 1..max-player
 
 : (.score ( n x y -- )
   at-xy s>d <# [ score-digits ] ?[#] #> text-attr attr! type ;
-  \ Print score _n_ at coordinates _x y_.
+  \ Display score _n_ at coordinates _x y_.
 
 : score-xy ( -- x y ) score-x c@ score-y ;
   \ Coordinates of the score.
@@ -764,10 +768,10 @@ cvariable player   1 player  c! \ 1..max-player
   \ Set the cursor position at the score.
 
 : .score ( -- ) score @ score-xy (.score ;
-  \ Print the score.
+  \ Display the score.
 
 : .record ( -- ) record @ record-x score-y (.score ;
-  \ Print the record.
+  \ Display the record.
 
 : update-score ( n -- ) score +! .score ;
 
@@ -1707,14 +1711,14 @@ XXXXXXXXXXXXXXXX cconstant fire-button
 
 : centered ( len -- col ) columns swap - 2/ ;
   \ Convert a string length to the column required
-  \ to print the string centered.
+  \ to display the string centered.
 
 : centered-at ( row len -- ) centered swap at-xy ;
-  \ Set the cursor position to print string _ca len_ centered
+  \ Set the cursor position to display string _ca len_ centered
   \ on the given row.
 
 : center-type ( ca len row -- ) over centered-at type ;
-  \ Print string _ca len_ centered on the given row.
+  \ Display string _ca len_ centered on the given row.
 
 : type-blank ( ca len -- ) nip spaces ;
 
@@ -2316,12 +2320,12 @@ defer debug-data-pause ( -- )
 : game-version ( -- ) version$ 1 center-type ;
 
 : (c) ( -- ) 127 emit ;
-  \ Print the copyright symbol.
+  \ Display the copyright symbol.
 
 : (.copyright ( -- )
   row 1 over    at-xy (c) ."  2016,2017 Marcos Cruz"
       8 swap 1+ at-xy           ." (programandala.net)" ;
-  \ Print the copyright notice at the current coordinates.
+  \ Display the copyright notice at the current coordinates.
 
 : .copyright ( -- ) 0 22 at-xy (.copyright ;
 
@@ -2332,7 +2336,7 @@ defer debug-data-pause ( -- )
   \   9 over 2+  at-xy ." Left " kk-left#  .control
   \   9 over 3 + at-xy ." Right" kk-right# .control
   \   9 swap 4 + at-xy ." Fire " kk-fire#  .control ;
-  \   \ Print controls at the current row.
+  \   \ Display controls at the current row.
 
 : left-key$ ( -- ca len ) kk-left# kk#>string ;
 
@@ -2344,19 +2348,19 @@ defer debug-data-pause ( -- )
   10 at-x left-arrow  .2x1-udg-sprite
   15 at-x fire-button .2x1-udg-sprite
   20 at-x right-arrow .2x1-udg-sprite ;
-  \ Print controls legend at the current row.
+  \ Display controls legend at the current row.
 
 : .control-keys ( -- )
   10 at-x left-key$  2 type-right-field
   13 at-x fire-key$  6 type-center-field
   20 at-x right-key$ 2 type-left-field ;
-  \ Print control keys at the current row.
+  \ Display control keys at the current row.
 
 : (.controls ( -- )
   \ s" [Space] to change controls:" row dup >r center-type
     \ XXX TODO --
   .controls-legend cr .control-keys ;
-  \ Print controls at the current row.
+  \ Display controls at the current row.
 
 : change-players ( -- )
   players c@ 1+ dup max-player > if drop 1 then players c! ;
@@ -2364,7 +2368,7 @@ defer debug-data-pause ( -- )
 false [if] \ XXX TODO --
 
 : (.players ( -- ) players$ type players c@ . ;
-   \ Print the number of players at the current coordinates.
+   \ Display the number of players at the current coordinates.
 
 : .players ( -- ) 0 8 at-xy (.players ;
 
@@ -2451,7 +2455,7 @@ variable invader-time
 
 : .invader ( -- )
   invader-proper-attr attr! invader-udg .2x1-udg-sprite ;
-  \ Print the current invader.
+  \ Display the current invader.
 
 : broken-bricks-coordinates ( x1 -- x1 y1 x2 y2 x3 y3 )
   invader-y c@ 2dup 1+ 2dup 2- ;
@@ -2463,7 +2467,7 @@ variable invader-time
   at-xy broken-top-left-brick .1x1sprite
   at-xy broken-bottom-left-brick .1x1sprite
   at-xy space ;
-  \ Print the broken left wall at the given coordinates of the
+  \ Display the broken left wall at the given coordinates of the
   \ broken brick above the invader, _x3 y3_, and below it, _x2
   \ y2_, and in front of it, _x1 y1_.
   \
@@ -2473,7 +2477,7 @@ variable invader-time
   at-xy broken-top-right-brick .1x1sprite
   at-xy broken-bottom-right-brick .1x1sprite
   at-xy space ;
-  \ Print the broken right wall at the given coordinates of the
+  \ Display the broken right wall at the given coordinates of the
   \ broken brick above the invader, _x3 y3_, and below it, _x2
   \ y2_, and in front of it, _x1 y1_.
   \
@@ -2483,7 +2487,7 @@ variable invader-time
   broken-bricks-coordinates broken-wall-attr attr!
   flying-to-the-right? if   broken-left-wall
                        else broken-right-wall then ;
-  \ Show the broken wall of the building.
+  \ Display the broken wall of the building.
 
 : broken-left-container ( -- )
   invader-x c@ 2+ invader-y c@ at-xy
@@ -2559,16 +2563,19 @@ variable invader-time
 : at-projectile? ( col row -- f )
   ocr first-projectile-frame last-projectile-frame between ;
 
+: .sky ( -- ) sky-attr attr! space ;
+  \ Display a sky-color space.
+
 : left-flying-invader ( -- )
   invader-x c@ 1- invader-y c@ at-projectile?
   if turn-back exit then
-  -1 invader-x c+! at-invader .invader sky-attr attr! space ;
+  -1 invader-x c+! at-invader .invader .sky ;
   \ Move the current invader, which is flying to the left.
 
 : right-flying-invader ( -- )
   invader-x c@ 1+ invader-y c@ at-projectile?
   if turn-back exit then
-  at-invader sky-attr attr! space .invader 1 invader-x c+! ;
+  at-invader .sky .invader 1 invader-x c+! ;
   \ Move the current invader, which is flying to the right.
 
 : flying-invader ( -- )
@@ -2683,6 +2690,12 @@ cvariable cure-factor  20 cure-factor c!
 variable mothership-x
 variable mothership-x-inc
 
+udg/mothership 1- negate  constant visible-mothership-min-x
+last-column              cconstant visible-mothership-max-x
+
+                       0 cconstant whole-mothership-min-x
+columns udg/mothership -  constant whole-mothership-max-x
+
 variable mothership-stopped  mothership-stopped off
   \ Flag: did the mothership stopped in the current flight?
 
@@ -2699,8 +2712,10 @@ variable mothership-stopped  mothership-stopped off
 32 cconstant mothership-range
   \ Allowed x coordinate positions of the mothership out of the
   \ screen, in either direction.
-  \
-  \ XXX TMP -- small value for debugging
+
+mothership-range negate     constant mothership-range-min-x
+mothership-range columns + cconstant mothership-range-max-x
+  \ X-coordinate limits of the mothership range.
 
 : start-mothership ( -- ) -1|1 mothership-x-inc ! ;
 
@@ -2708,30 +2723,44 @@ variable mothership-time
   \ When the ticks clock reaches the contents of this variable,
   \ the mothership will move.
 
-: init-mothership ( -- ) mothership-range mothership-x !
-                         mothership-y0 c!> mothership-y
-                         mothership-stopped off
-                         mothership-time off
-                         start-mothership ;
+: mothership-x0 ( -- n )
+  2 random if   mothership-range-min-x
+                udg/mothership negate
+           else whole-mothership-max-x udg/mothership +
+                mothership-range-max-x
+           then random-between ;
+  \ Return random initial horizontal location _n_ of the
+  \ mothership.
+
+: place-mothership ( -- )
+  mothership-x0 mothership-x ! mothership-y0 c!> mothership-y ;
+
+: init-mothership ( -- )
+  mothership-stopped off mothership-time off
+  place-mothership start-mothership ;
   \ Init the mothership.
 
-columns udg/mothership - cconstant mothership-max-x
-                       0 cconstant mothership-min-x
-
 : visible-mothership? ( -- f )
-  mothership-x @ mothership-min-x mothership-max-x between ;
+  mothership-x @
+  visible-mothership-min-x visible-mothership-max-x between ;
   \ Is the mothership visible?
 
+: visible-whole-mothership? ( -- f )
+  mothership-x @
+  whole-mothership-min-x whole-mothership-max-x between ;
+  \ Is the whole mothership visible?
+
 : mothership-coordinates ( -- row col )
-  mothership-x @ 0 max mothership-max-x min mothership-y ;
+  mothership-x @ mothership-y ;
   \ Return the cursor coordinates of the mothership.
 
 : at-mothership ( -- ) mothership-coordinates at-xy ;
   \ Set the cursor position at the coordinates of the
   \ the mothership.
 
-: -mothership ( -- ) at-mothership udg/mothership spaces ;
-  \ Delete the visible part of the mothership.
+: -whole-mothership ( -- )
+  at-mothership udg/mothership spaces ;
+  \ Delete the whole mothership.
 
 : mothership-frame+ ( n1 -- n2 )
   1+ dup mothership-frames < and ;
@@ -2751,34 +2780,68 @@ columns udg/mothership - cconstant mothership-max-x
 
 : mothership-in-range? ( -- f )
   mothership-x @
-  [ mothership-range negate    ] literal
-  [ mothership-range columns + ] literal within ;
+  mothership-range-min-x mothership-range-max-x within ;
   \ Is the mothership in the range of its flying limit?
 
-: .mothership ( -- )
+: (.whole-mothership) ( -- )
+  mothership-attr attr! mothership-udg .2x1-udg-sprite ;
+
+: .whole-mothership ( -- ) at-mothership (.whole-mothership) ;
+
+: (.visible-right-mothership) ( -- )
   mothership-attr attr!
-  at-mothership mothership-udg .2x1-udg-sprite ;
+  [ mothership-udg udg/mothership + 1- ] cliteral emit-udg ;
 
-0 [if] \ XXX OLD
+: .visible-right-mothership ( -- )
+  0 mothership-y at-xy (.visible-right-mothership) ;
 
-: move-mothership-to-the-right ( -- )
-  at-mothership sky-attr attr! space .mothership ;
+: (.visible-left-mothership) ( -- )
+  mothership-attr attr! mothership-udg emit-udg ;
 
-: move-mothership-to-the-left ( -- )
-  at-mothership .mothership sky-attr attr! space ;
+: .visible-left-mothership ( -- )
+  visible-mothership-max-x mothership-y at-xy
+  (.visible-left-mothership) ;
 
-      ' move-mothership-to-the-left ,
+: .visible-mothership ( -- )
+  mothership-x @ case
+    visible-mothership-min-x of .visible-right-mothership endof
+    visible-mothership-max-x of .visible-left-mothership  endof
+    .whole-mothership
+  endcase ;
+
+: move-visible-mothership-right ( -- )
+  mothership-x @ case
+    whole-mothership-max-x   of
+      at-mothership .sky (.visible-left-mothership)    endof
+    visible-mothership-max-x of
+      at-mothership .sky                               endof
+    visible-mothership-min-x of
+      0 mothership-y at-xy (.visible-right-mothership) endof
+    at-mothership .sky (.whole-mothership)
+  endcase advance-mothership ;
+
+: move-visible-mothership-left ( -- )
+  mothership-x @ case
+    whole-mothership-min-x                               of
+      .visible-right-mothership .sky advance-mothership  endof
+    visible-mothership-min-x                             of
+      0 mothership-y at-xy .sky advance-mothership       endof
+    [ whole-mothership-max-x udg/mothership + ] cliteral of
+      [ last-column ] cliteral mothership-y at-xy
+      (.visible-left-mothership) advance-mothership      endof
+    advance-mothership .whole-mothership .sky
+  endcase ;
+
+      ' move-visible-mothership-left ,
 here  ' noop ,
-      ' move-mothership-to-the-right ,
+      ' move-visible-mothership-right ,
 
-constant mothership-movements ( -- a )
-  \ Execution table to move the mothership.
+constant visible-mothership-movements ( -- a )
+  \ Execution table.
 
-: move-mothership ( -- )
-  mothership-movements mothership-x-inc @ +perform ;
+: move-visible-mothership ( -- )
+  visible-mothership-movements mothership-x-inc @ +perform ;
   \ Execute the proper movement.
-
-[then]
 
 : above-building? ( -- f )
   mothership-x @
@@ -2800,12 +2863,10 @@ constant mothership-movements ( -- a )
 : ?start-mothership ( -- ) 9 random ?exit start-mothership ;
 
 : flying-mothership ( -- )
-  -mothership advance-mothership
-  visible-mothership? if .mothership then ?stop-mothership ;
+  visible-mothership? if   move-visible-mothership
+                      then ?stop-mothership ;
   \ Manage the mothership, which is visible and flying,
   \ but maybe could stop above the building.
-  \ XXX TODO -- improve: don't delete the whole mothership
-  \ XXX TODO -- improve with fast `unvisible-mothership? ?exit`
 
 : visible-mothership ( -- )
   stopped-mothership? if   ?start-mothership exit
@@ -2813,11 +2874,9 @@ constant mothership-movements ( -- a )
 
 : invisible-mothership ( -- )
   advance-mothership
-  visible-mothership? if .mothership exit then
-  mothership-in-range? ?exit
-  mothership-returns advance-mothership ;
+  visible-mothership? if .visible-mothership exit then
+  mothership-in-range? ?exit mothership-returns ;
   \ Manage the mothership, when it's invisible.
-  \ XXX TODO -- try removing the last `advance-mothership`
 
 5 cconstant mothership-interval \ ticks
 
@@ -2843,10 +2902,10 @@ constant mothership-movements ( -- a )
 : mothership-on-fire ( -- )
   mothership-x @ mothership-y at-xy
   mothership-explosion-udg .2x1-udg-sprite ;
-  \ Show the mothership on fire.
+  \ Display the mothership on fire.
 
 : mothership-explosion ( -- )
-  mothership-on-fire mothership-bang -mothership
+  mothership-on-fire mothership-bang -whole-mothership
   0 c!> mothership-y ;
   \ The mothership explodes.
   \ XXX TODO -- Improve the effect.
@@ -2865,14 +2924,14 @@ constant mothership-movements ( -- a )
 
 : invader-on-fire ( -- )
   at-invader invader-explosion-udg .2x1-udg-sprite ;
-  \ Show the current invader on fire.
+  \ Display the current invader on fire.
 
 : -invader ( -- ) sky-attr attr! at-invader 2 spaces ;
   \ Delete the current invader.
 
 : invader-explosion ( -- )
   invader-on-fire invader-bang -invader ;
-  \ Show the explosion of the current invader.
+  \ Display the explosion of the current invader.
 
 : impacted-invader ( -- n )
   projectile-y c@ invader-top-y - 2/
@@ -2971,7 +3030,7 @@ constant mothership-movements ( -- a )
   [pixel-projectile]
   [if]    projectile-coords reset-pixel
   [else]  projectile-coords xy>attr projectile-attr <> ?exit
-          at-projectile sky-attr attr! space
+          at-projectile .sky
   [then] ;
   \ Delete the projectile.
 
@@ -3022,7 +3081,8 @@ cvariable trigger-delay-counter trigger-delay-counter coff
 : update-trigger ( -- )
   trigger-delay-counter c@ 1- 0 max trigger-delay-counter c! ;
   \ Decrement the trigger delay. The minimum is zero.
-  \ XXX TODO -- since the counter is a byte, `max` may be removed
+  \ XXX TODO -- since the counter is a byte, `max` may be
+  \ removed.
 
 : trigger-ready? ( -- f ) trigger-delay-counter c@ 0= ;
   \ Is the trigger ready?
@@ -3243,6 +3303,7 @@ localized-string about-next-location$ ( -- ca len )
   \ Fill the screen with a color, to contrast the report window.
 
 : end-report ( -- ) no-keys press-any-key$ wltype key drop ;
+  \ XXX TODO -- Use `-keys`.
 
 : open-report ( -- )
   unfocus paper-report-window current-window !
@@ -3329,7 +3390,7 @@ localized-string about-next-location$ ( -- ca len )
   \ Reduce the actual invaders to the left half.
 
 : .udgs ( -- ) cr last-udg 1+ 0 do i emit-udg loop ;
-  \ Print all game UDGs.
+  \ Display all game UDGs.
 
 : fp ( -- ) fly-projectile ;
 : fp? ( -- f ) flying-projectile? ;
@@ -3351,10 +3412,12 @@ localized-string about-next-location$ ( -- ca len )
 : vms ( -- ) visible-mothership ;
 : ams ( -- ) advance-mothership ;
 : vms? ( -- f ) visible-mothership? ;
-: .ms ( -- ) .mothership ;
+: .ms ( -- ) .whole-mothership ;
 : ms? ( -- f ) mothership-in-range? ;
-: -ms ( -- ) -mothership ;
+: -ms ( -- ) -whole-mothership ;
 : msx ( -- x ) mothership-x @ ;
+: im ( -- ) init-mothership ;
+: m ( -- ) begin key bl <> while manage-mothership repeat ;
 
 : .i ( n -- )
   >r
