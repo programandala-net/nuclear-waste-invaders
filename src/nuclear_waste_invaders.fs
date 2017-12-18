@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.103.0+201712181912" ;
+: version$ ( -- ca len ) s" 0.104.0+201712182137" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -227,6 +227,8 @@ defer ((debug-point  ' noop ' ((debug-point defer!
   home ." rdepth:" rdepth . ;
 ' ~~stack-info ' ~~app-info defer!
   \ XXX TMP -- for debugging
+
+: notice ( -- ) 1024 0 ?do i %11 and border loop ;
 
   \ ===========================================================
   cr .( Constants) ?depth debug-point \ {{{1
@@ -2283,9 +2285,7 @@ defer debug-data-pause ( -- )
              debug-data-pause ;
   \ XXX INFORMER
 
-: destroy-projectile ( -- )
-  projectile-y coff  projectile# >x
-  .debug-data ;
+: destroy-projectile ( -- ) projectile-y coff  projectile# >x ;
 
 : new-projectiles ( -- )
   used-projectiles off
@@ -2560,20 +2560,25 @@ variable invader-time
 : ?dock ( -- ) at-home? 0exit dock ;
   \ If the current invader is at home, dock it.
 
-: at-projectile? ( col row -- f )
+: is-there-a-projectile? ( col row -- f )
   ocr first-projectile-frame last-projectile-frame between ;
 
 : .sky ( -- ) sky-attr attr! space ;
   \ Display a sky-color space.
 
+: left-of-invader ( -- col row ) invader-x c@ 1- invader-y c@ ;
+
 : left-flying-invader ( -- )
-  invader-x c@ 1- invader-y c@ at-projectile?
+  left-of-invader is-there-a-projectile?
   if turn-back exit then
   -1 invader-x c+! at-invader .invader .sky ;
   \ Move the current invader, which is flying to the left.
 
+: right-of-invader ( -- col row )
+  invader-x c@ 1+ invader-y c@ ;
+
 : right-flying-invader ( -- )
-  invader-x c@ 1+ invader-y c@ at-projectile?
+  right-of-invader is-there-a-projectile?
   if turn-back exit then
   at-invader .sky .invader 1 invader-x c+! ;
   \ Move the current invader, which is flying to the right.
@@ -2705,7 +2710,7 @@ variable mothership-stopped  mothership-stopped off
   \ ' ~~mothership-info ' ~~app-info defer!
   \ XXX TMP -- for debugging
 
-: mothership-returns ( -- )
+: mothership-turns-back ( -- )
   mothership-stopped off
   mothership-x-inc @ negate mothership-x-inc ! ;
 
@@ -2809,7 +2814,12 @@ variable mothership-time
     .whole-mothership
   endcase ;
 
+: right-of-mothership ( -- col row )
+  mothership-x @ udg/mothership + mothership-y ;
+
 : move-visible-mothership-right ( -- )
+  right-of-mothership is-there-a-projectile?
+  if mothership-turns-back exit then
   mothership-x @ case
     whole-mothership-max-x   of
       at-mothership .sky (.visible-left-mothership)    endof
@@ -2820,7 +2830,12 @@ variable mothership-time
     at-mothership .sky (.whole-mothership)
   endcase advance-mothership ;
 
+: left-of-mothership ( -- col row )
+  mothership-x @ 1- mothership-y ;
+
 : move-visible-mothership-left ( -- )
+  left-of-mothership is-there-a-projectile?
+  if mothership-turns-back exit then
   mothership-x @ case
     whole-mothership-min-x                               of
       .visible-right-mothership .sky advance-mothership  endof
@@ -2875,7 +2890,7 @@ constant visible-mothership-movements ( -- a )
 : invisible-mothership ( -- )
   advance-mothership
   visible-mothership? if .visible-mothership exit then
-  mothership-in-range? ?exit mothership-returns ;
+  mothership-in-range? ?exit mothership-turns-back ;
   \ Manage the mothership, when it's invisible.
 
 5 cconstant mothership-interval \ ticks
@@ -3062,7 +3077,7 @@ cvariable trigger-delay-counter trigger-delay-counter coff
 
 : fire ( -- )
   1 used-projectiles +!
-  x> c!> projectile#  .debug-data
+  x> c!> projectile#
   new-projectile-x projectile-x c!
   [pixel-projectile]
   [if]    [ tank-y row>pixel 1+ ] cliteral
@@ -3095,7 +3110,6 @@ cvariable trigger-delay-counter trigger-delay-counter coff
   \ Point to the next current projectile.
 
 : fly-projectile ( -- )
-  .debug-data \ XXX INFORMER
   flying-projectile? if move-projectile then next-projectile ;
   \ Manage the shoot.
 
