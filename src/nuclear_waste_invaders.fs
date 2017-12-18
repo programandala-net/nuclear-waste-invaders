@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.104.0+201712182137" ;
+: version$ ( -- ca len ) s" 0.105.0+201712182311" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -96,7 +96,8 @@ need case need 0exit need +perform need do need abort"
   \ --------------------------------------------
   cr .(   -Memory) ?depth \ {{{2
 
-need c+! need c1+! need dzx7t need bank-start need coff
+need c+! need c1+! need c1-!  need coff
+need dzx7t need bank-start
 
   \ --------------------------------------------
   cr .(   -Math) ?depth \ {{{2
@@ -1817,6 +1818,7 @@ left-flying-invader-2 right-flying-invader-2 2 set-species
 columns udg/invader - cconstant invaders-max-x
 
 10 cconstant max-invaders
+max-invaders 2/ cconstant half-max-invaders
 10 cconstant actual-invaders \ XXX TMP -- for debugging
 
 0
@@ -1951,18 +1953,23 @@ building-top-y 1+ cconstant invader-top-y
   \ Other fields don't need initialization, because they
   \ contain zero (default) or a constant.
 
-: init-invaders-data ( -- )
-  invaders-data /invaders erase
-  0 layer>y invaders-max-x -1 0 9 set-invader
-  1 layer>y invaders-max-x -1 0 8 set-invader
-  2 layer>y invaders-max-x -1 1 7 set-invader
-  3 layer>y invaders-max-x -1 1 6 set-invader
-  4 layer>y invaders-max-x -1 2 5 set-invader
+: init-left-side-invaders-data ( -- )
   0 layer>y invaders-min-x  1 0 4 set-invader
   1 layer>y invaders-min-x  1 0 3 set-invader
   2 layer>y invaders-min-x  1 1 2 set-invader
   3 layer>y invaders-min-x  1 1 1 set-invader
   4 layer>y invaders-min-x  1 2 0 set-invader ;
+
+: init-right-side-invaders-data ( -- )
+  0 layer>y invaders-max-x -1 0 9 set-invader
+  1 layer>y invaders-max-x -1 0 8 set-invader
+  2 layer>y invaders-max-x -1 1 7 set-invader
+  3 layer>y invaders-max-x -1 1 6 set-invader
+  4 layer>y invaders-max-x -1 2 5 set-invader ;
+
+: init-invaders-data ( -- )
+  invaders-data /invaders erase
+  init-left-side-invaders-data init-right-side-invaders-data ;
   \ Init the data of all invaders.
 
 create stamina-attributes ( -- ca )
@@ -1974,6 +1981,13 @@ create stamina-attributes ( -- ca )
 : invader-proper-attr ( -- c )
   invader-stamina c@ [ stamina-attributes 1- ] literal + c@ ;
   \ Invader proper color for its stamina.
+
+: #invaders ( 0 n1 n2 -- n3 )
+  ?do i invader~ ~stamina c@ 0<> abs + loop ;
+
+: left-side-invaders ( -- n ) 0 5 0 #invaders ;
+
+: right-side-invaders ( -- n ) 0 10 5 #invaders ;
 
   \ ===========================================================
   cr .( Building) ?depth debug-point \ {{{1
@@ -2304,12 +2318,19 @@ defer debug-data-pause ( -- )
   [pixel-projectile] [ 0= ] [if] init-ocr [then]
   first-location score off cls ;
 
-: parade ( -- )
-  invader-attr attr!
-  max-invaders 0 do
+: (parade ( n1 n2 -- )
+  invader-attr attr!  ?do
     i invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
                        r> ~sprite c@ .2x1-udg-sprite
   loop ;
+
+: parade ( -- ) max-invaders 0 (parade ;
+
+: left-side-parade ( -- ) half-max-invaders 0
+                          (parade ;
+
+: right-side-parade ( -- ) max-invaders half-max-invaders
+                           (parade ;
 
   \ ===========================================================
   cr .( Instructions) ?depth debug-point \ {{{1
@@ -2817,9 +2838,7 @@ variable mothership-time
 : right-of-mothership ( -- col row )
   mothership-x @ udg/mothership + mothership-y ;
 
-: move-visible-mothership-right ( -- )
-  right-of-mothership is-there-a-projectile?
-  if mothership-turns-back exit then
+: (move-visible-mothership-right ( -- )
   mothership-x @ case
     whole-mothership-max-x   of
       at-mothership .sky (.visible-left-mothership)    endof
@@ -2829,13 +2848,31 @@ variable mothership-time
       0 mothership-y at-xy (.visible-right-mothership) endof
     at-mothership .sky (.whole-mothership)
   endcase advance-mothership ;
+  \ Do move the visible mothership to the right.
+
+: over-right-invaders-column? ( -- f )
+  mothership-x @ invaders-max-x = ;
+
+: half-more-invaders ( -- ) half-max-invaders invaders c+! ;
+
+: more-right-side-invaders ( -- )
+  init-right-side-invaders-data right-side-parade
+  half-more-invaders ;
+
+: help-right-side-invaders ( -- )
+  right-side-invaders ?exit more-right-side-invaders ;
+
+: move-visible-mothership-right ( -- )
+  right-of-mothership is-there-a-projectile?
+  if mothership-turns-back exit then
+  over-right-invaders-column? if help-right-side-invaders then
+  (move-visible-mothership-right ;
+  \ Move the visible mothership to the right, if possible.
 
 : left-of-mothership ( -- col row )
   mothership-x @ 1- mothership-y ;
 
-: move-visible-mothership-left ( -- )
-  left-of-mothership is-there-a-projectile?
-  if mothership-turns-back exit then
+: (move-visible-mothership-left ( -- )
   mothership-x @ case
     whole-mothership-min-x                               of
       .visible-right-mothership .sky advance-mothership  endof
@@ -2846,6 +2883,24 @@ variable mothership-time
       (.visible-left-mothership) advance-mothership      endof
     advance-mothership .whole-mothership .sky
   endcase ;
+  \ Do move the visible mothership to the left.
+
+: over-left-invaders-column? ( -- f )
+  mothership-x @ invaders-min-x = ;
+
+: more-left-side-invaders ( -- )
+  init-left-side-invaders-data left-side-parade
+  half-more-invaders ;
+
+: help-left-side-invaders ( -- )
+  left-side-invaders ?exit more-left-side-invaders ;
+
+: move-visible-mothership-left ( -- )
+  left-of-mothership is-there-a-projectile?
+  if mothership-turns-back exit then
+  over-left-invaders-column? if help-left-side-invaders then
+  (move-visible-mothership-left ;
+  \ Move the visible mothership to the left, if possible.
 
       ' move-visible-mothership-left ,
 here  ' noop ,
@@ -2877,15 +2932,9 @@ constant visible-mothership-movements ( -- a )
 
 : ?start-mothership ( -- ) 9 random ?exit start-mothership ;
 
-: flying-mothership ( -- )
-  visible-mothership? if   move-visible-mothership
-                      then ?stop-mothership ;
-  \ Manage the mothership, which is visible and flying,
-  \ but maybe could stop above the building.
-
 : visible-mothership ( -- )
-  stopped-mothership? if   ?start-mothership exit
-                      then flying-mothership ;
+  stopped-mothership? if ?start-mothership exit then
+  move-visible-mothership ?stop-mothership ;
 
 : invisible-mothership ( -- )
   advance-mothership
@@ -2963,7 +3012,7 @@ constant visible-mothership-movements ( -- a )
 
 : explode ( -- )
   invader-destroy-points update-score invader-explosion
-  -1 invaders c+! invader-stamina coff invader-active off ;
+  invaders c1-! invader-stamina coff invader-active off ;
   \ The current invader explodes.
 
 ' lightning1 alias retreat-sound
@@ -3400,7 +3449,7 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Debugging tools) ?depth debug-point \ {{{1
 
-: half ( -- ) [ max-invaders 2/ ] cliteral !> actual-invaders ;
+: half ( -- ) half-max-invaders !> actual-invaders ;
   \ Reduce the actual invaders to the left half.
 
 : .udgs ( -- ) cr last-udg 1+ 0 do i emit-udg loop ;
@@ -3420,16 +3469,15 @@ localized-string about-next-location$ ( -- ca len )
 : tl ( -- ) <tank h ; \ move tank left
 : tr ( -- ) tank> h ; \ move tank right
 
-: ms ( -- ) manage-mothership ;
-: fms ( -- ) flying-mothership ;
-: ims ( -- ) invisible-mothership ;
-: vms ( -- ) visible-mothership ;
-: ams ( -- ) advance-mothership ;
-: vms? ( -- f ) visible-mothership? ;
-: .ms ( -- ) .whole-mothership ;
-: ms? ( -- f ) mothership-in-range? ;
-: -ms ( -- ) -whole-mothership ;
-: msx ( -- x ) mothership-x @ ;
+: mm ( -- ) manage-mothership ;
+: im ( -- ) invisible-mothership ;
+: vm ( -- ) visible-mothership ;
+: am ( -- ) advance-mothership ;
+: vm? ( -- f ) visible-mothership? ;
+: .m ( -- ) .whole-mothership ;
+: m? ( -- f ) mothership-in-range? ;
+: -m ( -- ) -whole-mothership ;
+: mx ( -- x ) mothership-x @ ;
 : im ( -- ) init-mothership ;
 : m ( -- ) begin key bl <> while manage-mothership repeat ;
 

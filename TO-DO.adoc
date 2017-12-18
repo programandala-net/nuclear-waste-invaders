@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-12-18
+:revdate: 2017-12-19
 
 Older first:
 
@@ -125,5 +125,9 @@ loop:
 - Include the mothership into `extermination?`.  This way
   `chase-mothership` can be removed. But first the mothership should
   be dangerous, e.g. it could drop new invaders.
-- Make the mothership drop and cure invaders.
- 
+- Replace `invader~` with a look-up table, which is faster.
+
+== 2017-12-19
+
+- Make the mothership cure invaders.
+
