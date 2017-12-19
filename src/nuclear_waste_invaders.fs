@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.105.0+201712182311" ;
+: version$ ( -- ca len ) s" 0.106.0+201712190139" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -104,6 +104,7 @@ need dzx7t need bank-start
 
 need d< need -1|1 need 2/ need between need random need binary
 need within need even? need crnd need 8* need random-between
+need join
 
   \ --------------------------------------------
   cr .(   -Data structures) ?depth \ {{{2
@@ -144,7 +145,7 @@ need inverse-off need overprint-off need attr!  need attr@
 need black need blue   need red   need magenta need green
 need cyan  need yellow need white
 
-need papery need brighty need xy>attr
+need papery need brighty need xy>attr need xy>attra
 
   \ --------------------------------------------
   cr .(   -Keyboard) ?depth \ {{{2
@@ -576,6 +577,9 @@ localized-string press-any-key$ ( -- ca len )
               yellow cconstant wounded-invader-attr
                  red cconstant dying-invader-attr
              magenta cconstant mothership-attr
+
+magenta papery invader-attr + brighty
+                     cconstant beam-attr
 
                white cconstant tank-attr
               yellow cconstant projectile-attr
@@ -2139,8 +2143,9 @@ variable tank-time
 
 : repair-tank ( -- ) transmission-damage off tank-time off ;
 
-: park-tank ( -- )
-  columns udg/tank - 2/ tank-x c!  tank-frame coff ;
+columns udg/tank - 2/ cconstant parking-x
+
+: park-tank ( -- ) parking-x tank-x c! tank-frame coff ;
 
                     1 cconstant tank-min-x
 columns udg/tank - 1- cconstant tank-max-x
@@ -2703,10 +2708,6 @@ cvariable cure-factor  20 cure-factor c!
   \ ===========================================================
   cr .( Mothership) ?depth debug-point \ {{{1
 
-  \ XXX UNDER DEVELOPMENT
-
-  \ XXX TODO -- simplify: the mothership can be always visible
-
 1 cconstant mothership-y0
   \ Default y coordinate of the mothership.
 
@@ -2855,17 +2856,37 @@ variable mothership-time
 
 : half-more-invaders ( -- ) half-max-invaders invaders c+! ;
 
+0 layer>y cconstant invader-min-y
+
+beam-attr dup join constant beam-cell-attr
+sky-attr  dup join constant  sky-cell-attr
+
+: beam-on ( col -- )
+  invader-min-y 1+ mothership-y 1+ ?do
+    beam-cell-attr mothership-x @ i xy>attra !
+  loop ;
+  \ Turn the mothership's light beam on.
+
+: beam-off ( col -- )
+  mothership-y invader-min-y ?do
+    sky-cell-attr mothership-x @ i xy>attra
+    dup @ beam-cell-attr = if ! else 2drop then
+  -1 +loop ;
+  \ Turn the mothership's light beam off.
+  \ The attributes other than beam's are preserved.
+
 : more-right-side-invaders ( -- )
-  init-right-side-invaders-data right-side-parade
+  init-right-side-invaders-data
+  mothership-x @ dup beam-on right-side-parade beam-off
   half-more-invaders ;
 
-: help-right-side-invaders ( -- )
+: help-right-side ( -- )
   right-side-invaders ?exit more-right-side-invaders ;
 
 : move-visible-mothership-right ( -- )
   right-of-mothership is-there-a-projectile?
   if mothership-turns-back exit then
-  over-right-invaders-column? if help-right-side-invaders then
+  over-right-invaders-column? if help-right-side then
   (move-visible-mothership-right ;
   \ Move the visible mothership to the right, if possible.
 
@@ -2889,16 +2910,17 @@ variable mothership-time
   mothership-x @ invaders-min-x = ;
 
 : more-left-side-invaders ( -- )
-  init-left-side-invaders-data left-side-parade
+  init-left-side-invaders-data
+  mothership-x @ dup beam-on left-side-parade beam-off
   half-more-invaders ;
 
-: help-left-side-invaders ( -- )
+: help-left-side ( -- )
   left-side-invaders ?exit more-left-side-invaders ;
 
 : move-visible-mothership-left ( -- )
   left-of-mothership is-there-a-projectile?
   if mothership-turns-back exit then
-  over-left-invaders-column? if help-left-side-invaders then
+  over-left-invaders-column? if help-left-side then
   (move-visible-mothership-left ;
   \ Move the visible mothership to the left, if possible.
 

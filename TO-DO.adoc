@@ -47,26 +47,20 @@ Max ammo, with a method or place to get more.
 
 Get more ammo by firing below the building.
 
-== 2017-02-26
+== 2017-02-28, 2017-12-19
 
-Make the building touch the ground. Then make the tank invisible when
-it moves inside the building.
-
-== 2017-02-28
-
-- Make the tank delay through the doors.
+- Make the tank delay through the building.
 - Make a hit invader randomly move up to the next layer, if it's free.
 
 == 2017-01-13
 
 Improve the visibility of the projectile right above the tank.
 
-== 2017-03-01
+== 2017-03-01, 2017-12-19
 
-- Now two data fields are used for the invader status: `~active` and
-  `~retreating`.  Use only one datum instead, to hold the identifier
-  of the current status (attacking, docked, breaking the wall,
-  retreating...). This will be simpler to use and more versatile.
+- Add a data field to hold the identifier of the current status
+  (attacking, docked, breaking the wall, retreating...). This will be
+  simpler to use and more versatile.
 - Change the graphics of the invaders that are delayed at the wall.
 
 == 2017-03-01
@@ -130,4 +124,4 @@ loop:
 == 2017-12-19
 
 - Make the mothership cure invaders.
-
+- Improve the beam effect.
