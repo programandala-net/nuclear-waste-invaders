@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-12-19
+:revdate: 2017-12-20
 
 Older first:
 
@@ -125,3 +125,9 @@ loop:
 
 - Make the mothership cure invaders.
 - Improve the beam effect.
+
+== 2017-12-20
+
+- Replace conditionals with deferred words, for speed.
+- Adjust intervals?: some times the invaders or the tank can not move.
+

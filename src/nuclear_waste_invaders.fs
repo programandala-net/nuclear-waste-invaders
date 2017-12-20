@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.106.0+201712190139" ;
+: version$ ( -- ca len ) s" 0.107.0+201712201320" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -626,7 +626,7 @@ record off
 : enter-key? ( -- f ) inkey enter-key = ;
   \ Is the Enter key pressed?
 
-: wait-for-enter ( -- ) begin  enter-key?  until ;
+: wait-for-enter ( -- ) begin enter-key? until ;
   \ Wait until the Enter key is pressed.
 
 : kk#>c ( n -- c ) kk-chars + c@ ;
@@ -661,6 +661,7 @@ create controls  here
 
 here swap - /controls / cconstant max-controls
   \ Number of controls stored in `controls`.
+  \ XXX TODO -- Replace `here` with `controls`.
 
 max-controls 1- cconstant last-control
 
@@ -1325,6 +1326,17 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X... drop
 
+2 1 udg-sprite
+
+..............X.
+..X......XX..X..
+.X...XXXXXXX....
+....XXXXXXXXX.X.
+...XXXX.XX.XX..X
+.X..XX..XXXX....
+X....XXXXX...X..
+..X...XX...X..X. cconstant mothership-explosion-udg
+
   \ -----------------------------------------------------------
   \ Projectile
 
@@ -1599,17 +1611,6 @@ udg/tank 1 udg-sprite
   \ Containers
 
   \ XXX TODO -- Move to the building section.
-
-2 1 udg-sprite
-
-..............X.
-..X......XX..X..
-.X...XXXXXXX....
-....XXXXXXXXX.X.
-...XXXX.XX.XX..X
-.X..XX..XXXX....
-X....XXXXX...X..
-..X...XX...X..X. cconstant mothership-explosion-udg
 
 2 1 udg-sprite
 
@@ -2153,8 +2154,8 @@ columns udg/tank - 1- cconstant tank-max-x
 
 : new-projectile-x ( -- col|x )
   [pixel-projectile]
-  [if]    tank-x c@ col>pixel [ udg/tank 8 * 2/ ] cliteral +
-  [else]  tank-x c@ 1+
+  [if]   tank-x c@ col>pixel [ udg/tank 8 * 2/ ] cliteral +
+  [else] tank-x c@ 1+
   [then] ;
   \ Return the column _col_ or graphic coordinate _x_ for the
   \ new projectile, depending (at compile time) on the type of
@@ -2166,7 +2167,7 @@ columns udg/tank - 1- cconstant tank-max-x
     building-left-x c@ col>pixel building-right-x c@ col>pixel
   [else]
     building-left-x c@ building-right-x c@
-  [then]  between ;
+  [then] between ;
   \ Is the tank's gun below the building?
 
 : transmission? ( -- f ) rnd transmission-damage @ u> ;
@@ -2323,19 +2324,26 @@ defer debug-data-pause ( -- )
   [pixel-projectile] [ 0= ] [if] init-ocr [then]
   first-location score off cls ;
 
-: (parade ( n1 n2 -- )
-  invader-attr attr!  ?do
-    i invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
-                       r> ~sprite c@ .2x1-udg-sprite
-  loop ;
+: ((parade ( n1 n2 -- )
+  ?do i invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
+                     r> ~sprite c@ .2x1-udg-sprite   loop ;
+  \ Display invaders from _n2_ to _n1_, not including _n1_,
+  \ using the current attribute.
+
+: (parade ( n1 n2 -- ) invader-attr attr! ((parade ;
+  \ Display invaders from _n2_ to _n1_, not including _n1_,
+  \ using the proper attribute.
 
 : parade ( -- ) max-invaders 0 (parade ;
+  \ Display parade of all invaders.
 
 : left-side-parade ( -- ) half-max-invaders 0
                           (parade ;
+  \ Display parade of the left-side invaders.
 
 : right-side-parade ( -- ) max-invaders half-max-invaders
                            (parade ;
+  \ Display parade of the right-side invaders.
 
   \ ===========================================================
   cr .( Instructions) ?depth debug-point \ {{{1
@@ -2398,7 +2406,7 @@ false [if] \ XXX TODO --
 
 : .players ( -- ) 0 8 at-xy (.players ;
 
-[else]  \ XXX TMP --
+[else] \ XXX TMP --
 
 : .players ( -- ) ;
 
@@ -2851,7 +2859,7 @@ variable mothership-time
   endcase advance-mothership ;
   \ Do move the visible mothership to the right.
 
-: over-right-invaders-column? ( -- f )
+: over-right-invaders? ( -- f )
   mothership-x @ invaders-max-x = ;
 
 : half-more-invaders ( -- ) half-max-invaders invaders c+! ;
@@ -2861,32 +2869,91 @@ variable mothership-time
 beam-attr dup join constant beam-cell-attr
 sky-attr  dup join constant  sky-cell-attr
 
-: beam-on ( col -- )
-  invader-min-y 1+ mothership-y 1+ ?do
-    beam-cell-attr mothership-x @ i xy>attra !
-  loop ;
-  \ Turn the mothership's light beam on.
+variable beaming beaming off \ flag/direction (1|0|-1)
+variable beam-first-y        \ row
+variable beam-last-y         \ row
+variable beam-y              \ row
 
-: beam-off ( col -- )
-  mothership-y invader-min-y ?do
-    sky-cell-attr mothership-x @ i xy>attra
-    dup @ beam-cell-attr = if ! else 2drop then
-  -1 +loop ;
-  \ Turn the mothership's light beam off.
-  \ The attributes other than beam's are preserved.
+defer beam ( -- )
+  \ Manage the beam.
 
-: more-right-side-invaders ( -- )
-  init-right-side-invaders-data
-  mothership-x @ dup beam-on right-side-parade beam-off
-  half-more-invaders ;
+: set-beam ( row1 row2 xt -- )
+  ['] beam defer!
+  2dup beam-last-y ! dup beam-first-y ! beam-y !
+       swap - polarity beaming ! ;
+  \ Set the beam to grow/shrink from
+  \ _row1_ to _row2_ with handler _xt_.
 
-: help-right-side ( -- )
-  right-side-invaders ?exit more-right-side-invaders ;
+: beaming-down? ( -- 1|0|-1 )
+  beaming @ dup beam-y +!
+                beam-y @ beam-first-y @ beam-last-y @ between
+            and dup beaming ! ;
+  \ Update `beam-y` of a growing beam. Also update `beaming`
+  \ accordingly and return a copy of its content.
+
+: beaming-up? ( -- 1|0|-1 )
+  beaming @ dup beam-y +!
+                beam-y @ beam-last-y @ beam-first-y @ between
+            and dup beaming ! ;
+  \ Update `beam-y` of a shrinking beam. Also update `beaming`
+  \ accordingly and return a copy of its content.
+
+: over-left-invaders? ( -- f )
+  mothership-x @ invaders-min-x = ;
+  \ Is the mothership over the left invaders column?
+
+: more-invaders ( -- )
+  over-left-invaders? if   init-left-side-invaders-data
+                      else init-right-side-invaders-data
+                      then half-more-invaders ;
+  \ Init the data of the new invaders created by the beam
+  \ and update their global count.
+
+: .more-invaders ( -- )
+  over-left-invaders? if   left-side-parade
+                      else right-side-parade then ;
+  \ Display the new invaders created by the beam.
+
+: (beam-up ( -- )
+  sky-cell-attr mothership-x @ beam-y @ xy>attra
+  dup @ beam-cell-attr = if ! else 2drop then ;
+  \ Shrink the beam towards de mothership one character.
+
+: beam-up ( -- ) (beam-up beaming-up? ?exit more-invaders ;
+  \ Manage the beam, which is shrinking up to the mothership.
+  \ If it's finished, activate the new invaders.
+
+: beam-off ( -- )
+  invader-min-y 1+ mothership-y ['] beam-up set-beam ;
+  \ Turn the mothership's beam off, i.e. start shrinking it.
+
+: (beam-down ( -- )
+  beam-cell-attr mothership-x @ beam-y @ xy>attra ! ;
+  \ Grow the beam towards the ground one character.
+
+: beam-down ( -- )
+  (beam-down beaming-down? ?exit .more-invaders beam-off ;
+  \ Manage the beam, which is growing down to the ground.
+  \ If it's finished, display the new invaders and start
+  \ shrinking the beam.
+
+: beam-on ( -- )
+  mothership-y 1+ invader-min-y 1+ ['] beam-down set-beam ;
+  \ Turn the mothership's beam on.
+
+: need-help? ( n -- f ) 0= dup 0exit beam-on ;
+  \ If _n_ is zero turn the beam on and return _true_; otherwise
+  \ do nothing and return _false_.
+
+: help-right-side? ( -- f ) right-side-invaders need-help? ;
+  \ If there's no invader alive at the right side, turn the beam
+  \ on and return _true_; otherwise do nothing and return
+  \ _false_.
 
 : move-visible-mothership-right ( -- )
   right-of-mothership is-there-a-projectile?
   if mothership-turns-back exit then
-  over-right-invaders-column? if help-right-side then
+  over-right-invaders? if help-right-side? ?exit then
   (move-visible-mothership-right ;
   \ Move the visible mothership to the right, if possible.
 
@@ -2906,21 +2973,15 @@ sky-attr  dup join constant  sky-cell-attr
   endcase ;
   \ Do move the visible mothership to the left.
 
-: over-left-invaders-column? ( -- f )
-  mothership-x @ invaders-min-x = ;
-
-: more-left-side-invaders ( -- )
-  init-left-side-invaders-data
-  mothership-x @ dup beam-on left-side-parade beam-off
-  half-more-invaders ;
-
-: help-left-side ( -- )
-  left-side-invaders ?exit more-left-side-invaders ;
+: help-left-side? ( -- f ) left-side-invaders need-help? ;
+  \ If there's no invader alive at the left side, turn the beam
+  \ on and return _true_; otherwise do nothing and return
+  \ _false_.
 
 : move-visible-mothership-left ( -- )
   left-of-mothership is-there-a-projectile?
   if mothership-turns-back exit then
-  over-left-invaders-column? if help-left-side then
+  over-left-invaders? if help-left-side? ?exit then
   (move-visible-mothership-left ;
   \ Move the visible mothership to the left, if possible.
 
@@ -2956,6 +3017,7 @@ constant visible-mothership-movements ( -- a )
 
 : visible-mothership ( -- )
   stopped-mothership? if ?start-mothership exit then
+  beaming @ if beam exit then
   move-visible-mothership ?stop-mothership ;
 
 : invisible-mothership ( -- )
@@ -3114,17 +3176,17 @@ constant visible-mothership-movements ( -- a )
 
 : -projectile ( -- )
   [pixel-projectile]
-  [if]    projectile-coords reset-pixel
-  [else]  projectile-coords xy>attr projectile-attr <> ?exit
-          at-projectile .sky
+  [if]   projectile-coords reset-pixel
+  [else] projectile-coords xy>attr projectile-attr <> ?exit
+         at-projectile .sky
   [then] ;
   \ Delete the projectile.
 
 : projectile-lost? ( -- f )
   projectile-y c@
   [pixel-projectile]
-  [if]    [ sky-top-y row>pixel ] cliteral >
-  [else]  [ sky-top-y 1+ ] cliteral <
+  [if]   [ sky-top-y row>pixel ] cliteral >
+  [else] [ sky-top-y 1+ ] cliteral <
   [then] ;
   \ Is the projectile lost?
 
@@ -3151,9 +3213,9 @@ cvariable trigger-delay-counter trigger-delay-counter coff
   x> c!> projectile#
   new-projectile-x projectile-x c!
   [pixel-projectile]
-  [if]    [ tank-y row>pixel 1+ ] cliteral
-  [else]  [ tank-y 1- ] cliteral
-  [then]  projectile-y c!
+  [if]   [ tank-y row>pixel 1+ ] cliteral
+  [else] [ tank-y 1- ] cliteral
+  [then] projectile-y c!
   .projectile fire-sound delay-trigger damage-transmission ;
   \ The tank fires.
   \ XXX TODO -- confirm `tank-y 1-`
@@ -3502,6 +3564,28 @@ localized-string about-next-location$ ( -- ca len )
 : mx ( -- x ) mothership-x @ ;
 : im ( -- ) init-mothership ;
 : m ( -- ) begin key bl <> while manage-mothership repeat ;
+
+: beon ( -- ) beam-on ;
+: beoff ( -- ) beam-off ;
+: beu ( -- ) beam-up ;
+: bed ( -- ) beam-down ;
+: be ( -- ) beam ;
+
+: test-be ( -- )
+  mothership-x off .visible-mothership beam-on m ;
+
+: kill-left ( -- ) half-max-invaders !> actual-invaders ;
+  \ Reduce the actual invaders to the left half.
+
+: (kill ( n1 n2 -- ) ?do i invader~ ~stamina coff loop ;
+  \ Kill invaders from _n2_ to _n1_, not including _n1_.
+
+: kill-left ( -- ) half-max-invaders 0 (kill ;
+  \ Kill the left-side invaders.
+
+: kill-right ( -- ) max-invaders half-max-invaders (kill ;
+  \ Kill the right-side invaders.
+
 
 : .i ( n -- )
   >r
