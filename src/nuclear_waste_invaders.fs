@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.107.0+201712201320" ;
+: version$ ( -- ca len ) s" 0.108.0+201712201518" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -151,7 +151,7 @@ need papery need brighty need xy>attr need xy>attra
   cr .(   -Keyboard) ?depth \ {{{2
 
 need kk-ports need kk-1# need pressed? need kk-chars
-need #>kk need inkey
+need #>kk need inkey need -keys
 
   \ --------------------------------------------
   cr .(   -Time) ?depth \ {{{2
@@ -3195,7 +3195,6 @@ constant visible-mothership-movements ( -- a )
   [pixel-projectile] [if] 7 [else] -1 [then] projectile-y c+!
   impacted? ?exit .projectile ;
   \ Manage the projectile.
-  \ XXX TODO -- Move `[if]` out and set a constant.
 
 cvariable trigger-delay-counter trigger-delay-counter coff
 
@@ -3229,8 +3228,6 @@ cvariable trigger-delay-counter trigger-delay-counter coff
 : update-trigger ( -- )
   trigger-delay-counter c@ 1- 0 max trigger-delay-counter c! ;
   \ Decrement the trigger delay. The minimum is zero.
-  \ XXX TODO -- since the counter is a byte, `max` may be
-  \ removed.
 
 : trigger-ready? ( -- f ) trigger-delay-counter c@ 0= ;
   \ Is the trigger ready?
@@ -3436,8 +3433,6 @@ here \ en (English)
 
 localized-string about-next-location$ ( -- ca len )
 
-: no-keys ( -- ) begin key? while key drop repeat ;
-
 : paragraph ( ca len -- ) wltype wcr wcr ;
 
 : about-attack ( -- )
@@ -3449,8 +3444,7 @@ localized-string about-next-location$ ( -- ca len )
 : unfocus ( -- ) attributes /attributes unfocus-attr fill ;
   \ Fill the screen with a color, to contrast the report window.
 
-: end-report ( -- ) no-keys press-any-key$ wltype key drop ;
-  \ XXX TODO -- Use `-keys`.
+: end-report ( -- ) -keys press-any-key$ wltype key drop ;
 
 : open-report ( -- )
   unfocus paper-report-window current-window !
