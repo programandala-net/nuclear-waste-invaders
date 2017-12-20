@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.108.0+201712201518" ;
+: version$ ( -- ca len ) s" 0.109.0+201712201938" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -96,7 +96,7 @@ need case need 0exit need +perform need do need abort"
   \ --------------------------------------------
   cr .(   -Memory) ?depth \ {{{2
 
-need c+! need c1+! need c1-!  need coff
+need c+! need c-! need c1+! need c1-!  need coff
 need dzx7t need bank-start
 
   \ --------------------------------------------
@@ -578,7 +578,7 @@ localized-string press-any-key$ ( -- ca len )
                  red cconstant dying-invader-attr
              magenta cconstant mothership-attr
 
-magenta papery invader-attr + brighty
+magenta papery white + brighty
                      cconstant beam-attr
 
                white cconstant tank-attr
@@ -1868,25 +1868,44 @@ create invaders-data /invaders allot
   current-invader~ ~initial-x-inc ;
 : invader-y             ( -- ca ) current-invader~ ~y ;
 
-max-invaders 2 / 1- cconstant top-invader-layer
+max-invaders 2/ 1- cconstant top-invader-layer
   \ The number of the highest invader "layer". The pair
   \ of invaders that fly nearest the ground are layer 0.
   \ The pair above them are layer 1, and so on.
+
+top-invader-layer 1+ cconstant invader-layers
+  \ Number of invader layers.
 
 2 cconstant rows/layer
 
 building-top-y 1+ cconstant invader-top-y
 
+invader-top-y top-invader-layer rows/layer * +
+cconstant invader-bottom-y
+
 : layer>y ( n -- y )
   top-invader-layer swap - rows/layer * invader-top-y + ;
-  \ Convert invader "layer" _n_ to its equivalent row _y_. The
+  \ Convert invader layer _n_ to its equivalent row _y_. The
   \ pair of invaders that fly nearest the ground are layer 0.
   \ The pair above them are layer 1, and so on.
 
-: y>layer ( y -- n ) rows/layer / 1- top-invader-layer swap - ;
-  \ Convert invader row _y_ to its equilavent "layer" _n_. The
+: y>layer ( y -- n ) rows/layer / 1- invader-top-y swap - ;
+  \ Convert invader row _y_ to its equilavent layer _n_. The
   \ pair of invaders that fly nearest the ground are layer 0.
-  \ The pair above them are layer 1, and so on.
+  \ The pair above them are layer 1, and so on. Note: _y_ is
+  \ supposed to be a valid row of an invader layer, otherwise
+  \ the result will be wrong.
+
+: y>layer? ( y -- n f )
+  invader-top-y - rows/layer /mod swap 0= ;
+  \ If _y_ is a valid row of an invader layer, return layer _n_
+  \ and _f_ is _true_; otherwise _n_ is invalid and _f_ is
+  \ false.  The pair of invaders that fly nearest the ground are
+  \ layer 0.  The pair above them are layer 1, and so on.  Note:
+  \ If _y_ is greater than the last invader layer, the result
+  \ will be wrong.
+  \
+  \ XXX REMARK -- Not used.
 
 : invader-retreat-points ( -- n ) invader-y c@ y>layer 1+ ;
 
@@ -1958,14 +1977,14 @@ building-top-y 1+ cconstant invader-top-y
   \ Other fields don't need initialization, because they
   \ contain zero (default) or a constant.
 
-: init-left-side-invaders-data ( -- )
+: init-left-invaders-data ( -- )
   0 layer>y invaders-min-x  1 0 4 set-invader
   1 layer>y invaders-min-x  1 0 3 set-invader
   2 layer>y invaders-min-x  1 1 2 set-invader
   3 layer>y invaders-min-x  1 1 1 set-invader
   4 layer>y invaders-min-x  1 2 0 set-invader ;
 
-: init-right-side-invaders-data ( -- )
+: init-right-invaders-data ( -- )
   0 layer>y invaders-max-x -1 0 9 set-invader
   1 layer>y invaders-max-x -1 0 8 set-invader
   2 layer>y invaders-max-x -1 1 7 set-invader
@@ -1974,7 +1993,7 @@ building-top-y 1+ cconstant invader-top-y
 
 : init-invaders-data ( -- )
   invaders-data /invaders erase
-  init-left-side-invaders-data init-right-side-invaders-data ;
+  init-left-invaders-data init-right-invaders-data ;
   \ Init the data of all invaders.
 
 create stamina-attributes ( -- ca )
@@ -2324,9 +2343,11 @@ defer debug-data-pause ( -- )
   [pixel-projectile] [ 0= ] [if] init-ocr [then]
   first-location score off cls ;
 
-: ((parade ( n1 n2 -- )
-  ?do i invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
-                     r> ~sprite c@ .2x1-udg-sprite   loop ;
+: .parade-invader ( n -- )
+  invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
+               r> ~sprite c@ .2x1-udg-sprite ;
+
+: ((parade ( n1 n2 -- ) ?do i .parade-invader loop ;
   \ Display invaders from _n2_ to _n1_, not including _n1_,
   \ using the current attribute.
 
@@ -2862,61 +2883,64 @@ variable mothership-time
 : over-right-invaders? ( -- f )
   mothership-x @ invaders-max-x = ;
 
-: half-more-invaders ( -- ) half-max-invaders invaders c+! ;
-
 0 layer>y cconstant invader-min-y
 
-beam-attr dup join constant beam-cell-attr
-sky-attr  dup join constant  sky-cell-attr
+   beam-attr dup join constant beam-cell-attr
+invader-attr dup join constant invader-cell-attr
+    sky-attr dup join constant sky-cell-attr
 
-variable beaming beaming off \ flag/direction (1|0|-1)
-variable beam-first-y        \ row
-variable beam-last-y         \ row
-variable beam-y              \ row
+ variable beaming beaming off \ flag/direction (1|0|-1)
+
+ variable beam-y       \ row
+cvariable beam-first-y \ row
+cvariable beam-last-y  \ row
+
+cvariable beam-invader
+  \ Number of the next invader to be created by the beam.
 
 defer beam ( -- )
   \ Manage the beam.
 
 : set-beam ( row1 row2 xt -- )
   ['] beam defer!
-  2dup beam-last-y ! dup beam-first-y ! beam-y !
+  2dup beam-last-y c! dup beam-first-y c! beam-y !
        swap - polarity beaming ! ;
-  \ Set the beam to grow/shrink from
-  \ _row1_ to _row2_ with handler _xt_.
-
-: beaming-down? ( -- 1|0|-1 )
-  beaming @ dup beam-y +!
-                beam-y @ beam-first-y @ beam-last-y @ between
-            and dup beaming ! ;
-  \ Update `beam-y` of a growing beam. Also update `beaming`
-  \ accordingly and return a copy of its content.
-
-: beaming-up? ( -- 1|0|-1 )
-  beaming @ dup beam-y +!
-                beam-y @ beam-last-y @ beam-first-y @ between
-            and dup beaming ! ;
-  \ Update `beam-y` of a shrinking beam. Also update `beaming`
-  \ accordingly and return a copy of its content.
+  \ Set the beam to grow or shrink from _row1_ to _row2_ with
+  \ handler _xt_.
 
 : over-left-invaders? ( -- f )
   mothership-x @ invaders-min-x = ;
   \ Is the mothership over the left invaders column?
 
+: half-more-invaders ( -- ) half-max-invaders invaders c+! ;
+
 : more-invaders ( -- )
-  over-left-invaders? if   init-left-side-invaders-data
-                      else init-right-side-invaders-data
+  over-left-invaders? if   init-left-invaders-data
+                      else init-right-invaders-data
                       then half-more-invaders ;
   \ Init the data of the new invaders created by the beam
   \ and update their global count.
 
-: .more-invaders ( -- )
-  over-left-invaders? if   left-side-parade
-                      else right-side-parade then ;
-  \ Display the new invaders created by the beam.
+: layer-y? ( row -- f )
+  dup invader-top-y invader-bottom-y between
+      swap rows/layer mod 0= and ;
+  \ Is _y_ is a valid row of an invader layer?
+
+: reach-invader? ( -- f ) beam-y @ layer-y? ;
+  \ Has the beam reached the row of an invader's layer?
+
+: (beaming-up? ( -- )
+  beam-y @ beam-last-y c@ beam-first-y c@ between ;
+  \ Is the beam still shrinking?
+
+: beaming-up? ( -- 1|0|-1 )
+  beaming @ dup beam-y +! (beaming-up? and dup beaming ! ;
+  \ Update variables of a shrinking beam. Also update `beaming`
+  \ accordingly and return a copy of its content.
 
 : (beam-up ( -- )
-  sky-cell-attr mothership-x @ beam-y @ xy>attra
-  dup @ beam-cell-attr = if ! else 2drop then ;
+  reach-invader? if invader-cell-attr else sky-cell-attr then
+  mothership-x @ beam-y @ xy>attra ! ;
   \ Shrink the beam towards de mothership one character.
 
 : beam-up ( -- ) (beam-up beaming-up? ?exit more-invaders ;
@@ -2924,20 +2948,39 @@ defer beam ( -- )
   \ If it's finished, activate the new invaders.
 
 : beam-off ( -- )
-  invader-min-y 1+ mothership-y ['] beam-up set-beam ;
+  invader-min-y 1+ mothership-y 1+ ['] beam-up set-beam ;
   \ Turn the mothership's beam off, i.e. start shrinking it.
 
+: create-invader ( -- )
+  beam-attr attr! beam-invader dup c@ .parade-invader c1+! ;
+  \ Display the new invader and update its number.
+
+: (beaming-down? ( -- f )
+  beam-y @ beam-first-y c@ beam-last-y c@ between ;
+  \ Is the beam still growing?
+
+: beaming-down? ( -- 1|0|-1 )
+  beaming @ dup beam-y +! (beaming-down? and dup beaming ! ;
+  \ Update variables of a growing beam. Also update `beaming`
+  \ accordingly and return a copy of its content.
+
 : (beam-down ( -- )
-  beam-cell-attr mothership-x @ beam-y @ xy>attra ! ;
+  beam-cell-attr mothership-x @ beam-y @ xy>attra !
+  reach-invader? if create-invader then ;
   \ Grow the beam towards the ground one character.
 
-: beam-down ( -- )
-  (beam-down beaming-down? ?exit .more-invaders beam-off ;
+: beam-down ( -- ) (beam-down beaming-down? ?exit beam-off ;
   \ Manage the beam, which is growing down to the ground.
   \ If it's finished, display the new invaders and start
   \ shrinking the beam.
 
+: first-new-invader ( -- n )
+  half-max-invaders over-left-invaders? 0= and ;
+  \ Return the number of the first invader to create,
+  \ depending on the position of the mothership.
+
 : beam-on ( -- )
+  first-new-invader beam-invader c!
   mothership-y 1+ invader-min-y 1+ ['] beam-down set-beam ;
   \ Turn the mothership's beam on.
 
@@ -3553,11 +3596,12 @@ localized-string about-next-location$ ( -- ca len )
 : am ( -- ) advance-mothership ;
 : vm? ( -- f ) visible-mothership? ;
 : .m ( -- ) .whole-mothership ;
+: .vm ( -- ) .visible-mothership ;
 : m? ( -- f ) mothership-in-range? ;
 : -m ( -- ) -whole-mothership ;
 : mx ( -- x ) mothership-x @ ;
 : im ( -- ) init-mothership ;
-: m ( -- ) begin key bl <> while manage-mothership repeat ;
+: m ( -- ) begin key 'q' <> while manage-mothership repeat ;
 
 : beon ( -- ) beam-on ;
 : beoff ( -- ) beam-off ;
@@ -3568,7 +3612,7 @@ localized-string about-next-location$ ( -- ca len )
 : test-be ( -- )
   mothership-x off .visible-mothership beam-on m ;
 
-: kill-left ( -- ) half-max-invaders !> actual-invaders ;
+: left-only ( -- ) half-max-invaders !> actual-invaders ;
   \ Reduce the actual invaders to the left half.
 
 : (kill ( n1 n2 -- ) ?do i invader~ ~stamina coff loop ;
