@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.111.0+201712212214" ;
+: version$ ( -- ca len ) s" 0.111.1+201712220026" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2279,7 +2279,7 @@ constant tank-movements ( -- a )
 
 : tank-movement ( -- a ) tank-rudder tank-movements array> ;
 
-7 cconstant tank-interval \ ticks
+8 cconstant tank-interval \ ticks
 
 : schedule-tank ( -- ) ticks tank-interval + tank-time ! ;
 
@@ -2726,7 +2726,7 @@ cvariable cure-factor  20 cure-factor c!
   \ Move the current invader if it's active; else
   \ just try to activate it, if it's alive.
 
-0 cconstant invader-interval \ ticks
+1 cconstant invader-interval \ ticks
 
 : schedule-invader ( -- )
   ticks invader-interval + invader-time ! ;
@@ -3080,7 +3080,7 @@ constant visible-mothership-movements ( -- a )
   mothership-in-range? ?exit mothership-turns-back ;
   \ Manage the mothership, when it's invisible.
 
-5 cconstant mothership-interval \ ticks
+6 cconstant mothership-interval \ ticks
 
 : schedule-mothership ( -- )
   ticks mothership-interval + mothership-time ! ;

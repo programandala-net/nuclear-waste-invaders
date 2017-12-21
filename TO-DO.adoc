@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-12-21
+:revdate: 2017-12-22
 
 Older first:
 
@@ -125,8 +125,15 @@ loop:
 == 2017-12-20
 
 - Replace conditionals with deferred words, for speed.
-- Fix: Some times the invaders, the tank and/or the mothership don't move
-  any more (even the eyes of the docked invaders), but the projectiles
-  still work.
 - Improve the top and the bottom of the beam.
 
+== 2017-12-22
+
+- Make launching the beam a bit random.
+- Make the mothership's movement clever: stay longer above the
+  building, and go probably to the side where invaders need help or
+  the opposite side of the tank.
+- Add stamina control to the mothership, deactivate the beam when the
+  stamina is not the highest, and place the mothership above the
+  building for repairing.
+- Change the mothership's range randomly during the game.
