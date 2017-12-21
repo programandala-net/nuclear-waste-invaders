@@ -116,9 +116,6 @@ loop:
 
 - Improve scoring: reduce the score with each movement and projectile.
 - Move the localization tools to Solo Forth.
-- Include the mothership into `extermination?`.  This way
-  `chase-mothership` can be removed. But first the mothership should
-  be dangerous, e.g. it could drop new invaders.
 - Replace `invader~` with a look-up table, which is faster.
 
 == 2017-12-19
@@ -133,6 +130,3 @@ loop:
   still work.
 - Improve the top and the bottom of the beam.
 
-== 2017-12-21
-
-- Fix: include `beaming` in `extermination`.

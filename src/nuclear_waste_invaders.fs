@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.110.0+201712211409" ;
+: version$ ( -- ca len ) s" 0.111.0+201712212214" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3521,7 +3521,13 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1
 
-: extermination? ( -- f ) invaders c@ 0= ;
+: mothership-destroyed? ( -- f )
+  mothership-y mothership-y0 <> ;
+
+: invaders-destroyed? ( -- f ) invaders c@ 0= ;
+
+: extermination? ( -- f )
+  invaders-destroyed? mothership-destroyed? and ;
 
 : attack-wave ( -- ) init-mothership init-invaders parade ;
 
@@ -3534,30 +3540,9 @@ localized-string about-next-location$ ( -- ca len )
 
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
 
-: mothership-alive? ( -- f ) mothership-y 0<> ;
-
-: mothership-gone? ( -- f )
-  mothership-alive? 0= visible-mothership? 0= or ;
-
-: mothership-survived? ( -- f )
-  extermination? mothership-alive? and ;
-
-: (chase-mothership) ( -- )
-  begin fight mothership-gone? until ;
-  \ Figth until the mothership is gone or destroyed.
-
-: chase-mothership? ( -- f )
-  mothership-survived? visible-mothership? and ;
-
-: chase-mothership ( -- )
-  chase-mothership? 0exit (chase-mothership) ;
-  \ If the mothership survived and it's visible, figth until
-  \ it's gone or destroyed. This is the epilogue of the attack.
-
 : under-attack ( -- )
-  check-breachs attack-wave
-  begin fight end-of-attack? until
-  chase-mothership lose-projectiles ;
+  check-breachs attack-wave begin fight end-of-attack? until
+  lose-projectiles ;
 
 : another-attack? ( -- f ) breachs? catastrophe? 0= and ;
 
