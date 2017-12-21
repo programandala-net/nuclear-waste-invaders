@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.109.0+201712201938" ;
+: version$ ( -- ca len ) s" 0.110.0+201712211409" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -231,6 +231,9 @@ defer ((debug-point  ' noop ' ((debug-point defer!
   \ XXX TMP -- for debugging
 
 : notice ( -- ) 1024 0 ?do i %11 and border loop ;
+
+: borderx ( n -- )
+  1024 0 ?do dup border white border loop drop black border ;
 
   \ ===========================================================
   cr .( Constants) ?depth debug-point \ {{{1
@@ -2849,7 +2852,8 @@ variable mothership-time
   [ mothership-udg udg/mothership + 1- ] cliteral emit-udg ;
 
 : .visible-right-mothership ( -- )
-  0 mothership-y at-xy (.visible-right-mothership) ;
+  whole-mothership-min-x mothership-y at-xy
+  (.visible-right-mothership) ;
 
 : (.visible-left-mothership) ( -- )
   mothership-attr attr! mothership-udg emit-udg ;
@@ -2871,17 +2875,14 @@ variable mothership-time
 : (move-visible-mothership-right ( -- )
   mothership-x @ case
     whole-mothership-max-x   of
-      at-mothership .sky (.visible-left-mothership)    endof
-    visible-mothership-max-x of
-      at-mothership .sky                               endof
+      at-mothership .sky (.visible-left-mothership)       endof
+    visible-mothership-max-x of at-mothership .sky        endof
     visible-mothership-min-x of
-      0 mothership-y at-xy (.visible-right-mothership) endof
+      whole-mothership-min-x mothership-y at-xy
+      (.whole-mothership)                                 endof
     at-mothership .sky (.whole-mothership)
   endcase advance-mothership ;
   \ Do move the visible mothership to the right.
-
-: over-right-invaders? ( -- f )
-  mothership-x @ invaders-max-x = ;
 
 0 layer>y cconstant invader-min-y
 
@@ -2910,7 +2911,11 @@ defer beam ( -- )
 
 : over-left-invaders? ( -- f )
   mothership-x @ invaders-min-x = ;
-  \ Is the mothership over the left invaders column?
+  \ Is the mothership over the left initial column of invaders?
+
+: over-right-invaders? ( -- f )
+  mothership-x @ invaders-max-x = ;
+  \ Is the mothership over the right initial column of invaders?
 
 : half-more-invaders ( -- ) half-max-invaders invaders c+! ;
 
@@ -2985,18 +2990,29 @@ defer beam ( -- )
   \ Turn the mothership's beam on.
 
 : need-help? ( n -- f ) 0= dup 0exit beam-on ;
-  \ If _n_ is zero turn the beam on and return _true_; otherwise
-  \ do nothing and return _false_.
+  \ If number of invaders _n_ is zero turn the beam on and
+  \ return _true_; otherwise do nothing and return _false_.
 
 : help-right-side? ( -- f ) right-side-invaders need-help? ;
-  \ If there's no invader alive at the right side, turn the beam
-  \ on and return _true_; otherwise do nothing and return
-  \ _false_.
+  \ If there's no invader at the right side, turn the beam on
+  \ and return _true_; otherwise do nothing and return _false_.
+
+: help-left-side? ( -- f ) left-side-invaders need-help? ;
+  \ If there's no invader at the left side, turn the beam on and
+  \ return _true_; otherwise do nothing and return _false_.
+
+: help-invaders? ( -- f )
+  over-left-invaders?
+  if   help-left-side?
+  else over-right-invaders?
+       if   help-right-side?
+       else false then
+  then ;
 
 : move-visible-mothership-right ( -- )
   right-of-mothership is-there-a-projectile?
   if mothership-turns-back exit then
-  over-right-invaders? if help-right-side? ?exit then
+  help-invaders? ?exit
   (move-visible-mothership-right ;
   \ Move the visible mothership to the right, if possible.
 
@@ -3016,15 +3032,10 @@ defer beam ( -- )
   endcase ;
   \ Do move the visible mothership to the left.
 
-: help-left-side? ( -- f ) left-side-invaders need-help? ;
-  \ If there's no invader alive at the left side, turn the beam
-  \ on and return _true_; otherwise do nothing and return
-  \ _false_.
-
 : move-visible-mothership-left ( -- )
   left-of-mothership is-there-a-projectile?
   if mothership-turns-back exit then
-  over-left-invaders? if help-left-side? ?exit then
+  help-invaders? ?exit
   (move-visible-mothership-left ;
   \ Move the visible mothership to the left, if possible.
 

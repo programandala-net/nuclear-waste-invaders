@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-12-20
+:revdate: 2017-12-21
 
 Older first:
 
@@ -128,7 +128,11 @@ loop:
 == 2017-12-20
 
 - Replace conditionals with deferred words, for speed.
-- Adjust intervals?: some times the invaders or the tank can not move.
+- Fix: Some times the invaders, the tank and/or the mothership don't move
+  any more (even the eyes of the docked invaders), but the projectiles
+  still work.
 - Improve the top and the bottom of the beam.
-- Make the mothership create invaders in any direction.
 
+== 2017-12-21
+
+- Fix: include `beaming` in `extermination`.
