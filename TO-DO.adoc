@@ -80,8 +80,6 @@ remove duplicated frames from the UDG set.
 == 2017-05-12
 
 - Don't repair the building automatically. Use the tank.
-- Improve the start of the attack: Make the mothership drop the
-  invaders.
 
 == 2017-05-16
 
@@ -137,3 +135,5 @@ loop:
   stamina is not the highest, and place the mothership above the
   building for repairing.
 - Change the mothership's range randomly during the game.
+- Replace `invader~` and `current-invader~` with a look-up table to
+  save run-time calculations.

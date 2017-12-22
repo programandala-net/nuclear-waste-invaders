@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.111.1+201712220026" ;
+: version$ ( -- ca len ) s" 0.112.0+201712221944" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1826,8 +1826,12 @@ left-flying-invader-2 right-flying-invader-2 2 set-species
 columns udg/invader - cconstant invaders-max-x
 
 10 cconstant max-invaders
+
 max-invaders 2/ cconstant half-max-invaders
-10 cconstant actual-invaders \ XXX TMP -- for debugging
+
+10 cconstant actual-invaders
+  \ XXX TMP -- for debugging
+  \ XXX TODO -- remove
 
 0
 
@@ -1942,13 +1946,11 @@ cconstant invader-bottom-y
   invader-species @ dup
   flying-to-the-left?
   if   ~flying-left-sprite c@ swap
-       ~flying-left-sprite-frames  c@
+       ~flying-left-sprite-frames c@
   else ~flying-right-sprite c@ swap
        ~flying-right-sprite-frames c@
   then invader-frames c! invader-sprite c!
   invader-frame coff ;
-  \ XXX REMARK -- Left and right are  the same at the moment.
-  \
   \ XXX TODO -- Use double-cell fields to copy both fields with
   \ one operation or use `move`.
   \
@@ -1962,42 +1964,55 @@ cconstant invader-bottom-y
   \
   \ XXX TODO -- Rename.
 
-: set-invader ( c1 c2 c3 c4 c0 -- )
+: init-invader ( c1 c2 c3 c4 c0 -- )
   current-invader c!
-  max-stamina invader-stamina c!
+  invader-stamina coff invader-active off
   species~ invader-species !
-  invader-initial-x-inc !
+  invader-initial-x-inc ! invader-x-inc off
   dup invader-initial-x c!
       invader-x c!
   invader-y c!
   set-docked-sprite ;
-  \ Set initial data of invader_c0_:
+  \ Init invader_c0_ with the given data:
   \   c1 = y
   \   c2 = x = initial x
   \   c3 = initial x inc
   \   c4 = species
-  \   c0 = invader
-  \ Other fields don't need initialization, because they
-  \ contain zero (default) or a constant.
+  \ The sprite and the frame are set after the species.
+  \ All other fields are set to zero.
 
 : init-left-invaders-data ( -- )
-  0 layer>y invaders-min-x  1 0 4 set-invader
-  1 layer>y invaders-min-x  1 0 3 set-invader
-  2 layer>y invaders-min-x  1 1 2 set-invader
-  3 layer>y invaders-min-x  1 1 1 set-invader
-  4 layer>y invaders-min-x  1 2 0 set-invader ;
+  [ 0 layer>y ] cliteral invaders-min-x  1 0 4 init-invader
+  [ 1 layer>y ] cliteral invaders-min-x  1 0 3 init-invader
+  [ 2 layer>y ] cliteral invaders-min-x  1 1 2 init-invader
+  [ 3 layer>y ] cliteral invaders-min-x  1 1 1 init-invader
+  [ 4 layer>y ] cliteral invaders-min-x  1 2 0 init-invader ;
 
 : init-right-invaders-data ( -- )
-  0 layer>y invaders-max-x -1 0 9 set-invader
-  1 layer>y invaders-max-x -1 0 8 set-invader
-  2 layer>y invaders-max-x -1 1 7 set-invader
-  3 layer>y invaders-max-x -1 1 6 set-invader
-  4 layer>y invaders-max-x -1 2 5 set-invader ;
+  [ 0 layer>y ] cliteral invaders-max-x -1 0 9 init-invader
+  [ 1 layer>y ] cliteral invaders-max-x -1 0 8 init-invader
+  [ 2 layer>y ] cliteral invaders-max-x -1 1 7 init-invader
+  [ 3 layer>y ] cliteral invaders-max-x -1 1 6 init-invader
+  [ 4 layer>y ] cliteral invaders-max-x -1 2 5 init-invader ;
+
+: -invaders-data ( -- ) invaders-data /invaders erase ;
 
 : init-invaders-data ( -- )
-  invaders-data /invaders erase
+  -invaders-data
   init-left-invaders-data init-right-invaders-data ;
   \ Init the data of all invaders.
+
+: activate-invaders ( n1 n2 -- )
+  ?do  i current-invader c! max-stamina invader-stamina c!
+  loop ;
+
+: activate-left-invaders ( -- )
+  init-left-invaders-data
+  half-max-invaders 0 activate-invaders ;
+
+: activate-right-invaders ( -- )
+  init-right-invaders-data
+  max-invaders half-max-invaders activate-invaders ;
 
 create stamina-attributes ( -- ca )
   dying-invader-attr    c,
@@ -2346,9 +2361,16 @@ defer debug-data-pause ( -- )
   [pixel-projectile] [ 0= ] [if] init-ocr [then]
   first-location score off cls ;
 
+
 : .parade-invader ( n -- )
   invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
                r> ~sprite c@ .2x1-udg-sprite ;
+  \ Display invader _n_ at its initial position, with the
+  \ current attribute.
+
+0 [if]
+
+  \ XXX OLD
 
 : ((parade ( n1 n2 -- ) ?do i .parade-invader loop ;
   \ Display invaders from _n2_ to _n1_, not including _n1_,
@@ -2368,6 +2390,8 @@ defer debug-data-pause ( -- )
 : right-side-parade ( -- ) max-invaders half-max-invaders
                            (parade ;
   \ Display parade of the right-side invaders.
+
+[then]
 
   \ ===========================================================
   cr .( Instructions) ?depth debug-point \ {{{1
@@ -2490,8 +2514,7 @@ variable invader-time
 : init-invaders ( -- ) init-invaders-data
                        current-invader coff
                        invader-time off
-                       actual-invaders invaders c! ;
-  \ Init the invaders.
+                       invaders coff ;
 
 : at-invader ( -- ) invader-x c@ invader-y c@ at-xy ;
   \ Set the cursor position at the coordinates of the invader.
@@ -2726,7 +2749,7 @@ cvariable cure-factor  20 cure-factor c!
   \ Move the current invader if it's active; else
   \ just try to activate it, if it's alive.
 
-1 cconstant invader-interval \ ticks
+2 cconstant invader-interval \ ticks
 
 : schedule-invader ( -- )
   ticks invader-interval + invader-time ! ;
@@ -2920,11 +2943,11 @@ defer beam ( -- )
 : half-more-invaders ( -- ) half-max-invaders invaders c+! ;
 
 : more-invaders ( -- )
-  over-left-invaders? if   init-left-invaders-data
-                      else init-right-invaders-data
+  over-left-invaders? if   activate-left-invaders
+                      else activate-right-invaders
                       then half-more-invaders ;
-  \ Init the data of the new invaders created by the beam
-  \ and update their global count.
+  \ Activate the new invaders created by the beam and update
+  \ their global count.
 
 : layer-y? ( row -- f )
   dup invader-top-y invader-bottom-y between
@@ -3529,7 +3552,7 @@ localized-string about-next-location$ ( -- ca len )
 : extermination? ( -- f )
   invaders-destroyed? mothership-destroyed? and ;
 
-: attack-wave ( -- ) init-mothership init-invaders parade ;
+: attack-wave ( -- ) init-mothership init-invaders ;
 
 : fight ( -- )
   ?quit-game \ XXX TMP --
