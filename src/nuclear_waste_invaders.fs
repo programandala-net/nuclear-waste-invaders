@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.114.0+201712271722" ;
+: version$ ( -- ca len ) s" 0.115.0+201712272348" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -604,13 +604,14 @@ white papery brighty cconstant report-attr
   \ ===========================================================
   cr .( Global variables) ?depth debug-point \ {{{1
 
-cvariable location        \ counter
- variable score           \ counter
- variable record          \ max score
-cvariable current-invader \ element of table (0..9)
- variable catastrophe     \ flag (game end condition)
+cvariable location          \ counter
+ variable score             \ counter
+ variable record record off \ max score
 
-record off
+ cvariable invader# \ current invader's number (0..9)
+0 constant invader~ \ current invader's data address
+
+variable catastrophe \ flag (game end condition)
 
 : catastrophe? ( -- f ) catastrophe @ ;
 
@@ -1797,15 +1798,15 @@ cconstant /species
 create species #species /species * allot
   \ Invaders species data table.
 
-: species~ ( n -- a ) /species * species + ;
+: species#>~ ( n -- a ) /species * species + ;
 
 : set-species ( c1 c2 c3 c4 -- )
-  species~ >r r@ ~flying-right-sprite c!
-            4 r@ ~flying-right-sprite-frames c!
-              r@ ~flying-left-sprite c!
-            4 r@ ~flying-left-sprite-frames c!
-              r@ ~docked-sprite c!
-            3 r> ~docked-sprite-frames c! ;
+  species#>~ >r r@ ~flying-right-sprite c!
+              4 r@ ~flying-right-sprite-frames c!
+                r@ ~flying-left-sprite c!
+              4 r@ ~flying-left-sprite-frames c!
+                r@ ~docked-sprite c!
+              3 r> ~docked-sprite-frames c! ;
   \ Init the data of invaders species _c4_:
   \   c1 = docked sprite
   \   c2 = left flying sprite
@@ -1856,11 +1857,14 @@ max-invaders /invader * constant /invaders
 create invaders-data /invaders allot
   \ Invaders data table.
 
-: invader>~ ( n -- a ) /invader * invaders-data + ;
+: invader#>~ ( n -- a ) /invader * invaders-data + ;
   \ Convert invader number _n_ to its data address _a_.
 
-: invader~ ( -- a ) current-invader c@ invader>~ ;
-  \ Address _a_ of the current invader data.
+: set-invader ( n -- ) dup invader# c! invader#>~ !> invader~ ;
+  \ Set invader _n_ as the current invader.
+
+: get-invader ( -- n ) invader# c@ ;
+  \ Return number _n_ of the current invader.
 
 max-invaders 2/ 1- cconstant top-invader-layer
   \ The number of the highest invader "layer". The pair
@@ -1919,7 +1923,7 @@ cconstant invader-bottom-y
   \ XXX TMP -- for debugging
 
 : ~~invader-info ( -- )
-  home current-invader c@ 2 .r
+  home get-invader 2 .r
   ." Att.:" attacking? .y/n
   ." Sta.:" invader~ ~stamina c@ . ;
   \ XXX TMP -- for debugging
@@ -1952,9 +1956,9 @@ cconstant invader-bottom-y
   \ XXX TODO -- Rename.
 
 : init-invader ( c1 c2 c3 c4 c0 -- )
-  current-invader c!
+  set-invader
   invader~ ~stamina coff invader~ ~active off
-  species~ invader~ ~species !
+  species#>~ invader~ ~species !
   invader~ ~initial-x-inc ! invader~ ~x-inc off
   dup invader~ ~initial-x c!
       invader~ ~x c!
@@ -1990,8 +1994,7 @@ cconstant invader-bottom-y
   \ Init the data of all invaders.
 
 : activate-invaders ( n1 n2 -- )
-  ?do  i current-invader c! max-stamina invader~ ~stamina c!
-  loop ;
+  ?do i set-invader max-stamina invader~ ~stamina c! loop ;
 
 : activate-left-invaders ( -- )
   init-left-invaders-data
@@ -2012,7 +2015,7 @@ create stamina-attributes ( -- ca )
   \ Invader proper color for its stamina.
 
 : #invaders ( 0 n1 n2 -- n3 )
-  ?do i invader>~ ~stamina c@ 0<> abs + loop ;
+  ?do i invader#>~ ~stamina c@ 0<> abs + loop ;
 
 : left-side-invaders ( -- n ) 0 5 0 #invaders ;
 
@@ -2350,8 +2353,8 @@ defer debug-data-pause ( -- )
 
 
 : .parade-invader ( n -- )
-  invader>~ dup >r ~initial-x c@ r@ ~y c@ at-xy
-                r> ~sprite c@ .2x1-udg-sprite ;
+  invader#>~ dup >r ~initial-x c@ r@ ~y c@ at-xy
+                 r> ~sprite c@ .2x1-udg-sprite ;
   \ Display invader _n_ at its initial position, with the
   \ current attribute.
 
@@ -2499,7 +2502,7 @@ variable invader-time
   \ the current invader will move.
 
 : init-invaders ( -- ) init-invaders-data
-                       current-invader coff
+                       0 set-invader
                        invader-time off
                        invaders coff ;
 
@@ -2723,14 +2726,14 @@ cvariable cure-factor  20 cure-factor c!
   invader~ ~stamina c@ if (nonflying-invader then ;
 
 : last-invader? ( -- f )
-  \ current-invader c@ [ actual-invaders 1- ] cliteral = ;
-  current-invader c@ actual-invaders 1- = ;
+  \ get-invader [ actual-invaders 1- ] cliteral = ;
+  get-invader actual-invaders 1- = ;
   \ XXX TMP -- for debugging, calculate at run-time
   \ Is the current invader the last one?
 
 : next-invader ( -- )
-  last-invader? if     current-invader coff exit
-                then 1 current-invader c+! ;
+  last-invader? if   0 set-invader exit
+                then get-invader 1+ set-invader ;
   \ Update the invader to the next one.
 
 : move-invader ( -- )
@@ -3196,8 +3199,8 @@ constant visible-mothership-movements ( -- a )
   \ It explodes or retreats.
 
 : invader-impacted ( -- )
-  current-invader c@ >r impacted-invader current-invader c!
-  (invader-impacted  r> current-invader c! ;
+  get-invader >r impacted-invader set-invader (invader-impacted
+              r> set-invader ;
   \ An invader has been impacted by the projectile.
   \ Make it the current one and manage it.
   \
@@ -3631,7 +3634,7 @@ localized-string about-next-location$ ( -- ca len )
 : left-only ( -- ) half-max-invaders !> actual-invaders ;
   \ Reduce the actual invaders to the left half.
 
-: (kill ( n1 n2 -- ) ?do i invader>~ ~stamina coff loop ;
+: (kill ( n1 n2 -- ) ?do i invader#>~ ~stamina coff loop ;
   \ Kill invaders from _n2_ to _n1_, not including _n1_.
 
 : kill-left ( -- ) half-max-invaders 0 (kill ;
@@ -3643,17 +3646,17 @@ localized-string about-next-location$ ( -- ca len )
 
 : .i ( n -- )
   >r
-  ." active              " r@ invader>~ ~active ? cr
-  ." sprite              " r@ invader>~ ~sprite c@ . cr
-  ." frame               " r@ invader>~ ~frame c@ . cr
-  ." frames              " r@ invader>~ ~frames c@ . cr
-  ." stamina             " r@ invader>~ ~stamina c@ . cr
-  ." x                   " r@ invader>~ ~x c@ . cr
-  ." initial-x           " r@ invader>~ ~initial-x c@ . cr
-  ." x-inc               " r@ invader>~ ~x-inc ? cr
-  ." initial-x-inc       " r@ invader>~ ~initial-x-inc ? cr
-  ." y                   " r@ invader>~ ~y c@ . cr
-  ." species             " r@ invader>~ ~species dup u. cr @
+  ." active              " r@ invader#>~ ~active ? cr
+  ." sprite              " r@ invader#>~ ~sprite c@ . cr
+  ." frame               " r@ invader#>~ ~frame c@ . cr
+  ." frames              " r@ invader#>~ ~frames c@ . cr
+  ." stamina             " r@ invader#>~ ~stamina c@ . cr
+  ." x                   " r@ invader#>~ ~x c@ . cr
+  ." initial-x           " r@ invader#>~ ~initial-x c@ . cr
+  ." x-inc               " r@ invader#>~ ~x-inc ? cr
+  ." initial-x-inc       " r@ invader#>~ ~initial-x-inc ? cr
+  ." y                   " r@ invader#>~ ~y c@ . cr
+  ." species             " r@ invader#>~ ~species dup u. cr @
   ." SPECIES DATA:" cr
   rdrop >r
   ." flying-right-sprite " r@ ~flying-right-sprite c@ . cr

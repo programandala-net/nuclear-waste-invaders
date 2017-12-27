@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-12-22
+:revdate: 2017-12-27
 
 Older first:
 
@@ -114,7 +114,6 @@ loop:
 
 - Improve scoring: reduce the score with each movement and projectile.
 - Move the localization tools to Solo Forth.
-- Replace `invader~` with a look-up table, which is faster.
 
 == 2017-12-19
 
@@ -135,5 +134,7 @@ loop:
   stamina is not the highest, and place the mothership above the
   building for repairing.
 - Change the mothership's range randomly during the game.
-- Replace `invader~` and `current-invader~` with a look-up table to
-  save run-time calculations.
+
+== 2017-12-27
+
+- Remove `invader#` and use only the corresponding data addresses?
