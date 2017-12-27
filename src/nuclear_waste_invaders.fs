@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.113.0+201712271638" ;
+: version$ ( -- ca len ) s" 0.114.0+201712271722" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1856,24 +1856,11 @@ max-invaders /invader * constant /invaders
 create invaders-data /invaders allot
   \ Invaders data table.
 
-: invader~ ( n -- a ) /invader * invaders-data + ;
-  \ Convert invader number n_ to its data address _a_.
+: invader>~ ( n -- a ) /invader * invaders-data + ;
+  \ Convert invader number _n_ to its data address _a_.
 
-: current-invader~ ( -- a ) current-invader c@ invader~ ;
+: invader~ ( -- a ) current-invader c@ invader>~ ;
   \ Address _a_ of the current invader data.
-
-: invader-species       ( -- a  ) current-invader~ ~species ;
-: invader-active        ( -- a  ) current-invader~ ~active ;
-: invader-sprite        ( -- ca ) current-invader~ ~sprite ;
-: invader-frames        ( -- ca ) current-invader~ ~frames ;
-: invader-frame         ( -- ca ) current-invader~ ~frame ;
-: invader-stamina       ( -- ca ) current-invader~ ~stamina ;
-: invader-x             ( -- ca ) current-invader~ ~x ;
-: invader-initial-x     ( -- ca ) current-invader~ ~initial-x ;
-: invader-x-inc         ( -- a  ) current-invader~ ~x-inc ;
-: invader-initial-x-inc ( -- a  )
-  current-invader~ ~initial-x-inc ;
-: invader-y             ( -- ca ) current-invader~ ~y ;
 
 max-invaders 2/ 1- cconstant top-invader-layer
   \ The number of the highest invader "layer". The pair
@@ -1914,18 +1901,18 @@ cconstant invader-bottom-y
   \
   \ XXX REMARK -- Not used.
 
-: invader-retreat-points ( -- n ) invader-y c@ y>layer 1+ ;
+: invader-retreat-points ( -- n ) invader~ ~y c@ y>layer 1+ ;
 
 : invader-destroy-points ( -- n ) invader-retreat-points 10 * ;
 
-: flying-to-the-right? ( -- f ) invader-x-inc @ 0> ;
+: flying-to-the-right? ( -- f ) invader~ ~x-inc @ 0> ;
   \ Is the current invader flying to the right?
 
-: flying-to-the-left? ( -- f ) invader-x-inc @ 0< ;
+: flying-to-the-left? ( -- f ) invader~ ~x-inc @ 0< ;
   \ Is the current invader flying to the left?
 
 : attacking? ( -- f )
-  invader-initial-x-inc @ invader-x-inc @ = ;
+  invader~ ~initial-x-inc @ invader~ ~x-inc @ = ;
   \ Is the current invader attacking?
 
 : .y/n ( f -- ) if ." Y" else ." N" then space ;
@@ -1934,7 +1921,7 @@ cconstant invader-bottom-y
 : ~~invader-info ( -- )
   home current-invader c@ 2 .r
   ." Att.:" attacking? .y/n
-  ." Sta.:" invader-stamina c@ . ;
+  ." Sta.:" invader~ ~stamina c@ . ;
   \ XXX TMP -- for debugging
 
   \ ' ~~invader-info ' ~~app-info defer!
@@ -1943,35 +1930,35 @@ cconstant invader-bottom-y
 3 cconstant max-stamina
 
 : set-flying-sprite ( -- )
-  invader-species @ dup
+  invader~ ~species @ dup
   flying-to-the-left?
   if   ~flying-left-sprite c@ swap
        ~flying-left-sprite-frames c@
   else ~flying-right-sprite c@ swap
        ~flying-right-sprite-frames c@
-  then invader-frames c! invader-sprite c!
-  invader-frame coff ;
+  then invader~ ~frames c! invader~ ~sprite c!
+  invader~ ~frame coff ;
   \ XXX TODO -- Use double-cell fields to copy both fields with
   \ one operation or use `move`.
   \
   \ XXX TODO -- Rename.
 
 : set-docked-sprite ( -- )
-  invader-species @ dup
-  ~docked-sprite c@ invader-sprite c!
-  ~docked-sprite-frames c@ invader-frames c!
-  invader-frame coff ;
+  invader~ ~species @ dup
+  ~docked-sprite c@ invader~ ~sprite c!
+  ~docked-sprite-frames c@ invader~ ~frames c!
+  invader~ ~frame coff ;
   \
   \ XXX TODO -- Rename.
 
 : init-invader ( c1 c2 c3 c4 c0 -- )
   current-invader c!
-  invader-stamina coff invader-active off
-  species~ invader-species !
-  invader-initial-x-inc ! invader-x-inc off
-  dup invader-initial-x c!
-      invader-x c!
-  invader-y c!
+  invader~ ~stamina coff invader~ ~active off
+  species~ invader~ ~species !
+  invader~ ~initial-x-inc ! invader~ ~x-inc off
+  dup invader~ ~initial-x c!
+      invader~ ~x c!
+  invader~ ~y c!
   set-docked-sprite ;
   \ Init invader_c0_ with the given data:
   \   c1 = y
@@ -2003,7 +1990,7 @@ cconstant invader-bottom-y
   \ Init the data of all invaders.
 
 : activate-invaders ( n1 n2 -- )
-  ?do  i current-invader c! max-stamina invader-stamina c!
+  ?do  i current-invader c! max-stamina invader~ ~stamina c!
   loop ;
 
 : activate-left-invaders ( -- )
@@ -2021,11 +2008,11 @@ create stamina-attributes ( -- ca )
   \ Table to index the invader stamina to its proper attribute.
 
 : invader-proper-attr ( -- c )
-  invader-stamina c@ [ stamina-attributes 1- ] literal + c@ ;
+  invader~ ~stamina c@ [ stamina-attributes 1- ] literal + c@ ;
   \ Invader proper color for its stamina.
 
 : #invaders ( 0 n1 n2 -- n3 )
-  ?do i invader~ ~stamina c@ 0<> abs + loop ;
+  ?do i invader>~ ~stamina c@ 0<> abs + loop ;
 
 : left-side-invaders ( -- n ) 0 5 0 #invaders ;
 
@@ -2363,8 +2350,8 @@ defer debug-data-pause ( -- )
 
 
 : .parade-invader ( n -- )
-  invader~ dup >r ~initial-x c@ r@ ~y c@ at-xy
-               r> ~sprite c@ .2x1-udg-sprite ;
+  invader>~ dup >r ~initial-x c@ r@ ~y c@ at-xy
+                r> ~sprite c@ .2x1-udg-sprite ;
   \ Display invader _n_ at its initial position, with the
   \ current attribute.
 
@@ -2516,17 +2503,18 @@ variable invader-time
                        invader-time off
                        invaders coff ;
 
-: at-invader ( -- ) invader-x c@ invader-y c@ at-xy ;
+: at-invader ( -- ) invader~ ~x c@ invader~ ~y c@ at-xy ;
   \ Set the cursor position at the coordinates of the invader.
 
-: invader-frame+ ( n1 -- n2 ) 1+ dup invader-frames c@ < and ;
+: invader-frame+ ( n1 -- n2 )
+  1+ dup invader~ ~frames c@ < and ;
   \ Increase frame _n1_ resulting frame _n2_.
   \ If the limit was reached, _n2_ is zero.
 
 : invader-udg ( -- c )
-  invader-frame c@ dup invader-frame+ invader-frame c!
+  invader~ ~frame c@ dup invader-frame+ invader~ ~frame c!
   [ udg/invader 2 = ] [if] 2* [else] udg/invader * [then]
-  invader-sprite c@ + ;
+  invader~ ~sprite c@ + ;
   \ First UDG _c_ of the current invader sprite, calculated
   \ from its sprite and its frame.
   \
@@ -2539,7 +2527,7 @@ variable invader-time
   \ Display the current invader.
 
 : broken-bricks-coordinates ( x1 -- x1 y1 x2 y2 x3 y3 )
-  invader-y c@ 2dup 1+ 2dup 2- ;
+  invader~ ~y c@ 2dup 1+ 2dup 2- ;
   \ Convert the x coordinate _x1_ of the broken wall to the
   \ coordinates of the broken brick above the invader, _x3 y3_,
   \ below it, _x3 y3_, and in front of it, _x1 y1_.
@@ -2571,16 +2559,16 @@ variable invader-time
   \ Display the broken wall of the building.
 
 : broken-left-container ( -- )
-  invader-x c@ 2+ invader-y c@ at-xy
+  invader~ ~x c@ 2+ invader~ ~y c@ at-xy
   broken-top-right-container .1x1sprite
-  invader-x c@ 1+ invader-y c@ 1+ at-xy
+  invader~ ~x c@ 1+ invader~ ~y c@ 1+ at-xy
   broken-bottom-left-container .1x1sprite ;
   \ Broke the container on its left side.
 
 : broken-right-container ( -- )
-  invader-x c@ 1- invader-y c@ at-xy
+  invader~ ~x c@ 1- invader~ ~y c@ at-xy
   broken-top-left-container .1x1sprite
-  invader-x c@ invader-y c@ 1+ at-xy
+  invader~ ~x c@ invader~ ~y c@ 1+ at-xy
   broken-bottom-right-container .1x1sprite ;
   \ Broke the container on its right side.
 
@@ -2591,31 +2579,31 @@ variable invader-time
   \ Broke the container.
 
 : broken-container? ( -- f )
-  invader-x c@ flying-to-the-right? if   1+ containers-left-x
-                                    else    containers-right-x
-                                    then c@ = ;
+  invader~ ~x c@ flying-to-the-right?
+  if   1+ containers-left-x
+  else    containers-right-x then c@ = ;
   \ Has the current invader broken a container?
 
-: healthy? ( -- f ) invader-stamina c@ max-stamina = ;
+: healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
   \ Is the current invader healthy? Has it got maximum stamina?
 
 : change-direction ( -- )
-  invader-x-inc @ negate invader-x-inc ! ;
+  invader~ ~x-inc @ negate invader~ ~x-inc ! ;
   \ XXX TODO -- Write `negate! ( a -- )` in Z80.
 
 : turn-back ( -- )
-  change-direction set-flying-sprite invader-active on ;
+  change-direction set-flying-sprite invader~ ~active on ;
   \ Make the current invader turn back.  Also activate it, in
   \ case it's temporarily inactive at the wall of the building.
 
 : hit-wall ( -- )
-  healthy? if   invader-active off
+  healthy? if   invader~ ~active off
            else turn-back then ;
   \ XXX TMP --
 
 : hit-wall? ( -- f )
-  invader-x c@ 2+ flying-to-the-left? 3 * +
-  invader-y c@ ocr brick =  ;
+  invader~ ~x c@ 2+ flying-to-the-left? 3 * +
+  invader~ ~y c@ ocr brick =  ;
   \ Has the current invader hit the wall of the building?
 
 : ?damages ( -- )
@@ -2624,18 +2612,18 @@ variable invader-time
                         then catastrophe ! ;
   \ Manage the possible damages caused by the current invader.
 
-: at-home? ( -- f ) invader-x c@ invader-initial-x c@ = ;
+: at-home? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ = ;
   \ Is the current invader at its start position?
 
 : dock ( -- )
-  invader-active off invader-x-inc off set-docked-sprite ;
+  invader~ ~active off invader~ ~x-inc off set-docked-sprite ;
   \ Dock the current invader.
 
 : default-direction ( -- )
-  invader-initial-x-inc @ invader-x-inc ! ;
+  invader~ ~initial-x-inc @ invader~ ~x-inc ! ;
 
 : undock ( -- )
-  invader-active on default-direction set-flying-sprite ;
+  invader~ ~active on default-direction set-flying-sprite ;
   \ Undock the current invader.
 
 : ?dock ( -- ) at-home? 0exit dock ;
@@ -2647,21 +2635,22 @@ variable invader-time
 : .sky ( -- ) sky-attr attr! space ;
   \ Display a sky-color space.
 
-: left-of-invader ( -- col row ) invader-x c@ 1- invader-y c@ ;
+: left-of-invader ( -- col row )
+  invader~ ~x c@ 1- invader~ ~y c@ ;
 
 : left-flying-invader ( -- )
   left-of-invader is-there-a-projectile?
   if turn-back exit then
-  -1 invader-x c+! at-invader .invader .sky ;
+  -1 invader~ ~x c+! at-invader .invader .sky ;
   \ Move the current invader, which is flying to the left.
 
 : right-of-invader ( -- col row )
-  invader-x c@ 1+ invader-y c@ ;
+  invader~ ~x c@ 1+ invader~ ~y c@ ;
 
 : right-flying-invader ( -- )
   right-of-invader is-there-a-projectile?
   if turn-back exit then
-  at-invader .sky .invader 1 invader-x c+! ;
+  at-invader .sky .invader 1 invader~ ~x c+! ;
   \ Move the current invader, which is flying to the right.
 
 : flying-invader ( -- )
@@ -2674,7 +2663,7 @@ cvariable cure-factor  20 cure-factor c!
   \ XXX TMP -- for testing
 
 : difficult-cure? ( -- f )
-  max-stamina invader-stamina c@ -
+  max-stamina invader~ ~stamina c@ -
   cure-factor c@ \ XXX TMP -- for testing
   * random 0<> ;
   \ Is it a difficult cure? The flag _f_ is calculated
@@ -2683,7 +2672,8 @@ cvariable cure-factor  20 cure-factor c!
   \ cure.
 
 : cure ( -- )
-  invader-stamina c@ 1+ max-stamina min invader-stamina c! ;
+  invader~ ~stamina c@ 1+ max-stamina min invader~
+           ~stamina c! ;
   \ Cure the current invader, increasing its stamina.
 
 : ?cure ( -- ) difficult-cure? ?exit cure ;
@@ -2696,14 +2686,14 @@ cvariable cure-factor  20 cure-factor c!
 : require-docked-invader ( -- )
   healthy? if ?undock else ?cure then ;
 
-: docked? ( -- f ) invader-x c@ invader-initial-x c@ = ;
+: docked? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ = ;
   \ Is the current invader docked?
 
 : new-breach ( -- ) breachs c1+! battle-breachs c1+! ;
 
 : break-the-wall ( -- )
-  invader-active on
-  invader-x c@ flying-to-the-right? if 2+ else 1- then
+  invader~ ~active on
+  invader~ ~x c@ flying-to-the-right? if 2+ else 1- then
   broken-wall new-breach ;
 
   \ XXX TODO -- remove `if`, calculate:
@@ -2730,7 +2720,7 @@ cvariable cure-factor  20 cure-factor c!
   \ Require the current invader, either inactive or wounded.
 
 : nonflying-invader ( -- )
-  invader-stamina c@ if (nonflying-invader then ;
+  invader~ ~stamina c@ if (nonflying-invader then ;
 
 : last-invader? ( -- f )
   \ current-invader c@ [ actual-invaders 1- ] cliteral = ;
@@ -2744,8 +2734,8 @@ cvariable cure-factor  20 cure-factor c!
   \ Update the invader to the next one.
 
 : move-invader ( -- )
-  invader-active @ if      flying-invader exit
-                   then nonflying-invader ;
+  invader~ ~active @ if      flying-invader exit
+                     then nonflying-invader ;
   \ Move the current invader if it's active; else
   \ just try to activate it, if it's alive.
 
@@ -2754,9 +2744,9 @@ cvariable cure-factor  20 cure-factor c!
 : schedule-invader ( -- )
   ticks invader-interval + invader-time ! ;
 
-: invasion ( -- ) invader-time @ past? 0exit
-                  move-invader next-invader
-                  schedule-invader ;
+: manage-invaders ( -- ) invader-time @ past? 0exit
+                         move-invader next-invader
+                         schedule-invader ;
   \ If it's the right time, move the current invader, then
   \ choose the next one.
 
@@ -3180,7 +3170,7 @@ constant visible-mothership-movements ( -- a )
 
 : explode ( -- )
   invader-destroy-points update-score invader-explosion
-  invaders c1-! invader-stamina coff invader-active off ;
+  invaders c1-! invader~ ~stamina coff invader~ ~active off ;
   \ The current invader explodes.
 
 ' lightning1 alias retreat-sound
@@ -3192,10 +3182,10 @@ constant visible-mothership-movements ( -- a )
   \ The current invader retreats.
 
 : wounded ( -- )
-  invader-stamina c@ 1- 1 max invader-stamina ! ;
+  invader~ ~stamina c@ 1- 1 max invader~ ~stamina ! ;
   \ Reduce the invader's stamina after being shoot.
 
-: mortal? ( -- f ) invader-stamina c@ 2* random 0= ;
+: mortal? ( -- f ) invader~ ~stamina c@ 2* random 0= ;
   \ Is it a mortal impact?  _f_ depends on a random calculation
   \ based on the stamina: The more stamina, the less chances to
   \ be a mortal impact.
@@ -3566,7 +3556,7 @@ localized-string about-next-location$ ( -- ca len )
   fly-projectile driving
   fly-projectile shooting
   fly-projectile manage-mothership
-  fly-projectile invasion ;
+  fly-projectile manage-invaders ;
 
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
 
@@ -3641,7 +3631,7 @@ localized-string about-next-location$ ( -- ca len )
 : left-only ( -- ) half-max-invaders !> actual-invaders ;
   \ Reduce the actual invaders to the left half.
 
-: (kill ( n1 n2 -- ) ?do i invader~ ~stamina coff loop ;
+: (kill ( n1 n2 -- ) ?do i invader>~ ~stamina coff loop ;
   \ Kill invaders from _n2_ to _n1_, not including _n1_.
 
 : kill-left ( -- ) half-max-invaders 0 (kill ;
@@ -3653,17 +3643,17 @@ localized-string about-next-location$ ( -- ca len )
 
 : .i ( n -- )
   >r
-  ." active              " r@ invader~ ~active ? cr
-  ." sprite              " r@ invader~ ~sprite c@ . cr
-  ." frame               " r@ invader~ ~frame c@ . cr
-  ." frames              " r@ invader~ ~frames c@ . cr
-  ." stamina             " r@ invader~ ~stamina c@ . cr
-  ." x                   " r@ invader~ ~x c@ . cr
-  ." initial-x           " r@ invader~ ~initial-x c@ . cr
-  ." x-inc               " r@ invader~ ~x-inc ? cr
-  ." initial-x-inc       " r@ invader~ ~initial-x-inc ? cr
-  ." y                   " r@ invader~ ~y c@ . cr
-  ." species             " r@ invader~ ~species dup u. cr @
+  ." active              " r@ invader>~ ~active ? cr
+  ." sprite              " r@ invader>~ ~sprite c@ . cr
+  ." frame               " r@ invader>~ ~frame c@ . cr
+  ." frames              " r@ invader>~ ~frames c@ . cr
+  ." stamina             " r@ invader>~ ~stamina c@ . cr
+  ." x                   " r@ invader>~ ~x c@ . cr
+  ." initial-x           " r@ invader>~ ~initial-x c@ . cr
+  ." x-inc               " r@ invader>~ ~x-inc ? cr
+  ." initial-x-inc       " r@ invader>~ ~initial-x-inc ? cr
+  ." y                   " r@ invader>~ ~y c@ . cr
+  ." species             " r@ invader>~ ~species dup u. cr @
   ." SPECIES DATA:" cr
   rdrop >r
   ." flying-right-sprite " r@ ~flying-right-sprite c@ . cr
