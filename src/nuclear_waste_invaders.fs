@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.112.0+201712221944" ;
+: version$ ( -- ca len ) s" 0.113.0+201712271638" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2787,9 +2787,11 @@ variable mothership-stopped  mothership-stopped off
   \ ' ~~mothership-info ' ~~app-info defer!
   \ XXX TMP -- for debugging
 
+defer set-mothership-direction ( -1..1 -- )
+
 : mothership-turns-back ( -- )
   mothership-stopped off
-  mothership-x-inc @ negate mothership-x-inc ! ;
+  mothership-x-inc @ negate set-mothership-direction ;
 
 32 cconstant mothership-range
   \ Allowed x coordinate positions of the mothership out of the
@@ -2799,7 +2801,7 @@ mothership-range negate     constant mothership-range-min-x
 mothership-range columns + cconstant mothership-range-max-x
   \ X-coordinate limits of the mothership range.
 
-: start-mothership ( -- ) -1|1 mothership-x-inc ! ;
+: start-mothership ( -- ) -1|1 set-mothership-direction ;
 
 variable mothership-time
   \ When the ticks clock reaches the contents of this variable,
@@ -3062,6 +3064,9 @@ defer beam ( -- )
   (move-visible-mothership-left ;
   \ Move the visible mothership to the left, if possible.
 
+defer move-visible-mothership ( -- )
+  \ Execute the proper movement of the mothership.
+
       ' move-visible-mothership-left ,
 here  ' noop ,
       ' move-visible-mothership-right ,
@@ -3069,9 +3074,11 @@ here  ' noop ,
 constant visible-mothership-movements ( -- a )
   \ Execution table.
 
-: move-visible-mothership ( -- )
-  visible-mothership-movements mothership-x-inc @ +perform ;
-  \ Execute the proper movement.
+:noname ( -1..1 -- )
+  dup mothership-x-inc !
+      visible-mothership-movements array> @
+      ['] move-visible-mothership defer! ;
+' set-mothership-direction defer!
 
 : above-building? ( -- f )
   mothership-x @
@@ -3082,7 +3089,7 @@ constant visible-mothership-movements ( -- a )
 
 : stopped-mothership? ( -- f ) mothership-x-inc @ 0= ;
 
-: stop-mothership ( -- ) mothership-x-inc off
+: stop-mothership ( -- ) 0 set-mothership-direction
                          mothership-stopped on ;
 
 : ?stop-mothership ( -- ) mothership-stopped @ ?exit
