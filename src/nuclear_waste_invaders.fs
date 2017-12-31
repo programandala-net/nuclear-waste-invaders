@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.119.0+201712311904" ;
+: version$ ( -- ca len ) s" 0.120.0+201712312048" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1904,9 +1904,6 @@ cconstant invader-bottom-y
 
 : invader-destroy-points ( -- n ) invader-retreat-points 10 * ;
 
-: flying-to-the-left? ( -- f ) invader~ ~x-inc @ 0< ;
-  \ Is the current invader flying to the left?
-
 : attacking? ( -- f )
   invader~ ~initial-x-inc @ invader~ ~x-inc @ = ;
   \ Is the current invader attacking?
@@ -1924,6 +1921,9 @@ cconstant invader-bottom-y
   \ XXX TMP -- for debugging
 
 3 cconstant max-stamina
+
+0 cconstant flying-to-the-left? ( f )
+  \ Is the current invader flying to the left?
 
 : set-flying-sprite ( -- )
   invader~ ~species @ dup
@@ -2609,7 +2609,9 @@ here  ' noop ,
   invader-movements array> @ invader~ ~action ! ;
 
 : set-invader-direction ( -1..1 -- )
-  dup invader~ ~x-inc ! set-invader-mover ;
+  dup 0< c!> flying-to-the-left?
+  dup invader~ ~x-inc !
+      set-invader-mover ;
 
 : impel-invader ( -- ) invader~ ~x-inc @ set-invader-mover ;
 

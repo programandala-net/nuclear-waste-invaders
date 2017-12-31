@@ -141,5 +141,3 @@ loop:
 == 2017-12-31
 
 - Improve `attack-report` to display the texts immediately.
-- Replace `flying-to-the-left?` with a constant set in
-  `set-flying-sprite`.
