@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.115.0+201712272348" ;
+: version$ ( -- ca len ) s" 0.116.0+201712311631" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -46,6 +46,10 @@ cr cr .( Nuclear Waste Invaders) cr version$ type cr
 false constant [pixel-projectile] immediate
   \ Pixel projectiles (new) instead of UDG projectiles (old)?
   \ XXX TODO -- finish support for pixel projectiles
+
+true constant [faster-invaders] immediate
+  \ Use deferred words instead conditionals to manage the
+  \ invaders?
 
   \ ===========================================================
   cr .( Library) \ {{{1
@@ -597,9 +601,8 @@ white papery brighty cconstant report-attr
       yellow brighty cconstant container-attr
       yellow brighty cconstant radiation-attr
 
-: init-colors ( -- )
-  [ white black papery + ] cliteral attr!
-  overprint-off  inverse-off  black border ;
+: init-colors ( -- ) [ white black papery + ] cliteral attr!
+                     overprint-off inverse-off black border ;
 
   \ ===========================================================
   cr .( Global variables) ?depth debug-point \ {{{1
@@ -609,7 +612,7 @@ cvariable location          \ counter
  variable record record off \ max score
 
  cvariable invader# \ current invader's number (0..9)
-0 constant invader~ \ current invader's data address
+0 constant invader~ \ current invader's data structure address
 
 variable catastrophe \ flag (game end condition)
 
@@ -1787,12 +1790,12 @@ status-bar-rows columns * cconstant /status-bar
 3 cconstant #species
 
 0
-  cfield: ~flying-left-sprite
-  cfield: ~flying-left-sprite-frames
-  cfield: ~flying-right-sprite
-  cfield: ~flying-right-sprite-frames
-  cfield: ~docked-sprite
-  cfield: ~docked-sprite-frames
+  cfield: ~flying-left-sprite         \ UDG
+  cfield: ~flying-left-sprite-frames  \ count
+  cfield: ~flying-right-sprite        \ UDG
+  cfield: ~flying-right-sprite-frames \ count
+  cfield: ~docked-sprite              \ UDG
+  cfield: ~docked-sprite-frames       \ count
 cconstant /species
 
 create species #species /species * allot
@@ -1830,26 +1833,26 @@ columns udg/invader - cconstant invaders-max-x
 
 max-invaders 2/ cconstant half-max-invaders
 
-10 cconstant actual-invaders
-  \ XXX TMP -- for debugging
-  \ XXX TODO -- remove
-
 0
 
   \ XXX TODO -- reorder for speed: place the most used fields
   \ at cell offsets +0, +1, +2, +4
 
-  cfield: ~y
-  cfield: ~x
-  cfield: ~sprite
-  cfield: ~frames
-  cfield: ~frame
-  cfield: ~initial-x
-  field:  ~x-inc
-  field:  ~initial-x-inc
-  cfield: ~stamina
-  field:  ~active \ XXX TODO -- use `~stamina` instead
-  field:  ~species
+  cfield: ~y             \ row
+  cfield: ~x             \ column
+  cfield: ~sprite        \ UDG
+  cfield: ~frames        \ count
+  cfield: ~frame         \ counter
+  cfield: ~initial-x     \ column
+  field:  ~x-inc         \ -1|1
+  field:  ~initial-x-inc \ -1|1
+  cfield: ~stamina       \ 0..3
+  [faster-invaders] [if]
+    field:  ~action      \ execution token
+  [else]
+    field:  ~active      \ flag
+  [then]
+  field:  ~species       \ data structure address
 cconstant /invader
 
 max-invaders /invader * constant /invaders
@@ -1914,6 +1917,9 @@ cconstant invader-bottom-y
 
 : flying-to-the-left? ( -- f ) invader~ ~x-inc @ 0< ;
   \ Is the current invader flying to the left?
+  \
+  \ XXX TODO -- Calculate only in `set-flying-sprite` and save
+  \ the result in a flag.
 
 : attacking? ( -- f )
   invader~ ~initial-x-inc @ invader~ ~x-inc @ = ;
@@ -1942,10 +1948,16 @@ cconstant invader-bottom-y
        ~flying-right-sprite-frames c@
   then invader~ ~frames c! invader~ ~sprite c!
   invader~ ~frame coff ;
+  \
   \ XXX TODO -- Use double-cell fields to copy both fields with
   \ one operation or use `move`.
   \
   \ XXX TODO -- Rename.
+  \
+  \ XXX TODO -- If the maximum frames in both directions are
+  \ identical, there's no need to initiate `~frame`.
+  \
+  \ XXX TODO -- Combine with `set-invader-direction`.
 
 : set-docked-sprite ( -- )
   invader~ ~species @ dup
@@ -1955,9 +1967,22 @@ cconstant invader-bottom-y
   \
   \ XXX TODO -- Rename.
 
+[faster-invaders] [if]
+
+defer nonflying-invader ( -- )
+  \ If the current invader is alive, manage it, which is not
+  \ flying.
+
+: stop-invader ( -- )
+  ['] nonflying-invader invader~ ~action ! ;
+
+[then]
+
 : init-invader ( c1 c2 c3 c4 c0 -- )
   set-invader
-  invader~ ~stamina coff invader~ ~active off
+  invader~ ~stamina coff
+  [faster-invaders] [if]   stop-invader
+                    [else] invader~ ~active off [then]
   species#>~ invader~ ~species !
   invader~ ~initial-x-inc ! invader~ ~x-inc off
   dup invader~ ~initial-x c!
@@ -2224,6 +2249,9 @@ columns udg/tank - 1- cconstant tank-max-x
   \ If column _col1_ is outside the building, display character
   \ _c_ at the current cursor position.  Increment _col1_ and
   \ return it as _col2_.
+  \
+  \ XXX TODO -- Accelerate: Duplicate `1+` and replace `else`
+  \ with `exit then`.
 
 : left-tank-udg   ( -- c ) tank-frame c@ udg/tank * tank + ;
 : middle-tank-udg ( -- c ) left-tank-udg 1+ ;
@@ -2557,9 +2585,11 @@ variable invader-time
 
 : broken-wall ( col -- )
   broken-bricks-coordinates broken-wall-attr attr!
-  flying-to-the-right? if   broken-left-wall
+  flying-to-the-right? if   broken-left-wall 
                        else broken-right-wall then ;
   \ Display the broken wall of the building.
+  \
+  \ XXX TODO -- Accelerate: replace `else` with `exit then`.
 
 : broken-left-container ( -- )
   invader~ ~x c@ 2+ invader~ ~y c@ at-xy
@@ -2580,15 +2610,49 @@ variable invader-time
   flying-to-the-right? if   broken-left-container
                        else broken-right-container then ;
   \ Broke the container.
+  \
+  \ XXX TODO -- Accelerate: replace `else` with `exit then`.
 
 : broken-container? ( -- f )
   invader~ ~x c@ flying-to-the-right?
   if   1+ containers-left-x
   else    containers-right-x then c@ = ;
   \ Has the current invader broken a container?
+  \
+  \ XXX TODO -- Accelerate: Duplicate `c@ =` and replace `else`
+  \ with `exit then`.
 
 : healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
   \ Is the current invader healthy? Has it got maximum stamina?
+
+[faster-invaders] [if]
+
+defer move-invader-left ( -- )
+
+defer move-invader-right ( -- )
+
+      ' move-invader-left ,
+here  ' noop ,
+      ' move-invader-right ,
+      constant invader-movements ( -- a )
+      \ Execution table.
+
+: set-invader-mover ( -1..1 -- )
+  invader-movements array> @ invader~ ~action ! ;
+
+: set-invader-direction ( -1..1 -- )
+  dup invader~ ~x-inc ! set-invader-mover ;
+
+: impel-invader ( -- ) invader~ ~x-inc @ set-invader-mover ;
+
+: change-direction ( -- )
+  invader~ ~x-inc @ negate set-invader-direction ;
+
+: turn-back ( -- ) change-direction set-flying-sprite ;
+  \ Make the current invader turn back.  Also activate it, in
+  \ case it's temporarily inactive at the wall of the building.
+
+[else]
 
 : change-direction ( -- )
   invader~ ~x-inc @ negate invader~ ~x-inc ! ;
@@ -2599,13 +2663,24 @@ variable invader-time
   \ Make the current invader turn back.  Also activate it, in
   \ case it's temporarily inactive at the wall of the building.
 
+[then]
+
 : hit-wall ( -- )
-  healthy? if   invader~ ~active off
-           else turn-back then ;
+  healthy? if [faster-invaders] [if]   stop-invader
+                                [else] invader~ ~active off
+                                [then] exit then turn-back ;
   \ XXX TMP --
 
 : hit-wall? ( -- f )
-  invader~ ~x c@ 2+ flying-to-the-left? 3 * +
+  invader~ ~x c@
+  [ udg/invader 2 = ]
+  [if]   2+ flying-to-the-left? 3 * +
+  [else] [ udg/invader 1 = ]
+         [if]   1+ flying-to-the-left? 2* +
+         [else] udg/invader + flying-to-the-left?
+                [ udg/invader 1+ ] 1literal * +
+         [then]
+  [then]
   invader~ ~y c@ ocr brick =  ;
   \ Has the current invader hit the wall of the building?
 
@@ -2619,8 +2694,19 @@ variable invader-time
   \ Is the current invader at its start position?
 
 : dock ( -- )
-  invader~ ~active off invader~ ~x-inc off set-docked-sprite ;
+  [faster-invaders] [if]   stop-invader
+                    [else] invader~ ~active off [then]
+  invader~ ~x-inc off set-docked-sprite ;
   \ Dock the current invader.
+
+[faster-invaders] [if]
+
+: undock ( -- )
+  invader~ ~initial-x-inc @ set-invader-direction
+  set-flying-sprite ;
+  \ Undock the current invader.
+
+[else]
 
 : default-direction ( -- )
   invader~ ~initial-x-inc @ invader~ ~x-inc ! ;
@@ -2628,6 +2714,8 @@ variable invader-time
 : undock ( -- )
   invader~ ~active on default-direction set-flying-sprite ;
   \ Undock the current invader.
+
+[then]
 
 : ?dock ( -- ) at-home? 0exit dock ;
   \ If the current invader is at home, dock it.
@@ -2641,26 +2729,51 @@ variable invader-time
 : left-of-invader ( -- col row )
   invader~ ~x c@ 1- invader~ ~y c@ ;
 
-: left-flying-invader ( -- )
+: right-of-invader ( -- col row )
+  invader~ ~x c@ 1+ invader~ ~y c@ ;
+
+[faster-invaders] [if]
+
+: ?flying ( -- ) attacking? if ?damages exit then
+                            ?dock ;
+  \ If the current invader has reached the wall, the containers
+  \ or the dock, manage the situation.
+
+:noname ( -- )
+  left-of-invader is-there-a-projectile?
+  if turn-back exit then
+  -1 invader~ ~x c+! at-invader .invader .sky ?flying ;
+  ' move-invader-left defer!
+  \ Move the current invader, which is flying to the left.
+
+:noname ( -- )
+  right-of-invader is-there-a-projectile?
+  if turn-back exit then
+  at-invader .sky .invader 1 invader~ ~x c+! ?flying ;
+  ' move-invader-right defer!
+  \ Move the current invader, which is flying to the right.
+
+[else]
+
+: move-invader-left ( -- )
   left-of-invader is-there-a-projectile?
   if turn-back exit then
   -1 invader~ ~x c+! at-invader .invader .sky ;
   \ Move the current invader, which is flying to the left.
 
-: right-of-invader ( -- col row )
-  invader~ ~x c@ 1+ invader~ ~y c@ ;
-
-: right-flying-invader ( -- )
+: move-invader-right ( -- )
   right-of-invader is-there-a-projectile?
   if turn-back exit then
   at-invader .sky .invader 1 invader~ ~x c+! ;
   \ Move the current invader, which is flying to the right.
 
 : flying-invader ( -- )
-  flying-to-the-right? if   right-flying-invader
-                       else left-flying-invader then
+  flying-to-the-right? if   move-invader-right
+                       else move-invader-left then
             attacking? if   ?damages
                        else ?dock then ;
+
+[then]
 
 cvariable cure-factor  20 cure-factor c!
   \ XXX TMP -- for testing
@@ -2675,8 +2788,8 @@ cvariable cure-factor  20 cure-factor c!
   \ cure.
 
 : cure ( -- )
-  invader~ ~stamina c@ 1+ max-stamina min invader~
-           ~stamina c! ;
+  invader~ ~stamina c@ 1+ max-stamina min
+  invader~ ~stamina c! ;
   \ Cure the current invader, increasing its stamina.
 
 : ?cure ( -- ) difficult-cure? ?exit cure ;
@@ -2685,21 +2798,35 @@ cvariable cure-factor  20 cure-factor c!
 : ?undock ( -- ) invaders c@ random ?exit undock ;
   \ Undock the current invader randomly, depending on the
   \ number of invaders.
+  \
+  \ XXX TODO -- Improve the random calculation. Why use
+  \ `invaders`?
 
-: require-docked-invader ( -- )
-  healthy? if ?undock else ?cure then ;
+: manage-docked-invader ( -- ) healthy? if ?undock exit then
+                                        ?cure ;
 
 : docked? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ = ;
   \ Is the current invader docked?
 
 : new-breach ( -- ) breachs c1+! battle-breachs c1+! ;
 
-: break-the-wall ( -- )
+[faster-invaders] [if]
+
+: break-wall ( -- )
+  invader~ ~x c@ flying-to-the-right? if 2+ else 1- then
+  broken-wall new-breach impel-invader ;
+
+  \ XXX TODO -- Remove `if`, calculate.
+  \ Actually 2 is `udg/invader`.
+
+[else]
+
+: break-wall ( -- )
   invader~ ~active on
   invader~ ~x c@ flying-to-the-right? if 2+ else 1- then
   broken-wall new-breach ;
 
-  \ XXX TODO -- remove `if`, calculate:
+  \ XXX TODO -- Remove `if`, calculate:
 
   \ left?
   \ -1 --> +2 +
@@ -2713,22 +2840,44 @@ cvariable cure-factor  20 cure-factor c!
   \  0 --> -2 -
   \ -1 --> +1 -
 
-: require-entering-invader ( -- )
-  invaders c@ random 0= if break-the-wall then ;
+  \ Actually 2 is `udg/invader`.
 
-: (nonflying-invader ( -- )
-  docked? if   require-docked-invader
-          else require-entering-invader
-          then at-invader .invader ;
-  \ Require the current invader, either inactive or wounded.
+[then]
+
+: ?break-wall ( -- ) invaders c@ random ?exit break-wall ;
+  \ Break the wall randomly, depending on the number of
+  \ invaders.
+  \
+  \ XXX TODO -- Improve the random calculation. Why use
+  \ `invaders`?
+
+[faster-invaders] [if]
+
+:noname ( -- )
+  invader~ ~stamina c@ 0exit
+  docked? if   manage-docked-invader
+          else ?break-wall
+          then at-invader .invader ; ' nonflying-invader defer!
+  \ If the current invader is alive, manage it, which is not
+  \ flying.
+  \
+  \ XXX TODO -- Don't use a deferred word, but use the
+  \ execution token directly, for speed.
+
+[else]
 
 : nonflying-invader ( -- )
-  invader~ ~stamina c@ if (nonflying-invader then ;
+  invader~ ~stamina c@ 0exit
+  docked? if   manage-docked-invader
+          else ?break-wall
+          then at-invader .invader ;
+  \ If the current invader is alive, manage it, which is either
+  \ inactive or wounded.
+
+[then]
 
 : last-invader? ( -- f )
-  \ get-invader [ actual-invaders 1- ] cliteral = ;
-  get-invader actual-invaders 1- = ;
-  \ XXX TMP -- for debugging, calculate at run-time
+  get-invader [ max-invaders 1- ] 1literal = ;
   \ Is the current invader the last one?
 
 : next-invader ( -- )
@@ -2736,20 +2885,26 @@ cvariable cure-factor  20 cure-factor c!
                 then get-invader 1+ set-invader ;
   \ Update the invader to the next one.
 
+[faster-invaders] 0= [if]
+
 : move-invader ( -- )
   invader~ ~active @ if      flying-invader exit
                      then nonflying-invader ;
-  \ Move the current invader if it's active; else
-  \ just try to activate it, if it's alive.
+  \ Move the current invader if it's active; else just try to
+  \ activate it, if it's alive.
 
-2 cconstant invader-interval \ ticks
+[then]
+
+2 [faster-invaders] + cconstant invader-interval \ ticks
 
 : schedule-invader ( -- )
   ticks invader-interval + invader-time ! ;
 
-: manage-invaders ( -- ) invader-time @ past? 0exit
-                         move-invader next-invader
-                         schedule-invader ;
+: manage-invaders ( -- )
+  invader-time @ past? 0exit
+  [faster-invaders] [if]   invader~ ~action perform
+                    [else] move-invader [then]
+  next-invader schedule-invader ;
   \ If it's the right time, move the current invader, then
   \ choose the next one.
 
@@ -2778,7 +2933,7 @@ variable mothership-stopped  mothership-stopped off
   home ." x:" mothership-x ?
        ." inc.:" mothership-x-inc ? ;
   \ ' ~~mothership-info ' ~~app-info defer!
-  \ XXX TMP -- for debugging
+  \ XXX TMP -- For debugging.
 
 defer set-mothership-direction ( -1..1 -- )
 
@@ -2835,8 +2990,7 @@ variable mothership-time
   \ Set the cursor position at the coordinates of the
   \ the mothership.
 
-: -whole-mothership ( -- )
-  at-mothership udg/mothership spaces ;
+: -mothership ( -- ) at-mothership udg/mothership spaces ;
   \ Delete the whole mothership.
 
 : mothership-frame+ ( n1 -- n2 )
@@ -2860,10 +3014,10 @@ variable mothership-time
   mothership-range-min-x mothership-range-max-x within ;
   \ Is the mothership in the range of its flying limit?
 
-: (.whole-mothership) ( -- )
+: (.mothership) ( -- )
   mothership-attr attr! mothership-udg .2x1-udg-sprite ;
 
-: .whole-mothership ( -- ) at-mothership (.whole-mothership) ;
+: .mothership ( -- ) at-mothership (.mothership) ;
 
 : (.visible-right-mothership) ( -- )
   mothership-attr attr!
@@ -2884,7 +3038,7 @@ variable mothership-time
   mothership-x @ case
     visible-mothership-min-x of .visible-right-mothership endof
     visible-mothership-max-x of .visible-left-mothership  endof
-    .whole-mothership
+    .mothership
   endcase ;
 
 : right-of-mothership ( -- col row )
@@ -2897,8 +3051,8 @@ variable mothership-time
     visible-mothership-max-x of at-mothership .sky        endof
     visible-mothership-min-x of
       whole-mothership-min-x mothership-y at-xy
-      (.whole-mothership)                                 endof
-    at-mothership .sky (.whole-mothership)
+      (.mothership)                                 endof
+    at-mothership .sky (.mothership)
   endcase advance-mothership ;
   \ Do move the visible mothership to the right.
 
@@ -3046,7 +3200,7 @@ defer beam ( -- )
     [ whole-mothership-max-x udg/mothership + ] cliteral of
       [ last-column ] cliteral mothership-y at-xy
       (.visible-left-mothership) advance-mothership      endof
-    advance-mothership .whole-mothership .sky
+    advance-mothership .mothership .sky
   endcase ;
   \ Do move the visible mothership to the left.
 
@@ -3130,7 +3284,7 @@ constant visible-mothership-movements ( -- a )
   \ Display the mothership on fire.
 
 : mothership-explosion ( -- )
-  mothership-on-fire mothership-bang -whole-mothership
+  mothership-on-fire mothership-bang -mothership
   0 c!> mothership-y ;
   \ The mothership explodes.
   \ XXX TODO -- Improve the effect.
@@ -3173,7 +3327,9 @@ constant visible-mothership-movements ( -- a )
 
 : explode ( -- )
   invader-destroy-points update-score invader-explosion
-  invaders c1-! invader~ ~stamina coff invader~ ~active off ;
+  invaders c1-! invader~ ~stamina coff
+  [faster-invaders] [if]   stop-invader
+                    [else] invader~ ~active off [then] ;
   \ The current invader explodes.
 
 ' lightning1 alias retreat-sound
@@ -3185,7 +3341,7 @@ constant visible-mothership-movements ( -- a )
   \ The current invader retreats.
 
 : wounded ( -- )
-  invader~ ~stamina c@ 1- 1 max invader~ ~stamina ! ;
+  invader~ ~stamina c@ 1- 1 max invader~ ~stamina c! ;
   \ Reduce the invader's stamina after being shoot.
 
 : mortal? ( -- f ) invader~ ~stamina c@ 2* random 0= ;
@@ -3589,7 +3745,7 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Debugging tools) ?depth debug-point \ {{{1
 
-: half ( -- ) half-max-invaders !> actual-invaders ;
+: half ( -- ) half-max-invaders c!> max-invaders ;
   \ Reduce the actual invaders to the left half.
 
 : .udgs ( -- ) cr last-udg 1+ 0 do i emit-udg loop ;
@@ -3600,7 +3756,9 @@ localized-string about-next-location$ ( -- ca len )
 : mp ( -- ) move-projectile ;
 
 : ni ( -- ) next-invader ;
-: mi ( -- ) move-invader ;
+: mi ( -- )
+  [faster-invaders] [if]   invader~ ~action perform
+                    [else] move-invader [then] ;
 : ini ( -- ) prepare-war prepare-battle ;
 
 : h ( -- ) 7 attr! home ; \ home
@@ -3614,10 +3772,10 @@ localized-string about-next-location$ ( -- ca len )
 : vm ( -- ) visible-mothership ;
 : am ( -- ) advance-mothership ;
 : vm? ( -- f ) visible-mothership? ;
-: .m ( -- ) .whole-mothership ;
+: .m ( -- ) .mothership ;
 : .vm ( -- ) .visible-mothership ;
 : m? ( -- f ) mothership-in-range? ;
-: -m ( -- ) -whole-mothership ;
+: -m ( -- ) -mothership ;
 : mx ( -- x ) mothership-x @ ;
 : im ( -- ) init-mothership ;
 : m ( -- ) begin key 'q' <> while manage-mothership repeat ;
@@ -3631,7 +3789,7 @@ localized-string about-next-location$ ( -- ca len )
 : test-be ( -- )
   mothership-x off .visible-mothership beam-on m ;
 
-: left-only ( -- ) half-max-invaders !> actual-invaders ;
+: left-only ( -- ) half-max-invaders c!> max-invaders ;
   \ Reduce the actual invaders to the left half.
 
 : (kill ( n1 n2 -- ) ?do i invader#>~ ~stamina coff loop ;
@@ -3646,7 +3804,9 @@ localized-string about-next-location$ ( -- ca len )
 
 : .i ( n -- )
   >r
+  [faster-invaders] [ 0= ] [if]
   ." active              " r@ invader#>~ ~active ? cr
+  [then]
   ." sprite              " r@ invader#>~ ~sprite c@ . cr
   ." frame               " r@ invader#>~ ~frame c@ . cr
   ." frames              " r@ invader#>~ ~frames c@ . cr

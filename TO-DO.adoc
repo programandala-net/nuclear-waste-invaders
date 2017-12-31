@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2017-12-27
+:revdate: 2017-12-31
 
 Older first:
 
@@ -121,7 +121,6 @@ loop:
 
 == 2017-12-20
 
-- Replace conditionals with deferred words, for speed.
 - Improve the top and the bottom of the beam.
 
 == 2017-12-22
@@ -138,3 +137,8 @@ loop:
 == 2017-12-27
 
 - Remove `invader#` and use only the corresponding data addresses?
+
+== 2017-12-31
+
+- Replace `else ... then` with `exit then ...`, for speed.
+- Improve `attack-report` to display the texts immediately.
