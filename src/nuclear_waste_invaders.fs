@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.116.0+201712311631" ;
+: version$ ( -- ca len ) s" 0.117.0+201712311643" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1917,9 +1917,6 @@ cconstant invader-bottom-y
 
 : flying-to-the-left? ( -- f ) invader~ ~x-inc @ 0< ;
   \ Is the current invader flying to the left?
-  \
-  \ XXX TODO -- Calculate only in `set-flying-sprite` and save
-  \ the result in a flag.
 
 : attacking? ( -- f )
   invader~ ~initial-x-inc @ invader~ ~x-inc @ = ;
@@ -2245,13 +2242,11 @@ columns udg/tank - 1- cconstant tank-max-x
   \ the current coordinates.
 
 : ?emit-outside ( col1 c -- col2 )
-  over outside? if emit-udg else drop dup next-col then 1+ ;
+  over outside? if   emit-udg 1+          exit
+                then drop dup next-col 1+ ;
   \ If column _col1_ is outside the building, display character
   \ _c_ at the current cursor position.  Increment _col1_ and
   \ return it as _col2_.
-  \
-  \ XXX TODO -- Accelerate: Duplicate `1+` and replace `else`
-  \ with `exit then`.
 
 : left-tank-udg   ( -- c ) tank-frame c@ udg/tank * tank + ;
 : middle-tank-udg ( -- c ) left-tank-udg 1+ ;
@@ -2585,11 +2580,9 @@ variable invader-time
 
 : broken-wall ( col -- )
   broken-bricks-coordinates broken-wall-attr attr!
-  flying-to-the-right? if   broken-left-wall 
-                       else broken-right-wall then ;
+  flying-to-the-right? if   broken-left-wall  exit
+                       then broken-right-wall ;
   \ Display the broken wall of the building.
-  \
-  \ XXX TODO -- Accelerate: replace `else` with `exit then`.
 
 : broken-left-container ( -- )
   invader~ ~x c@ 2+ invader~ ~y c@ at-xy
@@ -2607,20 +2600,15 @@ variable invader-time
 
 : broken-container ( -- )
   container-attr attr!
-  flying-to-the-right? if   broken-left-container
-                       else broken-right-container then ;
+  flying-to-the-right? if   broken-left-container  exit
+                       then broken-right-container ;
   \ Broke the container.
-  \
-  \ XXX TODO -- Accelerate: replace `else` with `exit then`.
 
 : broken-container? ( -- f )
   invader~ ~x c@ flying-to-the-right?
-  if   1+ containers-left-x
-  else    containers-right-x then c@ = ;
+  if   1+ containers-left-x  c@ = exit
+  then    containers-right-x c@ = ;
   \ Has the current invader broken a container?
-  \
-  \ XXX TODO -- Accelerate: Duplicate `c@ =` and replace `else`
-  \ with `exit then`.
 
 : healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
   \ Is the current invader healthy? Has it got maximum stamina?

@@ -142,3 +142,5 @@ loop:
 
 - Replace `else ... then` with `exit then ...`, for speed.
 - Improve `attack-report` to display the texts immediately.
+- Replace `flying-to-the-left?` and `flying-to-the-right?` with a flag
+  calculated only in `set-flying-sprite`.
