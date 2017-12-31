@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.118.0+201712311714" ;
+: version$ ( -- ca len ) s" 0.119.0+201712311904" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1904,9 +1904,6 @@ cconstant invader-bottom-y
 
 : invader-destroy-points ( -- n ) invader-retreat-points 10 * ;
 
-: flying-to-the-right? ( -- f ) invader~ ~x-inc @ 0> ;
-  \ Is the current invader flying to the right?
-
 : flying-to-the-left? ( -- f ) invader~ ~x-inc @ 0< ;
   \ Is the current invader flying to the left?
 
@@ -2565,8 +2562,8 @@ variable invader-time
 
 : broken-wall ( col -- )
   broken-bricks-coordinates broken-wall-attr attr!
-  flying-to-the-right? if   broken-left-wall  exit
-                       then broken-right-wall ;
+  flying-to-the-left? if   broken-right-wall exit
+                      then broken-left-wall  ;
   \ Display the broken wall of the building.
 
 : broken-left-container ( -- )
@@ -2585,14 +2582,14 @@ variable invader-time
 
 : broken-container ( -- )
   container-attr attr!
-  flying-to-the-right? if   broken-left-container  exit
-                       then broken-right-container ;
+  flying-to-the-left? if   broken-right-container exit
+                      then broken-left-container  ;
   \ Broke the container.
 
 : broken-container? ( -- f )
-  invader~ ~x c@ flying-to-the-right?
-  if   1+ containers-left-x  c@ = exit
-  then    containers-right-x c@ = ;
+  invader~ ~x c@ flying-to-the-left?
+  if      containers-right-x c@ = exit
+  then 1+ containers-left-x  c@ = ;
   \ Has the current invader broken a container?
 
 : healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
@@ -2730,7 +2727,7 @@ cvariable cure-factor  20 cure-factor c!
 : new-breach ( -- ) breachs c1+! battle-breachs c1+! ;
 
 : break-wall ( -- )
-  invader~ ~x c@ flying-to-the-right? if 2+ else 1- then
+  invader~ ~x c@ flying-to-the-left? if 1- else 2+ then
   broken-wall new-breach impel-invader ;
 
   \ XXX TODO -- Remove `if`, calculate.
