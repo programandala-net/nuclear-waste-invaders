@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.124.0+201801022353" ;
+: version$ ( -- ca len ) s" 0.125.0+201801030032" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -650,7 +650,7 @@ variable catastrophe \ flag (game end condition)
 3 cconstant /controls
   \ Bytes per item in the `controls` table.
 
-create controls  here
+create controls
   \ left    right     fire
   kk-5# c,  kk-8# c,  kk-en# c, \ cursor: 5-8-Enter
   kk-r# c,  kk-t# c,  kk-en# c, \ Spanish Dvorak: R-T-Enter
@@ -664,9 +664,8 @@ create controls  here
   kk-q# c,  kk-w# c,  kk-p#  c, \ QWERTY: Q-W-P
   kk-z# c,  kk-x# c,  kk-p#  c, \ QWERTY: Z-X-P
 
-here swap - /controls / cconstant max-controls
+here controls - /controls / cconstant max-controls
   \ Number of controls stored in `controls`.
-  \ XXX TODO -- Replace `here` with `controls`.
 
 max-controls 1- cconstant last-control
 
@@ -728,28 +727,17 @@ cvariable used-udgs  used-udgs coff
 
 [pixel-projectile] 0= [if]
 
-cvariable ocr-first-udg
-cvariable ocr-last-udg
-  \ Char codes of the first and last UDG to be examined
-  \ by `ocr`.
+cvariable ocr-last
+
+: init-ocr ( -- ) ocr-first c@ udg>bitmap ocr-font !
+                  ocr-last c@ ocr-first c@ - 1+ ocr-chars c! ;
+  \ Set the UDGs `ocr` will examine to detect collisions.
   \
-  \ XXX TODO -- Remove. Use `ocr-first` and `ocr-last`
-  \ directly.
+  \ XXX TODO -- range: only chars that may be detected: brick
+  \ and invaders.
   \
   \ XXX TODO -- Remove `init-ocr`. It's needed only once, right
   \ after defining the graphics.
-
-: init-ocr ( -- )
-  ocr-first-udg c@ udg>bitmap ocr-font !
-    \ Set address of the first char bitmap to be examined.
-  ocr-first-udg c@ ocr-first c!
-    \ Its char code in the UDG set.
-  ocr-last-udg c@ ocr-first-udg c@ - 1+ ocr-chars c!  ; \ chars
-  \ Set the UDGs `ocr` will examine to detect collisions.
-  \ Set the address of the first char bitmap to be
-  \ examined, its char code and the number of examined chars.
-  \ XXX TODO -- range: only chars that may be detected: brick
-  \ and invaders.
 
 [then]
 
@@ -829,7 +817,7 @@ cvariable latest-sprite-udg
 0 0 0 0 0 0 0 0 1 free-udg dup cconstant bl-udg udg!
 
 [pixel-projectile] 0= [if]
-  >udg c@ ocr-first-udg c!
+  >udg c@ ocr-first c!
     \ The first UDG examined by `ocr` must be the first one of
     \ the next sprite.
 [then]
@@ -1481,7 +1469,7 @@ XX.XXXXX
 ........ cconstant brick
 
 [pixel-projectile] 0= [if]
-  >udg c@1- ocr-last-udg c!
+  >udg c@1- ocr-last c!
     \ The last UDG examined by `ocr` must be the last one
     \ of the latest sprite.
 [then]
@@ -1771,10 +1759,12 @@ status-bar-rows columns * cconstant /status-bar
 
 : col>pixel ( n1 -- n2 ) 8 * ;
   \ Convert a row (0..31) to a pixel y coordinate (0..255).
+  \
   \ XXX TODO -- Move to Solo Forth and rewrite in Z80
 
 : row>pixel ( n1 -- n2 ) 8 * 191 swap - ;
   \ Convert a row (0..23) to a pixel y coordinate (0..191).
+  \
   \ XXX TODO -- Move to Solo Forth and rewrite in Z80
 
 [then]
