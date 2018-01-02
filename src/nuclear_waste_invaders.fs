@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.123.0+201801022031" ;
+: version$ ( -- ca len ) s" 0.124.0+201801022353" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -44,7 +44,9 @@ cr cr .( Nuclear Waste Invaders) cr version$ type cr
   \ development.
 
 false constant [pixel-projectile] immediate
-  \ Pixel projectiles (new) instead of UDG projectiles (old)?
+  \ Pixel projectiles (new method) instead of UDG projectiles
+  \ (old method)?
+  \
   \ XXX TODO -- finish support for pixel projectiles
 
   \ ===========================================================
@@ -132,7 +134,7 @@ need set-udg need /udg
 need columns need rows need row need fade-display
 need last-column need udg-block need udg! need blackout
 
-need window need wltype need wcr need wcls
+need window need wltype need wcr need wcls need wcolor
 
 need ocr
 
@@ -151,7 +153,7 @@ need papery need brighty need xy>attr need xy>attra
   cr .(   -Keyboard) ?depth \ {{{2
 
 need kk-ports need kk-1# need pressed? need kk-chars
-need #>kk need inkey need -keys
+need #>kk need inkey need new-key
 
   \ --------------------------------------------
   cr .(   -Time) ?depth \ {{{2
@@ -573,29 +575,29 @@ localized-string press-any-key$ ( -- ca len )
 
 [pixel-projectile]    black and
 [pixel-projectile] 0= white and +
-                    cconstant sky-attr
+                               cconstant sky-attr
 
-               green cconstant invader-attr
-               green cconstant sane-invader-attr
-              yellow cconstant wounded-invader-attr
-                 red cconstant dying-invader-attr
-             magenta cconstant mothership-attr
+                         green cconstant invader-attr
+                         green cconstant sane-invader-attr
+                        yellow cconstant wounded-invader-attr
+                           red cconstant dying-invader-attr
+                       magenta cconstant mothership-attr
 
-magenta papery white + brighty
-                     cconstant beam-attr
+magenta papery white + brighty cconstant beam-attr
 
-               white cconstant tank-attr
-              yellow cconstant projectile-attr
+                         white cconstant tank-attr
+                        yellow cconstant projectile-attr
 
-        white papery cconstant unfocus-attr
-white papery brighty cconstant report-attr
-               white cconstant text-attr
+                  white papery cconstant unfocus-attr
+  white papery brighty white + cconstant hide-report-attr
+          white papery brighty cconstant reveal-report-attr
+                         white cconstant text-attr
 
-  white papery red + cconstant brick-attr
-               white cconstant door-attr
-                 red cconstant broken-wall-attr
-      yellow brighty cconstant container-attr
-      yellow brighty cconstant radiation-attr
+            white papery red + cconstant brick-attr
+                         white cconstant door-attr
+                           red cconstant broken-wall-attr
+                yellow brighty cconstant container-attr
+                yellow brighty cconstant radiation-attr
 
 : init-colors ( -- ) [ white black papery + ] cliteral attr!
                      overprint-off inverse-off black border ;
@@ -2584,7 +2586,7 @@ variable invader-time
   \
   \ XXX TODO -- Graphic instead of space.
 
-: (break-wall) ( col -- )
+: (break-wall ( col -- )
   broken-bricks-coordinates broken-wall-attr attr!
   flying-to-the-left? if   break-right-wall exit
                       then break-left-wall  ;
@@ -2765,7 +2767,7 @@ cvariable cure-factor  20 cure-factor c!
 
 : break-wall ( -- )
   invader~ ~x c@ flying-to-the-left? if 1- else 2+ then
-  (break-wall) new-breach impel-invader ;
+  (break-wall new-breach impel-invader ;
 
   \ XXX TODO -- Remove `if`, calculate.
 
@@ -2927,25 +2929,25 @@ variable mothership-time
   mothership-range-min-x mothership-range-max-x within ;
   \ Is the mothership in the range of its flying limit?
 
-: (.mothership) ( -- )
+: (.mothership ( -- )
   mothership-attr attr! mothership-udg .2x1-udg-sprite ;
 
-: .mothership ( -- ) at-mothership (.mothership) ;
+: .mothership ( -- ) at-mothership (.mothership ;
 
-: (.visible-right-mothership) ( -- )
+: (.visible-right-mothership ( -- )
   mothership-attr attr!
   [ mothership-udg udg/mothership + 1- ] cliteral emit-udg ;
 
 : .visible-right-mothership ( -- )
   whole-mothership-min-x mothership-y at-xy
-  (.visible-right-mothership) ;
+  (.visible-right-mothership ;
 
-: (.visible-left-mothership) ( -- )
+: (.visible-left-mothership ( -- )
   mothership-attr attr! mothership-udg emit-udg ;
 
 : .visible-left-mothership ( -- )
   visible-mothership-max-x mothership-y at-xy
-  (.visible-left-mothership) ;
+  (.visible-left-mothership ;
 
 : .visible-mothership ( -- )
   mothership-x @ case
@@ -2962,12 +2964,12 @@ variable mothership-time
 : (move-visible-mothership-right ( -- )
   mothership-x @ case
     whole-mothership-max-x   of
-      at-mothership .sky (.visible-left-mothership)       endof
-    visible-mothership-max-x of at-mothership .sky        endof
+      at-mothership .sky (.visible-left-mothership endof
+    visible-mothership-max-x of at-mothership .sky endof
     visible-mothership-min-x of
       whole-mothership-min-x mothership-y at-xy
-      (.mothership)                                 endof
-    at-mothership .sky (.mothership)
+      (.mothership                                 endof
+    at-mothership .sky (.mothership
   endcase advance-mothership ;
   \ Do move the visible mothership to the right.
 
@@ -3113,7 +3115,7 @@ defer beam ( -- )
       0 mothership-y at-xy .sky advance-mothership       endof
     [ whole-mothership-max-x udg/mothership + ] cliteral of
       [ last-column ] cliteral mothership-y at-xy
-      (.visible-left-mothership) advance-mothership      endof
+      (.visible-left-mothership advance-mothership       endof
     advance-mothership .mothership .sky
   endcase ;
   \ Do move the visible mothership to the left.
@@ -3590,27 +3592,27 @@ localized-string about-next-location$ ( -- ca len )
               else about-old-damages$ then paragraph ;
 
 : unfocus ( -- ) attributes /attributes unfocus-attr fill ;
-  \ Fill the screen with a color, to contrast the report window.
+  \ Unfocus the screen to contrast the report window.
 
-: end-report ( -- ) -keys press-any-key$ wltype key drop ;
+: end-report ( -- ) press-any-key$ wltype
+                    reveal-report-attr wcolor
+                    2000 ms new-key drop ;
 
-: open-report ( -- )
-  unfocus paper-report-window current-window !
-                              report-attr attr! wcls
-                report-window current-window ! whome ;
+: open-report ( -- ) unfocus
+                     paper-report-window current-window !
+                     hide-report-attr attr! wcls
+                     report-window current-window ! whome ;
 
 : (attack-report ( -- ) open-report about-attack end-report ;
 
 : attack-report ( -- )
   preserve-screen (attack-report restore-screen ;
 
-: about-battle ( -- )
-  well-done$ paragraph about-battle$ paragraph
-  about-next-location$ paragraph ;
+: about-battle ( -- ) well-done$           paragraph
+                      about-battle$        paragraph
+                      about-next-location$ paragraph ;
 
-: (battle-report ( -- ) open-report about-battle end-report ;
-
-: battle-report ( -- ) preserve-screen (battle-report ;
+: battle-report ( -- ) open-report about-battle end-report ;
 
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1

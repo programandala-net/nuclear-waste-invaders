@@ -138,11 +138,6 @@ loop:
 
 - Remove `invader#` and use only the corresponding data addresses?
 
-== 2017-12-31
-
-- Improve `attack-report` to display the texts immediately and force a
-  minimum pause.
-
 == 2018-01-01
 
 - Fix: wall detection.
