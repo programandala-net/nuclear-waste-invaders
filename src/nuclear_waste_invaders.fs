@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.122.0+201801021931" ;
+: version$ ( -- ca len ) s" 0.123.0+201801022031" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -97,7 +97,7 @@ need case need 0exit need +perform need do need abort"
   cr .(   -Memory) ?depth \ {{{2
 
 need c+! need c-! need c1+! need c1-!  need coff
-need dzx7t need bank-start
+need dzx7t need bank-start need c@1+ need c@1-
 
   \ --------------------------------------------
   cr .(   -Math) ?depth \ {{{2
@@ -686,7 +686,7 @@ current-controls c@ set-controls
   \ Default controls.
 
 : next-controls ( -- )
-  current-controls c@ 1+  dup last-control > 0= abs *
+  current-controls c@1+  dup last-control > 0= abs *
   dup current-controls c!  set-controls ;
   \ Change the current controls.
 
@@ -738,7 +738,7 @@ cvariable ocr-last-udg
   \ after defining the graphics.
 
 : init-ocr ( -- )
-  ocr-first-udg c@ udg>bitmap ocr-charset !
+  ocr-first-udg c@ udg>bitmap ocr-font !
     \ Set address of the first char bitmap to be examined.
   ocr-first-udg c@ ocr-first c!
     \ Its char code in the UDG set.
@@ -1460,7 +1460,7 @@ X....XXXXX...X..
 
   >udg c@ swap - cconstant frames/projectile
 
-  >udg c@ 1- cconstant last-projectile-frame
+  >udg c@1- cconstant last-projectile-frame
 
 [then]
 
@@ -1479,7 +1479,7 @@ XX.XXXXX
 ........ cconstant brick
 
 [pixel-projectile] 0= [if]
-  >udg c@ 1- ocr-last-udg c!
+  >udg c@1- ocr-last-udg c!
     \ The last UDG examined by `ocr` must be the last one
     \ of the latest sprite.
 [then]
@@ -2083,7 +2083,7 @@ cvariable containers-left-x   cvariable containers-right-x
 
 : size-building ( -- )
   [ columns 2/ 1- ] cliteral  \ half of the screen
-  location c@ 1+              \ half width of all containers
+  location c@1+               \ half width of all containers
   dup 2* 2+ building-width     c!
   2dup 1- - containers-left-x  c!
   2dup    - building-left-x    c!
@@ -2097,7 +2097,7 @@ cvariable containers-left-x   cvariable containers-right-x
   \ Draw a floor of the building at row _y_.
 
 : ground-floor ( y -- )
-  building-left-x c@ 1+ swap at-xy
+  building-left-x c@1+ swap at-xy
   door-attr attr!  left-door emit-udg
   brick-attr attr! brick building-width c@ 4 - .1x1sprites
   door-attr attr!  right-door emit-udg ;
@@ -2137,7 +2137,7 @@ variable repaired
 
 : building ( -- )
   building-top
-  location c@ 1+  building-left-x c@
+  location c@1+  building-left-x c@
   building-bottom-y [ building-top-y 1+ ] cliteral
   do   2dup i at-xy .brick
                     i 1 and containers-half array> perform
@@ -2157,7 +2157,7 @@ variable repaired
 8 cconstant locations
 
 : next-location ( -- )
-  location c@ 1+ locations min location c! ;
+  location c@1+ locations min location c! ;
   \ Increase the location number, but not beyond the maximum.
   \ XXX TMP --
   \ XXX TODO -- Check the limit to finish the game instead.
@@ -2165,7 +2165,7 @@ variable repaired
 variable used-projectiles  used-projectiles off
   \ Counter.
 
-: battle-bonus ( -- n ) location c@ 1+ 500 *
+: battle-bonus ( -- n ) location c@1+ 500 *
                         battle-breachs c@ 100 * -
                         used-projectiles @ -
                         0 max ;
@@ -2204,7 +2204,7 @@ columns udg/tank - 1- cconstant tank-max-x
 : new-projectile-x ( -- col|gx )
   [pixel-projectile]
   [if]   tank-x c@ col>pixel [ udg/tank 8 * 2/ ] cliteral +
-  [else] tank-x c@ 1+
+  [else] tank-x c@1+
   [then] ;
   \ Return the column _col_ or graphic coordinate _gx_ for the
   \ new projectile, depending (at compile time) on the type of
@@ -2227,7 +2227,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ Does the tank move? Return its x increment.
 
 : outside? ( col -- f )
-  building-left-x c@ 1+ building-right-x c@ within 0= ;
+  building-left-x c@1+ building-right-x c@ within 0= ;
   \ Is column _col_ outside the building?
   \ The most left and most right columns of the building
   \ are considered outside, because they are the doors.
@@ -2460,7 +2460,7 @@ defer debug-data-pause ( -- )
   \ Display controls at the current row.
 
 : change-players ( -- )
-  players c@ 1+ dup max-player > if drop 1 then players c! ;
+  players c@1+ dup max-player > if drop 1 then players c! ;
 
 false [if] \ XXX TODO --
 
@@ -2598,14 +2598,14 @@ variable invader-time
 : break-left-container ( -- )
   invader~ ~x c@ 2+ invader~ ~y c@ at-xy
   broken-top-right-container .1x1sprite
-  invader~ ~x c@ 1+ invader~ ~y c@ 1+ at-xy
+  invader~ ~x c@1+ invader~ ~y c@1+ at-xy
   broken-bottom-left-container .1x1sprite ;
   \ Broke the container on its left side.
 
 : break-right-container ( -- )
-  invader~ ~x c@ 1- invader~ ~y c@ at-xy
+  invader~ ~x c@1- invader~ ~y c@ at-xy
   broken-top-left-container .1x1sprite
-  invader~ ~x c@ invader~ ~y c@ 1+ at-xy
+  invader~ ~x c@ invader~ ~y c@1+ at-xy
   broken-bottom-right-container .1x1sprite ;
   \ Broke the container on its right side.
 
@@ -2691,11 +2691,11 @@ defer breaking-action ( -- )
   \ Display a sky-color space.
 
 : left-of-invader ( -- col row )
-  invader~ ~x c@ 1- invader~ ~y c@ ;
+  invader~ ~x c@1- invader~ ~y c@ ;
   \ Coordinates _col row_ at the right of the current invader.
 
 : right-of-invader ( -- col row )
-  invader~ ~x c@ 1+ invader~ ~y c@ ;
+  invader~ ~x c@1+ invader~ ~y c@ ;
   \ Coordinates _col row_ at the left of the current invader.
 
 defer ?dock ( -- )
@@ -2731,7 +2731,7 @@ cvariable cure-factor  20 cure-factor c!
   \ chances to be a difficult cure. This is used to delay the
   \ cure.
 
-: cure ( -- ) invader~ ~stamina c@ 1+ max-stamina min
+: cure ( -- ) invader~ ~stamina c@1+ max-stamina min
               invader~ ~stamina c! ;
   \ Cure the current invader, increasing its stamina.
 
@@ -3203,7 +3203,7 @@ constant visible-mothership-movements ( -- a )
   \ The mothership explodes.
   \ XXX TODO -- Improve the effect.
 
-: mothership-bonus ( -- n ) location c@ 1+ 250 * ;
+: mothership-bonus ( -- n ) location c@1+ 250 * ;
   \ Bonus points for impacting the mothership.
 
 : mothership-impacted ( -- )
@@ -3256,7 +3256,7 @@ constant visible-mothership-movements ( -- a )
   \ The current invader retreats.
 
 : wounded ( -- )
-  invader~ ~stamina c@ 1- 1 max invader~ ~stamina c! ;
+  invader~ ~stamina c@1- 1 max invader~ ~stamina c! ;
   \ Reduce the invader's stamina after being shoot.
 
 : mortal? ( -- f ) invader~ ~stamina c@ 2* random 0= ;
@@ -3374,7 +3374,7 @@ cvariable trigger-delay-counter trigger-delay-counter coff
   \ Is there any projectile left?
 
 : update-trigger ( -- )
-  trigger-delay-counter c@ 1- 0 max trigger-delay-counter c! ;
+  trigger-delay-counter c@1- 0 max trigger-delay-counter c! ;
   \ Decrement the trigger delay. The minimum is zero.
 
 : trigger-ready? ( -- f ) trigger-delay-counter c@ 0= ;
