@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-02
+:revdate: 2018-01-03
 
 Older first:
 
@@ -142,3 +142,7 @@ loop:
 
 - Fix: wall detection.
 - Fix: initiation of invaders after every attack.
+
+== 2018-01-03
+
+- Regularize names of sprites.

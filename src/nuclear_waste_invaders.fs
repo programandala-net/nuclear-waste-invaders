@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.126.0+201801030048" ;
+: version$ ( -- ca len ) s" 0.127.0+201801031430" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1264,9 +1264,22 @@ XXXX.XXX.XXXXXX.
   \ -----------------------------------------------------------
   \ Mothership
 
-4 cconstant mothership-frames
+0 cconstant mothership
+  \ Configurable constant that contains the first character of
+  \ the first sprite frame of the current sprite of the
+  \ mothership.
 
-cvariable mothership-frame \ counter (0..3)
+cvariable mothership-frame
+  \ Current frame of the current sprite of the mothership.
+
+0 cconstant mothership-frames
+  \ Configurable constant that contains the number of frames of
+  \ the current sprite of the mothership.
+
+  \ ............................................
+  \ Flying mothership
+
+4 cconstant flying-mothership-frames
 
   \ mothership, frame 0:
 
@@ -1279,7 +1292,7 @@ cvariable mothership-frame \ counter (0..3)
 .XX..XX..XX..XX.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X... cconstant mothership
+...X........X... cconstant flying-mothership
 
   \ mothership, frame 1:
 
@@ -1319,6 +1332,36 @@ XXXXXXXXXXXXXXXX
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X... drop
+
+  \ ............................................
+  \ Beaming mothership
+
+2 cconstant beaming-mothership-frames
+
+2 1 udg-sprite
+
+................
+.....XXXXXX.....
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+.XX..XX..XX..XX.
+XXXXXXXXXXXXXXXX
+.X.X.X.XX.X.X.X.
+X.X.X.X..X.X.X.X cconstant beaming-mothership
+
+2 1 udg-sprite
+
+................
+.....XXXXXX.....
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+.XX..XX..XX..XX.
+XXXXXXXXXXXXXXXX
+X.X.X.X..X.X.X.X
+.X.X.X.XX.X.X.X. drop
+
+  \ ............................................
+  \ Mothership explosion
 
 2 1 udg-sprite
 
@@ -2856,10 +2899,23 @@ variable mothership-time
 : place-mothership ( -- )
   mothership-x0 mothership-x ! mothership-y0 c!> mothership-y ;
 
+: set-mothership ( c n -- )
+  c!> mothership-frames c!> mothership mothership-frame coff ;
+  \ Set character _c_ as the first character of the first
+  \ sprite of the mothership, and _n_ as the number of frames.
+
+: set-flying-mothership ( -- )
+  flying-mothership flying-mothership-frames set-mothership ;
+  \ Make the mothership use its flying sprite.
+
+: set-beaming-mothership ( -- )
+  beaming-mothership beaming-mothership-frames set-mothership ;
+  \ Make the mothership use its beaming sprite.
+
 : init-mothership ( -- )
+  set-flying-mothership
   mothership-stopped off mothership-time off
   place-mothership start-mothership ;
-  \ Init the mothership.
 
 : visible-mothership? ( -- f )
   mothership-x @
@@ -3010,11 +3066,14 @@ defer beam ( -- )
   \ accordingly and return a copy of its content.
 
 : (beam-up ( -- )
+  .mothership
   reach-invader? if invader-cell-attr else sky-cell-attr then
   mothership-x @ beam-y @ xy>attra ! ;
   \ Shrink the beam towards de mothership one character.
 
-: beam-up ( -- ) (beam-up beaming-up? ?exit create-squadron ;
+: beam-up ( -- ) (beam-up beaming-up? ?exit
+                 set-flying-mothership .mothership
+                 create-squadron ;
   \ Manage the beam, which is shrinking up to the mothership.
   \ If it's finished, activate the new invaders.
 
@@ -3036,7 +3095,7 @@ defer beam ( -- )
   \ accordingly and return a copy of its content.
 
 : (beam-down ( -- )
-  beam-cell-attr mothership-x @ beam-y @ xy>attra !
+  .mothership beam-cell-attr mothership-x @ beam-y @ xy>attra !
   reach-invader? if create-invader then ;
   \ Grow the beam towards the ground one character.
 
@@ -3051,6 +3110,7 @@ defer beam ( -- )
   \ depending on the position of the mothership.
 
 : beam-on ( -- )
+  set-beaming-mothership
   first-new-invader beam-invader c!
   mothership-y 1+ invader-min-y 1+ ['] beam-down set-beam ;
   \ Turn the mothership's beam on.
