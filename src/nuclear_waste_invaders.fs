@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.129.0+201801031951" ;
+: version$ ( -- ca len ) s" 0.130.0+201801032018" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -99,7 +99,7 @@ need case need 0exit need +perform need do need abort"
   cr .(   -Memory) ?depth \ {{{2
 
 need c+! need c-! need c1+! need c1-!  need coff
-need dzx7t need bank-start need c@1+ need c@1-
+need dzx7t need bank-start need c@1+ need c@1- need c@2+
 
   \ --------------------------------------------
   cr .(   -Math) ?depth \ {{{2
@@ -2634,11 +2634,15 @@ defer break-the-wall ( col1 row1 col2 row2 -- )
   \ column _col_, and word _xt_ is used to manage the breaking.
 
 : break-left-container ( -- )
-  invader~ ~x c@ 2+ invader~ ~y c@ at-xy
+  invader~ ~x c@2+ invader~ ~y c@ at-xy
   broken-top-right-container .1x1sprite
   invader~ ~x c@1+ invader~ ~y c@1+ at-xy
   broken-bottom-left-container .1x1sprite ;
   \ Break the the left side of the container.
+  \
+  \ XXX TODO -- Calculate alternatives to `c@2+` and `c@1+` at
+  \ compile-time, depending on the size of the invaders, just in
+  \ case. See `hit-wall?`.
 
 : break-right-container ( -- )
   invader~ ~x c@1- invader~ ~y c@ at-xy
@@ -2700,7 +2704,7 @@ defer breaking-action ( -- )
 : hit-wall? ( -- f )
   invader~ ~x
   [ udg/invader 2 = ]
-  [if]   c@ 2+ flying-to-the-left? 3 * +
+  [if]   c@2+ flying-to-the-left? 3 * +
   [else] [ udg/invader 1 = ]
          [if]   c@1+ flying-to-the-left? 2* +
          [else] c@ udg/invader + flying-to-the-left?
@@ -2709,8 +2713,6 @@ defer breaking-action ( -- )
   [then]
   invader~ ~y c@ ocr brick = ;
   \ Has the current invader hit the wall of the building?
-  \
-  \ XXX TODO -- Use `c@2+`.
 
 : ?damages ( -- )
   hit-wall? if hit-wall exit then
@@ -2808,16 +2810,14 @@ cvariable cure-factor  20 cure-factor c!
   invader~ ~x
   flying-to-the-left? if   c@1-
                            ['] break-right-wall
-                      else c@ [ udg/invader 2 = ]
-                              [if]   2+
-                              [else] udg/invader + [then]
+                      else [ udg/invader 2 = ]
+                           [if]   c@2+
+                           [else] c@ udg/invader + [then]
                            ['] break-left-wall
                       then ['] break-the-wall defer! ;
   \ Prepare the wall to break: Return the column _col_ of the
   \ wall the current invader has hit, and set the action of
   \ `break-the-wall` accordingly.
-  \
-  \ XXX TODO -- Use `c@2+`.
 
 : break-wall ( -- )
   prepare-wall (break-wall new-breach impel-invader ;
