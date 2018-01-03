@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.125.0+201801030032" ;
+: version$ ( -- ca len ) s" 0.126.0+201801030048" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -140,6 +140,7 @@ need ocr
 
 [pixel-projectile] [if]
   need plot need set-pixel need reset-pixel need gxy>attra
+  need x>gx need y>gy
 [then]
 
 need inverse-off need overprint-off need attr!  need attr@
@@ -1755,20 +1756,6 @@ status-bar-rows columns * cconstant /status-bar
 : status-bar ( -- )
   text-attr attr! .score-label .score .record-label .record ;
 
-[pixel-projectile] [if]
-
-: col>pixel ( n1 -- n2 ) 8 * ;
-  \ Convert a row (0..31) to a pixel y coordinate (0..255).
-  \
-  \ XXX TODO -- Move to Solo Forth and rewrite in Z80
-
-: row>pixel ( n1 -- n2 ) 8 * 191 swap - ;
-  \ Convert a row (0..23) to a pixel y coordinate (0..191).
-  \
-  \ XXX TODO -- Move to Solo Forth and rewrite in Z80
-
-[then]
-
   \ ===========================================================
   cr .( Invaders data) ?depth debug-point \ {{{1
 
@@ -2195,7 +2182,7 @@ columns udg/tank - 1- cconstant tank-max-x
 
 : new-projectile-x ( -- col|gx )
   [pixel-projectile]
-  [if]   tank-x c@ col>pixel [ udg/tank 8 * 2/ ] cliteral +
+  [if]   tank-x c@ x>gx [ udg/tank 8 * 2/ ] cliteral +
   [else] tank-x c@1+
   [then] ;
   \ Return the column _col_ or graphic coordinate _gx_ for the
@@ -2205,7 +2192,7 @@ columns udg/tank - 1- cconstant tank-max-x
 : gun-below-building? ( -- f )
   new-projectile-x
   [pixel-projectile] [if]
-    building-left-x c@ col>pixel building-right-x c@ col>pixel
+    building-left-x c@ x>gx building-right-x c@ x>gx
   [else]
     building-left-x c@ building-right-x c@
   [then] between ;
@@ -3325,7 +3312,7 @@ constant visible-mothership-movements ( -- a )
 : projectile-lost? ( -- f )
   projectile-y c@
   [pixel-projectile]
-  [if]   [ sky-top-y row>pixel ] cliteral >
+  [if]   [ sky-top-y y>gy ] cliteral >
   [else] [ sky-top-y 1+ ] cliteral <
   [then] ;
   \ Is the projectile lost?
@@ -3352,7 +3339,7 @@ cvariable trigger-delay-counter trigger-delay-counter coff
   x> c!> projectile#
   new-projectile-x projectile-x c!
   [pixel-projectile]
-  [if]   [ tank-y row>pixel 1+ ] cliteral
+  [if]   [ tank-y y>gy 1+ ] cliteral
   [else] [ tank-y 1- ] cliteral
   [then] projectile-y c!
   .projectile fire-sound delay-trigger damage-transmission ;
