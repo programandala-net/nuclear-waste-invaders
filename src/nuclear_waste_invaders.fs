@@ -14,14 +14,14 @@
 \ License
 
 \ You may do whatever you want with this work, so long as you
-\ retain the copyright/authorship/acknowledgment/credit
-\ notice(s) and this license in all redistributed copies and
+\ retain all copyright, authorship, acknowledgment and credit
+\ notices and this license in all redistributed copies and
 \ derived works.  There is no warranty.
 
 \ =============================================================
 \ Credit
 
-\ Nuclear Waste Invaders was inspired by and is based on
+\ Nuclear Waste Invaders was inspired by and initially based on
 \ Nuclear Invaders (Copyright 2013 Scainet Soft), written by
 \ Dancresp for Jupiter ACE:
 \ http://www.zonadepruebas.com/viewtopic.php?t=4231.
@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.128.0+201801031538" ;
+: version$ ( -- ca len ) s" 0.128.0+201801031602" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
