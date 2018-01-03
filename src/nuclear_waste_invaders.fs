@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.130.0+201801032018" ;
+: version$ ( -- ca len ) s" 0.130.1+201801032209" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3668,9 +3668,8 @@ localized-string about-next-location$ ( -- ca len )
 : unfocus ( -- ) attributes /attributes unfocus-attr fill ;
   \ Unfocus the screen to contrast the report window.
 
-: end-report ( -- ) press-any-key$ wltype
-                    reveal-report-attr wcolor
-                    2000 ms new-key drop ;
+: end-report ( -- ) reveal-report-attr dup wcolor 2000 ms attr!
+                    press-any-key$ wltype new-key drop ;
 
 : open-report ( -- ) unfocus
                      paper-report-window current-window !
