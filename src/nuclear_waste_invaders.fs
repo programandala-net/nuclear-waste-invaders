@@ -8,7 +8,7 @@
 \ A game for ZX Spectrum 128, written in Forth with Solo Forth
 \ (http://programandala.net/en.program.solo_forth.html).
 
-\ Copyright (C) 2016,2017 Marcos Cruz (programandala.net)
+\ Copyright (C) 2016,2017,2018 Marcos Cruz (programandala.net)
 
 \ =============================================================
 \ License
@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.127.0+201801031430" ;
+: version$ ( -- ca len ) s" 0.128.0+201801031538" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -837,7 +837,7 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. cconstant left-flying-invader-0
+..XX........XX.. cconstant left-flying-invader-0-sprite
 
   \ invader species 0, left flying, frame 1:
 
@@ -889,7 +889,7 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. cconstant right-flying-invader-0
+..XX........XX.. cconstant right-flying-invader-0-sprite
 
   \ invader species 0, right flying, frame 1:
 
@@ -941,7 +941,7 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. cconstant docked-invader-0
+..XX........XX.. cconstant docked-invader-0-sprite
 
   \ invader species 0, docked, frame 1:
 
@@ -983,7 +983,7 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-....X.....X..... cconstant left-flying-invader-1
+....X.....X..... cconstant left-flying-invader-1-sprite
 
   \ invader species 1, left flying, frame 1:
 
@@ -1035,7 +1035,7 @@ XXXX.XXX.XXXXXX.
 ...XXXXXXXXXXX..
 ...XXXXXXXXXXX..
 ...X.X.....X.X..
-.....X.....X.... cconstant right-flying-invader-1
+.....X.....X.... cconstant right-flying-invader-1-sprite
 
   \ invader species 1, right flying, frame 1:
 
@@ -1087,7 +1087,7 @@ XXXX.XXX.XXXXXX.
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-.....XX.XX...... cconstant docked-invader-1
+.....XX.XX...... cconstant docked-invader-1-sprite
 
   \ invader species 1, docked, frame 1:
 
@@ -1129,7 +1129,7 @@ XXXX.XXX.XXXXXX.
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... cconstant left-flying-invader-2
+....X.X..X.X.... cconstant left-flying-invader-2-sprite
 
   \ invader species 2, left flying, frame 1:
 
@@ -1181,7 +1181,7 @@ XXXX.XXX.XXXXXX.
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... cconstant right-flying-invader-2
+....X.X..X.X.... cconstant right-flying-invader-2-sprite
 
   \ invader species 2, right flying, frame 1:
 
@@ -1233,7 +1233,7 @@ XXXX.XXX.XXXXXX.
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... cconstant docked-invader-2
+....X.X..X.X.... cconstant docked-invader-2-sprite
 
   \ invader species 2, docked, frame 1:
 
@@ -1292,7 +1292,7 @@ cvariable mothership-frame
 .XX..XX..XX..XX.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X... cconstant flying-mothership
+...X........X... cconstant flying-mothership-sprite
 
   \ mothership, frame 1:
 
@@ -1347,7 +1347,7 @@ XXXXXXXXXXXXXXXX
 .XX..XX..XX..XX.
 XXXXXXXXXXXXXXXX
 .X.X.X.XX.X.X.X.
-X.X.X.X..X.X.X.X cconstant beaming-mothership
+X.X.X.X..X.X.X.X cconstant beaming-mothership-sprite
 
 2 1 udg-sprite
 
@@ -1372,7 +1372,7 @@ X.X.X.X..X.X.X.X
 ...XXXX.XX.XX..X
 .X..XX..XXXX....
 X....XXXXX...X..
-..X...XX...X..X. cconstant mothership-explosion-udg
+..X...XX...X..X. cconstant mothership-explosion-sprite
 
   \ -----------------------------------------------------------
   \ Projectile
@@ -1391,7 +1391,7 @@ X....XXXXX...X..
   ..X.....
   .....X..
   ..X.....
-  .....X.. cconstant projectile-frame-0
+  .....X.. cconstant projectile-sprite
 
   1 1 udg-sprite
 
@@ -1601,7 +1601,7 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX..XX..XX..XX..XX.XX.
 ...X.XXX.XXX.XXX.XXX.X..
-....X.X.X.X.X.X.X.X.X... cconstant tank
+....X.X.X.X.X.X.X.X.X... cconstant tank-sprite
 
 udg/tank 1 udg-sprite
 ..........X..X..........
@@ -1633,6 +1633,11 @@ udg/tank 1 udg-sprite
 ...X..XX..XX..XX..XX.X..
 ...X.X.X.X.X.X.X.X.X.X.. drop
 
+  \ -----------------------------------------------------------
+  \ Invader explosion
+
+  \ XXX TODO -- Move to the invaders section.
+
 2 1 udg-sprite
 
 .....X...X......
@@ -1642,7 +1647,7 @@ udg/tank 1 udg-sprite
 .XX.........XX..
 .....X....X.....
 ...X..X.X..X....
-..X..X...X..X... cconstant invader-explosion-udg
+..X..X...X..X... cconstant invader-explosion-sprite
 
   \ -----------------------------------------------------------
   \ Containers
@@ -1833,14 +1838,20 @@ create species #species /species * allot
   \   c2 = left flying sprite
   \   c3 = right flying sprite
 
-docked-invader-0
-left-flying-invader-0 right-flying-invader-0 0 set-species
+docked-invader-0-sprite
+left-flying-invader-0-sprite
+right-flying-invader-0-sprite
+0 set-species
 
-docked-invader-1
-left-flying-invader-1 right-flying-invader-1 1 set-species
+docked-invader-1-sprite
+left-flying-invader-1-sprite
+right-flying-invader-1-sprite
+1 set-species
 
-docked-invader-2
-left-flying-invader-2 right-flying-invader-2 2 set-species
+docked-invader-2-sprite
+left-flying-invader-2-sprite
+right-flying-invader-2-sprite
+2 set-species
 
   \ --------------------------------------------
 
@@ -2270,8 +2281,11 @@ columns udg/tank - 1- cconstant tank-max-x
   \ _c_ at the current cursor position.  Increment _col1_ and
   \ return it as _col2_.
 
-: left-tank-udg   ( -- c ) tank-frame c@ udg/tank * tank + ;
+: left-tank-udg   ( -- c )
+  tank-frame c@ udg/tank * tank-sprite + ;
+
 : middle-tank-udg ( -- c ) left-tank-udg 1+ ;
+
 : right-tank-udg  ( -- c ) left-tank-udg 2+ ;
 
 : tank-frame+ ( n1 -- n2 ) 1+ dup tank-frames < and ;
@@ -2665,13 +2679,14 @@ here  ' noop ,
       set-invader-mover ;
 
 : impel-invader ( -- ) invader~ ~x-inc @ set-invader-mover ;
+  \ Restore the moving action of the current invader, using
+  \ its current direction.
 
 : change-direction ( -- )
   invader~ ~x-inc @ negate set-invader-direction ;
 
 : turn-back ( -- ) change-direction set-flying-sprite ;
-  \ Make the current invader turn back.  Also activate it, in
-  \ case it's temporarily inactive at the wall of the building.
+  \ Make the current invader turn back.
 
 defer breaking-action ( -- )
   \ Action of the invaders that are breaking the wall.
@@ -2708,6 +2723,7 @@ defer breaking-action ( -- )
 
 : is-there-a-projectile? ( col row -- f )
   ocr first-projectile-frame last-projectile-frame between ;
+  \ XXX TODO -- Accelerate by ocr-ing only the projectiles.
 
 : .sky ( -- ) sky-attr attr! space ;
   \ Display a sky-color space.
@@ -2905,11 +2921,13 @@ variable mothership-time
   \ sprite of the mothership, and _n_ as the number of frames.
 
 : set-flying-mothership ( -- )
-  flying-mothership flying-mothership-frames set-mothership ;
+  flying-mothership-sprite flying-mothership-frames
+  set-mothership ;
   \ Make the mothership use its flying sprite.
 
 : set-beaming-mothership ( -- )
-  beaming-mothership beaming-mothership-frames set-mothership ;
+  beaming-mothership-sprite beaming-mothership-frames
+  set-mothership ;
   \ Make the mothership use its beaming sprite.
 
 : init-mothership ( -- )
@@ -3233,7 +3251,7 @@ constant visible-mothership-movements ( -- a )
 
 : mothership-on-fire ( -- )
   mothership-x @ mothership-y at-xy
-  mothership-explosion-udg .2x1-udg-sprite ;
+  mothership-explosion-sprite .2x1-udg-sprite ;
   \ Display the mothership on fire.
 
 : mothership-explosion ( -- )
@@ -3255,7 +3273,7 @@ constant visible-mothership-movements ( -- a )
   \ XXX TODO -- look for a better sound
 
 : invader-on-fire ( -- )
-  at-invader invader-explosion-udg .2x1-udg-sprite ;
+  at-invader invader-explosion-sprite .2x1-udg-sprite ;
   \ Display the current invader on fire.
 
 : -invader ( -- ) sky-attr attr! at-invader 2 spaces ;
@@ -3347,7 +3365,7 @@ constant visible-mothership-movements ( -- a )
   \ projectile.
 
 : projectile ( -- c )
-  projectile-frame-0 frames/projectile random + ;
+  projectile-sprite frames/projectile random + ;
   \ Return the UDG _c_ of a random frame of the projectile.
 
 [then]

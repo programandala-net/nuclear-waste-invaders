@@ -145,4 +145,5 @@ loop:
 
 == 2018-01-03
 
-- Regularize names of sprites.
+- Finish regularizing the names of the sprites. The static graphics
+  have no suffix.
