@@ -147,3 +147,8 @@ loop:
 
 - Finish regularizing the names of the sprites. The static graphics
   have no suffix.
+- Add `c@2+` to the library of Solo Forth and use it.
+- Fix `end-report`: display the message after the mandatory pause.
+- Fix: a flying invader that is at its former docking position can
+  dodge when a projectile is in front of it, turning back off the
+  screen.

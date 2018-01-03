@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.128.0+201801031602" ;
+: version$ ( -- ca len ) s" 0.129.0+201801031951" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -77,7 +77,7 @@ here 512 dup allot !> /stringer !> stringer empty-stringer
 
 need [if] need ~~
 need warn.message need order need see need rdepth need where
-need evaluate need ?depth
+need evaluate need ?depth need see-colon-body>
 
   \ --------------------------------------------
   cr .(   -Definers) ?depth \ {{{2
@@ -2600,6 +2600,13 @@ variable invader-time
   \ row3_, below it, _col3 row3_, and in front of it, _col1
   \ row1_.
 
+defer break-the-wall ( col1 row1 col2 row2 -- )
+  \ Display the broken wall at the given coordinates of the
+  \ broken brick above the invader, _col3 row3_, and below it,
+  \ _col2 row2_, and in front of it, _col1 row1_.
+  \ The action of this deferred word is set to `break-left-wall`
+  \ or `break-right-word`.
+
 : break-left-wall ( col1 row1 col2 row2 -- )
   at-xy broken-top-left-brick .1x1sprite
   at-xy broken-bottom-left-brick .1x1sprite
@@ -2622,34 +2629,28 @@ variable invader-time
 
 : (break-wall ( col -- )
   broken-bricks-coordinates broken-wall-attr attr!
-  flying-to-the-left? if   break-right-wall exit
-                      then break-left-wall  ;
+  break-the-wall ;
   \ Display the broken wall of the building. The wall is at
-  \ column _col_.
-  \
-  \ XXX TODO -- Don't check `flying-to-the-left?`. Use the chek
-  \ already done in `break-wall` to pass the corresponding xt,
-  \ for speed.
+  \ column _col_, and word _xt_ is used to manage the breaking.
 
 : break-left-container ( -- )
   invader~ ~x c@ 2+ invader~ ~y c@ at-xy
   broken-top-right-container .1x1sprite
   invader~ ~x c@1+ invader~ ~y c@1+ at-xy
   broken-bottom-left-container .1x1sprite ;
-  \ Broke the container on its left side.
+  \ Break the the left side of the container.
 
 : break-right-container ( -- )
   invader~ ~x c@1- invader~ ~y c@ at-xy
   broken-top-left-container .1x1sprite
   invader~ ~x c@ invader~ ~y c@1+ at-xy
   broken-bottom-right-container .1x1sprite ;
-  \ Broke the container on its right side.
+  \ Break the the right side of the container.
 
 : break-container ( -- )
   container-attr attr!
   flying-to-the-left? if   break-right-container exit
                       then break-left-container  ;
-  \ Broke the container.
 
 : break-container? ( -- f )
   invader~ ~x c@ flying-to-the-left?
@@ -2697,17 +2698,19 @@ defer breaking-action ( -- )
   \ XXX TMP --
 
 : hit-wall? ( -- f )
-  invader~ ~x c@
+  invader~ ~x
   [ udg/invader 2 = ]
-  [if]   2+ flying-to-the-left? 3 * +
+  [if]   c@ 2+ flying-to-the-left? 3 * +
   [else] [ udg/invader 1 = ]
-         [if]   1+ flying-to-the-left? 2* +
-         [else] udg/invader + flying-to-the-left?
-                [ udg/invader 1+ ] 1literal * +
+         [if]   c@1+ flying-to-the-left? 2* +
+         [else] c@ udg/invader + flying-to-the-left?
+                [ udg/invader 1+ ] cliteral * +
          [then]
   [then]
   invader~ ~y c@ ocr brick = ;
   \ Has the current invader hit the wall of the building?
+  \
+  \ XXX TODO -- Use `c@2+`.
 
 : ?damages ( -- )
   hit-wall? if hit-wall exit then
@@ -2801,25 +2804,24 @@ cvariable cure-factor  20 cure-factor c!
 
 : new-breach ( -- ) breachs c1+! battle-breachs c1+! ;
 
+: prepare-wall ( -- col )
+  invader~ ~x
+  flying-to-the-left? if   c@1-
+                           ['] break-right-wall
+                      else c@ [ udg/invader 2 = ]
+                              [if]   2+
+                              [else] udg/invader + [then]
+                           ['] break-left-wall
+                      then ['] break-the-wall defer! ;
+  \ Prepare the wall to break: Return the column _col_ of the
+  \ wall the current invader has hit, and set the action of
+  \ `break-the-wall` accordingly.
+  \
+  \ XXX TODO -- Use `c@2+`.
+
 : break-wall ( -- )
-  invader~ ~x c@ flying-to-the-left? if 1- else 2+ then
-  (break-wall new-breach impel-invader ;
-
-  \ XXX TODO -- Remove `if`, calculate.
-
-  \ left?
-  \ -1 --> +2 +
-  \  0 --> -1 +
-  \ -1 --> -2 -
-  \  0 --> +1 -
-
-  \ right?
-  \  0 --> +2 +
-  \ -1 --> -1 +
-  \  0 --> -2 -
-  \ -1 --> +1 -
-
-  \ Actually 2 is `udg/invader`.
+  prepare-wall (break-wall new-breach impel-invader ;
+  \ Break the wall the current invader has hit.
 
 : ?break-wall ( -- ) invaders c@ random ?exit break-wall ;
   \ Break the wall randomly, depending on the number of
@@ -2833,7 +2835,7 @@ cvariable cure-factor  20 cure-factor c!
   \ Action of the invaders that are breaking the wall.
 
 : last-invader? ( -- f )
-  get-invader [ max-invaders 1- ] 1literal = ;
+  get-invader [ max-invaders 1- ] cliteral = ;
   \ Is the current invader the last one?
 
 : alive? ( -- f ) invader~ ~stamina c@ 0<> ;
@@ -2910,7 +2912,7 @@ variable mothership-time
                 mothership-range-max-x
            then random-between ;
   \ Return random initial horizontal location _n_ of the
-  \ mothership.
+  \ mothership, out of the screen.
 
 : place-mothership ( -- )
   mothership-x0 mothership-x ! mothership-y0 c!> mothership-y ;
@@ -2982,23 +2984,35 @@ variable mothership-time
 
 : (.mothership ( -- )
   mothership-attr attr! mothership-udg .2x1-udg-sprite ;
+  \ Display the mothership, which is fully visible, at the
+  \ cursor coordinates.
 
 : .mothership ( -- ) at-mothership (.mothership ;
+  \ Display the mothership, which is fully visible, at its
+  \ coordinates.
 
 : (.visible-right-mothership ( -- )
   mothership-attr attr!
   [ mothership-udg udg/mothership + 1- ] cliteral emit-udg ;
+  \ Display the mothership, which is partially visible (only its
+  \ right side is visible) at the cursor coordinates.
 
 : .visible-right-mothership ( -- )
   whole-mothership-min-x mothership-y at-xy
   (.visible-right-mothership ;
+  \ Display the mothership, which is partially visible (only its
+  \ right side is visible) at its proper coordinates.
 
 : (.visible-left-mothership ( -- )
   mothership-attr attr! mothership-udg emit-udg ;
+  \ Display the mothership, which is partially visible (only its
+  \ left side is visible) at the cursor coordinates.
 
 : .visible-left-mothership ( -- )
   visible-mothership-max-x mothership-y at-xy
   (.visible-left-mothership ;
+  \ Display the mothership, which is partially visible (only its
+  \ left side is visible) at its proper coordinates.
 
 : .visible-mothership ( -- )
   mothership-x @ case
@@ -3006,11 +3020,14 @@ variable mothership-time
     visible-mothership-max-x of .visible-left-mothership  endof
     .mothership
   endcase ;
+  \ Display the mothership, which is fully or partially visible.
 
 : right-of-mothership ( -- col row )
   mothership-x @ [ udg/mothership 2 = ] [if]   2+
                                         [else] udg/mothership +
                                         [then] mothership-y ;
+  \ Return coordinates _col row_ of the position at the right
+  \ of the mothership.
 
 : (move-visible-mothership-right ( -- )
   mothership-x @ case
@@ -3161,6 +3178,8 @@ defer beam ( -- )
 
 : left-of-mothership ( -- col row )
   mothership-x @ 1- mothership-y ;
+  \ Return coordinates _col row_ of the position at the left
+  \ of the mothership.
 
 : (move-visible-mothership-left ( -- )
   mothership-x @ case
