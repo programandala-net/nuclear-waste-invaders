@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-03
+:revdate: 2018-01-04
 
 Older first:
 
@@ -147,6 +147,3 @@ loop:
 
 - Finish regularizing the names of the sprites. The static graphics
   have no suffix.
-- Fix: a flying invader that is at its former docking position can
-  dodge when a projectile is in front of it, turning back off the
-  screen.

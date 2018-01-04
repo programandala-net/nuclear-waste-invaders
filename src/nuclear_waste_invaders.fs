@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.130.1+201801032209" ;
+: version$ ( -- ca len ) s" 0.130.2+201801041835" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2665,25 +2665,30 @@ defer break-the-wall ( col1 row1 col2 row2 -- )
 : healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
   \ Is the current invader healthy? Has it got maximum stamina?
 
-defer move-invader-left ( -- )
+defer invader-left-move-action ( -- )
 
-defer move-invader-right ( -- )
+defer invader-right-move-action ( -- )
 
-      ' move-invader-left ,
+      ' invader-left-move-action ,
 here  ' noop ,
-      ' move-invader-right ,
-      constant invader-movements ( -- a )
+      ' invader-right-move-action ,
+      constant invader-move-actions ( a )
       \ Execution table.
 
-: set-invader-mover ( -1..1 -- )
-  invader-movements array> @ invader~ ~action ! ;
+: set-invader-move-action ( -1..1 -- )
+  invader-move-actions array> @ invader~ ~action ! ;
+  \ Set the invader action to the movement corresponding to
+  \ the given x-coordinate increment _-1..1_.
 
 : set-invader-direction ( -1..1 -- )
   dup 0< c!> flying-to-the-left?
   dup invader~ ~x-inc !
-      set-invader-mover ;
+      set-invader-move-action ;
+  \ Set the invader direction corresponding to the given
+  \ x-coordinate increment _-1..1_.
 
-: impel-invader ( -- ) invader~ ~x-inc @ set-invader-mover ;
+: impel-invader ( -- )
+  invader~ ~x-inc @ set-invader-move-action ;
   \ Restore the moving action of the current invader, using
   \ its current direction.
 
@@ -2719,9 +2724,6 @@ defer breaking-action ( -- )
   break-container? dup catastrophe ! 0exit break-container ;
   \ Manage the possible damages caused by the current invader.
 
-: at-home? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ = ;
-  \ Is the current invader at its start position?
-
 : undock ( -- ) invader~ ~initial-x-inc @ set-invader-direction
                 set-flying-sprite ;
   \ Undock the current invader.
@@ -2748,18 +2750,22 @@ defer ?dock ( -- )
   \ If the current invader has reached the wall, the containers
   \ or the dock, manage the situation.
 
+: undocked? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ <> ;
+  \ Is the current invader not at the dock, i.e. not at its
+  \ start position?
+
 :noname ( -- )
-  left-of-invader is-there-a-projectile?
-  if turn-back exit then
+  undocked? if left-of-invader is-there-a-projectile?
+               if turn-back exit then then
   -1 invader~ ~x c+! at-invader .invader .sky ?flying ;
-  ' move-invader-left defer!
+  ' invader-left-move-action defer!
   \ Move the current invader, which is flying to the left.
 
 :noname ( -- )
-  right-of-invader is-there-a-projectile?
-  if turn-back exit then
+  undocked? if right-of-invader is-there-a-projectile?
+               if turn-back exit then then
   at-invader .sky .invader 1 invader~ ~x c+! ?flying ;
-  ' move-invader-right defer!
+  ' invader-right-move-action defer!
   \ Move the current invader, which is flying to the right.
 
 cvariable cure-factor  20 cure-factor c!
@@ -2798,11 +2804,12 @@ cvariable cure-factor  20 cure-factor c!
   ['] docked-action invader~ ~action ! set-docked-sprite ;
   \ Dock the current invader.
 
-:noname ( -- ) at-home? 0exit dock ; ' ?dock defer!
-  \ If the current invader is at home, dock it.
-
 : docked? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ = ;
-  \ Is the current invader docked?
+  \ Is the current invader at the dock, i.e. at its start
+  \ position?
+
+:noname ( -- ) docked? 0exit dock ; ' ?dock defer!
+  \ If the current invader is at the dock, dock it.
 
 : new-breach ( -- ) breachs c1+! battle-breachs c1+! ;
 
