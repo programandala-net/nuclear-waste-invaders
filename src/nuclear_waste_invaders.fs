@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.130.2+201801041835" ;
+: version$ ( -- ca len ) s" 0.131.0+201801041910" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2750,23 +2750,25 @@ defer ?dock ( -- )
   \ If the current invader has reached the wall, the containers
   \ or the dock, manage the situation.
 
-: undocked? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ <> ;
-  \ Is the current invader not at the dock, i.e. not at its
-  \ start position?
+: docked? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ = ;
+  \ Is the current invader at the dock, i.e. at its start
+  \ position?
 
 :noname ( -- )
-  undocked? if left-of-invader is-there-a-projectile?
-               if turn-back exit then then
+  left-of-invader is-there-a-projectile?
+  if docked? ?exit turn-back exit then
   -1 invader~ ~x c+! at-invader .invader .sky ?flying ;
   ' invader-left-move-action defer!
-  \ Move the current invader, which is flying to the left.
+  \ Move the current invader, which is flying to the left,
+  \ unless a projectile is at the left.
 
 :noname ( -- )
-  undocked? if right-of-invader is-there-a-projectile?
-               if turn-back exit then then
+  right-of-invader is-there-a-projectile?
+  if docked? ?exit turn-back exit then
   at-invader .sky .invader 1 invader~ ~x c+! ?flying ;
   ' invader-right-move-action defer!
-  \ Move the current invader, which is flying to the right.
+  \ Move the current invader, which is flying to the right,
+  \ unless a projectile is at the right.
 
 cvariable cure-factor  20 cure-factor c!
   \ XXX TMP -- for testing
@@ -2803,10 +2805,6 @@ cvariable cure-factor  20 cure-factor c!
 : dock ( -- )
   ['] docked-action invader~ ~action ! set-docked-sprite ;
   \ Dock the current invader.
-
-: docked? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ = ;
-  \ Is the current invader at the dock, i.e. at its start
-  \ position?
 
 :noname ( -- ) docked? 0exit dock ; ' ?dock defer!
   \ If the current invader is at the dock, dock it.
