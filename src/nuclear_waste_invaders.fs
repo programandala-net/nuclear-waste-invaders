@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.132.0+201801041958" ;
+: version$ ( -- ca len ) s" 0.132.1+201801042315" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1993,7 +1993,7 @@ cconstant invader-bottom-y
 : init-invader ( c1 c2 c3 c4 c0 -- )
   set-invader
   invader~ ~stamina coff
-  ['] noop invader~ ~action !
+  invader~ ~action off
   species#>~ invader~ ~species !
   invader~ ~initial-x-inc ! invader~ ~x-inc off
   dup invader~ ~initial-x c!
@@ -2998,7 +2998,7 @@ variable mothership-time
 
 : (.visible-right-mothership ( -- )
   mothership-attr attr!
-  [ mothership-udg udg/mothership + 1- ] cliteral emit-udg ;
+  mothership-udg [ udg/mothership 1- ] cliteral + emit-udg ;
   \ Display the mothership, which is partially visible (only its
   \ right side is visible) at the cursor coordinates.
 
@@ -3322,8 +3322,7 @@ constant visible-mothership-movements ( -- a )
 
 : explode ( -- )
   invader-destroy-points update-score invader-explosion
-  invaders c1-! invader~ ~stamina coff
-  ['] noop invader~ ~action ! ;
+  invaders c1-! invader~ ~stamina coff invader~ ~action off ;
   \ The current invader explodes.
   \
   \ XXX TODO -- Set an action to show the explosion.
@@ -3349,14 +3348,15 @@ constant visible-mothership-movements ( -- a )
                            wounded attacking? 0exit retreat ;
   \ The current invader has been impacted by the projectile.
   \ It explodes or retreats.
+  \
+  \ XXX TODO -- Improve the logic: First wound, then check
+  \ death.
 
 : invader-impacted ( -- )
-  get-invader >r impacted-invader set-invader (invader-impacted
-              r> set-invader ;
+  get-invader impacted-invader set-invader (invader-impacted
+  set-invader ;
   \ An invader has been impacted by the projectile.
   \ Make it the current one and manage it.
-  \
-  \ XXX TODO -- Don't use the return stack.
 
 : mothership-impacted? ( -- f )
   [pixel-projectile]
