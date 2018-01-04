@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-04
+:revdate: 2018-01-05
 
 Older first:
 
@@ -134,15 +134,6 @@ loop:
 
 - Remove `invader#` and use only the corresponding data addresses?
 
-== 2018-01-01, 2018-01-04
-
-Fix: wall detection fails after any invader has been wounded.  The bug
-seems to be caused by `turn-back`.
-
-The following words have been tested and discarded as causes of the
-bug: `explode`, `wounded`, `set-flying-sprite`. I.e. the bug remains
-when those words are deactivated.
-
 == 2018-01-03
 
 - Finish regularizing the names of the sprites. The static graphics
@@ -152,5 +143,4 @@ when those words are deactivated.
 
 - Make the current projectiles harmless to the mothership and create a
   second type of projectiles to destroy it.
-- Fix: `flying-to-the-left?` is not updated in `set-invader`.
 - Use `3*`.

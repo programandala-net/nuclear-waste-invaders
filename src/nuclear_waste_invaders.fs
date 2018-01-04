@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.132.2+201801042331" ;
+: version$ ( -- ca len ) s" 0.132.3+201801050015" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1888,7 +1888,13 @@ create invaders-data /invaders allot
 : invader#>~ ( n -- a ) /invader * invaders-data + ;
   \ Convert invader number _n_ to its data address _a_.
 
-: set-invader ( n -- ) dup invader# c! invader#>~ !> invader~ ;
+0 constant flying-to-the-left? ( f )
+  \ A configurable constant containing a flag:
+  \ Is the current invader flying to the left?
+
+: set-invader ( n -- )
+  dup invader# c! invader#>~ !> invader~
+  invader~ ~x-inc @ 0< !> flying-to-the-left? ;
   \ Set invader _n_ as the current invader.
 
 : get-invader ( -- n ) invader# c@ ;
@@ -1954,10 +1960,6 @@ cconstant invader-bottom-y
   \ XXX TMP -- for debugging
 
 3 cconstant max-stamina
-
-0 constant flying-to-the-left? ( f )
-  \ A configurable constant containing a flag:
-  \ Is the current invader flying to the left?
 
 : set-flying-sprite ( -- )
   invader~ ~species @ dup
