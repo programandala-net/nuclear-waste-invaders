@@ -119,10 +119,6 @@ loop:
 
 - Make the mothership cure invaders.
 
-== 2017-12-20
-
-- Improve the top and the bottom of the beam.
-
 == 2017-12-22
 
 - Make launching the beam a bit random.
@@ -147,3 +143,8 @@ loop:
 
 - Finish regularizing the names of the sprites. The static graphics
   have no suffix.
+
+== 2018-01-04
+
+- Make the current projectiles harmless to the mothership and create a
+  second type of projectiles to destroy it.

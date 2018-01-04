@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.131.0+201801041910" ;
+: version$ ( -- ca len ) s" 0.132.0+201801041958" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -98,7 +98,7 @@ need case need 0exit need +perform need do need abort"
   \ --------------------------------------------
   cr .(   -Memory) ?depth \ {{{2
 
-need c+! need c-! need c1+! need c1-!  need coff
+need c+! need c-! need c1+! need c1-! need ?c1-! need coff
 need dzx7t need bank-start need c@1+ need c@1- need c@2+
 
   \ --------------------------------------------
@@ -3454,9 +3454,8 @@ cvariable trigger-delay-counter trigger-delay-counter coff
 : projectile-left? ( -- f ) xdepth 0<> ;
   \ Is there any projectile left?
 
-: update-trigger ( -- )
-  trigger-delay-counter c@1- 0 max trigger-delay-counter c! ;
-  \ Decrement the trigger delay. The minimum is zero.
+: update-trigger ( -- ) trigger-delay-counter ?c1-! ;
+  \ Decrement the trigger delay, if it's not zero.
 
 : trigger-ready? ( -- f ) trigger-delay-counter c@ 0= ;
   \ Is the trigger ready?
