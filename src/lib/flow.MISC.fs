@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201712111905
+  \ Last modified: 201801041922
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -26,7 +26,8 @@
 
 ( +perform base-execute call don't executions )
 
-[unneeded] +perform ( a n -- )
+[unneeded] +perform
+
 ?\ : +perform ( a n -- ) cells + perform ;
 
   \ doc{
@@ -39,11 +40,12 @@
   \
   \ If the execution token is zero, do nothing.
   \
-  \ See: `perform`, `execute`.
+  \ See: `perform`, `execute`, `array>`.
   \
   \ }doc
 
 [unneeded] base-execute
+
 ?\ : base-execute ( xt n -- ) base @ >r execute r> base ! ;
 
   \ Credit:
@@ -391,7 +393,20 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \
   \ }doc
 
-( cond thens )
+( cond thens orif andif )
+
+  \ Credit of the `cond thens` structure, `orif` and `andif`:
+  \
+  \ Subject: Re: Multiple WHILE's
+  \ From: Wil Baden <neil...@earthlink.net>
+  \ Newsgroups: comp.lang.forth
+  \ Message-ID: <260620020959020469%neilbawd@earthlink.net>
+  \ Date: Wed, 26 Jun 2002 16:58:18 GMT
+  \
+  \ The usage of `cs-mark` and `cs-test` was borrowed from:
+  \
+  \ Control-Flow Stack Extensions
+  \ http://dxforth.netbay.com.au/cfsext.html
 
 [unneeded] cond ?( need cs-mark need thens
 
@@ -427,7 +442,7 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \   thens ;
   \ ----
 
-  \ See: `case`, `cs-mark`.
+  \ See: `case`, `cs-mark`, `andif`, `orif`.
   \
   \ }doc
 
@@ -457,22 +472,89 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \ structures, but it's also the end of the `cond` ..
   \ ``thens`` structure.
   \
-  \ See: `cs-mark`, `cs-test`.
+  \ See: `cs-mark`, `cs-test`, `andif`, `orif`.
   \
   \ }doc
 
-  \ Credit of the `cond thens` structure:
+[unneeded] andif ?(
+
+: andif
+  \ Compilation: ( C: -- orig )
+  \ Run-time:    ( f -- )
+  postpone dup postpone if postpone drop
+  ; immediate compile-only ?)
+
+  \ doc{
   \
-  \ Subject: Re: Multiple WHILE's
-  \ From: Wil Baden <neil...@earthlink.net>
-  \ Newsgroups: comp.lang.forth
-  \ Message-ID: <260620020959020469%neilbawd@earthlink.net>
-  \ Date: Wed, 26 Jun 2002 16:58:18 GMT
+  \ andif                         "and-if"
+  \   Compilation: ( C: -- orig )
+  \   Run-time:    ( f -- )
   \
-  \ The usage of `cs-mark` and `cs-test` was borrowed from:
+  \ Short-circuit `and` variant of `if`.
   \
-  \ Control-Flow Stack Extensions
-  \ http://dxforth.netbay.com.au/cfsext.html
+  \ ``andif`` is an `immediate` and `compile-only` word.
+  \
+  \ Usage example:
+
+  \ ----
+  \ : the-end? ( -- f ) cond  won-battle?     andif
+  \                           found-treasure? andif
+  \                           kill-dragon?    andif
+  \                     thens ;
+  \ ----
+
+  \ Compare with the following equivalent code, where all three
+  \ conditions are always checked:
+
+  \ ----
+  \ : the-end? ( -- f ) won-battle?
+  \                     found-treasure? and
+  \                     kill-dragon?    and ;
+  \ ----
+
+  \ See: `orif`, `cond`, `thens`.
+  \
+  \ }doc
+
+[unneeded] orif ?(
+
+: orif
+  \ Compilation: ( C: -- orig )
+  \ Run-time:    ( f -- )
+  postpone dup postpone 0= postpone if postpone drop
+  ; immediate compile-only ?)
+
+  \ doc{
+  \
+  \ orif                          "or-if"
+  \   Compilation: ( C: -- orig )
+  \   Run-time:    ( f -- )
+  \
+  \ Short-circuit `or` variant of `if`.
+  \
+  \ ``orif`` is an `immediate` and `compile-only` word.
+  \
+  \ Usage example:
+
+  \ ----
+  \ : is-alphanum? ( c -- f ) cond  dup is-lower? orif
+  \                                 dup is-upper? orif
+  \                                 dup is-digit?
+  \                           thens nip ;
+  \ ----
+
+  \ Compare with the following equivalent code, where all three
+  \ conditions are always checked:
+
+  \ ----
+  \ : is-alphanum? ( c -- f ) dup  is-lower?
+  \                           over is-upper? or
+  \                           swap is-digit? or ;
+  \ ----
+
+  \ See: `andif`, `cond`, `thens`.
+  \
+  \ }doc
 
   \ ===========================================================
   \ Change log
@@ -548,5 +630,9 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \ `cs-test`. Update the change log with the old changes of
   \ the former modules. Rewrite `?repeat`. Add `0repeat`.
   \ Improve documentation.
+  \
+  \ 2018-01-03: Fix documentation layout.
+  \
+  \ 2018-01-04: Improve documentation. Add `andif` and `orif`.
 
   \ vim: filetype=soloforth
