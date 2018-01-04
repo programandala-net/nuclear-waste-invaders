@@ -152,4 +152,5 @@ when those words are deactivated.
 
 - Make the current projectiles harmless to the mothership and create a
   second type of projectiles to destroy it.
-  
+- Fix: `flying-to-the-left?` is not updated in `set-invader`.
+- Use `3*`.

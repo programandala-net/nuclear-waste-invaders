@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.132.1+201801042315" ;
+: version$ ( -- ca len ) s" 0.132.2+201801042331" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1955,12 +1955,9 @@ cconstant invader-bottom-y
 
 3 cconstant max-stamina
 
-0 cconstant flying-to-the-left? ( f )
+0 constant flying-to-the-left? ( f )
+  \ A configurable constant containing a flag:
   \ Is the current invader flying to the left?
-  \
-  \ XXX REMARK -- This constant is used as a flag, but it
-  \ contains an 8-bit value. Therefore the value for true is
-  \ 255, not -1.
 
 : set-flying-sprite ( -- )
   invader~ ~species @ dup
@@ -2681,7 +2678,7 @@ here  ' noop ,
   \ the given x-coordinate increment _-1..1_.
 
 : set-invader-direction ( -1..1 -- )
-  dup 0< c!> flying-to-the-left?
+  dup 0< !> flying-to-the-left?
   dup invader~ ~x-inc !
       set-invader-move-action ;
   \ Set the invader direction corresponding to the given
