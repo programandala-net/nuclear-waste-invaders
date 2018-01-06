@@ -148,4 +148,3 @@ loop:
 
 - Improve mothership explosion: Change the color for every frame.
 - Improve mothership explosion: Make frames a logical sequence.
-- Make beaming an independent action.

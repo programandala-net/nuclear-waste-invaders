@@ -5,6 +5,8 @@
 
 ( nuclear-waste-invaders )
 
+\ Nuclear Waste Invaders
+
 \ A game for ZX Spectrum 128, written in Forth with Solo Forth
 \ (http://programandala.net/en.program.solo_forth.html).
 
@@ -33,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.134.0+201801061358" ;
+: version$ ( -- ca len ) s" 0.135.0+201801061807" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2378,9 +2380,9 @@ constant tank-movements ( -- a )
 
 : schedule-tank ( -- ) ticks tank-interval + tank-time ! ;
 
-: driving ( -- ) tank-time @ past? 0exit
-                 tank-movement perform
-                 schedule-tank ;
+: driving ( -- )
+  tank-time @ past? 0exit \ exit if too soon
+  tank-movement perform schedule-tank ;
 
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
@@ -2886,7 +2888,7 @@ cvariable cure-factor  20 cure-factor c!
   ticks invader-interval + invader-time ! ;
 
 : manage-invaders ( -- )
-  invader-time @ past? 0exit
+  invader-time @ past? 0exit \ exit if too soon
   alive? if invader~ ~action perform then
   next-invader schedule-invader ;
   \ If it's the right time, move the current invader, then
@@ -2898,11 +2900,27 @@ cvariable cure-factor  20 cure-factor c!
 defer mothership-action ( -- )
   \ The current action of the mothership.
 
+: mothership-action! ( xt -- ) ['] mothership-action defer! ;
+  \ Set _xt_ as the current action of the mothership.
+
 defer invisible-mothership-action ( -- )
-  \ Action of the mothership when it's invisible.
+  \ Action of the flying mothership when it's invisible.
+
+: set-invisible-mothership-action ( -- )
+  ['] invisible-mothership-action mothership-action! ;
+  \ Set `invisible-mothership-action` as the current action of
+  \ the mothership.
 
 defer visible-mothership-action ( -- )
-  \ Action of the mothership when it's visible.
+  \ Action of the flying mothership when it's visible.
+
+: set-visible-mothership-action ( -- )
+  ['] visible-mothership-action mothership-action! ;
+  \ Set `visible-mothership-action` as the current action of
+  \ the mothership.
+
+defer beaming-mothership-action ( -- )
+  \ Action of the beaming mothership.
 
 1 cconstant mothership-y0
   \ Default y coordinate of the mothership.
@@ -2983,8 +3001,7 @@ variable mothership-time
   \ Make the mothership use its exploding sprite.
 
 : init-mothership ( -- )
-  set-flying-mothership-sprite
-  ['] invisible-mothership-action ['] mothership-action defer!
+  set-flying-mothership-sprite set-invisible-mothership-action
   mothership-stopped off mothership-time off
   place-mothership start-mothership ;
 
@@ -3107,11 +3124,8 @@ cvariable beam-last-y  \ row
 cvariable beam-invader
   \ Number of the next invader to be created by the beam.
 
-defer beam ( -- )
-  \ Manage the beam.
-
 : set-beam ( row1 row2 xt -- )
-  ['] beam defer!
+  mothership-action!
   2dup beam-last-y c! dup beam-first-y c! beam-y !
        swap - polarity beaming ! ;
   \ Set the beam to grow or shrink from _row1_ to _row2_ with
@@ -3142,14 +3156,14 @@ defer beam ( -- )
 : reach-invader? ( -- f ) beam-y @ layer-y? ;
   \ Has the beam reached the row of an invader's layer?
 
+: update-beam ( -- ) beaming @ beam-y +! ;
+
 : (beaming-up? ( -- )
   beam-y @ beam-last-y c@ beam-first-y c@ between ;
   \ Is the beam still shrinking?
 
-: beaming-up? ( -- 1|0|-1 )
-  beaming @ dup beam-y +! (beaming-up? and dup beaming ! ;
-  \ Update variables of a shrinking beam. Also update `beaming`
-  \ accordingly and return a copy of its content.
+: beaming-up? ( -- f ) update-beam (beaming-up? ;
+  \ Update a shrinking beam. Is it still shrinking?
 
 : (beam-up ( -- )
   .mothership
@@ -3157,15 +3171,17 @@ defer beam ( -- )
   mothership-x @ beam-y @ xy>attra ! ;
   \ Shrink the beam towards de mothership one character.
 
-: beam-up ( -- ) (beam-up beaming-up? ?exit
-                 set-flying-mothership-sprite .mothership
-                 create-squadron ;
-  \ Manage the beam, which is shrinking up to the mothership.
-  \ If it's finished, activate the new invaders.
+: beaming-up-mothership-action ( -- )
+  (beam-up beaming-up? ?exit
+  create-squadron
+  set-flying-mothership-sprite set-visible-mothership-action ;
+  \ Action of the mothership when the beam is shrinking.
 
 : beam-off ( -- )
-  invader-min-y 1+ mothership-y 1+ ['] beam-up set-beam ;
-  \ Turn the mothership's beam off, i.e. start shrinking it.
+  invader-min-y 1+ mothership-y 1+
+  ['] beaming-up-mothership-action set-beam ;
+  \ Turn the mothership's beam off, i.e. start shrinking it
+  \ back to the mothership.
 
 : create-invader ( -- )
   beam-attr attr! beam-invader dup c@ .parade-invader c1+! ;
@@ -3175,17 +3191,16 @@ defer beam ( -- )
   beam-y @ beam-first-y c@ beam-last-y c@ between ;
   \ Is the beam still growing?
 
-: beaming-down? ( -- 1|0|-1 )
-  beaming @ dup beam-y +! (beaming-down? and dup beaming ! ;
-  \ Update variables of a growing beam. Also update `beaming`
-  \ accordingly and return a copy of its content.
+: beaming-down? ( -- f ) update-beam (beaming-down? ;
+  \ Update a growing beam. Is it still growing?
 
 : (beam-down ( -- )
   .mothership beam-cell-attr mothership-x @ beam-y @ xy>attra !
   reach-invader? if create-invader then ;
   \ Grow the beam towards the ground one character.
 
-: beam-down ( -- ) (beam-down beaming-down? ?exit beam-off ;
+: beaming-down-mothership-action ( -- )
+  (beam-down beaming-down? ?exit beam-off ;
   \ Manage the beam, which is growing down to the ground.
   \ If it's finished, display the new invaders and start
   \ shrinking the beam.
@@ -3198,8 +3213,10 @@ defer beam ( -- )
 : beam-on ( -- )
   set-beaming-mothership-sprite
   first-new-invader beam-invader c!
-  mothership-y 1+ invader-min-y 1+ ['] beam-down set-beam ;
-  \ Turn the mothership's beam on.
+  mothership-y 1+ invader-min-y 1+
+  ['] beaming-down-mothership-action set-beam ;
+  \ Turn the mothership's beam on, i.e. start launching it
+  \ towards the ground.
 
 : need-help? ( n -- f ) 0= dup 0exit beam-on ;
   \ If number of invaders _n_ is zero turn the beam on and
@@ -3289,22 +3306,16 @@ constant visible-mothership-movements ( -- a )
 
 :noname ( -- )
   stopped-mothership? if ?start-mothership exit then
-  beaming @ if beam exit then
-    \ XXX TODO -- Make beaming an action.
   move-visible-mothership
-  visible-mothership? 0= if ['] invisible-mothership-action
-                            ['] mothership-action defer!  exit
-                         then
+  visible-mothership? 0=
+  if set-invisible-mothership-action exit then
   ?stop-mothership ; ' visible-mothership-action defer!
   \ Action of the mothership when it's visible.
 
 :noname ( -- )
-  advance-mothership
-  visible-mothership? if .visible-mothership
-                         ['] visible-mothership-action
-                         ['] mothership-action defer!  exit
-                      then
-  mothership-in-range? ?exit mothership-turns-back ;
+  advance-mothership visible-mothership?
+  if   .visible-mothership set-visible-mothership-action exit
+  then mothership-in-range? ?exit mothership-turns-back ;
   ' invisible-mothership-action defer!
   \ Action of the mothership when it's invisible.
 
@@ -3314,8 +3325,8 @@ constant visible-mothership-movements ( -- a )
   ticks mothership-interval + mothership-time ! ;
 
 : manage-mothership ( -- )
-  mothership-y            0exit
-  mothership-time @ past? 0exit
+  mothership-y            0exit \ exit if destroyed
+  mothership-time @ past? 0exit \ exit if too soon
   mothership-action schedule-mothership ;
 
   \ ===========================================================
@@ -3337,7 +3348,8 @@ variable mothership-explosion-time
   mothership-explosion-time ! ;
 
 : exploding-mothership-action ( -- )
-  .mothership  mothership-explosion-time @ past? 0exit
+  .mothership
+  mothership-explosion-time @ past? 0exit \ exit if too soon
   -mothership  0 c!> mothership-y ;
   \ Action of the mothership when it's exploding.
 
@@ -3346,7 +3358,7 @@ variable mothership-explosion-time
 
 : set-exploding-mothership ( -- )
   set-exploding-mothership-sprite
-  ['] exploding-mothership-action ['] mothership-action defer!
+  ['] exploding-mothership-action mothership-action!
   mothership-bang mothership-bonus update-score
   schedule-mothership-explosion ;
   \ The mothership has been impacted. Set it accordingly.
@@ -3835,9 +3847,9 @@ localized-string about-next-location$ ( -- ca len )
 
 : beon ( -- ) beam-on ;
 : beoff ( -- ) beam-off ;
-: beu ( -- ) beam-up ;
-: bed ( -- ) beam-down ;
-: be ( -- ) beam ;
+: beu ( -- ) beaming-up-mothership-action ;
+: bed ( -- ) beaming-down-mothership-action ;
+: be ( -- ) beaming-mothership-action ;
 
 : test-be ( -- )
   mothership-x off .visible-mothership beam-on m ;
