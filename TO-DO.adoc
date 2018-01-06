@@ -86,11 +86,11 @@ remove duplicated frames from the UDG set.
 Improve `battle-bonus`: Make the breach penalty depend on the altitude
 of the breachs.
 
-== 2017-05-20
+== 2017-05-20, 2018-01-06
 
 Replace the UDG codes with the UDG addresses and write a new faster
-version of `.2x1sprite`, in Z80, without the conversion from code to
-address.
+version of `.2x1-udg-sprite`, in Z80, without the conversion from code
+to address.
 
 == 2017-05-21
 
@@ -146,4 +146,6 @@ loop:
 
 == 2018-01-06
 
-- Change the color of the mothership explosion for every frame.
+- Improve mothership explosion: Change the color for every frame.
+- Improve mothership explosion: Make frames a logical sequence.
+- Make beaming an independent action.

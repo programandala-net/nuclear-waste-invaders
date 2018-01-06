@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.133.0+201801050032" ;
+: version$ ( -- ca len ) s" 0.134.0+201801061358" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -715,13 +715,13 @@ cvariable used-udgs  used-udgs coff
   \ Counter of UDGs defined.
 
 : udg-overflow? ( -- f ) used-udgs c@ last-udg 1+ > ;
-  \ Too many UDG defined?
+  \ Too many UDGs defined?
 
 : ?udg-overflow ( -- ) udg-overflow? abort" Too many UDGs" ;
-  \ Abort if there are too many UDG defined.
+  \ Abort if there are too many UDGs defined.
 
 : ?free-udg ( n -- ) used-udgs c+!  ?udg-overflow ;
-  \ Abort if there is not free space to define _n_ UDG.
+  \ Abort if there is not free space to define _n_ UDGs.
 
   \ ===========================================================
   cr .( Font) ?depth debug-point \ {{{1
@@ -809,7 +809,7 @@ cvariable latest-sprite-udg
 : (udg-sprite ( width height -- width height c )
   2dup set-latest-sprite-size 2dup * free-udg ;
 
-: udg-sprite ( width height -- c )
+: udg-sprite ( width height "ccc" -- c )
   (udg-sprite dup >r udg-block r> ;
 
 2 cconstant udg/invader
@@ -1363,6 +1363,8 @@ X.X.X.X..X.X.X.X
   \ ............................................
   \ Mothership explosion
 
+2 cconstant exploding-mothership-frames
+
 2 1 udg-sprite
 
 ..............X.
@@ -1372,7 +1374,35 @@ X.X.X.X..X.X.X.X
 ...XXXX.XX.XX..X
 .X..XX..XXXX....
 X....XXXXX...X..
-..X...XX...X..X. cconstant mothership-explosion-sprite
+..X...XX...X..X. cconstant exploding-mothership-sprite
+
+2 1 udg-sprite
+
+................
+...X...X...X....
+.....XXXXXXX..X.
+.X..X.XXXX.XX...
+...XX.XXX.XXX...
+..X.X.XXXX.X..X.
+.X...XX.XX..X...
+.X...XX...X..X.X drop
+
+0 [if]
+
+  \ XXX TODO -- Too many UDGs!
+
+2 1 udg-sprite
+
+.X...X..........
+X...X....X...X..
+...X.XXXX.XX....
+...XXXX.XX.XX..X
+X...X.XXX.X.XX..
+....X.XX.X.XX..X
+...X.XX.XXX.XX..
+X...XX.X..X..... drop
+
+[then]
 
   \ -----------------------------------------------------------
   \ Projectile
@@ -2865,6 +2895,15 @@ cvariable cure-factor  20 cure-factor c!
   \ ===========================================================
   cr .( Mothership) ?depth debug-point \ {{{1
 
+defer mothership-action ( -- )
+  \ The current action of the mothership.
+
+defer invisible-mothership-action ( -- )
+  \ Action of the mothership when it's invisible.
+
+defer visible-mothership-action ( -- )
+  \ Action of the mothership when it's visible.
+
 1 cconstant mothership-y0
   \ Default y coordinate of the mothership.
 
@@ -2920,24 +2959,32 @@ variable mothership-time
 
 : place-mothership ( -- )
   mothership-x0 mothership-x ! mothership-y0 c!> mothership-y ;
+  \ Set the initial coordinates of the motherhip, out of the
+  \ screen.
 
-: set-mothership ( c n -- )
+: set-mothership-sprite ( c n -- )
   c!> mothership-frames c!> mothership mothership-frame coff ;
   \ Set character _c_ as the first character of the first
   \ sprite of the mothership, and _n_ as the number of frames.
 
-: set-flying-mothership ( -- )
+: set-flying-mothership-sprite ( -- )
   flying-mothership-sprite flying-mothership-frames
-  set-mothership ;
+  set-mothership-sprite ;
   \ Make the mothership use its flying sprite.
 
-: set-beaming-mothership ( -- )
+: set-beaming-mothership-sprite ( -- )
   beaming-mothership-sprite beaming-mothership-frames
-  set-mothership ;
+  set-mothership-sprite ;
   \ Make the mothership use its beaming sprite.
 
+: set-exploding-mothership-sprite ( -- )
+  exploding-mothership-sprite exploding-mothership-frames
+  set-mothership-sprite ;
+  \ Make the mothership use its exploding sprite.
+
 : init-mothership ( -- )
-  set-flying-mothership
+  set-flying-mothership-sprite
+  ['] invisible-mothership-action ['] mothership-action defer!
   mothership-stopped off mothership-time off
   place-mothership start-mothership ;
 
@@ -3111,7 +3158,7 @@ defer beam ( -- )
   \ Shrink the beam towards de mothership one character.
 
 : beam-up ( -- ) (beam-up beaming-up? ?exit
-                 set-flying-mothership .mothership
+                 set-flying-mothership-sprite .mothership
                  create-squadron ;
   \ Manage the beam, which is shrinking up to the mothership.
   \ If it's finished, activate the new invaders.
@@ -3149,7 +3196,7 @@ defer beam ( -- )
   \ depending on the position of the mothership.
 
 : beam-on ( -- )
-  set-beaming-mothership
+  set-beaming-mothership-sprite
   first-new-invader beam-invader c!
   mothership-y 1+ invader-min-y 1+ ['] beam-down set-beam ;
   \ Turn the mothership's beam on.
@@ -3240,16 +3287,26 @@ constant visible-mothership-movements ( -- a )
 
 : ?start-mothership ( -- ) 9 random ?exit start-mothership ;
 
-: visible-mothership ( -- )
+:noname ( -- )
   stopped-mothership? if ?start-mothership exit then
   beaming @ if beam exit then
-  move-visible-mothership ?stop-mothership ;
+    \ XXX TODO -- Make beaming an action.
+  move-visible-mothership
+  visible-mothership? 0= if ['] invisible-mothership-action
+                            ['] mothership-action defer!  exit
+                         then
+  ?stop-mothership ; ' visible-mothership-action defer!
+  \ Action of the mothership when it's visible.
 
-: invisible-mothership ( -- )
+:noname ( -- )
   advance-mothership
-  visible-mothership? if .visible-mothership exit then
+  visible-mothership? if .visible-mothership
+                         ['] visible-mothership-action
+                         ['] mothership-action defer!  exit
+                      then
   mothership-in-range? ?exit mothership-turns-back ;
-  \ Manage the mothership, when it's invisible.
+  ' invisible-mothership-action defer!
+  \ Action of the mothership when it's invisible.
 
 6 cconstant mothership-interval \ ticks
 
@@ -3257,12 +3314,9 @@ constant visible-mothership-movements ( -- a )
   ticks mothership-interval + mothership-time ! ;
 
 : manage-mothership ( -- )
-  mothership-y 0exit
+  mothership-y            0exit
   mothership-time @ past? 0exit
-  visible-mothership? if   visible-mothership
-                      else invisible-mothership
-                      then schedule-mothership ;
-  \ Manage the mothership, if not destroyed.
+  mothership-action schedule-mothership ;
 
   \ ===========================================================
   cr .( Impact) ?depth debug-point \ {{{1
@@ -3272,23 +3326,30 @@ constant visible-mothership-movements ( -- a )
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
-: mothership-on-fire ( -- )
-  mothership-x @ mothership-y at-xy
-  mothership-explosion-sprite .2x1-udg-sprite ;
-  \ Display the mothership on fire.
+100 cconstant mothership-explosion-duration \ in ticks
 
-: mothership-explosion ( -- )
-  mothership-on-fire mothership-bang -mothership
-  0 c!> mothership-y ;
-  \ The mothership explodes.
-  \ XXX TODO -- Improve the effect.
+variable mothership-explosion-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the mothership explosion will finish.
+
+: schedule-mothership-explosion ( -- )
+  ticks mothership-explosion-duration +
+  mothership-explosion-time ! ;
+
+: exploding-mothership-action ( -- )
+  .mothership  mothership-explosion-time @ past? 0exit
+  -mothership  0 c!> mothership-y ;
+  \ Action of the mothership when it's exploding.
 
 : mothership-bonus ( -- n ) location c@1+ 250 * ;
   \ Bonus points for impacting the mothership.
 
-: mothership-impacted ( -- )
-  mothership-explosion mothership-bonus update-score ;
-  \ The mothership has been impacted.
+: set-exploding-mothership ( -- )
+  set-exploding-mothership-sprite
+  ['] exploding-mothership-action ['] mothership-action defer!
+  mothership-bang mothership-bonus update-score
+  schedule-mothership-explosion ;
+  \ The mothership has been impacted. Set it accordingly.
 
 ' shoot alias invader-bang ( -- )
   \ Make the explosion sound of an invader.
@@ -3363,7 +3424,7 @@ constant visible-mothership-movements ( -- a )
   [else] projectile-y c@ mothership-y =  [then] ;
 
 : impact ( -- )
-  mothership-impacted? if   mothership-impacted
+  mothership-impacted? if   set-exploding-mothership
                        else invader-impacted
                        then destroy-projectile ;
 
@@ -3760,8 +3821,8 @@ localized-string about-next-location$ ( -- ca len )
 : tr ( -- ) tank> h ; \ move tank right
 
 : mm ( -- ) manage-mothership ;
-: im ( -- ) invisible-mothership ;
-: vm ( -- ) visible-mothership ;
+: im ( -- ) invisible-mothership-action ;
+: vm ( -- ) visible-mothership-action ;
 : am ( -- ) advance-mothership ;
 : vm? ( -- f ) visible-mothership? ;
 : .m ( -- ) .mothership ;
