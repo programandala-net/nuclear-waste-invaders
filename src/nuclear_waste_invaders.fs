@@ -33,7 +33,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.132.3+201801050015" ;
+: version$ ( -- ca len ) s" 0.133.0+201801050032" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -106,7 +106,7 @@ need dzx7t need bank-start need c@1+ need c@1- need c@2+
 
 need d< need -1|1 need 2/ need between need random need binary
 need within need even? need crnd need 8* need random-between
-need join
+need join need 3*
 
   \ --------------------------------------------
   cr .(   -Data structures) ?depth \ {{{2
@@ -2708,7 +2708,7 @@ defer breaking-action ( -- )
 : hit-wall? ( -- f )
   invader~ ~x
   [ udg/invader 2 = ]
-  [if]   c@2+ flying-to-the-left? 3 * +
+  [if]   c@2+ flying-to-the-left? 3* +
   [else] [ udg/invader 1 = ]
          [if]   c@1+ flying-to-the-left? 2* +
          [else] c@ udg/invader + flying-to-the-left?

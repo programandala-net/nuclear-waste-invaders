@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-05
+:revdate: 2018-01-06
 
 Older first:
 
@@ -143,4 +143,7 @@ loop:
 
 - Make the current projectiles harmless to the mothership and create a
   second type of projectiles to destroy it.
-- Use `3*`.
+
+== 2018-01-06
+
+- Change the color of the mothership explosion for every frame.
