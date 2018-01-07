@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.136.0+201801071642" ;
+: version$ ( -- ca len ) s" 0.137.0+201801071747" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3367,20 +3367,27 @@ constant visible-mothership-movements ( -- a )
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
-100 cconstant mothership-explosion-duration \ in ticks
+8 cconstant mothership-explostion-interval
+  \ Ticks between the frames of the mothership explosion.
 
 variable mothership-explosion-time
   \ When the ticks clock reaches the contents of this variable,
-  \ the mothership explosion will finish.
+  \ the mothership explosion advances to the next frame.
 
 : schedule-mothership-explosion ( -- )
-  ticks mothership-explosion-duration +
+  ticks mothership-explostion-interval +
   mothership-explosion-time ! ;
 
+: destroy-mothership ( -- ) -mothership 0 c!> mothership-y ;
+
+: still-exploding? ( -- f ) mothership-frame c@ 0<> ;
+  \ Is the mothership still exploding? When its frame counter is
+  \ zero, the cycle has been completed and _f_ is _false_.
+
 : exploding-mothership-action ( -- )
-  .mothership
   mothership-explosion-time @ past? 0exit \ exit if too soon
-  -mothership  0 c!> mothership-y ;
+  .mothership schedule-mothership-explosion
+  still-exploding? ?exit destroy-mothership ;
   \ Action of the mothership when it's exploding.
 
 : mothership-bonus ( -- n ) location c@1+ 250 * ;
@@ -3388,9 +3395,9 @@ variable mothership-explosion-time
 
 : set-exploding-mothership ( -- )
   set-exploding-mothership-sprite
+  .mothership schedule-mothership-explosion
   ['] exploding-mothership-action mothership-action!
-  mothership-bang mothership-bonus update-score
-  schedule-mothership-explosion ;
+  mothership-bang mothership-bonus update-score ;
   \ The mothership has been impacted. Set it accordingly.
 
 ' shoot alias invader-bang ( -- )
@@ -3982,7 +3989,7 @@ cr cr greeting
 
 cr cr .( Type RUN to start) cr
 
-[breakable] 0= ?\ cr .( The BREAK key quits the game)
+[breakable] 0= ?\ cr .( The BREAK key quits the game) cr
 
 end-program
 

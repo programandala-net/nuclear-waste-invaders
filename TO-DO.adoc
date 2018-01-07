@@ -165,3 +165,5 @@ loop:
 - Replace the run-time calculation done in `hit-wall?` and
   `prepare-wall` with a table of constants constants calculated at
   compile-time.
+- Use `,udg-block` to create the sprites and use their address instead
+  of their character codes.
