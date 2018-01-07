@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.137.0+201801071747" ;
+: version$ ( -- ca len ) s" 0.138.0+201801071932" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -58,6 +58,10 @@ false constant [ocr] immediate
   \ Use `ocr` to check the graphics on the screen (old, slower
   \ method) instead of checking the attributes with `xy>attr`
   \ (new, faster method)?
+
+true constant [udg] immediate
+  \ Reference graphics with their UDG codes (old method) instead
+  \ of their addresses (new method).
 
   \ ===========================================================
   cr .( Library) \ {{{1
@@ -140,7 +144,7 @@ need type-center-field need gigatype-title need mode-32iso
   \ --------------------------------------------
   cr .(   -Graphics) ?depth \ {{{2
 
-need set-udg need /udg
+need set-udg need /udg need /udg+
 need columns need rows need row need fade-display
 need last-column need udg-block need udg! need blackout
 
@@ -790,6 +794,8 @@ cvariable player   1 player  c! \ 1..max-player
   \ ===========================================================
   cr .( Graphics) ?depth debug-point \ {{{1
 
+[udg] [if]
+
     cvariable >udg  >udg coff \ next free UDG
 
 cvariable latest-sprite-width
@@ -812,6 +818,7 @@ cvariable latest-sprite-udg
 : emits-udg ( c n -- ) 0 ?do dup emit-udg loop drop ;
 
 ' emit-udg alias .1x1sprite ( c -- )
+
 ' emits-udg alias .1x1sprites ( c n -- )
 
 : .2x1-udg-sprite ( c -- ) dup emit-udg 1+ emit-udg ;
@@ -822,16 +829,42 @@ cvariable latest-sprite-udg
 : udg-sprite ( width height "ccc" -- c )
   (udg-sprite dup >r udg-block r> ;
 
+[else]
+
+' emit-udga alias .1x1sprite ( ca -- )
+
+: .1x1sprites ( ca n -- ) 0 ?do dup emit-udga loop drop ;
+
+: .2x1-udg-sprite ( ca -- ) dup emit-udga /udg+ emit-udga ;
+
+: udg-sprite ( width height "ccc" -- ca )
+  here -rot ,udg-block ;
+
+[then]
+
 2 cconstant udg/invader
 2 cconstant udg/mothership
 
-0 0 0 0 0 0 0 0 1 free-udg dup cconstant bl-udg udg!
+[udg] [if]
 
-[pixel-projectile] 0= [ocr] and [if]
+0 0 0 0 0 0 0 0 1 free-udg dup cconstant bl-udg udg!
+  \ An empty UDG to be used as space.
+
+[else]
+
+rom-font bl /udg * constant bl-udg
+  \ Address of the ROM font's space, to be used directly as
+  \ an UDG.
+
+[then]
+
+[pixel-projectile] 0= [ocr] and [udg] and [if]
   >udg c@ ocr-first c!
     \ The first UDG examined by `ocr` must be the first one of
     \ the next sprite.
 [then]
+
+[udg] [if] ' cconstant [else] ' constant [then] alias sprite-id
 
   \ -----------------------------------------------------------
   \ Invader species 0
@@ -847,7 +880,7 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. cconstant left-flying-invader-0-sprite
+..XX........XX.. sprite-id left-flying-invader-0-sprite
 
   \ invader species 0, left flying, frame 1:
 
@@ -899,7 +932,7 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. cconstant right-flying-invader-0-sprite
+..XX........XX.. sprite-id right-flying-invader-0-sprite
 
   \ invader species 0, right flying, frame 1:
 
@@ -951,7 +984,7 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. cconstant docked-invader-0-sprite
+..XX........XX.. sprite-id docked-invader-0-sprite
 
   \ invader species 0, docked, frame 1:
 
@@ -993,7 +1026,7 @@ cvariable latest-sprite-udg
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-....X.....X..... cconstant left-flying-invader-1-sprite
+....X.....X..... sprite-id left-flying-invader-1-sprite
 
   \ invader species 1, left flying, frame 1:
 
@@ -1045,7 +1078,7 @@ XXXX.XXX.XXXXXX.
 ...XXXXXXXXXXX..
 ...XXXXXXXXXXX..
 ...X.X.....X.X..
-.....X.....X.... cconstant right-flying-invader-1-sprite
+.....X.....X.... sprite-id right-flying-invader-1-sprite
 
   \ invader species 1, right flying, frame 1:
 
@@ -1097,7 +1130,7 @@ XXXX.XXX.XXXXXX.
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-.....XX.XX...... cconstant docked-invader-1-sprite
+.....XX.XX...... sprite-id docked-invader-1-sprite
 
   \ invader species 1, docked, frame 1:
 
@@ -1139,7 +1172,7 @@ XXXX.XXX.XXXXXX.
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... cconstant left-flying-invader-2-sprite
+....X.X..X.X.... sprite-id left-flying-invader-2-sprite
 
   \ invader species 2, left flying, frame 1:
 
@@ -1191,7 +1224,7 @@ XXXX.XXX.XXXXXX.
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... cconstant right-flying-invader-2-sprite
+....X.X..X.X.... sprite-id right-flying-invader-2-sprite
 
   \ invader species 2, right flying, frame 1:
 
@@ -1243,7 +1276,7 @@ XXXX.XXX.XXXXXX.
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... cconstant docked-invader-2-sprite
+....X.X..X.X.... sprite-id docked-invader-2-sprite
 
   \ invader species 2, docked, frame 1:
 
@@ -1302,7 +1335,7 @@ cvariable mothership-frame
 .XX..XX..XX..XX.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X... cconstant flying-mothership-sprite
+...X........X... sprite-id flying-mothership-sprite
 
   \ mothership, frame 1:
 
@@ -1357,7 +1390,7 @@ XXXXXXXXXXXXXXXX
 .XX..XX..XX..XX.
 XXXXXXXXXXXXXXXX
 .X.X.X.XX.X.X.X.
-X.X.X.X..X.X.X.X cconstant beaming-mothership-sprite
+X.X.X.X..X.X.X.X sprite-id beaming-mothership-sprite
 
 2 1 udg-sprite
 
@@ -1384,7 +1417,7 @@ X.X.X.X..X.X.X.X
 ...XXXX.XX.XX..X
 .X..XX..XXXX....
 X....XXXXX...X..
-..X...XX...X..X. cconstant exploding-mothership-sprite
+..X...XX...X..X. sprite-id exploding-mothership-sprite
 
 2 1 udg-sprite
 
@@ -1419,9 +1452,6 @@ X...XX.X..X..... drop
 
 [pixel-projectile] 0= [if]
 
-  >udg c@ \ next free UDG
-  dup cconstant first-projectile-frame
-
   1 1 udg-sprite
 
   ..X.....
@@ -1431,7 +1461,7 @@ X...XX.X..X..... drop
   ..X.....
   .....X..
   ..X.....
-  .....X.. cconstant projectile-sprite
+  .....X.. sprite-id projectile-sprite
 
   1 1 udg-sprite
 
@@ -1532,9 +1562,11 @@ X...XX.X..X..... drop
   .....X..
   ..X..X.. drop
 
-  >udg c@ swap - cconstant frames/projectile
+  projectile-sprite [udg] [if]   >udg c@ swap -
+                          [else] here swap /udg /
+                          [then] cconstant frames/projectile
 
-  >udg c@1- cconstant last-projectile-frame
+  [ocr] [if] >udg c@1- cconstant last-projectile-frame [then]
 
 [then]
 
@@ -1550,7 +1582,7 @@ XXXXX.XX
 XX.XXXXX
 XX.XXXXX
 XX.XXXXX
-........ cconstant brick
+........ sprite-id brick
 
 [pixel-projectile] 0= [ocr] and [if]
   >udg c@1- ocr-last c!
@@ -1567,7 +1599,7 @@ XXXXXXXX
 ..XXXXXX
 ..XXXXXX
 ..XXXXXX
-..XXXXXX cconstant left-door
+..XXXXXX sprite-id left-door
 
 1 1 udg-sprite
 
@@ -1578,7 +1610,7 @@ XXXXXX..
 XXXXXX..
 XXXXXX..
 XXXXXX..
-XXXXXX.. cconstant right-door
+XXXXXX.. sprite-id right-door
 
 1 1 udg-sprite
 
@@ -1589,7 +1621,7 @@ XXXXXXXX
 ......XX
 .....XXX
 ......X.
-........ cconstant broken-top-left-brick
+........ sprite-id broken-top-left-brick
 
 1 1 udg-sprite
 
@@ -1600,7 +1632,7 @@ XXXXXXXX
 ...XX.XX
 .XXXXXXX
 XXXXXXXX
-XXXXXXXX cconstant broken-bottom-left-brick
+XXXXXXXX sprite-id broken-bottom-left-brick
 
 1 1 udg-sprite
 
@@ -1611,7 +1643,7 @@ XXXXXX..
 XXX..X..
 X.......
 ........
-........ cconstant broken-top-right-brick
+........ sprite-id broken-top-right-brick
 
 1 1 udg-sprite
 
@@ -1622,7 +1654,7 @@ XXX..X..
 XXXXXX..
 XXXXX...
 XXXXXX.X
-XXXXXXXX cconstant broken-bottom-right-brick
+XXXXXXXX sprite-id broken-bottom-right-brick
 
   \ -----------------------------------------------------------
   \ Tank
@@ -1641,7 +1673,7 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX..XX..XX..XX..XX.XX.
 ...X.XXX.XXX.XXX.XXX.X..
-....X.X.X.X.X.X.X.X.X... cconstant tank-sprite
+....X.X.X.X.X.X.X.X.X... sprite-id tank-sprite
 
 udg/tank 1 udg-sprite
 ..........X..X..........
@@ -1687,7 +1719,7 @@ udg/tank 1 udg-sprite
 .XX.........XX..
 .....X....X.....
 ...X..X.X..X....
-..X..X...X..X... cconstant invader-explosion-sprite
+..X..X...X..X... sprite-id invader-explosion-sprite
 
   \ -----------------------------------------------------------
   \ Containers
@@ -1703,7 +1735,7 @@ udg/tank 1 udg-sprite
 ..X....XXX....X.
 ..X...XXXXX...X.
 ..X....XXX....X.
-..X.....X.....X. cconstant container-top
+..X.....X.....X. sprite-id container-top
 
 1 1 udg-sprite
 
@@ -1714,7 +1746,7 @@ udg/tank 1 udg-sprite
 ..X...X.
 ..X....X
 ..X....X
-..X....X cconstant broken-top-left-container
+..X....X sprite-id broken-top-left-container
 
 1 1 udg-sprite
 
@@ -1725,7 +1757,7 @@ udg/tank 1 udg-sprite
 .X....X.
 .X....X.
 .X....X.
-X.....X. cconstant broken-top-right-container
+X.....X. sprite-id broken-top-right-container
 
 2 1 udg-sprite
 
@@ -1736,7 +1768,7 @@ X.....X. cconstant broken-top-right-container
 ..X...........X.
 ...XXX.....XXX..
 ......XXXXX.....
-................ cconstant container-bottom
+................ sprite-id container-bottom
 
 1 1 udg-sprite
 
@@ -1747,7 +1779,7 @@ X.....X. cconstant broken-top-right-container
 ..X.....
 ...XXX..
 ......XX
-........ cconstant broken-bottom-left-container
+........ sprite-id broken-bottom-left-container
 
 1 1 udg-sprite
 
@@ -1758,7 +1790,7 @@ XX......
 ......X.
 ...XXX..
 XXX.....
-........ cconstant broken-bottom-right-container
+........ sprite-id broken-bottom-right-container
 
   \ -----------------------------------------------------------
   \ Icons
@@ -1772,7 +1804,7 @@ XXX.....
 ....XXXXXXXXXXXX
 ....XXXXXXXXXXX.
 ............XX..
-............X... cconstant right-arrow
+............X... sprite-id right-arrow
 
 2 1 udg-sprite
 
@@ -1783,7 +1815,7 @@ XXX.....
 XXXXXXXXXXXX....
 .XXXXXXXXXXX....
 ..XX............
-...X............ cconstant left-arrow
+...X............ sprite-id left-arrow
 
 2 1 udg-sprite
 
@@ -1794,7 +1826,7 @@ XXXXXXXXXXXX....
 ..X..........X..
 ..X..........X..
 ..X..........X..
-XXXXXXXXXXXXXXXX cconstant fire-button
+XXXXXXXXXXXXXXXX sprite-id fire-button
 
   \ ===========================================================
   cr .( Type) ?depth debug-point \ {{{1
@@ -2781,7 +2813,7 @@ defer breaking-action ( -- )
   \ Undock the current invader.
 
 : is-there-a-projectile? ( col row -- f )
-  [ocr] [if]   ocr first-projectile-frame
+  [ocr] [if]   ocr projectile-sprite
                    last-projectile-frame between
         [else] xy>attr projectile-attr = [then] ;
 
@@ -3432,7 +3464,7 @@ variable mothership-explosion-time
   \ right; etc..
 
 : explode ( -- )
-  invader-explosion invader~ ~stamina coff invader~ ~action off 
+  invader-explosion invader~ ~stamina coff invader~ ~action off
   invaders c1-! invader-destroy-points update-score ;
   \ The current invader explodes.
   \

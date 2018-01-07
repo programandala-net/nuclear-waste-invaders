@@ -17,16 +17,13 @@ Use pixels instead of characters as projectiles.
 
 Show a graphic of the ammo left.
 
-== 2016-10-16
+== 2016-10-16, 2018-01-07
 
-Effect: the invaders eat the containers.
-
-Keep moving the projectiles and the invaders after the invasion,
-during the future final effect.
-
-Change the color of explosions.
-
-Animate the explosions with several frames.
+- Effect: the invaders eat the containers.
+- Keep moving the projectiles and the invaders after the invasion,
+  during the future final effect.
+- Change the color of explosions.
+- Animate the invader explosions with several frames.
 
 == 2016-10-22
 
@@ -43,9 +40,8 @@ Use stamina to calculate the damages to the mothership.
 
 == 2017-02-26, 2017-05-14
 
-Max ammo, with a method or place to get more.
-
-Get more ammo by firing below the building.
+- Max ammo, with a method or place to get more.
+- Get more ammo by firing below the building.
 
 == 2017-02-28, 2017-12-19
 
@@ -91,19 +87,6 @@ of the breachs.
 Replace the UDG codes with the UDG addresses and write a new faster
 version of `.2x1-udg-sprite`, in Z80, without the conversion from code
 to address.
-
-== 2017-05-21
-
-Improve the explosion of the mothership. Now it's almost unobservable.
-
-Possible method to make the explosion longer without halting the game
-loop:
-
-- Change its graphic to a sequence of explosion frames.
-- Change its x coordinate increment to 0.
-- Update its detection accordingly.
-- Change its y coordinate to zero only when the explosion has
-  finished.
 
 == 2017-12-06
 
