@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.135.0+201801061807" ;
+: version$ ( -- ca len ) s" 0.136.0+201801071642" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -45,11 +45,19 @@ cr cr .( Nuclear Waste Invaders) cr version$ type cr
   \ Flags for conditional compilation of new features under
   \ development.
 
+true constant [breakable] immediate
+  \ Make the program breakable with the BREAK key combination?
+
 false constant [pixel-projectile] immediate
   \ Pixel projectiles (new method) instead of UDG projectiles
   \ (old method)?
   \
   \ XXX TODO -- finish support for pixel projectiles
+
+false constant [ocr] immediate
+  \ Use `ocr` to check the graphics on the screen (old, slower
+  \ method) instead of checking the attributes with `xy>attr`
+  \ (new, faster method)?
 
   \ ===========================================================
   cr .( Library) \ {{{1
@@ -138,7 +146,7 @@ need last-column need udg-block need udg! need blackout
 
 need window need wltype need wcr need wcls need wcolor
 
-need ocr
+[ocr] [if] need ocr [else] need xy>attr [then]
 
 [pixel-projectile] [if]
   need plot need set-pixel need reset-pixel need gxy>attra
@@ -576,20 +584,20 @@ localized-string press-any-key$ ( -- ca len )
   \ ===========================================================
   cr .( Colors) ?depth debug-point \ {{{1
 
-[pixel-projectile]    black and
-[pixel-projectile] 0= white and +
-                               cconstant sky-attr
+  \ Note: `projectile-attr` must be different to all attributes
+  \ used by the invaders.
 
-                         green cconstant invader-attr
-                         green cconstant sane-invader-attr
+                         black cconstant sky-attr
+
+                         green cconstant healthy-invader-attr
                         yellow cconstant wounded-invader-attr
                            red cconstant dying-invader-attr
-                       magenta cconstant mothership-attr
 
+                       magenta cconstant mothership-attr
 magenta papery white + brighty cconstant beam-attr
 
                          white cconstant tank-attr
-                        yellow cconstant projectile-attr
+                yellow brighty cconstant projectile-attr
 
                   white papery cconstant unfocus-attr
   white papery brighty white + cconstant hide-report-attr
@@ -728,7 +736,7 @@ cvariable used-udgs  used-udgs coff
   \ ===========================================================
   cr .( Font) ?depth debug-point \ {{{1
 
-[pixel-projectile] 0= [if]
+[pixel-projectile] 0= [ocr] and [if]
 
 cvariable ocr-last
 
@@ -789,7 +797,7 @@ cvariable latest-sprite-height
 cvariable latest-sprite-udg
 
 : ?udg ( c -- ) last-udg > abort" Too many UDGs" ;
-  \ Abort if UDG _n_ is too high.
+  \ Abort if UDG _c_ is too high.
   \ XXX TMP -- during the development
 
 : free-udg ( n -- c )
@@ -819,7 +827,7 @@ cvariable latest-sprite-udg
 
 0 0 0 0 0 0 0 0 1 free-udg dup cconstant bl-udg udg!
 
-[pixel-projectile] 0= [if]
+[pixel-projectile] 0= [ocr] and [if]
   >udg c@ ocr-first c!
     \ The first UDG examined by `ocr` must be the first one of
     \ the next sprite.
@@ -1544,7 +1552,7 @@ XX.XXXXX
 XX.XXXXX
 ........ cconstant brick
 
-[pixel-projectile] 0= [if]
+[pixel-projectile] 0= [ocr] and [if]
   >udg c@1- ocr-last c!
     \ The last UDG examined by `ocr` must be the last one
     \ of the latest sprite.
@@ -2080,10 +2088,9 @@ defer docked-action ( -- )
   init-right-invaders-data
   max-invaders half-max-invaders create-invaders ;
 
-create stamina-attributes ( -- ca )
-  dying-invader-attr    c,
-  wounded-invader-attr  c,
-  sane-invader-attr     c,
+create stamina-attributes ( -- ca )   dying-invader-attr c,
+                                    wounded-invader-attr c,
+                                    healthy-invader-attr c,
   \ Table to index the invader stamina to its proper attribute.
 
 : invader-proper-attr ( -- c )
@@ -2440,9 +2447,8 @@ defer debug-data-pause ( -- )
 
 : prepare-war ( -- )
   catastrophe off
-  [pixel-projectile] [ 0= ] [if] init-ocr [then]
+  [ocr] [pixel-projectile] [ 0= and ] [if] init-ocr [then]
   first-location score off cls ;
-
 
 : .parade-invader ( n -- )
   invader#>~ dup >r ~initial-x c@ r@ ~y c@ at-xy
@@ -2458,7 +2464,7 @@ defer debug-data-pause ( -- )
   \ Display invaders from _n2_ to _n1_, not including _n1_,
   \ using the current attribute.
 
-: (parade ( n1 n2 -- ) invader-attr attr! ((parade ;
+: (parade ( n1 n2 -- ) healthy-invader-attr attr! ((parade ;
   \ Display invaders from _n2_ to _n1_, not including _n1_,
   \ using the proper attribute.
 
@@ -2563,15 +2569,19 @@ false [if] \ XXX TODO --
 : change-language  ( -- ) lang 1+ dup langs < abs * c!> lang ;
   \ Change the current language.
 
-: quit-game ( -- ) mode-32 quit ;
+[breakable] [if]
+
+: quit-game ( -- ) mode-32 default-colors quit ;
   \ XXX TMP -- for debugging
 
 : ?quit-game ( -- ) break-key? if quit-game then ;
   \ XXX TMP -- for debugging
 
+[then]
+
 : menu ( -- )
   begin
-    ?quit-game \ XXX TMP --
+    [breakable] [if] ?quit-game [then] \ XXX TMP --
     key lower case
     start-key    of  exit           endof \ XXX TMP --
     language-key of change-language variable-menu-screen endof
@@ -2587,7 +2597,8 @@ false [if] \ XXX TODO --
   \ ===========================================================
   cr .( Invasion) ?depth debug-point \ {{{1
 
-cvariable invaders \ counter
+cvariable invaders
+  \ Current number of invaders during the attack.
 
 variable invader-time
   \ When the ticks clock reaches the contents of this variable,
@@ -2697,8 +2708,10 @@ defer break-the-wall ( col1 row1 col2 row2 -- )
   \ Is the current invader healthy? Has it got maximum stamina?
 
 defer invader-left-move-action ( -- )
+  \ Action of the invaders that are moving to the left.
 
 defer invader-right-move-action ( -- )
+  \ Action of the invaders that are moving to the right.
 
       ' invader-left-move-action ,
 here  ' noop ,
@@ -2708,15 +2721,15 @@ here  ' noop ,
 
 : set-invader-move-action ( -1..1 -- )
   invader-move-actions array> @ invader~ ~action ! ;
-  \ Set the invader action to the movement corresponding to
-  \ the given x-coordinate increment _-1..1_.
+  \ Set the action of the current invader after x-coordinate
+  \ increment _-1..1_.
 
 : set-invader-direction ( -1..1 -- )
   dup 0< !> flying-to-the-left?
   dup invader~ ~x-inc !
       set-invader-move-action ;
-  \ Set the invader direction corresponding to the given
-  \ x-coordinate increment _-1..1_.
+  \ Set the direction of the current invader after x-coordinate
+  \ increment _-1..1_.
 
 : impel-invader ( -- )
   invader~ ~x-inc @ set-invader-move-action ;
@@ -2737,7 +2750,7 @@ defer breaking-action ( -- )
            then turn-back ;
   \ XXX TMP --
 
-: hit-wall? ( -- f )
+: invader-front-coords ( -- col row )
   invader~ ~x
   [ udg/invader 2 = ]
   [if]   c@2+ flying-to-the-left? 3* +
@@ -2747,7 +2760,15 @@ defer breaking-action ( -- )
                 [ udg/invader 1+ ] cliteral * +
          [then]
   [then]
-  invader~ ~y c@ ocr brick = ;
+  invader~ ~y c@ ;
+  \ Return the coordinates _col row_ at the front of the current
+  \ invaders, i.e. the location the invader is heading to
+  \ on its current direction.
+
+: hit-wall? ( -- f )
+  invader-front-coords [ocr] [if]   ocr brick
+                             [else] xy>attr brick-attr
+                             [then] = ;
   \ Has the current invader hit the wall of the building?
 
 : ?damages ( -- )
@@ -2760,8 +2781,9 @@ defer breaking-action ( -- )
   \ Undock the current invader.
 
 : is-there-a-projectile? ( col row -- f )
-  ocr first-projectile-frame last-projectile-frame between ;
-  \ XXX TODO -- Accelerate by ocr-ing only the projectiles.
+  [ocr] [if]   ocr first-projectile-frame
+                   last-projectile-frame between
+        [else] xy>attr projectile-attr = [then] ;
 
 : .sky ( -- ) sky-attr attr! space ;
   \ Display a sky-color space.
@@ -2854,6 +2876,10 @@ cvariable cure-factor  20 cure-factor c!
   \ Prepare the wall to break: Return the column _col_ of the
   \ wall the current invader has hit, and set the action of
   \ `break-the-wall` accordingly.
+  \
+  \ XXX TODO -- Reuse the calculation already done in
+  \ `hit-wall?`. Better yet: Keep the columns in a table of
+  \ constants, two per level, calculated at compile-time.
 
 : break-wall ( -- )
   prepare-wall (break-wall new-breach impel-invader ;
@@ -2897,10 +2923,11 @@ cvariable cure-factor  20 cure-factor c!
   \ ===========================================================
   cr .( Mothership) ?depth debug-point \ {{{1
 
-defer mothership-action ( -- )
+defer do-mothership-action ( -- )
   \ The current action of the mothership.
 
-: mothership-action! ( xt -- ) ['] mothership-action defer! ;
+: mothership-action! ( xt -- )
+  ['] do-mothership-action defer! ;
   \ Set _xt_ as the current action of the mothership.
 
 defer invisible-mothership-action ( -- )
@@ -3111,12 +3138,14 @@ variable mothership-time
 
 0 layer>y cconstant invader-min-y
 
-   beam-attr dup join constant beam-cell-attr
-invader-attr dup join constant invader-cell-attr
-    sky-attr dup join constant sky-cell-attr
+beam-attr dup join constant beam-cell-attr
 
- variable beaming beaming off \ flag/direction (1|0|-1)
+healthy-invader-attr dup join
+constant healthy-invader-cell-attr
 
+sky-attr dup join constant sky-cell-attr
+
+ variable beam-y-inc   \ 1|-1
  variable beam-y       \ row
 cvariable beam-first-y \ row
 cvariable beam-last-y  \ row
@@ -3127,7 +3156,7 @@ cvariable beam-invader
 : set-beam ( row1 row2 xt -- )
   mothership-action!
   2dup beam-last-y c! dup beam-first-y c! beam-y !
-       swap - polarity beaming ! ;
+       swap - polarity beam-y-inc ! ;
   \ Set the beam to grow or shrink from _row1_ to _row2_ with
   \ handler _xt_.
 
@@ -3156,7 +3185,7 @@ cvariable beam-invader
 : reach-invader? ( -- f ) beam-y @ layer-y? ;
   \ Has the beam reached the row of an invader's layer?
 
-: update-beam ( -- ) beaming @ beam-y +! ;
+: update-beam ( -- ) beam-y-inc @ beam-y +! ;
 
 : (beaming-up? ( -- )
   beam-y @ beam-last-y c@ beam-first-y c@ between ;
@@ -3167,8 +3196,9 @@ cvariable beam-invader
 
 : (beam-up ( -- )
   .mothership
-  reach-invader? if invader-cell-attr else sky-cell-attr then
-  mothership-x @ beam-y @ xy>attra ! ;
+  reach-invader? if   healthy-invader-cell-attr
+                 else sky-cell-attr
+                 then mothership-x @ beam-y @ xy>attra ! ;
   \ Shrink the beam towards de mothership one character.
 
 : beaming-up-mothership-action ( -- )
@@ -3327,7 +3357,7 @@ constant visible-mothership-movements ( -- a )
 : manage-mothership ( -- )
   mothership-y            0exit \ exit if destroyed
   mothership-time @ past? 0exit \ exit if too soon
-  mothership-action schedule-mothership ;
+  do-mothership-action schedule-mothership ;
 
   \ ===========================================================
   cr .( Impact) ?depth debug-point \ {{{1
@@ -3374,6 +3404,8 @@ variable mothership-explosion-time
 
 : -invader ( -- ) sky-attr attr! at-invader 2 spaces ;
   \ Delete the current invader.
+  \
+  \ XXX TODO -- Use `bl-udg` for speed.
 
 : invader-explosion ( -- )
   invader-on-fire invader-bang -invader ;
@@ -3393,8 +3425,8 @@ variable mothership-explosion-time
   \ right; etc..
 
 : explode ( -- )
-  invader-destroy-points update-score invader-explosion
-  invaders c1-! invader~ ~stamina coff invader~ ~action off ;
+  invader-explosion invader~ ~stamina coff invader~ ~action off 
+  invaders c1-! invader-destroy-points update-score ;
   \ The current invader explodes.
   \
   \ XXX TODO -- Set an action to show the explosion.
@@ -3433,23 +3465,28 @@ variable mothership-explosion-time
 : mothership-impacted? ( -- f )
   [pixel-projectile]
   [if]   projectile-coords gxy>attra c@ mothership-attr =
-  [else] projectile-y c@ mothership-y =  [then] ;
+  [else] projectile-y c@ mothership-y = [then] ;
 
 : impact ( -- )
   mothership-impacted? if   set-exploding-mothership
                        else invader-impacted
                        then destroy-projectile ;
 
-: hit-something? ( -- f )
+: hit-something? ( -- f|f0 )
   projectile-coords
-  [pixel-projectile] [if]   \ gxy>attra c@ sky-attr <>
-                            get-pixel \ XXX NEW
-                     [else] ocr 0<> [then] ;
+  [pixel-projectile] [if]   get-pixel ( f )
+                     [else] [ocr] [if]   ocr 0<>
+                                  [else] xy>attr
+                                         [ sky-attr 0<> ]
+                                         [if] sky-attr <> ( f )
+                                         [else] ( f0 ) [then]
+                                  [then]
+                     [then] ;
   \ Did the projectile hit something?
 
 : impacted? ( -- f ) hit-something? dup if impact then ;
-  \ Did the projectil impacted?
-  \ If so, do manage the impact.
+  \ If the projectil impacted, manage the impact and return
+  \ _true_.  Otherwise do nothing and return _false_.
 
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
@@ -3496,6 +3533,9 @@ variable mothership-explosion-time
   [pixel-projectile] [if] 7 [else] -1 [then] projectile-y c+!
   impacted? ?exit .projectile ;
   \ Manage the projectile.
+  \
+  \ XXX TODO -- Move `hit-something?` here to simplify the
+  \ logic.
 
 cvariable trigger-delay-counter trigger-delay-counter coff
 
@@ -3777,7 +3817,7 @@ localized-string about-next-location$ ( -- ca len )
 : attack-wave ( -- ) init-mothership init-invaders ;
 
 : fight ( -- )
-  ?quit-game \ XXX TMP --
+  [breakable] [if] ?quit-game [then] \ XXX TMP --
   fly-projectile driving
   fly-projectile shooting
   fly-projectile manage-mothership
@@ -3941,6 +3981,8 @@ cr .( Loaded)
 cr cr greeting
 
 cr cr .( Type RUN to start) cr
+
+[breakable] 0= ?\ cr .( The BREAK key quits the game)
 
 end-program
 

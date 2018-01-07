@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-06
+:revdate: 2018-01-07
 
 Older first:
 
@@ -148,3 +148,20 @@ loop:
 
 - Improve mothership explosion: Change the color for every frame.
 - Improve mothership explosion: Make frames a logical sequence.
+- Fix: the mothership explosion can be impacted.
+- Fix: happened once: frozen docked invaders (no eye blinking)...
+  Schedule?
+
+== 2018-01-07
+
+- Remove `~inc-x`? It's not used by the move actions, but only to
+  calculate `flying-to-the-left?` and `attacking?`.
+- Remove `beaming`?
+- Simplifly the way `hit-something?` and `impacted?` are used.
+- Improve `mortal?` using the y coordinate in the calculation.
+- Remove `turn-back` and use its factor `change-direction` instead,
+  because the sprite does not need to be set when the direction is
+  changed.
+- Replace the run-time calculation done in `hit-wall?` and
+  `prepare-wall` with a table of constants constants calculated at
+  compile-time.
