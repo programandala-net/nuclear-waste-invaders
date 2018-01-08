@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.138.0+201801071932" ;
+: version$ ( -- ca len ) s" 0.139.0+201801072057" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -709,7 +709,7 @@ current-controls c@ set-controls
   \ ===========================================================
   cr .( UDG) ?depth debug-point \ {{{1
 
-               128 cconstant last-udg \ last UDG code used
+               144 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
 create udg-set /udg-set allot  udg-set set-udg
@@ -1406,7 +1406,7 @@ X.X.X.X..X.X.X.X
   \ ............................................
   \ Mothership explosion
 
-2 cconstant exploding-mothership-frames
+9 cconstant exploding-mothership-frames
 
 2 1 udg-sprite
 
@@ -1430,10 +1430,6 @@ X....XXXXX...X..
 .X...XX.XX..X...
 .X...XX...X..X.X drop
 
-0 [if]
-
-  \ XXX TODO -- Too many UDGs!
-
 2 1 udg-sprite
 
 .X...X..........
@@ -1445,7 +1441,71 @@ X...X.XXX.X.XX..
 ...X.XX.XXX.XX..
 X...XX.X..X..... drop
 
-[then]
+2 1 udg-sprite
+
+X......X........
+....X....X......
+...X.X.XX.X.....
+X..X.X...X.XX..X
+....X.X.X.X.XX..
+..X...X..X.XX...
+...X.XX.X.X.XX..
+.X..X..........X drop
+
+2 1 udg-sprite
+
+..X.............
+....X....X..X...
+X..X.X.X..X..X..
+...X..X..X......
+....X.....X.X...
+.X....X..X.X..X.
+...X.X....X.....
+....X....X...X.. drop
+
+2 1 udg-sprite
+
+X............X..
+....X....X......
+.......X..X..X..
+..X...........X.
+..........X.....
+.X....X.......X.
+..........X.....
+..X.......X....X drop
+
+2 1 udg-sprite
+
+.X.........X....
+.....X.....X..X.
+...............X
+................
+X...............
+...........X....
+X.....X........X
+..X........X.... drop
+
+2 1 udg-sprite
+
+....X.......X..X
+................
+................
+................
+................
+...........X....
+.............X..
+......X......... drop
+
+2 1 udg-sprite
+
+................
+................
+................
+................
+................
+................
+................
+................ drop
 
   \ -----------------------------------------------------------
   \ Projectile
@@ -3109,14 +3169,18 @@ variable mothership-time
   mothership-range-min-x mothership-range-max-x within ;
   \ Is the mothership in the range of its flying limit?
 
-: (.mothership ( -- )
-  mothership-attr attr! mothership-udg .2x1-udg-sprite ;
+: .attr-mothership ( b -- )
+  attr! mothership-udg .2x1-udg-sprite ;
   \ Display the mothership, which is fully visible, at the
-  \ cursor coordinates.
+  \ cursor coordinates, in attribute _b_.
+
+: (.mothership ( -- ) mothership-attr .attr-mothership ;
+  \ Display the mothership, which is fully visible, at the
+  \ cursor coordinates in its default attribute.
 
 : .mothership ( -- ) at-mothership (.mothership ;
   \ Display the mothership, which is fully visible, at its
-  \ coordinates.
+  \ coordinates, in its default attribute.
 
 : (.visible-right-mothership ( -- )
   mothership-attr attr!
@@ -3418,7 +3482,8 @@ variable mothership-explosion-time
 
 : exploding-mothership-action ( -- )
   mothership-explosion-time @ past? 0exit \ exit if too soon
-  .mothership schedule-mothership-explosion
+  at-mothership crnd %01000111 and .attr-mothership
+  schedule-mothership-explosion
   still-exploding? ?exit destroy-mothership ;
   \ Action of the mothership when it's exploding.
 

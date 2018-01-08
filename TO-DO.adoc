@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-07
+:revdate: 2018-01-08
 
 Older first:
 
@@ -129,8 +129,6 @@ to address.
 
 == 2018-01-06
 
-- Improve mothership explosion: Change the color for every frame.
-- Improve mothership explosion: Make frames a logical sequence.
 - Fix: the mothership explosion can be impacted.
 - Fix: happened once: frozen docked invaders (no eye blinking)...
   Schedule?
@@ -150,3 +148,9 @@ to address.
   compile-time.
 - Use `,udg-block` to create the sprites and use their address instead
   of their character codes.
+
+== 2018-01-08
+
+- Make the invader explosions asynchronous.
+- Improve the graphics of the explosion.
+- Use explosion sprite also for invaders.
