@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201801071939
+  \ Last modified: 201801081732
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -298,29 +298,53 @@ need parse-name-thru
     2dup
   while repeat ;
 
-( udg-block )
+( (udg-block udg-block )
 
-need udg-scan>number need udg> need /udg need /udg*
+[unneeded] (udg-block ?(
+
+need udg-scan>number need /udg need /udg*
 need udg-width need parse-name-thru need j need anon
 
-here anon> ! 3 cells allot
+here anon> ! 2 cells allot
+
+: (udg-block ( width height a "name..." -- )
+  rot 2 set-anon
+    \ Set the anonymous local variables:
+    \   [ 0 ] anon = _width_
+    \   [ 1 ] anon = address to store the UDG block
+  /udg* 0 ?do parse-name-thru ( ca len )
+    [ 0 ] anon @ 0 ?do
+      over udg-width udg-scan>number ( ca len b )
+      j /udg /mod [ 0 ] anon @ * i + /udg* + ( ca len b +n )
+      [ 1 ] anon @ + c!
+      udg-width /string ( ca' len' ) loop 2drop loop ; ?)
+
+  \ doc{
+  \
+  \ (udg-block ( width height a "name..." -- )
+  \
+  \ Parse a UDG block, and store it from address _a_.  _width_
+  \ and _height_ are in characters.  The maximum _width_ is 7
+  \ (imposed by the size of Forth source blocks). _height_ has
+  \ no maximum, as the UDG block can ocuppy more than one Forth
+  \ block (provided the Forth block has no index line, i.e.
+  \ `load-program` is used to load the source).
+  \
+  \ The scans can be formed by binary digits, by the characters
+  \ hold in `udg-blank` and `udg-dot`, or any combination of
+  \ both notations.
+  \
+  \ ``(udg-block`` is a common factor of `udg-block` and
+  \ `,udg-block`, whose documentation include usage examples.
+  \
+  \ See: `csprite`, `udg-group`.
+  \
+  \ }doc
+
+[unneeded] udg-block ?( need udg> need (udg-block
 
 : udg-block ( width height c "name..." -- )
-  3 set-anon
-    \ Set the anonymous local variables:
-    \   [ 0 ] anon = _c_
-    \   [ 1 ] anon = _height_
-    \   [ 2 ] anon = _width_
-  [ 1 ] anon @ /udg* 0 ?do parse-name-thru ( ca len )
-    [ 2 ] anon @ 0 ?do
-      over udg-width udg-scan>number ( ca len b )
-      j /udg /mod [ 2 ] anon @ * i + /udg* +
-        \ Calculate the offset from the address of _c_ in
-        \ the UDG font, to store the scan _b_.
-      [ 0 ] anon @ udg> + c!
-        \ Store _b_ at the proper address in the UDG font,
-        \ i.e. the address of _c_ plus the offset.
-      udg-width /string ( ca' len' ) loop 2drop loop ;
+  udg> (udg-block ; ?)
 
   \ doc{
   \
@@ -341,7 +365,11 @@ here anon> ! 3 cells allot
   \ Usage example:
 
   \ ----
-  \ 5 2 140 udg-block
+  \ 0 cconstant mass-udg
+  \ 2 cconstant mass-height
+  \ 5 cconstant mass-width
+  \
+  \ mass-width mass-height mass-udg udg-block
   \
   \ ..XXXX....XXXX....XXXX....XXXX....XXXX..
   \ .XXXXXX..XXXXXX..XXXXXX..XXXXXX..X.XXXX.
@@ -359,41 +387,38 @@ here anon> ! 3 cells allot
   \ XX..XXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   \ .XXXXXX..XXXXXX..XXXXXX..XXXXXX..XXXXXX.
   \ ..XXXX....XXXX....XXXX....XXXX....XXXX..
+  \
+  \ : .mass ( -- )
+  \   mass-height 0 ?do
+  \     mass-width 0 ?do
+  \       i j mass-width * + mass-udg + emit-udg
+  \     loop cr
+  \   loop ;
+  \
+  \ cr .mass
   \ ----
 
   \ See: `,udg-block`, `csprite`, `udg-group`.
   \
   \ }doc
 
-( ,udg-block )
+( ,udg-block csprite )
 
-  \ XXX UNDER DEVELOPMENT
-
-need udg-scan>number need /udg*
-need udg-width need parse-name-thru need anon
-
-here anon> ! cell allot
+[unneeded] ,udg-block ?( need /udg* need (udg-block
 
 : ,udg-block ( width height "name..." -- )
-  swap 1 set-anon
-    \ Set an anonymous local variable:
-    \   [ 0 ] anon = _width_
-  /udg* 0 ?do parse-name-thru ( ca len )
-    [ 0 ] anon @ 0 ?do
-      over udg-width udg-scan>number c, udg-width /string
-  loop 2drop loop ;
+  here >r 2dup * /udg* allot r> (udg-block ; ?)
 
   \ doc{
   \
   \ ,udg-block ( width height "name..." -- )
   \
-  \ Parse a UDG block, and store it from UDG character _c_
-  \ (0..255). _width_ and _height_ are in characters.  The
-  \ maximum _width_ is 7 (imposed by the size of Forth source
-  \ blocks). _height_ has no maximum, as the UDG block can
-  \ ocuppy more than one Forth block (provided the Forth block
-  \ has no index line, i.e. `load-program` is used to load the
-  \ source).
+  \ Parse a UDG block, and compile it in data space.  _width_
+  \ and _height_ are in characters.  The maximum _width_ is 7
+  \ (imposed by the size of Forth source blocks). _height_ has
+  \ no maximum, as the UDG block can ocuppy more than one Forth
+  \ block (provided the Forth block has no index line, i.e.
+  \ `load-program` is used to load the source).
   \
   \ The scans can be formed by binary digits, by the characters
   \ hold in `udg-blank` and `udg-dot`, or any combination of
@@ -402,8 +427,7 @@ here anon> ! cell allot
   \ Usage example:
 
   \ ----
-  \ here constant tank-graphic
-  \ 3 1 ,udg-block
+  \ here 3 1 ,udg-block
   \ ..........X..X..........
   \ ...XXXXXX.X..X.XXXXXXX..
   \ ..XXXXXXXXXXXXXXXXXXXXX.
@@ -411,47 +435,19 @@ here anon> ! cell allot
   \ .XX.X.X.X.X.X.X.X.X.X.XX
   \ ..XX..XX..XX..XX..XX.XX.
   \ ...X.XXX.XXX.XXX.XXX.X..
-  \ ....X.X.X.X.X.X.X.X.X...
+  \ ....X.X.X.X.X.X.X.X.X... constant tank
+  \
+  \ : .tank ( -- )
+  \   tank dup emit-udga /udg+ dup emit-udga /udg+ emit-udga ;
+  \
+  \ cr .tank cr
   \ ----
 
   \ See: `udga-emit`, `udg-block`, `csprite`, `udg-group`.
   \
   \ }doc
 
--->
-
-( )
-
-  \ XXX TMP --
-
-here constant g1
-3 1 ,udg-block
-..........X..X..........
-...XXXXXX.X..X.XXXXXXX..
-..XXXXXXXXXXXXXXXXXXXXX.
-.XXXXXXXXXXXXXXXXXXXXXXX
-.XX.X.X.X.X.X.X.X.X.X.XX
-..XX..XX..XX..XX..XX.XX.
-...X.XXX.XXX.XXX.XXX.X..
-....X.X.X.X.X.X.X.X.X... cr .( done!) cr
-
-( )
-
-  \ XXX TMP --
-
-need udg-block
-
-3 1 0 udg-block
-..........X..X..........
-...XXXXXX.X..X.XXXXXXX..
-..XXXXXXXXXXXXXXXXXXXXX.
-.XXXXXXXXXXXXXXXXXXXXXXX
-.XX.X.X.X.X.X.X.X.X.X.XX
-..XX..XX..XX..XX..XX.XX.
-...X.XXX.XXX.XXX.XXX.X..
-....X.X.X.X.X.X.X.X.X... constant g2 cr .( done!) cr
-
-( csprite )
+[unneeded] csprite ?(
 
 need udg-scan>number need /udg*
 need udg-width need parse-name-thru need j need anon
@@ -469,7 +465,7 @@ here anon> ! 3 cells allot
       over udg-width udg-scan>number ( ca len b )
       j [ 2 ] anon @ * i + [ 0 ] anon @ + c! udg-width /string
     loop 2drop
-  loop ;
+  loop ; ?)
 
   \ doc{
   \
@@ -1202,5 +1198,8 @@ exx, jpnext, end-code
   \ 2018-01-06: Add prototype of `,udg-block`.
   \
   \ 2018-01-07: Add `/udg+`. Improve documentation.
+  \
+  \ 2018-01-08: Improve and factor `udg-block`. Finish
+  \ `,udg-block`.  Improve documentation.
 
   \ vim: filetype=soloforth
