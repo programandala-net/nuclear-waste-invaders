@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.139.0+201801072057" ;
+: version$ ( -- ca len ) s" 0.139.1+201801081742" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -783,8 +783,17 @@ cvariable player   1 player  c! \ 1..max-player
 : at-score ( -- ) score-xy at-xy ;
   \ Set the cursor position at the score.
 
-: .score ( -- ) score @ score-xy (.score ;
+cvariable invaders
+  \ Current number of invaders during the attack.
+  \
+  \ XXX TMP -- Moved here for debugging.
+
+: .score ( -- ) score @ score-xy (.score
+  space invaders c@ . ;
   \ Display the score.
+  \
+  \ XXX TMP -- For debugging.
+  \ XXX INFORMER -- Show also the current number of invaders.
 
 : .record ( -- ) record @ record-x score-y (.score ;
   \ Display the record.
@@ -2689,8 +2698,10 @@ false [if] \ XXX TODO --
   \ ===========================================================
   cr .( Invasion) ?depth debug-point \ {{{1
 
-cvariable invaders
+  \ cvariable invaders
   \ Current number of invaders during the attack.
+  \
+  \ XXX TMP -- Commented out for debugging.
 
 variable invader-time
   \ When the ticks clock reaches the contents of this variable,
@@ -3142,7 +3153,8 @@ variable mothership-time
   \ Set the cursor position at the coordinates of the
   \ the mothership.
 
-: -mothership ( -- ) at-mothership udg/mothership spaces ;
+: -mothership ( -- )
+  sky-attr attr! at-mothership udg/mothership spaces ;
   \ Delete the whole mothership.
 
 : mothership-frame+ ( n1 -- n2 )
@@ -3474,15 +3486,19 @@ variable mothership-explosion-time
   ticks mothership-explostion-interval +
   mothership-explosion-time ! ;
 
-: destroy-mothership ( -- ) -mothership 0 c!> mothership-y ;
+: destroy-mothership ( -- )
+  -mothership 0 c!> mothership-y ['] noop mothership-action! ;
 
 : still-exploding? ( -- f ) mothership-frame c@ 0<> ;
   \ Is the mothership still exploding? When its frame counter is
   \ zero, the cycle has been completed and _f_ is _false_.
 
+: explosion-attr ( -- b ) crnd %01000111 and 1 min ;
+  \ Return random explosion attribute _b_.
+
 : exploding-mothership-action ( -- )
   mothership-explosion-time @ past? 0exit \ exit if too soon
-  at-mothership crnd %01000111 and .attr-mothership
+  at-mothership explosion-attr .attr-mothership
   schedule-mothership-explosion
   still-exploding? ?exit destroy-mothership ;
   \ Action of the mothership when it's exploding.
@@ -4045,6 +4061,16 @@ localized-string about-next-location$ ( -- ca len )
   container-bottom .2x1-udg-sprite 8 emit
   broken-bottom-right-container .1x1sprite cr ;
   \ Display the graphics of the broken containers.
+
+: sky ( -- )
+  attributes /attributes bounds ?do
+    i c@ sky-attr = if   [ cyan papery brighty ] cliteral i c!
+                    then loop ;
+  \ Reveal the zones of the screen that have the sky attribute,
+  \ by coloring them with brighy cyan.  This is useful to
+  \ discover attributes that shoud be sky-colored but have been
+  \ contaminated by the movement of the sprites, because of
+  \ wrong calculations in the code.
 
   \ ===========================================================
   cr .( Development benchmarks) ?depth debug-point \ {{{1

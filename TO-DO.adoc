@@ -154,3 +154,5 @@ to address.
 - Make the invader explosions asynchronous.
 - Improve the graphics of the explosion.
 - Use explosion sprite also for invaders.
+- Make `mothership-bonus` faster with `flip`.
+- Fix: crashes.
