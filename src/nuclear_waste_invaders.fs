@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.139.2+201801110055" ;
+: version$ ( -- ca len ) s" 0.139.2+201801111016" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -60,8 +60,8 @@ false constant [ocr] immediate
   \ (new, faster method)?
 
 true constant [udg] immediate
-  \ Reference graphics with their UDG codes (old method) instead
-  \ of their addresses (new method).
+  \ Reference graphics with their UDG codes (old method)
+  \ instead of their addresses (new method).
 
   \ ===========================================================
   cr .( Library) \ {{{1
@@ -573,7 +573,8 @@ sconstants >es.country$ ( n -- ca len ) drop
 ' >eo.country$
 ' >en.country$
 localized-word >(country)$ ( n -- ca len )
-  \ Return name _ca len_ of country _n_ in the current language.
+  \ Return name _ca len_ of country _n_ in the current
+  \ language.
 
 : >country$ ( n -- ca len )
   s" (" rot >(country)$ s+ s" )" s+ ;
@@ -2073,10 +2074,10 @@ cconstant invader-bottom-y
   invader-top-y - rows/layer /mod swap 0= ;
   \ If _y_ is a valid row of an invader layer, return layer _n_
   \ and _f_ is _true_; otherwise _n_ is invalid and _f_ is
-  \ false.  The pair of invaders that fly nearest the ground are
-  \ layer 0.  The pair above them are layer 1, and so on.  Note:
-  \ If _y_ is greater than the last invader layer, the result
-  \ will be wrong.
+  \ false.  The pair of invaders that fly nearest the ground
+  \ are layer 0.  The pair above them are layer 1, and so on.
+  \ Note: If _y_ is greater than the last invader layer, the
+  \ result will be wrong.
   \
   \ XXX REMARK -- Not used.
 
@@ -2178,8 +2179,9 @@ defer docked-action ( -- )
       max-stamina invader~ ~stamina c!
       ['] docked-action invader~ ~action !
   loop ;
-  \ Create new docked invaders from _n2_ to _n1-1_.  The data of
-  \ those invaders must be set already to their default values.
+  \ Create new docked invaders from _n2_ to _n1-1_.  The data
+  \ of those invaders must be set already to their default
+  \ values.
 
 : create-left-squadron ( -- )
   init-left-invaders-data
@@ -2212,8 +2214,8 @@ create stamina-attributes ( -- ca )   dying-invader-attr c,
 
 : right-side-invaders ( -- n )
   0 max-invaders half-max-invaders +invaders ;
-  \ Return number _n_ of alive invaders that are at the right of
-  \ the building.
+  \ Return number _n_ of alive invaders that are at the right
+  \ of the building.
 
   \ ===========================================================
   cr .( Building) ?depth debug-point \ {{{1
@@ -2749,16 +2751,16 @@ defer break-the-wall ( col1 row1 col2 row2 -- )
   \ Display the broken wall at the given coordinates of the
   \ broken brick above the invader, _col3 row3_, and below it,
   \ _col2 row2_, and in front of it, _col1 row1_.
-  \ The action of this deferred word is set to `break-left-wall`
-  \ or `break-right-word`.
+  \ The action of this deferred word is set to
+  \ `break-left-wall` or `break-right-word`.
 
 : break-left-wall ( col1 row1 col2 row2 -- )
   at-xy broken-top-left-brick .1x1sprite
   at-xy broken-bottom-left-brick .1x1sprite
   at-xy space ;
-  \ Display the broken left wall at the given coordinates of the
-  \ broken brick above the invader, _col3 row3_, and below it,
-  \ _col2 row2_, and in front of it, _col1 row1_.
+  \ Display the broken left wall at the given coordinates of
+  \ the broken brick above the invader, _col3 row3_, and below
+  \ it, _col2 row2_, and in front of it, _col1 row1_.
   \
   \ XXX TODO -- Graphic instead of space.
 
@@ -2786,8 +2788,8 @@ defer break-the-wall ( col1 row1 col2 row2 -- )
   \ Break the the left side of the container.
   \
   \ XXX TODO -- Calculate alternatives to `c@2+` and `c@1+` at
-  \ compile-time, depending on the size of the invaders, just in
-  \ case. See `hit-wall?`.
+  \ compile-time, depending on the size of the invaders, just
+  \ in case. See `hit-wall?`.
 
 : break-right-container ( -- )
   invader~ ~x c@1- invader~ ~y c@ at-xy
@@ -2864,9 +2866,9 @@ defer breaking-action ( -- )
          [then]
   [then]
   invader~ ~y c@ ;
-  \ Return the coordinates _col row_ at the front of the current
-  \ invaders, i.e. the location the invader is heading to
-  \ on its current direction.
+  \ Return the coordinates _col row_ at the front of the
+  \ current invaders, i.e. the location the invader is heading
+  \ to on its current direction.
 
 : hit-wall? ( -- f )
   invader-front-coords [ocr] [if]   ocr brick
@@ -3159,9 +3161,9 @@ variable mothership-time
 
 : mothership-frame+ ( n1 -- n2 )
   1+ dup mothership-frames < and ;
-  \ Increase frame _n1_ of the mothership, resulting frame _n2_.
-  \ If _n1_ is the maximum frame allowed, _n2_ is zero, which is
-  \ the first one.
+  \ Increase frame _n1_ of the mothership, resulting frame
+  \ _n2_.  If _n1_ is the maximum frame allowed, _n2_ is zero,
+  \ which is the first one.
   \
   \ XXX TODO -- Use `mothership-max-frame <>` for speed.
 
@@ -3197,25 +3199,25 @@ variable mothership-time
 : (.visible-right-mothership ( -- )
   mothership-attr attr!
   mothership-udg [ udg/mothership 1- ] cliteral + emit-udg ;
-  \ Display the mothership, which is partially visible (only its
-  \ right side is visible) at the cursor coordinates.
+  \ Display the mothership, which is partially visible (only
+  \ its right side is visible) at the cursor coordinates.
 
 : .visible-right-mothership ( -- )
   whole-mothership-min-x mothership-y at-xy
   (.visible-right-mothership ;
-  \ Display the mothership, which is partially visible (only its
-  \ right side is visible) at its proper coordinates.
+  \ Display the mothership, which is partially visible (only
+  \ its right side is visible) at its proper coordinates.
 
 : (.visible-left-mothership ( -- )
   mothership-attr attr! mothership-udg emit-udg ;
-  \ Display the mothership, which is partially visible (only its
-  \ left side is visible) at the cursor coordinates.
+  \ Display the mothership, which is partially visible (only
+  \ its left side is visible) at the cursor coordinates.
 
 : .visible-left-mothership ( -- )
   visible-mothership-max-x mothership-y at-xy
   (.visible-left-mothership ;
-  \ Display the mothership, which is partially visible (only its
-  \ left side is visible) at its proper coordinates.
+  \ Display the mothership, which is partially visible (only
+  \ its left side is visible) at its proper coordinates.
 
 : .visible-mothership ( -- )
   mothership-x @ case
@@ -3223,7 +3225,8 @@ variable mothership-time
     visible-mothership-max-x of .visible-left-mothership  endof
     .mothership
   endcase ;
-  \ Display the mothership, which is fully or partially visible.
+  \ Display the mothership, which is fully or partially
+  \ visible.
 
 : right-of-mothership ( -- col row )
   mothership-x @ [ udg/mothership 2 = ] [if]   2+
@@ -3274,7 +3277,8 @@ cvariable beam-invader
 
 : over-right-invaders? ( -- f )
   mothership-x @ invaders-max-x = ;
-  \ Is the mothership over the right initial column of invaders?
+  \ Is the mothership over the right initial column of
+  \ invaders?
 
 : enlist-squadron ( -- ) half-max-invaders invaders c+! ;
 
@@ -3365,8 +3369,8 @@ cvariable beam-invader
   \ and return _true_; otherwise do nothing and return _false_.
 
 : help-left-side? ( -- f ) left-side-invaders need-help? ;
-  \ If there's no invader at the left side, turn the beam on and
-  \ return _true_; otherwise do nothing and return _false_.
+  \ If there's no invader at the left side, turn the beam on
+  \ and return _true_; otherwise do nothing and return _false_.
 
 : help-invaders? ( -- f )
   over-left-invaders?  if help-left-side?  exit then
@@ -4121,4 +4125,4 @@ cr cr .( Type RUN to start) cr
 
 end-program
 
-  \ vim: filetype=soloforth:colorcolumn=64
+  \ vim: filetype=soloforth:colorcolumn=64:textwidth=63
