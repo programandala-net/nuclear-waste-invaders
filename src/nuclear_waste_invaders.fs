@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.139.1+201801081742" ;
+: version$ ( -- ca len ) s" 0.139.2+201801110055" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -96,7 +96,7 @@ need evaluate need ?depth need see-colon-body>
   \ --------------------------------------------
   cr .(   -Definers) ?depth \ {{{2
 
-need defer need alias need cvariable
+need defer need action-of need alias need cvariable
 need 2const need cenum need c!>
 
   \ --------------------------------------------
@@ -3026,6 +3026,9 @@ cvariable cure-factor  20 cure-factor c!
   \ ===========================================================
   cr .( Mothership) ?depth debug-point \ {{{1
 
+cvariable motherships
+  \ Number of motherships.
+
 defer do-mothership-action ( -- )
   \ The current action of the mothership.
 
@@ -3052,11 +3055,8 @@ defer visible-mothership-action ( -- )
 defer beaming-mothership-action ( -- )
   \ Action of the beaming mothership.
 
-1 cconstant mothership-y0
-  \ Default y coordinate of the mothership.
-
 1 cconstant mothership-y
-  \ Current y coordinate of the mothership (0 if destroyed).
+  \ y coordinate of the mothership.
 
 variable mothership-x
 variable mothership-x-inc
@@ -3105,9 +3105,8 @@ variable mothership-time
   \ Return random initial horizontal location _n_ of the
   \ mothership, out of the screen.
 
-: place-mothership ( -- )
-  mothership-x0 mothership-x ! mothership-y0 c!> mothership-y ;
-  \ Set the initial coordinates of the motherhip, out of the
+: place-mothership ( -- ) mothership-x0 mothership-x ! ;
+  \ Set the initial X coordinate of the motherhip, out of the
   \ screen.
 
 : set-mothership-sprite ( c n -- )
@@ -3131,6 +3130,7 @@ variable mothership-time
   \ Make the mothership use its exploding sprite.
 
 : init-mothership ( -- )
+  1 motherships c!
   set-flying-mothership-sprite set-invisible-mothership-action
   mothership-stopped off mothership-time off
   place-mothership start-mothership ;
@@ -3462,8 +3462,10 @@ constant visible-mothership-movements ( -- a )
 : schedule-mothership ( -- )
   ticks mothership-interval + mothership-time ! ;
 
+: mothership-destroyed? ( -- f ) motherships c@ 0= ;
+
 : manage-mothership ( -- )
-  mothership-y            0exit \ exit if destroyed
+  mothership-destroyed?   ?exit \ exit if destroyed
   mothership-time @ past? 0exit \ exit if too soon
   do-mothership-action schedule-mothership ;
 
@@ -3487,11 +3489,12 @@ variable mothership-explosion-time
   mothership-explosion-time ! ;
 
 : destroy-mothership ( -- )
-  -mothership 0 c!> mothership-y ['] noop mothership-action! ;
+  -mothership ['] noop mothership-action! motherships ?c1-! ;
 
-: still-exploding? ( -- f ) mothership-frame c@ 0<> ;
-  \ Is the mothership still exploding? When its frame counter is
-  \ zero, the cycle has been completed and _f_ is _false_.
+: mothership-explosion? ( -- f ) mothership-frame c@ 0<> ;
+  \ Is the mothership explosion still active? When the frame
+  \ counter is zero (first frame), the cycle has been completed
+  \ and _f_ is _false_.
 
 : explosion-attr ( -- b ) crnd %01000111 and 1 min ;
   \ Return random explosion attribute _b_.
@@ -3500,7 +3503,7 @@ variable mothership-explosion-time
   mothership-explosion-time @ past? 0exit \ exit if too soon
   at-mothership explosion-attr .attr-mothership
   schedule-mothership-explosion
-  still-exploding? ?exit destroy-mothership ;
+  mothership-explosion? ?exit destroy-mothership ;
   \ Action of the mothership when it's exploding.
 
 : mothership-bonus ( -- n ) location c@1+ 250 * ;
@@ -3587,8 +3590,13 @@ variable mothership-explosion-time
   [if]   projectile-coords gxy>attra c@ mothership-attr =
   [else] projectile-y c@ mothership-y = [then] ;
 
+: mothership-exploding? ( -- f )
+  action-of do-mothership-action
+  ['] exploding-mothership-action = ;
+
 : impact ( -- )
-  mothership-impacted? if   set-exploding-mothership
+  mothership-impacted? if   mothership-exploding? ?exit
+                            set-exploding-mothership
                        else invader-impacted
                        then destroy-projectile ;
 
@@ -3925,9 +3933,6 @@ localized-string about-next-location$ ( -- ca len )
 
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1
-
-: mothership-destroyed? ( -- f )
-  mothership-y mothership-y0 <> ;
 
 : invaders-destroyed? ( -- f ) invaders c@ 0= ;
 

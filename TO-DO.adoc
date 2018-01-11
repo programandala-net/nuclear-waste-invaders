@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-08
+:revdate: 2018-01-10
 
 Older first:
 
@@ -38,10 +38,10 @@ Fix: sometimes the projectile erases half of the invader.
 
 Use stamina to calculate the damages to the mothership.
 
-== 2017-02-26, 2017-05-14
+== 2017-02-26, 2017-05-14, 2018-01-11
 
-- Max ammo, with a method or place to get more.
-- Get more ammo by firing below the building.
+- Max ammo
+- Get more ammo below the building.
 
 == 2017-02-28, 2017-12-19
 
@@ -129,7 +129,6 @@ to address.
 
 == 2018-01-06
 
-- Fix: the mothership explosion can be impacted.
 - Fix: happened once: frozen docked invaders (no eye blinking)...
   Schedule?
 
@@ -144,8 +143,7 @@ to address.
   because the sprite does not need to be set when the direction is
   changed.
 - Replace the run-time calculation done in `hit-wall?` and
-  `prepare-wall` with a table of constants constants calculated at
-  compile-time.
+  `prepare-wall` with a table of constants calculated at compile-time.
 - Use `,udg-block` to create the sprites and use their address instead
   of their character codes.
 
@@ -156,3 +154,13 @@ to address.
 - Use explosion sprite also for invaders.
 - Make `mothership-bonus` faster with `flip`.
 - Fix: crashes.
+
+== 2018-01-10
+
+- Make sound of mothership explosion longer. Manage it in
+  `exploding-mothership-action`.
+- Idea: Make `manage-mothership` deferred, replacing
+  `do-mothership-action`, and duplicate its current functions
+  (checking, timing and scheduling) into every action.  This will be a
+  bit faster, saving one nesting level.
+- Improve colors of the mothership explosion, limiting the range.
