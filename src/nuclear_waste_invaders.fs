@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.139.2+201801111016" ;
+: version$ ( -- ca len ) s" 0.140.0+201801111218" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2171,13 +2171,13 @@ cconstant invader-bottom-y
   init-left-invaders-data init-right-invaders-data ;
   \ Init the data of all invaders.
 
-defer docked-action ( -- )
+defer docked-invader-action ( -- )
   \ Action of the invaders that are docked.
 
 : create-invaders ( n1 n2 -- )
   ?do i set-invader
       max-stamina invader~ ~stamina c!
-      ['] docked-action invader~ ~action !
+      ['] docked-invader-action invader~ ~action !
   loop ;
   \ Create new docked invaders from _n2_ to _n1-1_.  The data
   \ of those invaders must be set already to their default
@@ -2812,20 +2812,20 @@ defer break-the-wall ( col1 row1 col2 row2 -- )
 : healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
   \ Is the current invader healthy? Has it got maximum stamina?
 
-defer invader-left-move-action ( -- )
+defer flying-left-invader-action ( -- )
   \ Action of the invaders that are moving to the left.
 
-defer invader-right-move-action ( -- )
+defer flying-right-invader-action ( -- )
   \ Action of the invaders that are moving to the right.
 
-      ' invader-left-move-action ,
+      ' flying-left-invader-action ,
 here  ' noop ,
-      ' invader-right-move-action ,
-      constant invader-move-actions ( a )
+      ' flying-right-invader-action ,
+      constant flying-invader-actions ( a )
       \ Execution table.
 
 : set-invader-move-action ( -1..1 -- )
-  invader-move-actions array> @ invader~ ~action ! ;
+  flying-invader-actions array> @ invader~ ~action ! ;
   \ Set the action of the current invader after x-coordinate
   \ increment _-1..1_.
 
@@ -2847,11 +2847,12 @@ here  ' noop ,
 : turn-back ( -- ) change-direction set-flying-sprite ;
   \ Make the current invader turn back.
 
-defer breaking-action ( -- )
+defer breaking-invader-action ( -- )
   \ Action of the invaders that are breaking the wall.
 
 : hit-wall ( -- )
-  healthy? if   ['] breaking-action invader~ ~action ! exit
+  healthy? if   ['] breaking-invader-action invader~ ~action !
+                exit
            then turn-back ;
   \ XXX TMP --
 
@@ -2916,7 +2917,7 @@ defer ?dock ( -- )
   left-of-invader is-there-a-projectile?
   if docked? ?exit turn-back exit then
   -1 invader~ ~x c+! at-invader .invader .sky ?flying ;
-  ' invader-left-move-action defer!
+  ' flying-left-invader-action defer!
   \ Move the current invader, which is flying to the left,
   \ unless a projectile is at the left.
 
@@ -2924,7 +2925,7 @@ defer ?dock ( -- )
   right-of-invader is-there-a-projectile?
   if docked? ?exit turn-back exit then
   at-invader .sky .invader 1 invader~ ~x c+! ?flying ;
-  ' invader-right-move-action defer!
+  ' flying-right-invader-action defer!
   \ Move the current invader, which is flying to the right,
   \ unless a projectile is at the right.
 
@@ -2957,11 +2958,12 @@ cvariable cure-factor  20 cure-factor c!
 :noname ( -- )
   healthy? if   ?undock
            else ?cure
-           then at-invader .invader ; ' docked-action defer!
+           then at-invader .invader
+  ; ' docked-invader-action defer!
   \ Action of the invaders that are docked.
 
-: dock ( -- )
-  ['] docked-action invader~ ~action ! set-docked-sprite ;
+: dock ( -- ) ['] docked-invader-action invader~ ~action !
+                  set-docked-sprite ;
   \ Dock the current invader.
 
 :noname ( -- ) docked? 0exit dock ; ' ?dock defer!
@@ -2997,8 +2999,8 @@ cvariable cure-factor  20 cure-factor c!
   \ XXX TODO -- Improve the random calculation. Why use
   \ `invaders`?
 
-:noname ( -- )
-  ?break-wall at-invader .invader ; ' breaking-action defer!
+:noname ( -- ) ?break-wall at-invader .invader
+               ; ' breaking-invader-action defer!
   \ Action of the invaders that are breaking the wall.
 
 : last-invader? ( -- f )
