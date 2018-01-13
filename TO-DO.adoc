@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-10
+:revdate: 2018-01-13
 
 Older first:
 
@@ -149,11 +149,8 @@ to address.
 
 == 2018-01-08
 
-- Make the invader explosions asynchronous.
 - Improve the graphics of the explosion.
-- Use explosion sprite also for invaders.
 - Make `mothership-bonus` faster with `flip`.
-- Fix: crashes.
 
 == 2018-01-10
 
@@ -164,3 +161,9 @@ to address.
   (checking, timing and scheduling) into every action.  This will be a
   bit faster, saving one nesting level.
 - Improve colors of the mothership explosion, limiting the range.
+
+== 2018-01-11
+
+- Use the mothership color for its explosion.
+- Fix: invaders turn back at the broken wall. This bug was introduced
+  with the invaders' asynchronous explosions.

@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.140.0+201801111218" ;
+: version$ ( -- ca len ) s" 0.141.0+201801132306" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1413,10 +1413,10 @@ XXXXXXXXXXXXXXXX
 X.X.X.X..X.X.X.X
 .X.X.X.XX.X.X.X. drop
 
-  \ ............................................
-  \ Mothership explosion
+  \ -----------------------------------------------------------
+  \ Explosion
 
-9 cconstant exploding-mothership-frames
+9 cconstant explosion-frames
 
 2 1 udg-sprite
 
@@ -1427,7 +1427,7 @@ X.X.X.X..X.X.X.X
 ...XXXX.XX.XX..X
 .X..XX..XXXX....
 X....XXXXX...X..
-..X...XX...X..X. sprite-id exploding-mothership-sprite
+..X...XX...X..X. sprite-id explosion-sprite
 
 2 1 udg-sprite
 
@@ -1776,22 +1776,6 @@ udg/tank 1 udg-sprite
 ...X.X.X.X.X.X.X.X.X.X.. drop
 
   \ -----------------------------------------------------------
-  \ Invader explosion
-
-  \ XXX TODO -- Move to the invaders section.
-
-2 1 udg-sprite
-
-.....X...X......
-..X...X.X...X...
-...X.......X....
-....X.....X.....
-.XX.........XX..
-.....X....X.....
-...X..X.X..X....
-..X..X...X..X... sprite-id invader-explosion-sprite
-
-  \ -----------------------------------------------------------
   \ Containers
 
   \ XXX TODO -- Move to the building section.
@@ -2009,17 +1993,18 @@ max-invaders 2/ cconstant half-max-invaders
   \ XXX TODO -- reorder for speed: place the most used fields
   \ at cell offsets +0, +1, +2, +4
 
-  cfield: ~y             \ row
-  cfield: ~x             \ column
-  cfield: ~sprite        \ UDG
-  cfield: ~frames        \ count
-  cfield: ~frame         \ counter
-  cfield: ~initial-x     \ column
-  field:  ~x-inc         \ -1|1
-  field:  ~initial-x-inc \ -1|1
-  cfield: ~stamina       \ 0..3
-  field:  ~action        \ execution token
-  field:  ~species       \ data structure address
+  cfield: ~y              \ row
+  cfield: ~x              \ column
+  cfield: ~sprite         \ UDG
+  cfield: ~frames         \ count
+  cfield: ~frame          \ counter
+  cfield: ~initial-x      \ column
+  field:  ~x-inc          \ -1|1
+  field:  ~initial-x-inc  \  -1|1
+  cfield: ~stamina        \ 0..3
+  field:  ~action         \ execution token
+  field:  ~species        \ data structure address
+  field:  ~explosion-time \ ticks clock time
 cconstant /invader
 
 max-invaders /invader * constant /invaders
@@ -2103,33 +2088,35 @@ cconstant invader-bottom-y
 
 3 cconstant max-stamina
 
-: set-flying-sprite ( -- )
+: set-invader-sprite ( c n -- )
+  invader~ ~frames c! invader~ ~sprite c!
+  invader~ ~frame coff ;
+  \ Set character _c_ as the first character of the first
+  \ sprite of the current invader, and _n_ as the number of
+  \ frames.
+
+: set-flying-invader-sprite ( -- )
   invader~ ~species @ dup
   flying-to-the-left?
   if   ~flying-left-sprite c@ swap
        ~flying-left-sprite-frames c@
   else ~flying-right-sprite c@ swap
        ~flying-right-sprite-frames c@
-  then invader~ ~frames c! invader~ ~sprite c!
-  invader~ ~frame coff ;
+  then set-invader-sprite ;
   \
   \ XXX TODO -- Use double-cell fields to copy both fields with
   \ one operation or use `move`.
-  \
-  \ XXX TODO -- Rename.
   \
   \ XXX TODO -- If the maximum frames in both directions are
   \ identical, there's no need to initiate `~frame`.
   \
   \ XXX TODO -- Combine with `set-invader-direction`.
 
-: set-docked-sprite ( -- )
-  invader~ ~species @ dup
-  ~docked-sprite c@ invader~ ~sprite c!
-  ~docked-sprite-frames c@ invader~ ~frames c!
-  invader~ ~frame coff ;
-  \
-  \ XXX TODO -- Rename.
+: set-docked-invader-sprite ( -- )
+  invader~ ~species @ dup ~docked-sprite c@
+                      swap ~docked-sprite-frames c@
+  set-invader-sprite ;
+  \ Make the current invader use the docked invader sprite.
 
 : init-invader ( c1 c2 c3 c4 c0 -- )
   set-invader
@@ -2140,7 +2127,7 @@ cconstant invader-bottom-y
   dup invader~ ~initial-x c!
       invader~ ~x c!
   invader~ ~y c!
-  set-docked-sprite ;
+  set-docked-invader-sprite ;
   \ Init invader_c0_ with the given data:
   \   c1 = y
   \   c2 = x = initial x
@@ -2553,15 +2540,15 @@ defer debug-data-pause ( -- )
   [ocr] [pixel-projectile] [ 0= and ] [if] init-ocr [then]
   first-location score off cls ;
 
+0 [if]
+
+  \ XXX OLD
+
 : .parade-invader ( n -- )
   invader#>~ dup >r ~initial-x c@ r@ ~y c@ at-xy
                  r> ~sprite c@ .2x1-udg-sprite ;
   \ Display invader _n_ at its initial position, with the
   \ current attribute.
-
-0 [if]
-
-  \ XXX OLD
 
 : ((parade ( n1 n2 -- ) ?do i .parade-invader loop ;
   \ Display invaders from _n2_ to _n1_, not including _n1_,
@@ -2737,7 +2724,8 @@ variable invader-time
 
 : .invader ( -- )
   invader-proper-attr attr! invader-udg .2x1-udg-sprite ;
-  \ Display the current invader.
+  \ Display the current invader.  at the cursor coordinates, in
+  \ its proper attribute.
 
 : broken-bricks-coordinates
   ( col1 -- col1 row1 col2 row2 col3 row3 )
@@ -2844,7 +2832,7 @@ here  ' noop ,
 : change-direction ( -- )
   invader~ ~x-inc @ negate set-invader-direction ;
 
-: turn-back ( -- ) change-direction set-flying-sprite ;
+: turn-back ( -- ) change-direction set-flying-invader-sprite ;
   \ Make the current invader turn back.
 
 defer breaking-invader-action ( -- )
@@ -2883,7 +2871,7 @@ defer breaking-invader-action ( -- )
   \ Manage the possible damages caused by the current invader.
 
 : undock ( -- ) invader~ ~initial-x-inc @ set-invader-direction
-                set-flying-sprite ;
+                set-flying-invader-sprite ;
   \ Undock the current invader.
 
 : is-there-a-projectile? ( col row -- f )
@@ -2934,8 +2922,8 @@ cvariable cure-factor  20 cure-factor c!
 
 : difficult-cure? ( -- f )
   max-stamina invader~ ~stamina c@ -
-  cure-factor c@ \ XXX TMP -- for testing
-  * random 0<> ;
+  cure-factor c@ * \ XXX TMP -- for testing
+  random 0<> ;
   \ Is it a difficult cure? The flag _f_ is calculated
   \ randomly, based on the stamina: The less stamina, the more
   \ chances to be a difficult cure. This is used to delay the
@@ -2963,7 +2951,7 @@ cvariable cure-factor  20 cure-factor c!
   \ Action of the invaders that are docked.
 
 : dock ( -- ) ['] docked-invader-action invader~ ~action !
-                  set-docked-sprite ;
+                  set-docked-invader-sprite ;
   \ Dock the current invader.
 
 :noname ( -- ) docked? 0exit dock ; ' ?dock defer!
@@ -3056,9 +3044,6 @@ defer visible-mothership-action ( -- )
   \ Set `visible-mothership-action` as the current action of
   \ the mothership.
 
-defer beaming-mothership-action ( -- )
-  \ Action of the beaming mothership.
-
 1 cconstant mothership-y
   \ y coordinate of the mothership.
 
@@ -3129,9 +3114,8 @@ variable mothership-time
   \ Make the mothership use its beaming sprite.
 
 : set-exploding-mothership-sprite ( -- )
-  exploding-mothership-sprite exploding-mothership-frames
-  set-mothership-sprite ;
-  \ Make the mothership use its exploding sprite.
+  explosion-sprite explosion-frames set-mothership-sprite ;
+  \ Make the mothership use the explosion sprite.
 
 : init-mothership ( -- )
   1 motherships c!
@@ -3327,8 +3311,18 @@ cvariable beam-invader
   \ Turn the mothership's beam off, i.e. start shrinking it
   \ back to the mothership.
 
+: .new-invader ( -- )
+  invader~ ~initial-x c@ invader~ ~y c@ at-xy
+  invader~ ~sprite c@ .2x1-udg-sprite ;
+  \ Display invader _n_ at its initial position, with the
+  \ current attribute.
+
 : create-invader ( -- )
-  beam-attr attr! beam-invader dup c@ .parade-invader c1+! ;
+  get-invader
+    beam-invader dup c@ set-invader set-docked-invader-sprite
+                     beam-attr attr! .new-invader
+                 c1+!
+  set-invader ;
   \ Display the new invader and update its number.
 
 : (beaming-down? ( -- f )
@@ -3483,15 +3477,15 @@ constant visible-mothership-movements ( -- a )
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
-8 cconstant mothership-explostion-interval
-  \ Ticks between the frames of the mothership explosion.
+8 cconstant mothership-explosion-interval
+  \ Ticks between the frames of the explosion.
 
 variable mothership-explosion-time
   \ When the ticks clock reaches the contents of this variable,
-  \ the mothership explosion advances to the next frame.
+  \ the explosion advances to the next frame.
 
 : schedule-mothership-explosion ( -- )
-  ticks mothership-explostion-interval +
+  ticks mothership-explosion-interval +
   mothership-explosion-time ! ;
 
 : destroy-mothership ( -- )
@@ -3499,8 +3493,8 @@ variable mothership-explosion-time
 
 : mothership-explosion? ( -- f ) mothership-frame c@ 0<> ;
   \ Is the mothership explosion still active? When the frame
-  \ counter is zero (first frame), the cycle has been completed
-  \ and _f_ is _false_.
+  \ counter is zero (first frame), the explosion cycle has been
+  \ completed and _f_ is _false_.
 
 : explosion-attr ( -- b ) crnd %01000111 and 1 min ;
   \ Return random explosion attribute _b_.
@@ -3527,18 +3521,14 @@ variable mothership-explosion-time
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
-: invader-on-fire ( -- )
-  at-invader invader-explosion-sprite .2x1-udg-sprite ;
-  \ Display the current invader on fire.
-
 : -invader ( -- ) sky-attr attr! at-invader 2 spaces ;
   \ Delete the current invader.
   \
   \ XXX TODO -- Use `bl-udg` for speed.
 
-: invader-explosion ( -- )
-  invader-on-fire invader-bang -invader ;
-  \ Display the explosion of the current invader.
+: destroy-invader ( -- )
+  -invader invader~ ~stamina coff invader~ ~action off
+  invaders c1-! invader-destroy-points update-score ;
 
 : impacted-invader ( -- n )
   projectile-y c@ invader-top-y - 2/
@@ -3553,12 +3543,34 @@ variable mothership-explosion-time
   \ order, to simplify the calculation: 0: top left; 1: top
   \ right; etc..
 
-: explode ( -- )
-  invader-explosion invader~ ~stamina coff invader~ ~action off
-  invaders c1-! invader-destroy-points update-score ;
-  \ The current invader explodes.
-  \
-  \ XXX TODO -- Set an action to show the explosion.
+: invader-explosion? ( -- f ) invader~ ~frame c@ 0<> ;
+  \ Is the explosion of the current invader still active? When
+  \ the frame counter is zero (first frame), the explosion
+  \ cycle has been completed and _f_ is _false_.
+
+8 cconstant invader-explosion-interval
+  \ Ticks between the frames of the explosion.
+
+: schedule-invader-explosion ( -- )
+  ticks invader-explosion-interval +
+  invader~ ~explosion-time ! ;
+
+: exploding-invader-action ( -- )
+  invader~ ~explosion-time @ past? 0exit \ exit if too soon
+  at-invader .invader schedule-invader-explosion
+  invader-explosion? ?exit destroy-invader ;
+  \ Action of the invader when it's exploding.
+
+: set-exploding-invader-sprite ( -- )
+  explosion-sprite explosion-frames set-invader-sprite ;
+  \ Make the invader use the explosion sprite.
+
+: set-exploding-invader ( -- )
+  set-exploding-invader-sprite
+  at-invader .invader schedule-invader-explosion
+  ['] exploding-invader-action invader~ ~action !
+  invader-bang invader-destroy-points update-score ;
+  \ The current invader has been impacted. Set it accordingly.
 
 ' lightning1 alias retreat-sound
   \ XXX TMP --
@@ -3577,8 +3589,14 @@ variable mothership-explosion-time
   \ based on the stamina: The more stamina, the less chances to
   \ be a mortal impact.
 
-: (invader-impacted ( -- ) mortal? if explode exit then
-                           wounded attacking? 0exit retreat ;
+: invader-exploding? ( -- f )
+  invader~ ~action @ ['] exploding-invader-action = ;
+  \ Is the current invader exploding?
+
+: (invader-impacted ( -- )
+  invader-exploding? ?exit
+  mortal? if set-exploding-invader exit then
+  wounded attacking? 0exit retreat ;
   \ The current invader has been impacted by the projectile.
   \ It explodes or retreats.
   \
@@ -3599,6 +3617,7 @@ variable mothership-explosion-time
 : mothership-exploding? ( -- f )
   action-of do-mothership-action
   ['] exploding-mothership-action = ;
+  \ Is the mothership exploding?
 
 : impact ( -- )
   mothership-impacted? if   mothership-exploding? ?exit
@@ -4020,7 +4039,6 @@ localized-string about-next-location$ ( -- ca len )
 : beoff ( -- ) beam-off ;
 : beu ( -- ) beaming-up-mothership-action ;
 : bed ( -- ) beaming-down-mothership-action ;
-: be ( -- ) beaming-mothership-action ;
 
 : test-be ( -- )
   mothership-x off .visible-mothership beam-on m ;
