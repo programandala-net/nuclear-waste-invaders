@@ -22,8 +22,6 @@ Show a graphic of the ammo left.
 - Effect: the invaders eat the containers.
 - Keep moving the projectiles and the invaders after the invasion,
   during the future final effect.
-- Change the color of explosions.
-- Animate the invader explosions with several frames.
 
 == 2016-10-22
 
@@ -160,10 +158,12 @@ to address.
   `do-mothership-action`, and duplicate its current functions
   (checking, timing and scheduling) into every action.  This will be a
   bit faster, saving one nesting level.
-- Improve colors of the mothership explosion, limiting the range.
 
 == 2018-01-11
 
-- Use the mothership color for its explosion.
 - Fix: invaders turn back at the broken wall. This bug was introduced
   with the invaders' asynchronous explosions.
+
+== 2018-01-13
+
+- Update stack notation for columns and rows.

@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.141.0+201801132306" ;
+: version$ ( -- ca len ) s" 0.142.0+201801132332" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -119,7 +119,7 @@ need dzx7t need bank-start need c@1+ need c@1- need c@2+
   cr .(   -Math) ?depth \ {{{2
 
 need d< need -1|1 need 2/ need between need random need binary
-need within need even? need crnd need 8* need random-between
+need within need even? need 8* need random-between
 need join need 3*
 
   \ --------------------------------------------
@@ -3169,12 +3169,8 @@ variable mothership-time
   mothership-range-min-x mothership-range-max-x within ;
   \ Is the mothership in the range of its flying limit?
 
-: .attr-mothership ( b -- )
-  attr! mothership-udg .2x1-udg-sprite ;
-  \ Display the mothership, which is fully visible, at the
-  \ cursor coordinates, in attribute _b_.
-
-: (.mothership ( -- ) mothership-attr .attr-mothership ;
+: (.mothership ( -- )
+  mothership-attr attr! mothership-udg .2x1-udg-sprite ;
   \ Display the mothership, which is fully visible, at the
   \ cursor coordinates in its default attribute.
 
@@ -3496,12 +3492,9 @@ variable mothership-explosion-time
   \ counter is zero (first frame), the explosion cycle has been
   \ completed and _f_ is _false_.
 
-: explosion-attr ( -- b ) crnd %01000111 and 1 min ;
-  \ Return random explosion attribute _b_.
-
 : exploding-mothership-action ( -- )
   mothership-explosion-time @ past? 0exit \ exit if too soon
-  at-mothership explosion-attr .attr-mothership
+  at-mothership .mothership
   schedule-mothership-explosion
   mothership-explosion? ?exit destroy-mothership ;
   \ Action of the mothership when it's exploding.
