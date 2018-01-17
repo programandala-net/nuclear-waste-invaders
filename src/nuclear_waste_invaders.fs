@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.142.0+201801132332" ;
+: version$ ( -- ca len ) s" 0.142.0+201801171610" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1920,9 +1920,9 @@ status-bar-rows columns * cconstant /status-bar
 
 : .score-label ( -- ) score$ dup 1+ score-x c! home type ;
 
-: >record-label-x ( len -- x )
+: >record-label-x ( len -- col )
   [ columns score-digits 1+ - ] cliteral swap - ;
-  \ Get the column _x_ of the record label from its length
+  \ Get the column _col_ of the record label from its length
   \ _len_.
 
 : .record-label ( -- ) record$ dup >record-label-x at-x type ;
@@ -2042,26 +2042,26 @@ building-top-y 1+ cconstant invader-top-y
 invader-top-y top-invader-layer rows/layer * +
 cconstant invader-bottom-y
 
-: layer>y ( n -- y )
+: layer>y ( n -- row )
   top-invader-layer swap - rows/layer * invader-top-y + ;
-  \ Convert invader layer _n_ to its equivalent row _y_. The
+  \ Convert invader layer _n_ to its equivalent row _row_. The
   \ pair of invaders that fly nearest the ground are layer 0.
   \ The pair above them are layer 1, and so on.
 
-: y>layer ( y -- n ) rows/layer / 1- invader-top-y swap - ;
-  \ Convert invader row _y_ to its equilavent layer _n_. The
+: y>layer ( row -- n ) rows/layer / 1- invader-top-y swap - ;
+  \ Convert invader row _row_ to its equilavent layer _n_. The
   \ pair of invaders that fly nearest the ground are layer 0.
-  \ The pair above them are layer 1, and so on. Note: _y_ is
+  \ The pair above them are layer 1, and so on. Note: _row_ is
   \ supposed to be a valid row of an invader layer, otherwise
   \ the result will be wrong.
 
-: y>layer? ( y -- n f )
+: y>layer? ( row -- n f )
   invader-top-y - rows/layer /mod swap 0= ;
-  \ If _y_ is a valid row of an invader layer, return layer _n_
+  \ If _row_ is a valid row of an invader layer, return layer _n_
   \ and _f_ is _true_; otherwise _n_ is invalid and _f_ is
   \ false.  The pair of invaders that fly nearest the ground
   \ are layer 0.  The pair above them are layer 1, and so on.
-  \ Note: If _y_ is greater than the last invader layer, the
+  \ Note: If _row_ is greater than the last invader layer, the
   \ result will be wrong.
   \
   \ XXX REMARK -- Not used.
@@ -2129,9 +2129,9 @@ cconstant invader-bottom-y
   invader~ ~y c!
   set-docked-invader-sprite ;
   \ Init invader_c0_ with the given data:
-  \   c1 = y
-  \   c2 = x = initial x
-  \   c3 = initial x inc
+  \   c1 = row
+  \   c2 = column = initial column
+  \   c3 = initial column inc
   \   c4 = species
   \ The sprite and the frame are set after the species.
   \ All other fields are set to zero.
@@ -2252,17 +2252,17 @@ cvariable containers-left-x   cvariable containers-right-x
        1+ + building-right-x   c! ;
   \ Set the size of the building after the current location.
 
-: floor ( y -- )
+: floor ( row -- )
   building-left-x c@ swap at-xy
   brick-attr attr! brick building-width c@ .1x1sprites ;
-  \ Draw a floor of the building at row _y_.
+  \ Draw a floor of the building at row _row_.
 
-: ground-floor ( y -- )
+: ground-floor ( row -- )
   building-left-x c@1+ swap at-xy
   door-attr attr!  left-door emit-udg
   brick-attr attr! brick building-width c@ 4 - .1x1sprites
   door-attr attr!  right-door emit-udg ;
-  \ Draw the ground floor of the building at row _y_.
+  \ Draw the ground floor of the building at row _row_.
 
 : building-top ( -- ) building-top-y floor ;
   \ Draw the top of the building.
@@ -2385,7 +2385,7 @@ columns udg/tank - 1- cconstant tank-max-x
 
 : tank-rudder ( -- -1|0|1 )
   kk-left pressed? kk-right pressed? abs + transmission? and ;
-  \ Does the tank move? Return its x increment.
+  \ Does the tank move? Return its column increment.
 
 : outside? ( col -- f )
   building-left-x c@1+ building-right-x c@ within 0= ;
@@ -2730,7 +2730,7 @@ variable invader-time
 : broken-bricks-coordinates
   ( col1 -- col1 row1 col2 row2 col3 row3 )
   invader~ ~y c@ 2dup 1+ 2dup 2- ;
-  \ Convert the x coordinate _col1_ of the broken wall to the
+  \ Convert the column _col1_ of the broken wall to the
   \ coordinates of the broken brick above the invader, _col3
   \ row3_, below it, _col3 row3_, and in front of it, _col1
   \ row1_.
@@ -3045,7 +3045,7 @@ defer visible-mothership-action ( -- )
   \ the mothership.
 
 1 cconstant mothership-y
-  \ y coordinate of the mothership.
+  \ Row of the mothership.
 
 variable mothership-x
 variable mothership-x-inc
@@ -3072,8 +3072,8 @@ defer set-mothership-direction ( -1..1 -- )
   mothership-x-inc @ negate set-mothership-direction ;
 
 32 cconstant mothership-range
-  \ Allowed x coordinate positions of the mothership out of the
-  \ screen, in either direction.
+  \ Allowed columns of the mothership out of the screen, in
+  \ either direction.
 
 mothership-range negate     constant mothership-range-min-x
 mothership-range columns + cconstant mothership-range-max-x
@@ -3095,8 +3095,7 @@ variable mothership-time
   \ mothership, out of the screen.
 
 : place-mothership ( -- ) mothership-x0 mothership-x ! ;
-  \ Set the initial X coordinate of the motherhip, out of the
-  \ screen.
+  \ Set the initial column of the motherhip, out of the screen.
 
 : set-mothership-sprite ( c n -- )
   c!> mothership-frames c!> mothership mothership-frame coff ;
@@ -3161,8 +3160,8 @@ variable mothership-time
 
 : advance-mothership ( -- )
   mothership-x-inc @ mothership-x +! ;
-  \ Advance the mothership on its current direction,
-  \ adding its x increment to its x coordinate.
+  \ Advance the mothership on its current direction, adding its
+  \ increment to its column.
 
 : mothership-in-range? ( -- f )
   mothership-x @
@@ -3274,7 +3273,7 @@ cvariable beam-invader
 : layer-y? ( row -- f )
   dup invader-top-y invader-bottom-y between
       swap rows/layer mod 0= and ;
-  \ Is _y_ is a valid row of an invader layer?
+  \ Is _row_ is a valid row of an invader layer?
 
 : reach-invader? ( -- f ) beam-y @ layer-y? ;
   \ Has the beam reached the row of an invader's layer?
@@ -3760,8 +3759,8 @@ cvariable trigger-delay-counter trigger-delay-counter coff
 
 1 gigatype-style c!
 
-: .location ( ca len y -- ) 0 swap at-xy gigatype-title ;
-  \ Display location name part _ca len_, centered at row _y_.
+: .location ( ca len row -- ) 0 swap at-xy gigatype-title ;
+  \ Display location name part _ca len_, centered at row _row_.
 
 : (location-title ( n -- )
   dup >town$     6 .location

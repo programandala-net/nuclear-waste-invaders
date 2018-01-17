@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-13
+:revdate: 2018-01-17
 
 Older first:
 
@@ -163,7 +163,3 @@ to address.
 
 - Fix: invaders turn back at the broken wall. This bug was introduced
   with the invaders' asynchronous explosions.
-
-== 2018-01-13
-
-- Update stack notation for columns and rows.
