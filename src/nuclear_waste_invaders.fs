@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.142.0+201801171610" ;
+: version$ ( -- ca len ) s" 0.142.1+201801171643" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -602,7 +602,7 @@ localized-string press-any-key$ ( -- ca len )
 magenta papery white + brighty cconstant beam-attr
 
                          white cconstant tank-attr
-                yellow brighty cconstant projectile-attr
+                   red brighty cconstant projectile-attr
 
                   white papery cconstant unfocus-attr
   white papery brighty white + cconstant hide-report-attr
