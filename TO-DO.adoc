@@ -120,11 +120,6 @@ to address.
 - Finish regularizing the names of the sprites. The static graphics
   have no suffix.
 
-== 2018-01-04
-
-- Make the current projectiles harmless to the mothership and create a
-  second type of projectiles to destroy it [UNDER DEVELOPMENT].
-
 == 2018-01-06
 
 - Fix: happened once: frozen docked invaders (no eye blinking)...
@@ -163,3 +158,23 @@ to address.
 
 - Generalize the detection of the projectile in the flying invader
   actions: detect also the wall and the containers.
+
+== 2018-01-18
+
+- Convert the projectiles data tables into a data structure.
+
+- New status bar:
+
+....
+  <------------------------------>
+  Bullets:00/000 Missiles:0/00 Score:00000/00000
+  Ammo:00/000 0/00 Score:00000/00000
+  B:00/000 M:0/00 S:00000/00000
+  B:00/000 M:0/00    S:00000/00000
+  B:00/000 M:0/00 S:00000 H:00000
+  B:00/000 M:0/00  S:00000 H:00000
+  <------------------------------>
+....
+
+- Remove old code about pixel projectiles.
+- Limit the number of bullets and missiles.

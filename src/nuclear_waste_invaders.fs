@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.143.0-pre.0+201801181048" ;
+: version$ ( -- ca len ) s" 0.143.0+201801181746" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -236,14 +236,14 @@ defer ((debug-point  ' noop ' ((debug-point defer!
   immediate compile-only
 
 : XXX ( -- )
-  ~~? @ 0= ?exit
+  ~~? @ 0exit
   base @ >r decimal latest .name .s r> base !
   key drop ;
 
-'q' ~~quit-key c!  $FF ~~resume-key c!  22 ~~y c!  ~~? off
+'q' ~~quit-key c!  $FF ~~resume-key c!  22 ~~y c!  ~~? on
 
 : ~~stack-info ( -- )
-  home ." rdepth:" rdepth . ;
+  0 ~~y c@ at-xy ." D:" depth . ." R:" rdepth . space ;
 ' ~~stack-info ' ~~app-info defer!
   \ XXX TMP -- for debugging
 
@@ -712,7 +712,7 @@ current-controls c@ set-controls
   \ ===========================================================
   cr .( UDG) ?depth debug-point \ {{{1
 
-               154 cconstant last-udg \ last UDG code used
+               156 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
 create udg-set /udg-set allot  udg-set set-udg
@@ -791,12 +791,8 @@ cvariable invaders
   \
   \ XXX TMP -- Moved here for debugging.
 
-: .score ( -- ) score @ score-xy (.score
-  space invaders c@ . ;
+: .score ( -- ) score @ score-xy (.score ;
   \ Display the score.
-  \
-  \ XXX TMP -- For debugging.
-  \ XXX INFORMER -- Show also the current number of invaders.
 
 : .record ( -- ) record @ record-x score-y (.score ;
   \ Display the record.
@@ -1520,7 +1516,7 @@ X.....X........X
 ................ drop
 
   \ -----------------------------------------------------------
-  \ Projectile
+  \ Projectiles
 
 [pixel-projectile] 0= [if]
 
@@ -1533,7 +1529,7 @@ X.....X........X
   ..X.....
   .....X..
   ..X.....
-  .....X.. sprite-id projectile-sprite
+  .....X.. sprite-id bullet-sprite
 
   1 1 udg-sprite
 
@@ -1634,11 +1630,39 @@ X.....X........X
   .....X..
   ..X..X.. drop
 
-  projectile-sprite [udg] [if]   >udg c@ swap -
-                          [else] here swap /udg /
-                          [then] cconstant frames/projectile
+  bullet-sprite [udg] [if]   >udg c@ swap -
+                      [else] here swap /udg /
+                      [then] cconstant frames/bullet
 
-  [ocr] [if] >udg c@1- cconstant last-projectile-frame [then]
+  [ocr] [if] >udg c@1- cconstant bullet-last-frame [then]
+
+  1 1 udg-sprite
+
+  ...XX...
+  ...XX...
+  ...XX...
+  ..XXXX..
+  ..XXXX..
+  ..XXXX..
+  ...X.X..
+  ..X.X... sprite-id missile-sprite
+
+  1 1 udg-sprite
+
+  ...XX...
+  ...XX...
+  ...XX...
+  ..XXXX..
+  ..XXXX..
+  ..XXXX..
+  ..X.X...
+  ...X.X.. drop
+
+  missile-sprite [udg] [if]   >udg c@ swap -
+                       [else] here swap /udg /
+                       [then] cconstant frames/missile
+
+  [ocr] [if] >udg c@1- cconstant missile-last-frame [then]
 
 [then]
 
@@ -2513,7 +2537,9 @@ columns udg/tank - 1- cconstant tank-max-x
   \ Display the tank at its current position.
 
 cvariable arm#
-  \ Number of the current tank arm.
+  \ Number of the current tank arm:
+  \ 0 = gun machine;
+  \ 1 = missile gun.
 
 create tank-sprites
   gun-machine-tank-sprite c,
@@ -2552,7 +2578,7 @@ constant tank-movements ( -- a )
 
 : tank-movement ( -- a ) tank-rudder tank-movements array> ;
 
-8 cconstant tank-interval \ ticks
+9 cconstant tank-interval \ ticks
 
 : schedule-tank ( -- ) ticks tank-interval + tank-time ! ;
 
@@ -2562,6 +2588,9 @@ constant tank-movements ( -- a )
 
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
+
+0 cconstant max-projectile-frames
+  \ Configurable constant.
 
 %111 cconstant max-projectile#
   \ Bitmask for the projectile counter (0..7).
@@ -2577,15 +2606,39 @@ max-projectile# 1+ cconstant #projectiles
 0 cconstant projectile#
   \ Number of the current projectile.
 
-create 'projectile-x #projectiles allot
-create 'projectile-y #projectiles allot
-  \ Tables for the coordinates of all projectiles.
+create 'projectile-x          #projectiles allot
+create 'projectile-y          #projectiles allot
+create 'projectile-sprite     #projectiles allot
+create 'projectile-frames     #projectiles allot
+[ocr] [if]
+  create 'projectile-last-frame #projectiles allot
+[then]
+  \ Tables for the coordinates and types of all projectiles.
+  \
+  \ XXX TODO -- Convert to a structure.
 
 : projectile-x ( -- ca ) 'projectile-x projectile# + ;
   \ Address of the x coordinate of the current projectile.
 
 : projectile-y ( -- ca ) 'projectile-y projectile# + ;
   \ Address of the y coordinate of the current projectile.
+
+: projectile-sprite ( -- ca )
+  'projectile-sprite projectile# + ;
+  \ Address of the UDG sprite of the current projectile.
+
+: projectile-frames ( -- ca )
+  'projectile-frames projectile# + ;
+  \ Address of the number of frames of the current projectile.
+
+[ocr] [if]
+
+: projectile-last-frame ( -- ca )
+  'projectile-last-frame projectile# + ;
+  \ Address of the UDG of the last frame of the current
+  \ projectile.
+
+[then]
 
 defer .debug-data ( -- )
 ' noop ' .debug-data defer!
@@ -2954,8 +3007,8 @@ defer breaking-invader-action ( -- )
   \ Undock the current invader.
 
 : is-there-a-projectile? ( col row -- f )
-  [ocr] [if]   ocr projectile-sprite
-                   last-projectile-frame between
+  [ocr] [if]   ocr projectile-sprite c@
+                   last-projectile-frame c@ between
         [else] xy>attr projectile-attr = [then] ;
 
 : .sky ( -- ) sky-attr attr! space ;
@@ -3307,7 +3360,9 @@ variable mothership-time
   endcase advance-mothership ;
   \ Do move the visible mothership to the right.
 
-0 layer>y cconstant invader-min-y
+0 layer>y cconstant invader-min-y \ bottom
+
+4 layer>y cconstant invader-max-y \ top
 
 beam-attr dup join constant beam-cell-attr
 
@@ -3531,7 +3586,7 @@ constant visible-mothership-movements ( -- a )
   ' invisible-mothership-action defer!
   \ Action of the mothership when it's invisible.
 
-6 cconstant mothership-interval \ ticks
+7 cconstant mothership-interval \ ticks
 
 : schedule-mothership ( -- )
   ticks mothership-interval + mothership-time ! ;
@@ -3722,8 +3777,11 @@ variable mothership-explosion-time
   \ projectile.
 
 : projectile ( -- c )
-  projectile-sprite frames/projectile random + ;
+  projectile-sprite c@ projectile-frames c@ random + ;
   \ Return the UDG _c_ of a random frame of the projectile.
+  \
+  \ XXX TODO -- Adapt to missiles, whose frames should be
+  \ sequential, not random.
 
 [then]
 
@@ -3744,11 +3802,15 @@ variable mothership-explosion-time
   [then] ;
   \ Delete the projectile.
 
+create projectile-altitudes
+  invader-max-y   c, \ bullet
+  mothership-y 1+ c, \ missile
+
 : projectile-lost? ( -- f )
   projectile-y c@
   [pixel-projectile]
   [if]   [ sky-top-y y>gy ] cliteral >
-  [else] [ sky-top-y 1+ ] cliteral <
+  [else] arm# c@ projectile-altitudes + c@ <
   [then] ;
   \ Is the projectile lost?
 
@@ -3772,13 +3834,45 @@ cvariable trigger-delay-counter trigger-delay-counter coff
 
 : damage-transmission ( -- ) 1 transmission-damage +! ;
 
+create projectile-sprites
+  bullet-sprite c,
+  missile-sprite c,
+
+: arm-sprite ( -- c ) arm# c@ projectile-sprites + c@ ;
+  \ UDG sprite _c_ of the current arm.
+
+[ocr] [if]
+
+create projectile-last-frames
+  bullet-last-frame c,
+  missile-last-frame c,
+
+: arm-projectile-last-frame ( -- c )
+  arm# c@ projectile-last-frames + c@ ;
+  \ UDG last frame _c_ of the projectile of the current arm.
+
+[then]
+
+create projectile-frames
+  frames/bullet c,
+  frames/missile c,
+
+: arm-projectile-frames ( -- n )
+  arm# c@ projectile-frames + c@ ;
+  \ Number _n_ of frames of the projectile of the current arm.
+
 : fire ( -- )
   1 used-projectiles +!
   x> c!> projectile#
   new-projectile-x projectile-x c!
   [pixel-projectile]
   [if]   [ tank-y y>gy 1+ ] cliteral
-  [else] [ tank-y 1- ] cliteral
+  [else] arm-sprite projectile-sprite c!
+         arm-projectile-frames projectile-frames c!
+         [ocr] [if]
+           arm-projectile-last-frame projectile-last-frame c!
+         [then]
+         [ tank-y 1- ] cliteral
   [then] projectile-y c!
   .projectile fire-sound delay-trigger damage-transmission ;
   \ The tank fires.
@@ -3821,7 +3915,7 @@ cvariable trigger-delay-counter trigger-delay-counter coff
 
 : toggle-arm ( -- ) arm# c@ 0= abs set-arm ;
 
-8 cconstant arming-interval \ ticks
+10 cconstant arming-interval \ ticks
 
 : schedule-arming ( -- )
   ticks arming-interval + arming-time ! ;
@@ -4052,6 +4146,7 @@ localized-string about-next-location$ ( -- ca len )
 
 : fight ( -- )
   [breakable] [if] ?quit-game [then] \ XXX TMP --
+  \ ~~stack-info \ XXX INFORMER
   fly-projectile manage-tank
   fly-projectile manage-mothership
   fly-projectile manage-invaders ;
