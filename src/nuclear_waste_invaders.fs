@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.142.1+201801171643" ;
+: version$ ( -- ca len ) s" 0.143.0-pre.0+201801181048" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -640,6 +640,7 @@ variable catastrophe \ flag (game end condition)
 0 cconstant kk-left#  0. 2constant kk-left
 0 cconstant kk-right# 0. 2constant kk-right
 0 cconstant kk-fire#  0. 2constant kk-fire
+0 cconstant kk-down#  0. 2constant kk-down
 
 : wait ( -- ) begin inkey until ;
   \ Wait until any key is pressed.
@@ -663,22 +664,22 @@ variable catastrophe \ flag (game end condition)
 
   \ Controls
 
-3 cconstant /controls
+4 cconstant /controls
   \ Bytes per item in the `controls` table.
 
 create controls
-  \ left    right     fire
-  kk-5# c,  kk-8# c,  kk-en# c, \ cursor: 5-8-Enter
-  kk-r# c,  kk-t# c,  kk-en# c, \ Spanish Dvorak: R-T-Enter
-  kk-z# c,  kk-x# c,  kk-en# c, \ QWERTY: Z-X-Enter
-  kk-5# c,  kk-8# c,  kk-0#  c, \ cursor joystick: 5-8-0
-  kk-5# c,  kk-8# c,  kk-sp# c, \ cursor: 5-8-Space
-  kk-1# c,  kk-2# c,  kk-5#  c, \ Sinclair joystick 1: 1-2-5
-  kk-6# c,  kk-7# c,  kk-0#  c, \ Sinclair joystick 2: 6-7-0
-  kk-o# c,  kk-p# c,  kk-q#  c, \ QWERTY: O-P-Q
-  kk-n# c,  kk-m# c,  kk-q#  c, \ QWERTY: N-M-Q
-  kk-q# c,  kk-w# c,  kk-p#  c, \ QWERTY: Q-W-P
-  kk-z# c,  kk-x# c,  kk-p#  c, \ QWERTY: Z-X-P
+  \ left    right     fire       down
+  kk-5# c,  kk-8# c,  kk-en# c,  kk-6#  c, \ cursor+enter
+  kk-r# c,  kk-t# c,  kk-en# c,  kk-m#  c, \ Spanish Dvorak
+  kk-z# c,  kk-x# c,  kk-en# c,  kk-sp# c, \ QWERTY
+  kk-5# c,  kk-8# c,  kk-0#  c,  kk-6#  c, \ cursor joystick
+  kk-5# c,  kk-8# c,  kk-sp# c,  kk-6#  c, \ cursor+space
+  kk-1# c,  kk-2# c,  kk-5#  c,  kk-3#  c, \ Sinclair 1
+  kk-6# c,  kk-7# c,  kk-0#  c,  kk-8#  c, \ Sinclair 2
+  kk-o# c,  kk-p# c,  kk-q#  c,  kk-a#  c, \ QWERTY
+  kk-n# c,  kk-m# c,  kk-q#  c,  kk-a#  c, \ QWERTY
+  kk-q# c,  kk-w# c,  kk-p#  c,  kk-en# c, \ QWERTY
+  kk-z# c,  kk-x# c,  kk-p#  c,  kk-en# c, \ QWERTY
 
 here controls - /controls / cconstant max-controls
   \ Number of controls stored in `controls`.
@@ -691,7 +692,8 @@ max-controls 1- cconstant last-control
 : set-controls ( n -- )
   >controls     dup c@  dup c!> kk-left#   #>kk 2!> kk-left
              1+ dup c@  dup c!> kk-right#  #>kk 2!> kk-right
-             1+     c@  dup c!> kk-fire#   #>kk 2!> kk-fire ;
+             1+ dup c@  dup c!> kk-fire#   #>kk 2!> kk-fire
+             1+     c@  dup c!> kk-down#   #>kk 2!> kk-down ;
   \ Make controls number _n_ (item of the `controls` table) the
   \ current controls.
 
@@ -710,7 +712,7 @@ current-controls c@ set-controls
   \ ===========================================================
   cr .( UDG) ?depth debug-point \ {{{1
 
-               144 cconstant last-udg \ last UDG code used
+               154 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
 create udg-set /udg-set allot  udg-set set-udg
@@ -1731,6 +1733,11 @@ XXXXXXXX sprite-id broken-bottom-right-brick
 
 4 cconstant tank-frames
 
+tank-frames 1- cconstant tank-max-frame
+
+0 cconstant tank-sprite
+  \ A configurable constant. The current sprite of the tank.
+
 cvariable tank-frame \ counter (0..3)
 
 3 cconstant udg/tank
@@ -1743,7 +1750,7 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX..XX..XX..XX..XX.XX.
 ...X.XXX.XXX.XXX.XXX.X..
-....X.X.X.X.X.X.X.X.X... sprite-id tank-sprite
+....X.X.X.X.X.X.X.X.X... sprite-id gun-machine-tank-sprite
 
 udg/tank 1 udg-sprite
 ..........X..X..........
@@ -1769,6 +1776,46 @@ udg/tank 1 udg-sprite
 ..........X..X..........
 ...XXXXXX.X..X.XXXXXXX..
 ..XXXXXXXXXXXXXXXXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XXX.X.X.X.X.X.X.X.X.XXX
+..XX.XXX.XXX.XXX.XXX.XX.
+...X..XX..XX..XX..XX.X..
+...X.X.X.X.X.X.X.X.X.X.. drop
+
+udg/tank 1 udg-sprite
+..........XXXX..........
+...XXXXXX.XXXX.XXXXXXX..
+..XXXXXXX.XXXX.XXXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XX.X.X.X.X.X.X.X.X.X.XX
+..XX..XX..XX..XX..XX.XX.
+...X.XXX.XXX.XXX.XXX.X..
+....X.X.X.X.X.X.X.X.X... sprite-id missile-gun-tank-sprite
+
+udg/tank 1 udg-sprite
+..........XXXX..........
+...XXXXXX.XXXX.XXXXXXX..
+..XXXXXXX.XXXX.XXXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XXX.X.X.X.X.X.X.X.X.XXX
+..XX.XX..XX..XX..XX..XX.
+...X.XXX.XXX.XXX.XXX.X..
+...X.X.X.X.X.X.X.X.X.X.. drop
+
+udg/tank 1 udg-sprite
+..........XXXX..........
+...XXXXXX.XXXX.XXXXXXX..
+..XXXXXXX.XXXX.XXXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XX.X.X.X.X.X.X.X.X.X.XX
+..XX.XXX.XXX.XXX.XXX.XX.
+...X.XX..XX..XX..XX..X..
+....X.X.X.X.X.X.X.X.X... drop
+
+udg/tank 1 udg-sprite
+..........XXXX..........
+...XXXXXX.XXXX.XXXXXXX..
+..XXXXXXX.XXXX.XXXXXXXX.
 .XXXXXXXXXXXXXXXXXXXXXXX
 .XXX.X.X.X.X.X.X.X.X.XXX
 ..XX.XXX.XXX.XXX.XXX.XX.
@@ -2352,7 +2399,12 @@ variable tank-time
   \ When the ticks clock reaches the contents of this variable,
   \ the tank will move.
 
-: repair-tank ( -- ) transmission-damage off tank-time off ;
+variable arming-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the tank can change its gun type.
+
+: repair-tank ( -- )
+  transmission-damage off tank-time off arming-time off ;
 
 columns udg/tank - 2/ cconstant parking-x
 
@@ -2393,7 +2445,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ The most left and most right columns of the building
   \ are considered outside, because they are the doors.
 
-: next-col ( col -- ) 1+ 33 swap - 23688 c!  1 23684 +! ;
+: next-col ( col -- ) 1+ 33 swap - 23688 c! 1 23684 +! ;
   \ Set the current column to _col+1_, by modifing the
   \ contents of OS byte variable S_POSN (23688) and increasing
   \ the OS cell variable DF_CC (23684) (printing address in the
@@ -2416,11 +2468,19 @@ columns udg/tank - 1- cconstant tank-max-x
 
 : right-tank-udg  ( -- c ) left-tank-udg 2+ ;
 
-: tank-frame+ ( n1 -- n2 ) 1+ dup tank-frames < and ;
+: tank-frame+ ( n1 -- n2 ) 1+ dup tank-frames <> and ;
   \ Increase tank frame _n1_ resulting frame _n2_.
   \ If the limit was reached, _n2_ is zero.
-  \
-  \ XXX TODO -- Use `tank-max-frame <>` for speed.
+
+: tank-frame- ( n1 -- n2 )
+  ?dup if 1- else tank-max-frame then ;
+  \ Decrease tank frame _n1_ resulting frame _n2_.
+
+: tank-arm-udg ( -- c )
+  tank-frame c@ tank-frame- udg/tank * tank-sprite + 1+ ;
+  \ Return UDG _c_ of the tank arm. This is identical to
+  \ `middle-tank-udg`, except the frame has to be decreased
+  \ in order to prevent the tank chains from moving.
 
 : tank-next-frame ( -- )
   tank-frame c@ tank-frame+ tank-frame c! ;
@@ -2452,7 +2512,26 @@ columns udg/tank - 1- cconstant tank-max-x
 : .tank ( -- ) (.tank drop ;
   \ Display the tank at its current position.
 
-: new-tank ( -- ) repair-tank park-tank .tank ;
+cvariable arm#
+  \ Number of the current tank arm.
+
+create tank-sprites
+  gun-machine-tank-sprite c,
+  missile-gun-tank-sprite c,
+
+: .tank-arm ( -- )
+  tank-attr attr!
+  tank-x c@ 1+ dup tank-y at-xy
+                   tank-arm-udg ?emit-outside drop ;
+  \ If the middle part of the tank is visible (i.e. outside the
+  \ building), display it.
+
+: (set-arm ( n -- )
+  dup arm# c! tank-sprites + c@ c!> tank-sprite ;
+
+: set-arm ( n -- ) (set-arm .tank-arm ;
+
+: new-tank ( -- ) repair-tank 0 (set-arm park-tank .tank ;
 
 : <tank ( -- ) -1 tank-x c+! (.tank -tank-extreme drop ;
   \ Move the tank to the left.
@@ -3740,6 +3819,19 @@ cvariable trigger-delay-counter trigger-delay-counter coff
   gun-below-building? ?exit fire ;
   \ Manage the gun.
 
+: toggle-arm ( -- ) arm# c@ 0= abs set-arm ;
+
+8 cconstant arming-interval \ ticks
+
+: schedule-arming ( -- )
+  ticks arming-interval + arming-time ! ;
+
+: arming ( -- ) arming-time @ past? 0exit
+                kk-down pressed?    0exit
+                toggle-arm schedule-arming ;
+
+: manage-tank ( -- ) driving arming shooting ;
+
 : new-record? ( -- f ) score @ record @ > ;
   \ Is there a new record?
 
@@ -3960,8 +4052,7 @@ localized-string about-next-location$ ( -- ca len )
 
 : fight ( -- )
   [breakable] [if] ?quit-game [then] \ XXX TMP --
-  fly-projectile driving
-  fly-projectile shooting
+  fly-projectile manage-tank
   fly-projectile manage-mothership
   fly-projectile manage-invaders ;
 

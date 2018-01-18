@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-17
+:revdate: 2018-01-18
 
 Older first:
 
@@ -123,7 +123,7 @@ to address.
 == 2018-01-04
 
 - Make the current projectiles harmless to the mothership and create a
-  second type of projectiles to destroy it.
+  second type of projectiles to destroy it [UNDER DEVELOPMENT].
 
 == 2018-01-06
 
