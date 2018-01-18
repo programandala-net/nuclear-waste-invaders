@@ -9,10 +9,6 @@ Older first:
 Several players, say 1..4. Simply, save their controls number and score in a
 table.
 
-== 2016-10-12
-
-Use pixels instead of characters as projectiles.
-
 == 2016-10-15
 
 Show a graphic of the ammo left.
@@ -176,5 +172,4 @@ to address.
   <------------------------------>
 ....
 
-- Remove old code about pixel projectiles.
 - Limit the number of bullets and missiles.

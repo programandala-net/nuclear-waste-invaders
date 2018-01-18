@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.143.0+201801181746" ;
+: version$ ( -- ca len ) s" 0.144.0+201801181810" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -47,12 +47,6 @@ cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
 true constant [breakable] immediate
   \ Make the program breakable with the BREAK key combination?
-
-false constant [pixel-projectile] immediate
-  \ Pixel projectiles (new method) instead of UDG projectiles
-  \ (old method)?
-  \
-  \ XXX TODO -- finish support for pixel projectiles
 
 false constant [ocr] immediate
   \ Use `ocr` to check the graphics on the screen (old, slower
@@ -151,11 +145,6 @@ need last-column need udg-block need udg! need blackout
 need window need wltype need wcr need wcls need wcolor
 
 [ocr] [if] need ocr [else] need xy>attr [then]
-
-[pixel-projectile] [if]
-  need plot need set-pixel need reset-pixel need gxy>attra
-  need x>gx need y>gy
-[then]
 
 need inverse-off need overprint-off need attr!  need attr@
 
@@ -743,7 +732,7 @@ cvariable used-udgs  used-udgs coff
   \ ===========================================================
   cr .( Font) ?depth debug-point \ {{{1
 
-[pixel-projectile] 0= [ocr] and [if]
+[ocr] [if]
 
 cvariable ocr-last
 
@@ -866,7 +855,7 @@ rom-font bl /udg * constant bl-udg
 
 [then]
 
-[pixel-projectile] 0= [ocr] and [udg] and [if]
+[ocr] [udg] and [if]
   >udg c@ ocr-first c!
     \ The first UDG examined by `ocr` must be the first one of
     \ the next sprite.
@@ -1518,8 +1507,6 @@ X.....X........X
   \ -----------------------------------------------------------
   \ Projectiles
 
-[pixel-projectile] 0= [if]
-
   1 1 udg-sprite
 
   ..X.....
@@ -1664,8 +1651,6 @@ X.....X........X
 
   [ocr] [if] >udg c@1- cconstant missile-last-frame [then]
 
-[then]
-
   \ -----------------------------------------------------------
   \ Building
 
@@ -1680,7 +1665,7 @@ XX.XXXXX
 XX.XXXXX
 ........ sprite-id brick
 
-[pixel-projectile] 0= [ocr] and [if]
+[ocr] [if]
   >udg c@1- ocr-last c!
     \ The last UDG examined by `ocr` must be the last one
     \ of the latest sprite.
@@ -2438,22 +2423,14 @@ columns udg/tank - 2/ cconstant parking-x
 columns udg/tank - 1- cconstant tank-max-x
   \ Mininum and maximum columns of the tank.
 
-: new-projectile-x ( -- col|gx )
-  [pixel-projectile]
-  [if]   tank-x c@ x>gx [ udg/tank 8 * 2/ ] cliteral +
-  [else] tank-x c@1+
-  [then] ;
+: new-projectile-x ( -- col ) tank-x c@1+ ;
   \ Return the column _col_ or graphic coordinate _gx_ for the
   \ new projectile, depending (at compile time) on the type of
   \ projectile and (at runtime) the position of the tank.
 
 : gun-below-building? ( -- f )
   new-projectile-x
-  [pixel-projectile] [if]
-    building-left-x c@ x>gx building-right-x c@ x>gx
-  [else]
-    building-left-x c@ building-right-x c@
-  [then] between ;
+  building-left-x c@ building-right-x c@ between ;
   \ Is the tank's gun below the building?
 
 : transmission? ( -- f ) rnd transmission-damage @ u> ;
@@ -2669,7 +2646,7 @@ defer debug-data-pause ( -- )
 
 : prepare-war ( -- )
   catastrophe off
-  [ocr] [pixel-projectile] [ 0= and ] [if] init-ocr [then]
+  [ocr] [if] init-ocr [then]
   first-location score off cls ;
 
 0 [if]
@@ -3736,9 +3713,7 @@ variable mothership-explosion-time
   \ Make it the current one and manage it.
 
 : mothership-impacted? ( -- f )
-  [pixel-projectile]
-  [if]   projectile-coords gxy>attra c@ mothership-attr =
-  [else] projectile-y c@ mothership-y = [then] ;
+  projectile-y c@ mothership-y = ;
 
 : mothership-exploding? ( -- f )
   action-of do-mothership-action
@@ -3753,14 +3728,10 @@ variable mothership-explosion-time
 
 : hit-something? ( -- f|f0 )
   projectile-coords
-  [pixel-projectile] [if]   get-pixel ( f )
-                     [else] [ocr] [if]   ocr 0<>
-                                  [else] xy>attr
-                                         [ sky-attr 0<> ]
-                                         [if] sky-attr <> ( f )
-                                         [else] ( f0 ) [then]
-                                  [then]
-                     [then] ;
+  [ocr] [if]   ocr 0<>
+        [else] xy>attr [ sky-attr 0<> ] [if] sky-attr <> ( f )
+                                        [else] ( f0 ) [then]
+        [then] ;
   \ Did the projectile hit something?
 
 : impacted? ( -- f ) hit-something? dup if impact then ;
@@ -3769,8 +3740,6 @@ variable mothership-explosion-time
 
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
-
-[pixel-projectile] 0= [if]
 
 : at-projectile ( -- ) projectile-coords at-xy ;
   \ Set the cursor position at the coordinates of the
@@ -3783,23 +3752,15 @@ variable mothership-explosion-time
   \ XXX TODO -- Adapt to missiles, whose frames should be
   \ sequential, not random.
 
-[then]
-
 : .projectile ( -- )
-  projectile-attr attr!
-  [pixel-projectile] [if]   projectile-coords plots
-                     [else] at-projectile projectile .1x1sprite
-                     [then] ;
+  projectile-attr attr! at-projectile projectile .1x1sprite ;
   \ Display the projectile.
 
 ' whip alias fire-sound ( -- )
 
 : -projectile ( -- )
-  [pixel-projectile]
-  [if]   projectile-coords reset-pixel
-  [else] projectile-coords xy>attr projectile-attr <> ?exit
-         at-projectile .sky
-  [then] ;
+  projectile-coords xy>attr projectile-attr <> ?exit
+  at-projectile .sky ;
   \ Delete the projectile.
 
 create projectile-altitudes
@@ -3807,16 +3768,12 @@ create projectile-altitudes
   mothership-y 1+ c, \ missile
 
 : projectile-lost? ( -- f )
-  projectile-y c@
-  [pixel-projectile]
-  [if]   [ sky-top-y y>gy ] cliteral >
-  [else] arm# c@ projectile-altitudes + c@ <
-  [then] ;
+  projectile-y c@ arm# c@ projectile-altitudes + c@ < ;
   \ Is the projectile lost?
 
 : move-projectile ( -- )
   -projectile projectile-lost? if destroy-projectile exit then
-  [pixel-projectile] [if] 7 [else] -1 [then] projectile-y c+!
+  -1 projectile-y c+!
   impacted? ?exit .projectile ;
   \ Manage the projectile.
   \
@@ -3825,9 +3782,7 @@ create projectile-altitudes
 
 cvariable trigger-delay-counter trigger-delay-counter coff
 
-[pixel-projectile] [if]   8
-                   [else] 6
-                   [then] cconstant trigger-delay
+6 cconstant trigger-delay
 
 : delay-trigger ( -- )
   trigger-delay trigger-delay-counter c! ;
@@ -3865,15 +3820,13 @@ create projectile-frames
   1 used-projectiles +!
   x> c!> projectile#
   new-projectile-x projectile-x c!
-  [pixel-projectile]
-  [if]   [ tank-y y>gy 1+ ] cliteral
-  [else] arm-sprite projectile-sprite c!
-         arm-projectile-frames projectile-frames c!
-         [ocr] [if]
-           arm-projectile-last-frame projectile-last-frame c!
-         [then]
-         [ tank-y 1- ] cliteral
-  [then] projectile-y c!
+  arm-sprite projectile-sprite c!
+  arm-projectile-frames projectile-frames c!
+  [ocr] [if]
+    arm-projectile-last-frame projectile-last-frame c!
+  [then]
+  [ tank-y 1- ] cliteral
+  projectile-y c!
   .projectile fire-sound delay-trigger damage-transmission ;
   \ The tank fires.
   \ XXX TODO -- confirm `tank-y 1-`
