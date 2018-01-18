@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.144.0+201801181810" ;
+: version$ ( -- ca len ) s" 0.145.0+201801182018" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2412,8 +2412,12 @@ variable arming-time
   \ When the ticks clock reaches the contents of this variable,
   \ the tank can change its gun type.
 
-: repair-tank ( -- )
-  transmission-damage off tank-time off arming-time off ;
+variable trigger-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the trigger can work.
+
+: repair-tank ( -- ) transmission-damage off tank-time off
+                     arming-time off trigger-time off ;
 
 columns udg/tank - 2/ cconstant parking-x
 
@@ -3780,13 +3784,6 @@ create projectile-altitudes
   \ XXX TODO -- Move `hit-something?` here to simplify the
   \ logic.
 
-cvariable trigger-delay-counter trigger-delay-counter coff
-
-6 cconstant trigger-delay
-
-: delay-trigger ( -- )
-  trigger-delay trigger-delay-counter c! ;
-
 : damage-transmission ( -- ) 1 transmission-damage +! ;
 
 create projectile-sprites
@@ -3816,6 +3813,15 @@ create projectile-frames
   arm# c@ projectile-frames + c@ ;
   \ Number _n_ of frames of the projectile of the current arm.
 
+create trigger-intervals \ ticks
+   8 c, \ gun machine
+  16 c, \ missile gun
+
+: trigger-interval ( -- n ) arm# c@ trigger-intervals + c@ ;
+
+: schedule-trigger ( -- )
+  ticks trigger-interval + trigger-time ! ;
+
 : fire ( -- )
   1 used-projectiles +!
   x> c!> projectile#
@@ -3827,7 +3833,7 @@ create projectile-frames
   [then]
   [ tank-y 1- ] cliteral
   projectile-y c!
-  .projectile fire-sound delay-trigger damage-transmission ;
+  .projectile fire-sound schedule-trigger damage-transmission ;
   \ The tank fires.
   \ XXX TODO -- confirm `tank-y 1-`
 
@@ -3837,10 +3843,7 @@ create projectile-frames
 : projectile-left? ( -- f ) xdepth 0<> ;
   \ Is there any projectile left?
 
-: update-trigger ( -- ) trigger-delay-counter ?c1-! ;
-  \ Decrement the trigger delay, if it's not zero.
-
-: trigger-ready? ( -- f ) trigger-delay-counter c@ 0= ;
+: trigger-ready? ( -- f ) trigger-time @ past? ;
   \ Is the trigger ready?
 
 : trigger-pressed? ( -- f ) kk-fire pressed? ;
@@ -3859,7 +3862,6 @@ create projectile-frames
   \ Lose all flying projectiles.
 
 : shooting ( -- )
-  update-trigger
   trigger-pressed?    0exit
   trigger-ready?      0exit
   projectile-left?    0exit

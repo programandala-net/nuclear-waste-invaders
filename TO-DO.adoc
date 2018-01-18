@@ -116,15 +116,8 @@ to address.
 - Finish regularizing the names of the sprites. The static graphics
   have no suffix.
 
-== 2018-01-06
-
-- Fix: happened once: frozen docked invaders (no eye blinking)...
-  Schedule?
-
 == 2018-01-07
 
-- Remove `~inc-x`? It's not used by the move actions, but only to
-  calculate `flying-to-the-left?` and `attacking?`.
 - Remove `beaming`?
 - Simplifly the way `hit-something?` and `impacted?` are used.
 - Improve `mortal?` using the y coordinate in the calculation.
