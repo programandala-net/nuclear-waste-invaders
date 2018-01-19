@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.146.0+201801191658" ;
+: version$ ( -- ca len ) s" 0.147.0-pre.0+201801200015" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -108,6 +108,7 @@ need case need 0exit need +perform need do need abort"
 
 need c+! need c-! need c1+! need c1-! need ?c1-! need coff
 need dzx7t need bank-start need c@1+ need c@1- need c@2+
+need con
 
   \ --------------------------------------------
   cr .(   -Math) ?depth \ {{{2
@@ -123,11 +124,6 @@ need roll need cfield: need field: need +field-opt-0124
 need array> need !> need c!> need 2!>
 
 need sconstants
-
-need xstack need allot-xstack need xdepth need >x need x>
-need xclear
-
-need .xs \ XXX TMP -- for debuging
 
   \ --------------------------------------------
   cr .(   -Display) ?depth \ {{{2
@@ -2556,20 +2552,13 @@ constant tank-movements ( -- a )
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
 
-%111 cconstant max-projectile#
-  \ Bitmask for the projectile counter (0..7).
-  \ XXX TODO -- try %1111 and %11111
-
-max-projectile# 1+ cconstant #projectiles
-  \ Maximum number of simultaneous projectiles.
-
-#projectiles allot-xstack xstack
-  \ Create and activate an extra stack to store the free
-  \ projectiles.
+8 cconstant #projectiles
+  \ Number of projectiles the tank can hold.
 
 0
-  cfield: ~projectile-x
   cfield: ~projectile-y
+  cfield: ~projectile-x
+  cfield: ~projectile-used
   cfield: ~projectile-sprite
   cfield: ~projectile-frames
   [ocr] [if]
@@ -2596,13 +2585,10 @@ create projectiles /projectiles allot
 first-projectile~ constant projectile~
   \ Data address of the current projectile in the data table.
 
-: destroy-projectile ( -- )
-  projectile~ ~projectile-y coff projectile~ >x ;
+: destroy-projectile ( -- ) projectile~ ~projectile-y coff ;
 
 : new-projectiles ( -- )
-  used-projectiles off
-  projectiles /projectiles erase
-  xclear #projectiles 0 do i projectile#>~ >x loop ;
+  used-projectiles off projectiles /projectiles erase ;
 
 : projectile-coords ( -- col row | gx gy )
   projectile~ ~projectile-x c@ projectile~ ~projectile-y c@ ;
@@ -3751,8 +3737,21 @@ create trigger-intervals \ ticks
 : schedule-trigger ( -- )
   ticks trigger-interval + trigger-time ! ;
 
-: get-projectile ( -- )
-  x> !> projectile~
+: get-projectile ( -- a|0 )
+  #projectiles 0 do
+    i projectile#>~ dup ~projectile-used c@
+    if drop else unloop exit then
+ loop 0 ;
+  \ Get a new projectile to be used. If an unused projectile is
+  \ available, return its data address _a_; otherswise return
+  \ zero.
+
+: use-projectile ( -- )
+  projectile~ ~projectile-used con 1 used-projectiles +! ;
+  \ Mark the current projectile as used and update the
+  \ corresponding count.
+
+: prepare-projectile ( -- )
   gun-x projectile~ ~projectile-x c!
   [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
   arm-sprite projectile~ ~projectile-sprite c!
@@ -3760,22 +3759,18 @@ create trigger-intervals \ ticks
   [ocr] [if]
     arm-projectile-last-frame
     projectile~ ~projectile-last-frame c!
-  [then]
-  1 used-projectiles +! ;
-  \ Get a new projectile from the stack of available
-  \ projectiles and set its data according to the current value
-  \ of `arm#`.
+  [then] use-projectile ;
+  \ Prepare the new current projectile after to the current
+  \ value of `arm#`.
 
-: fire ( -- ) get-projectile .projectile fire-sound
+: fire ( -- ) get-projectile ?dup 0exit !> projectile~
+              prepare-projectile .projectile fire-sound
               schedule-trigger damage-transmission ;
-  \ The tank fires.
+  \ Fire the gun of the tank.
 
 : flying-projectile? ( -- f )
   projectile~ ~projectile-y c@ 0<> ;
   \ Is the current projectile flying?
-
-: projectile-left? ( -- f ) xdepth 0<> ;
-  \ Is there any projectile left?
 
 : trigger-ready? ( -- f ) trigger-time @ past? ;
   \ Is the trigger ready?
@@ -3793,14 +3788,19 @@ create trigger-intervals \ ticks
   flying-projectile? if move-projectile then next-projectile ;
   \ Manage the shoot.
 
+: flying-projectiles ( -- n )
+  0 #projectiles 0 do
+    i projectile#>~ ~projectile-y c@ 0<> abs +
+ loop ;
+ \ Return the number of flying projectiles.
+
 : lose-projectiles ( -- )
-  begin fly-projectile xdepth #projectiles = until ;
+  begin fly-projectile flying-projectiles 0= until ;
   \ Lose all flying projectiles.
 
 : shooting ( -- )
   trigger-pressed?    0exit
   trigger-ready?      0exit
-  projectile-left?    0exit
   gun-below-building? ?exit fire ;
   \ Manage the gun.
 
