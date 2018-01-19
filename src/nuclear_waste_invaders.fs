@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.145.0+201801182018" ;
+: version$ ( -- ca len ) s" 0.146.0+201801191637" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -419,18 +419,6 @@ localized-string not-in-this-language$ ( -- ca len )
 
 'n' cconstant language-key
   \ Key to change the current language.
-
-here ," puntos "
-here ," poentoj"
-here ," points "
-localized-string points$ ( -- ca len )
-  \ Return string _ca len_ in the current language.
-
-here ," puntos extra"
-here ," krompoentoj "
-here ," bonus       "
-localized-string bonus$ ( -- ca len )
-  \ Return string _ca len_ in the current language.
 
 here ," PUNTUACIÓN"
 here ," POENTARO"
@@ -1973,6 +1961,7 @@ sky-top-y columns * attributes + constant sky-top-attribute
 1 cconstant status-bar-rows
 
 status-bar-rows columns * cconstant /status-bar
+  \ Characters occupied by the status bar.
 
 : .score-label ( -- ) score$ dup 1+ score-x c! home type ;
 
@@ -2113,8 +2102,8 @@ cconstant invader-bottom-y
 
 : y>layer? ( row -- n f )
   invader-top-y - rows/layer /mod swap 0= ;
-  \ If _row_ is a valid row of an invader layer, return layer _n_
-  \ and _f_ is _true_; otherwise _n_ is invalid and _f_ is
+  \ If _row_ is a valid row of an invader layer, return layer
+  \ _n_ and _f_ is _true_; otherwise _n_ is invalid and _f_ is
   \ false.  The pair of invaders that fly nearest the ground
   \ are layer 0.  The pair above them are layer 1, and so on.
   \ Note: If _row_ is greater than the last invader layer, the
@@ -2427,14 +2416,11 @@ columns udg/tank - 2/ cconstant parking-x
 columns udg/tank - 1- cconstant tank-max-x
   \ Mininum and maximum columns of the tank.
 
-: new-projectile-x ( -- col ) tank-x c@1+ ;
-  \ Return the column _col_ or graphic coordinate _gx_ for the
-  \ new projectile, depending (at compile time) on the type of
-  \ projectile and (at runtime) the position of the tank.
+: gun-x ( -- col ) tank-x c@1+ ;
+  \ Return the column _col_ of the tank's gun.
 
 : gun-below-building? ( -- f )
-  new-projectile-x
-  building-left-x c@ building-right-x c@ between ;
+  gun-x building-left-x c@ building-right-x c@ between ;
   \ Is the tank's gun below the building?
 
 : transmission? ( -- f ) rnd transmission-damage @ u> ;
@@ -2570,9 +2556,6 @@ constant tank-movements ( -- a )
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
 
-0 cconstant max-projectile-frames
-  \ Configurable constant.
-
 %111 cconstant max-projectile#
   \ Bitmask for the projectile counter (0..7).
   \ XXX TODO -- try %1111 and %11111
@@ -2584,65 +2567,45 @@ max-projectile# 1+ cconstant #projectiles
   \ Create and activate an extra stack to store the free
   \ projectiles.
 
-0 cconstant projectile#
-  \ Number of the current projectile.
+0
+  cfield: ~projectile-x
+  cfield: ~projectile-y
+  cfield: ~projectile-sprite
+  cfield: ~projectile-frames
+  [ocr] [if]
+    cfield: ~projectile-last-frame
+  [then]
+cconstant /projectile
+  \ XXX TODO -- Move the three last field to a structure of
+  \ projectile types.
 
-create 'projectile-x          #projectiles allot
-create 'projectile-y          #projectiles allot
-create 'projectile-sprite     #projectiles allot
-create 'projectile-frames     #projectiles allot
-[ocr] [if]
-  create 'projectile-last-frame #projectiles allot
-[then]
-  \ Tables for the coordinates and types of all projectiles.
-  \
-  \ XXX TODO -- Convert to a structure.
+#projectiles /projectile * constant /projectiles
 
-: projectile-x ( -- ca ) 'projectile-x projectile# + ;
-  \ Address of the x coordinate of the current projectile.
+create projectiles /projectiles allot
+  \ Projectiles data table.
 
-: projectile-y ( -- ca ) 'projectile-y projectile# + ;
-  \ Address of the y coordinate of the current projectile.
+: projectile#>~ ( n -- a ) /projectile * projectiles + ;
+  \ Convert projectile number _n_ to its data address _a_.
 
-: projectile-sprite ( -- ca )
-  'projectile-sprite projectile# + ;
-  \ Address of the UDG sprite of the current projectile.
+0 projectile#>~ constant first-projectile~
+  \ Data address of the first projectile in the data table.
 
-: projectile-frames ( -- ca )
-  'projectile-frames projectile# + ;
-  \ Address of the number of frames of the current projectile.
+#projectiles 1- projectile#>~ constant last-projectile~
+  \ Data address of the last projectile in the data table.
 
-[ocr] [if]
+first-projectile~ constant projectile~
+  \ Data address of the current projectile in the data table.
 
-: projectile-last-frame ( -- ca )
-  'projectile-last-frame projectile# + ;
-  \ Address of the UDG of the last frame of the current
-  \ projectile.
-
-[then]
-
-defer .debug-data ( -- )
-' noop ' .debug-data defer!
-
-defer debug-data-pause ( -- )
-' wait ' debug-data-pause defer!
-
-: (.debug-data ( -- )
-  9 23 at-xy ." Ammo:" xdepth .
-             ." Depth:" depth .
-             ." Curr.:" projectile# .
-             debug-data-pause ;
-  \ XXX INFORMER
-
-: destroy-projectile ( -- ) projectile-y coff  projectile# >x ;
+: destroy-projectile ( -- )
+  projectile~ ~projectile-y coff projectile~ >x ;
 
 : new-projectiles ( -- )
   used-projectiles off
-  'projectile-y #projectiles erase
-  xclear #projectiles 0 do i >x loop ;
+  projectiles /projectiles erase
+  xclear #projectiles 0 do i projectile#>~ >x loop ;
 
 : projectile-coords ( -- col row | gx gy )
-  projectile-x c@ projectile-y c@ ;
+  projectile~ ~projectile-x c@ projectile~ ~projectile-y c@ ;
   \ Coordinates of the projectile.
 
   \ ===========================================================
@@ -2692,12 +2655,12 @@ defer debug-data-pause ( -- )
 
 : game-version ( -- ) version$ 1 center-type ;
 
-: (c) ( -- ) 127 emit ;
-  \ Display the copyright symbol.
+127 cconstant '(c)'
+  \ The code of the copyright symbol.
 
 : (.copyright ( -- )
-  row 1 over    at-xy (c) ."  2016..2018 Marcos Cruz"
-      8 swap 1+ at-xy           ." (programandala.net)" ;
+  row 1 over    at-xy '(c)' emit ."  2016..2018 Marcos Cruz"
+      8 swap 1+ at-xy            ." (programandala.net)" ;
   \ Display the copyright notice at the current coordinates.
 
 : .copyright ( -- ) 0 22 at-xy (.copyright ;
@@ -2988,7 +2951,7 @@ defer breaking-invader-action ( -- )
   \ Undock the current invader.
 
 : is-there-a-projectile? ( col row -- f )
-  [ocr] [if]   ocr projectile-sprite c@
+  [ocr] [if]   ocr projectile~ ~projectile-sprite c@
                    last-projectile-frame c@ between
         [else] xy>attr projectile-attr = [then] ;
 
@@ -3132,7 +3095,7 @@ cvariable cure-factor  20 cure-factor c!
   cr .( Mothership) ?depth debug-point \ {{{1
 
 cvariable motherships
-  \ Number of motherships.
+  \ Number of motherships. Used as a flag.
 
 defer do-mothership-action ( -- )
   \ The current action of the mothership.
@@ -3638,9 +3601,10 @@ variable mothership-explosion-time
   invaders c1-! invader-destroy-points update-score ;
 
 : impacted-invader ( -- n )
-  projectile-y c@ invader-top-y - 2/
-  projectile-x c@ [ columns 2/ ] cliteral > abs 5 * + ;
-  \ Return the impacted invader (0..9), calculated from the
+  projectile~ ~projectile-y c@ invader-top-y - 2/
+  projectile~ ~projectile-x c@ [ columns 2/ ] cliteral > abs
+  half-max-invaders * + ;
+  \ Return the impacted invader _n_, calculated from the
   \ projectile coordinates: Invaders 0 and 5 are at the top,
   \ one row below the top of the building; 1 and 6 are two rows
   \ below and so on.  0..4 are at the left of the screen; 5..9
@@ -3717,7 +3681,7 @@ variable mothership-explosion-time
   \ Make it the current one and manage it.
 
 : mothership-impacted? ( -- f )
-  projectile-y c@ mothership-y = ;
+  projectile~ ~projectile-y c@ mothership-y = ;
 
 : mothership-exploding? ( -- f )
   action-of do-mothership-action
@@ -3750,7 +3714,8 @@ variable mothership-explosion-time
   \ projectile.
 
 : projectile ( -- c )
-  projectile-sprite c@ projectile-frames c@ random + ;
+  projectile~ ~projectile-sprite c@
+  projectile~ ~projectile-frames c@ random + ;
   \ Return the UDG _c_ of a random frame of the projectile.
   \
   \ XXX TODO -- Adapt to missiles, whose frames should be
@@ -3772,12 +3737,15 @@ create projectile-altitudes
   mothership-y 1+ c, \ missile
 
 : projectile-lost? ( -- f )
-  projectile-y c@ arm# c@ projectile-altitudes + c@ < ;
+  projectile~ ~projectile-y c@
+  arm# c@ projectile-altitudes + c@ < ;
   \ Is the projectile lost?
+  \
+  \ XXX TODO -- Move to the data table.
 
 : move-projectile ( -- )
   -projectile projectile-lost? if destroy-projectile exit then
-  -1 projectile-y c+!
+  -1 projectile~ ~projectile-y c+!
   impacted? ?exit .projectile ;
   \ Manage the projectile.
   \
@@ -3822,22 +3790,27 @@ create trigger-intervals \ ticks
 : schedule-trigger ( -- )
   ticks trigger-interval + trigger-time ! ;
 
-: fire ( -- )
-  1 used-projectiles +!
-  x> c!> projectile#
-  new-projectile-x projectile-x c!
-  arm-sprite projectile-sprite c!
-  arm-projectile-frames projectile-frames c!
+: get-projectile ( -- )
+  x> !> projectile~
+  gun-x projectile~ ~projectile-x c!
+  [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
+  arm-sprite projectile~ ~projectile-sprite c!
+  arm-projectile-frames projectile~ ~projectile-frames c!
   [ocr] [if]
-    arm-projectile-last-frame projectile-last-frame c!
+    arm-projectile-last-frame
+    projectile~ ~projectile-last-frame c!
   [then]
-  [ tank-y 1- ] cliteral
-  projectile-y c!
-  .projectile fire-sound schedule-trigger damage-transmission ;
-  \ The tank fires.
-  \ XXX TODO -- confirm `tank-y 1-`
+  1 used-projectiles +! ;
+  \ Get a new projectile from the stack of available
+  \ projectiles and set its data according to the current value
+  \ of `arm#`.
 
-: flying-projectile? ( -- f ) projectile-y c@ 0<> ;
+: fire ( -- ) get-projectile .projectile fire-sound
+              schedule-trigger damage-transmission ;
+  \ The tank fires.
+
+: flying-projectile? ( -- f )
+  projectile~ ~projectile-y c@ 0<> ;
   \ Is the current projectile flying?
 
 : projectile-left? ( -- f ) xdepth 0<> ;
@@ -3850,7 +3823,9 @@ create trigger-intervals \ ticks
   \ Is the trigger pressed?
 
 : next-projectile ( -- )
-  projectile# 1+ max-projectile# and c!> projectile# ;
+  projectile~ /projectile +
+  dup [ last-projectile~ /projectile + ] literal =
+  if drop first-projectile~ then !> projectile~ ;
   \ Point to the next current projectile.
 
 : fly-projectile ( -- )

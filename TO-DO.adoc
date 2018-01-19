@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-18
+:revdate: 2018-01-19
 
 Older first:
 
@@ -34,7 +34,7 @@ Use stamina to calculate the damages to the mothership.
 
 == 2017-02-26, 2017-05-14, 2018-01-11
 
-- Max ammo
+- Max ammo.
 - Get more ammo below the building.
 
 == 2017-02-28, 2017-12-19
@@ -118,7 +118,6 @@ to address.
 
 == 2018-01-07
 
-- Remove `beaming`?
 - Simplifly the way `hit-something?` and `impacted?` are used.
 - Improve `mortal?` using the y coordinate in the calculation.
 - Remove `turn-back` and use its factor `change-direction` instead,
@@ -150,19 +149,26 @@ to address.
 
 == 2018-01-18
 
-- Convert the projectiles data tables into a data structure.
-
 - New status bar:
 
 ....
-  <------------------------------>
-  Bullets:00/000 Missiles:0/00 Score:00000/00000
-  Ammo:00/000 0/00 Score:00000/00000
-  B:00/000 M:0/00 S:00000/00000
-  B:00/000 M:0/00    S:00000/00000
-  B:00/000 M:0/00 S:00000 H:00000
-  B:00/000 M:0/00  S:00000 H:00000
-  <------------------------------>
+<------------------------------>
+Bullets:00/000 Missiles:0/00 Score:00000/00000
+Bullets:00 Missiles:0 Score:00000/00000
+Bul:00 Mis:0     Sco:00000/00000
+Ammo:00/000 0/00 Score:00000/00000
+B:00/000 M:0/00 S:00000/00000
+B:00/000 M:0/00    S:00000/00000
+B:00/000 M:0/00 S:00000 H:00000
+B:00/000 M:0/00  S:00000 H:00000
+B:00/00 M:0/00   S:00000 H:00000
+B:00/00 M:0/00     S:00000/00000
+B:00 M:0           S:00000/00000
+<------------------------------>
 ....
 
 - Limit the number of bullets and missiles.
+
+== 2018-01-19
+
+- Remove the old code about parades.
