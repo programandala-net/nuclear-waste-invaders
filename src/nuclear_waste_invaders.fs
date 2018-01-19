@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.146.0+201801191637" ;
+: version$ ( -- ca len ) s" 0.146.0+201801191658" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2609,45 +2609,6 @@ first-projectile~ constant projectile~
   \ Coordinates of the projectile.
 
   \ ===========================================================
-  cr .( Init) ?depth debug-point \ {{{1
-
-: prepare-war ( -- )
-  catastrophe off
-  [ocr] [if] init-ocr [then]
-  first-location score off cls ;
-
-0 [if]
-
-  \ XXX OLD
-
-: .parade-invader ( n -- )
-  invader#>~ dup >r ~initial-x c@ r@ ~y c@ at-xy
-                 r> ~sprite c@ .2x1-udg-sprite ;
-  \ Display invader _n_ at its initial position, with the
-  \ current attribute.
-
-: ((parade ( n1 n2 -- ) ?do i .parade-invader loop ;
-  \ Display invaders from _n2_ to _n1_, not including _n1_,
-  \ using the current attribute.
-
-: (parade ( n1 n2 -- ) healthy-invader-attr attr! ((parade ;
-  \ Display invaders from _n2_ to _n1_, not including _n1_,
-  \ using the proper attribute.
-
-: parade ( -- ) max-invaders 0 (parade ;
-  \ Display parade of all invaders.
-
-: left-side-parade ( -- ) half-max-invaders 0
-                          (parade ;
-  \ Display parade of the left-side invaders.
-
-: right-side-parade ( -- ) max-invaders half-max-invaders
-                           (parade ;
-  \ Display parade of the right-side invaders.
-
-[then]
-
-  \ ===========================================================
   cr .( Instructions) ?depth debug-point \ {{{1
 
 : game-title ( -- )
@@ -4101,6 +4062,9 @@ localized-string about-next-location$ ( -- ca len )
 
 : campaign ( -- ) begin battle catastrophe? 0=
                   while battle-report reward travel repeat ;
+
+: prepare-war ( -- ) catastrophe off [ocr] [if] init-ocr [then]
+                     first-location score off cls ;
 
 : war ( -- ) prepare-war campaign defeat ;
 

@@ -168,7 +168,3 @@ B:00 M:0           S:00000/00000
 ....
 
 - Limit the number of bullets and missiles.
-
-== 2018-01-19
-
-- Remove the old code about parades.
