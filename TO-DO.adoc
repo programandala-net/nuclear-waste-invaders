@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-19
+:revdate: 2018-01-20
 
 Older first:
 
@@ -172,3 +172,9 @@ B:00 M:0           S:00000/00000
 == 2018-01-19
 
 - Replace `arm#` with the address of a data record. 
+
+== 2018-01-20
+
+- Use a queue to manage the flying projectiles, improving
+  `next-projectile`.  Then one single `fly-projectile` would be
+  required in `fight`.
