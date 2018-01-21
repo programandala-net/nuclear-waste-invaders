@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.147.0-pre.1+201801201150" ;
+: version$ ( -- ca len ) s" 0.147.0-pre.2+201801202335" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -47,11 +47,6 @@ cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
 true constant [breakable] immediate
   \ Make the program breakable with the BREAK key combination?
-
-false constant [ocr] immediate
-  \ Use `ocr` to check the graphics on the screen (old, slower
-  \ method) instead of checking the attributes with `xy>attr`
-  \ (new, faster method)?
 
 true constant [udg] immediate
   \ Reference graphics with their UDG codes (old method)
@@ -142,7 +137,7 @@ need last-column need udg-block need udg! need blackout
 
 need window need wltype need wcr need wcls need wcolor
 
-[ocr] [if] need ocr [else] need xy>attr [then]
+need xy>attr
 
 need inverse-off need overprint-off need attr!  need attr@
 
@@ -716,25 +711,6 @@ cvariable used-udgs  used-udgs coff
   \ Abort if there is not free space to define _n_ UDGs.
 
   \ ===========================================================
-  cr .( Font) ?depth debug-point \ {{{1
-
-[ocr] [if]
-
-cvariable ocr-last
-
-: init-ocr ( -- ) ocr-first c@ udg>bitmap ocr-font !
-                  ocr-last c@ ocr-first c@ - 1+ ocr-chars c! ;
-  \ Set the UDGs `ocr` will examine to detect collisions.
-  \
-  \ XXX TODO -- range: only chars that may be detected: brick
-  \ and invaders.
-  \
-  \ XXX TODO -- Remove `init-ocr`. It's needed only once, right
-  \ after defining the graphics.
-
-[then]
-
-  \ ===========================================================
   cr .( Score) ?depth debug-point \ {{{1
 
                      0 cconstant status-bar-y
@@ -839,12 +815,6 @@ rom-font bl /udg * constant bl-udg
   \ Address of the ROM font's space, to be used directly as
   \ an UDG.
 
-[then]
-
-[ocr] [udg] and [if]
-  >udg c@ ocr-first c!
-    \ The first UDG examined by `ocr` must be the first one of
-    \ the next sprite.
 [then]
 
 [udg] [if] ' cconstant [else] ' constant [then] alias sprite-id
@@ -1607,8 +1577,6 @@ X.....X........X
                       [else] here swap /udg /
                       [then] cconstant frames/bullet
 
-  [ocr] [if] >udg c@1- cconstant bullet-last-frame [then]
-
   1 1 udg-sprite
 
   ...XX...
@@ -1635,8 +1603,6 @@ X.....X........X
                        [else] here swap /udg /
                        [then] cconstant frames/missile
 
-  [ocr] [if] >udg c@1- cconstant missile-last-frame [then]
-
   \ -----------------------------------------------------------
   \ Building
 
@@ -1650,12 +1616,6 @@ XX.XXXXX
 XX.XXXXX
 XX.XXXXX
 ........ sprite-id brick
-
-[ocr] [if]
-  >udg c@1- ocr-last c!
-    \ The last UDG examined by `ocr` must be the last one
-    \ of the latest sprite.
-[then]
 
 1 1 udg-sprite
 
@@ -2566,9 +2526,6 @@ constant tank-movements ( -- a )
   cfield: ~projectile-x
   cfield: ~projectile-sprite
   cfield: ~projectile-frames
-  [ocr] [if]
-    cfield: ~projectile-last-frame
-  [then]
 cconstant /projectile
   \ XXX TODO -- Move the three last field to a structure of
   \ projectile types.
@@ -2894,9 +2851,7 @@ defer breaking-invader-action ( -- )
   \ to on its current direction.
 
 : hit-wall? ( -- f )
-  invader-front-coords [ocr] [if]   ocr brick
-                             [else] xy>attr brick-attr
-                             [then] = ;
+  invader-front-coords xy>attr brick-attr = ;
   \ Has the current invader hit the wall of the building?
 
 : ?damages ( -- )
@@ -2909,9 +2864,7 @@ defer breaking-invader-action ( -- )
   \ Undock the current invader.
 
 : is-there-a-projectile? ( col row -- f )
-  [ocr] [if]   ocr projectile~ ~projectile-sprite c@
-                   last-projectile-frame c@ between
-        [else] xy>attr projectile-attr = [then] ;
+  xy>attr projectile-attr = ;
 
 : .sky ( -- ) sky-attr attr! space ;
   \ Display a sky-color space.
@@ -3654,10 +3607,8 @@ variable mothership-explosion-time
 
 : hit-something? ( -- f|f0 )
   projectile-coords
-  [ocr] [if]   ocr 0<>
-        [else] xy>attr [ sky-attr 0<> ] [if] sky-attr <> ( f )
-                                        [else] ( f0 ) [then]
-        [then] ;
+  xy>attr [ sky-attr 0<> ] [if]   sky-attr <> ( f )
+                           [else] ( f0 ) [then] ;
   \ Did the projectile hit something?
 
 : impacted? ( -- f ) hit-something? dup if impact then ;
@@ -3719,18 +3670,6 @@ create projectile-sprites
 : arm-sprite ( -- c ) arm# c@ projectile-sprites + c@ ;
   \ UDG sprite _c_ of the current arm.
 
-[ocr] [if]
-
-create projectile-last-frames
-  bullet-last-frame c,
-  missile-last-frame c,
-
-: arm-projectile-last-frame ( -- c )
-  arm# c@ projectile-last-frames + c@ ;
-  \ UDG last frame _c_ of the projectile of the current arm.
-
-[then]
-
 create projectile-frames
   frames/bullet c,
   frames/missile c,
@@ -3754,10 +3693,6 @@ create trigger-intervals \ ticks
   [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
   arm-sprite projectile~ ~projectile-sprite c!
   arm-projectile-frames projectile~ ~projectile-frames c!
-  [ocr] [if]
-    arm-projectile-last-frame
-    projectile~ ~projectile-last-frame c!
-  [then]
   1 used-projectiles +! ;
   \ Get a new projectile and set its data according to the
   \ current value of `arm#`.
@@ -4060,8 +3995,8 @@ localized-string about-next-location$ ( -- ca len )
 : campaign ( -- ) begin battle catastrophe? 0=
                   while battle-report reward travel repeat ;
 
-: prepare-war ( -- ) catastrophe off [ocr] [if] init-ocr [then]
-                     first-location score off cls ;
+: prepare-war ( -- )
+  catastrophe off first-location score off cls ;
 
 : war ( -- ) prepare-war campaign defeat ;
 

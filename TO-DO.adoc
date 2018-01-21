@@ -178,3 +178,7 @@ B:00 M:0           S:00000/00000
 - Use a queue to manage the flying projectiles, improving
   `next-projectile`.  Then one single `fly-projectile` would be
   required in `fight`.
+
+== 2018-01-21
+
+- Remove `damage-transmission` and friends.
