@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.147.0-pre.2+201801202335" ;
+: version$ ( -- ca len ) s" 0.147.0-pre.3+201801211645" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -103,6 +103,7 @@ need case need 0exit need +perform need do need abort"
 
 need c+! need c-! need c1+! need c1-! need ?c1-! need coff
 need dzx7t need bank-start need c@1+ need c@1- need c@2+
+need 1+!
 
   \ --------------------------------------------
   cr .(   -Math) ?depth \ {{{2
@@ -2326,7 +2327,7 @@ variable repaired
   \ XXX TMP --
   \ XXX TODO -- Check the limit to finish the game instead.
 
-variable used-projectiles  used-projectiles off
+variable used-projectiles
   \ Counter.
 
 : battle-bonus ( -- n ) location c@1+ 500 *
@@ -2394,7 +2395,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ The most left and most right columns of the building
   \ are considered outside, because they are the doors.
 
-: next-col ( col -- ) 1+ 33 swap - 23688 c! 1 23684 +! ;
+: next-col ( col -- ) 1+ 33 swap - 23688 c! 23684 1+! ;
   \ Set the current column to _col+1_, by modifing the
   \ contents of OS byte variable S_POSN (23688) and increasing
   \ the OS cell variable DF_CC (23684) (printing address in the
@@ -2451,7 +2452,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ and return its column _col_.
 
 : tank> ( -- )
-  at-tank@ -tank-extreme tank-parts drop 1 tank-x c+! ;
+  at-tank@ -tank-extreme tank-parts drop tank-x c1+! ;
   \ Move the tank to the right.
 
 : (.tank ( -- col ) at-tank@ tank-parts ;
@@ -2484,7 +2485,7 @@ create tank-sprites
 
 : new-tank ( -- ) repair-tank 0 (set-arm park-tank .tank ;
 
-: <tank ( -- ) -1 tank-x c+! (.tank -tank-extreme drop ;
+: <tank ( -- ) tank-x c1-! (.tank -tank-extreme drop ;
   \ Move the tank to the left.
 
 : ?<tank ( -- ) tank-x c@ tank-min-x = ?exit <tank ;
@@ -2518,7 +2519,7 @@ constant tank-movements ( -- a )
   \ Number of projectiles the tank can hold.
 
 #projectiles allot-xstack xstack
-  \ Create and activate an extra stack to store the free
+  \ Create and activate an extra stack to store the available
   \ projectiles.
 
 0
@@ -2547,14 +2548,49 @@ create projectiles /projectiles allot
 first-projectile~ constant projectile~
   \ Data address of the current projectile in the data table.
 
-cvariable flying-projectiles
-  \ Counter.
+cvariable #flying-projectiles
+  \ Counter: number of currently flying projectiles.
 
-: destroy-projectile ( -- )
-  projectile~ ~projectile-y coff flying-projectiles c1-! ;
+cvariable #flying-projectile
+  \ Index of the currently managed flying projectile in the
+  \ array of flying projectiles.
+
+16 cconstant max-flying-projectiles
+  \ Maximum number of projectiles that can be flying at the
+  \ same time. This is used only to create the array, i.e.  no
+  \ check is done at run-time. Therefore, the value must be
+  \ enough according to the configuration of the shooting
+  \ intervals.
+
+max-flying-projectiles cells cconstant /flying-projectiles
+
+create flying-projectiles /flying-projectiles allot
+  \ Array of flying projectiles
+  \
+  \ XXX UNDER DEVELOPMENT
+
+: start-flying ( a -- )
+  #flying-projectiles c@ flying-projectiles array> !
+  #flying-projectiles c1+! used-projectiles 1+! ;
+  \ Store projectile _a_ into the array of flying projectiles
+  \ and update the count of currently flying projectiles.
+  \
+  \ XXX UNDER DEVELOPMENT
+
+: stop-flying ( n -- )
+  flying-projectiles /flying-projectiles rot 1+ cells /string
+  over cell- swap cmove
+  #flying-projectiles c1-! ;
+  \ Remove projectile _n_ from the array of flying projectiles
+  \ and update the count of currently flying projectiles.
+  \
+  \ XXX UNDER DEVELOPMENT
+
+: destroy-projectile ( -- ) #flying-projectile c@ stop-flying ;
 
 : new-projectiles ( -- )
-  used-projectiles off flying-projectiles coff
+  used-projectiles off #flying-projectiles coff
+  #flying-projectile coff
   projectiles /projectiles erase
   xclear #projectiles 0 do i projectile#>~ >x loop ;
 
@@ -2891,7 +2927,7 @@ defer ?dock ( -- )
 :noname ( -- )
   left-of-invader is-there-a-projectile?
   if docked? ?exit turn-back exit then
-  -1 invader~ ~x c+! at-invader .invader .sky ?flying ;
+  invader~ ~x c1-! at-invader .invader .sky ?flying ;
   ' flying-left-invader-action defer!
   \ Move the current invader, which is flying to the left,
   \ unless a projectile is at the left.
@@ -2899,7 +2935,7 @@ defer ?dock ( -- )
 :noname ( -- )
   right-of-invader is-there-a-projectile?
   if docked? ?exit turn-back exit then
-  at-invader .sky .invader 1 invader~ ~x c+! ?flying ;
+  at-invader .sky .invader invader~ ~x c1+! ?flying ;
   ' flying-right-invader-action defer!
   \ Move the current invader, which is flying to the right,
   \ unless a projectile is at the right.
@@ -3654,14 +3690,14 @@ create projectile-altitudes
 
 : move-projectile ( -- )
   -projectile projectile-lost? if destroy-projectile exit then
-  -1 projectile~ ~projectile-y c+!
+  projectile~ ~projectile-y c1-!
   impacted? ?exit .projectile ;
   \ Manage the projectile.
   \
   \ XXX TODO -- Move `hit-something?` here to simplify the
   \ logic.
 
-: damage-transmission ( -- ) 1 transmission-damage +! ;
+: damage-transmission ( -- ) transmission-damage 1+! ;
 
 create projectile-sprites
   bullet-sprite c,
@@ -3692,22 +3728,22 @@ create trigger-intervals \ ticks
   gun-x projectile~ ~projectile-x c!
   [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
   arm-sprite projectile~ ~projectile-sprite c!
-  arm-projectile-frames projectile~ ~projectile-frames c!
-  1 used-projectiles +! ;
+  arm-projectile-frames projectile~ ~projectile-frames c! ;
   \ Get a new projectile and set its data according to the
   \ current value of `arm#`.
 
-: fire ( -- ) get-projectile .projectile fire-sound
-              flying-projectiles c1+!
+: launch-projectile ( -- )
+  .projectile projectile~ start-flying fire-sound ;
+
+: fire ( -- ) get-projectile launch-projectile
               schedule-trigger damage-transmission ;
   \ Fire the gun of the tank.
 
-: flying-projectile? ( -- f )
-  projectile~ ~projectile-y c@ 0<> ;
-  \ Is the current projectile flying?
+: flying-projectiles? ( -- f ) #flying-projectiles c@ 0<> ;
+  \ Is there any projectile flying?
 
 : projectile-left? ( -- f ) xdepth 0<> ;
-  \ Is there any projectile left?
+  \ Is there any projectile left in the tank?
 
 : trigger-ready? ( -- f ) trigger-time @ past? ;
   \ Is the trigger ready?
@@ -3715,18 +3751,20 @@ create trigger-intervals \ ticks
 : trigger-pressed? ( -- f ) kk-fire pressed? ;
   \ Is the trigger pressed?
 
-: next-projectile ( -- )
-  projectile~ /projectile +
-  dup [ last-projectile~ /projectile + ] literal =
-  if drop first-projectile~ then !> projectile~ ;
-  \ Point to the next current projectile.
+: next-flying-projectile ( -- )
+  #flying-projectile c@1+ dup #flying-projectiles c@ < and
+  dup #flying-projectile c!
+      flying-projectiles array> @ !> projectile~ ;
+  \ Point to the next flying projectile and make it the current
+  \ one.
 
 : fly-projectile ( -- )
-  flying-projectile? if move-projectile then next-projectile ;
-  \ Manage the shoot.
+  flying-projectiles? 0exit
+  move-projectile next-flying-projectile ;
+  \ Manage a flying projectile, if any.
 
 : lose-projectiles ( -- )
-  begin fly-projectile flying-projectiles c@ 0= until ;
+  begin fly-projectile #flying-projectiles c@ 0= until ;
   \ Lose all flying projectiles.
 
 : shooting ( -- )
@@ -4012,8 +4050,15 @@ localized-string about-next-location$ ( -- ca len )
   \ Display all game UDGs.
 
 : fp ( -- ) fly-projectile ;
-: fp? ( -- f ) flying-projectile? ;
+: fp? ( -- f ) flying-projectiles? ;
 : mp ( -- ) move-projectile ;
+: np ( -- ) next-flying-projectile ;
+
+: .fp ( -- )
+  #flying-projectiles c@ 0 ?do
+    i flying-projectiles array> @ u.
+  loop cr ;
+
 
 : ni ( -- ) next-invader ;
 : mi ( -- ) manage-invaders ;
