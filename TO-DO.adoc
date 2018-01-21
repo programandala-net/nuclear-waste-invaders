@@ -181,5 +181,3 @@ B:00 M:0           S:00000/00000
   invaders will never explode.
 - Convert `invader-proper-attr` to `stamina>attr` to reuse it for the
   mothership.
-- Use only one `fly-projectile` in `fight`.
-

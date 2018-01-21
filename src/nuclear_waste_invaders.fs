@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.147.0-pre.3+201801211645" ;
+: version$ ( -- ca len ) s" 0.147.0-pre.4+201801211710" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2515,7 +2515,7 @@ constant tank-movements ( -- a )
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
 
-8 cconstant #projectiles
+64 cconstant #projectiles
   \ Number of projectiles the tank can hold.
 
 #projectiles allot-xstack xstack
@@ -2566,16 +2566,12 @@ max-flying-projectiles cells cconstant /flying-projectiles
 
 create flying-projectiles /flying-projectiles allot
   \ Array of flying projectiles
-  \
-  \ XXX UNDER DEVELOPMENT
 
 : start-flying ( a -- )
   #flying-projectiles c@ flying-projectiles array> !
   #flying-projectiles c1+! used-projectiles 1+! ;
   \ Store projectile _a_ into the array of flying projectiles
   \ and update the count of currently flying projectiles.
-  \
-  \ XXX UNDER DEVELOPMENT
 
 : stop-flying ( n -- )
   flying-projectiles /flying-projectiles rot 1+ cells /string
@@ -2583,8 +2579,6 @@ create flying-projectiles /flying-projectiles allot
   #flying-projectiles c1-! ;
   \ Remove projectile _n_ from the array of flying projectiles
   \ and update the count of currently flying projectiles.
-  \
-  \ XXX UNDER DEVELOPMENT
 
 : destroy-projectile ( -- ) #flying-projectile c@ stop-flying ;
 
@@ -3758,13 +3752,13 @@ create trigger-intervals \ ticks
   \ Point to the next flying projectile and make it the current
   \ one.
 
-: fly-projectile ( -- )
+: manage-projectiles ( -- )
   flying-projectiles? 0exit
   move-projectile next-flying-projectile ;
   \ Manage a flying projectile, if any.
 
 : lose-projectiles ( -- )
-  begin fly-projectile #flying-projectiles c@ 0= until ;
+  begin manage-projectiles #flying-projectiles c@ 0= until ;
   \ Lose all flying projectiles.
 
 : shooting ( -- )
@@ -4008,9 +4002,8 @@ localized-string about-next-location$ ( -- ca len )
 : fight ( -- )
   [breakable] [if] ?quit-game [then] \ XXX TMP --
   \ ~~stack-info \ XXX INFORMER
-  fly-projectile manage-tank
-  fly-projectile manage-mothership
-  fly-projectile manage-invaders ;
+  manage-projectiles manage-tank
+  manage-mothership manage-invaders ;
 
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
 
@@ -4049,9 +4042,9 @@ localized-string about-next-location$ ( -- ca len )
 : .udgs ( -- ) cr last-udg 1+ 0 do i emit-udg loop ;
   \ Display all game UDGs.
 
-: fp ( -- ) fly-projectile ;
+: mp ( -- ) manage-projectiles ;
 : fp? ( -- f ) flying-projectiles? ;
-: mp ( -- ) move-projectile ;
+: mop ( -- ) move-projectile ;
 : np ( -- ) next-flying-projectile ;
 
 : .fp ( -- )
