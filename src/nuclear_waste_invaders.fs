@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.147.0+201801211952" ;
+: version$ ( -- ca len ) s" 0.148.0-dev.0+201801212304" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -428,10 +428,13 @@ here ," S:"
 localized-string score-label$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
-here ," M:"
-here ," M:"
-here ," A:"
-localized-string ammo-label$ ( -- ca len )
+: missiles-label$ s" M:" ( -- ca len ) ;
+  \ Return string _ca len_ in the current language.
+
+here ," B:"
+here ," K:"
+here ," B:"
+localized-string bullets-label$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
 here ," RÉCOR"
@@ -730,14 +733,23 @@ cvariable used-udgs  used-udgs coff
   \ ===========================================================
   cr .( Score) ?depth debug-point \ {{{1
 
-                                0 cconstant status-bar-y
-                                5 cconstant score-digits
-                                0 cconstant ammo-label-x
-   ammo-label-x ammo-label$ nip + cconstant ammo-x
-           columns score-digits - cconstant record-x
-                      record-x 1- cconstant record-separator-x
-record-separator-x score-digits - cconstant score-x
-       score-x score-label$ nip - cconstant score-label-x
+                bullets-label$ nip cconstant /bullets-label
+               missiles-label$ nip cconstant /missiles-label
+
+                                 2 cconstant ammo-digits
+                                 5 cconstant score-digits
+
+                                 0 cconstant status-bar-y
+
+                                 0 cconstant bullets-label-x
+  bullets-label-x /bullets-label + cconstant bullets-x
+        bullets-x ammo-digits + 1+ cconstant missiles-label-x
+missiles-label-x /missiles-label + cconstant missiles-x
+
+            columns score-digits - cconstant record-x
+                       record-x 1- cconstant record-separator-x
+ record-separator-x score-digits - cconstant score-x
+        score-x score-label$ nip - cconstant score-label-x
 
 2 cconstant max-player
 
@@ -753,10 +765,19 @@ cvariable player   1 player  c! \ 1..max-player
 
 ' xdepth alias projectiles-left ( -- n )
 
-: .ammo ( n -- )
-  projectiles-left s>d <# # # #> text-attr attr!
-  ammo-x status-bar-y at-xy type ;
-  \ Display the number of projectiles left.
+: .ammo ( n col -- )
+  status-bar-y at-xy s>d <# [ ammo-digits ] [#] #>
+  text-attr attr! type ;
+  \ Display the number _n_ of ammo left at column _col_ of the
+  \ status bar.
+
+: .bullets ( -- ) projectiles-left bullets-x .ammo ;
+  \ Display the number of bullets left.
+
+: .missiles ( -- ) projectiles-left missiles-x .ammo ;
+  \ Display the number of bullets left.
+  \
+  \ XXX TODO --
 
 : .score ( -- ) score @ score-x status-bar-y (.score ;
   \ Display the score.
@@ -1796,8 +1817,6 @@ udg/tank 1 udg-sprite
   \ -----------------------------------------------------------
   \ Containers
 
-  \ XXX TODO -- Move to the building section.
-
 2 1 udg-sprite
 
 ......XXXXX.....
@@ -1937,16 +1956,20 @@ sky-top-y columns * attributes + constant sky-top-attribute
 status-bar-rows columns * cconstant /status-bar
   \ Characters occupied by the status bar.
 
-: .ammo-label ( -- )
-  ammo-label-x status-bar-y at-xy ammo-label$ type ;
+: .label ( ca len col -- ) status-bar-y at-xy type ;
 
-: .score-label ( -- )
-  score-label-x status-bar-y at-xy score-label$ type ;
+: .bullets-label ( -- ) bullets-label$ bullets-label-x .label ;
+
+: .missiles-label ( -- )
+  missiles-label$ missiles-label-x .label ;
+
+: .score-label ( -- ) score-label$ score-label-x .label ;
 
 : .record-separator ( -- )
   record-separator-x status-bar-y at-xy '/' emit ;
 
-: status-bar ( -- ) text-attr attr! .ammo-label       .ammo
+: status-bar ( -- ) text-attr attr! .bullets-label    .bullets
+                                    .missiles-label   .missiles
                                     .score-label      .score
                                     .record-separator .record ;
 
@@ -2254,8 +2277,6 @@ cvariable battle-breachs
   \ attack?
 
 building-top-y 11 + cconstant building-bottom-y
-  \ XXX TODO -- Rename. This was valid when the building
-  \ was "flying".
 
 cvariable building-width
 
@@ -3740,7 +3761,8 @@ create trigger-intervals \ ticks
 : launch-projectile ( -- )
   .projectile projectile~ start-flying fire-sound ;
 
-: fire ( -- ) get-projectile launch-projectile .ammo
+: fire ( -- ) get-projectile launch-projectile
+              .bullets .missiles \ XXX TODO --
               schedule-trigger damage-transmission ;
   \ Fire the gun of the tank.
 
@@ -3792,11 +3814,8 @@ create trigger-intervals \ ticks
 : new-record? ( -- f ) score @ record @ > ;
   \ Is there a new record?
 
-: new-record ( -- ) score @ record ! ;
-  \ Set the new record.
-
-: check-record ( -- ) new-record? if new-record then ;
-  \ Set the new record, if needed.
+: update-record ( -- ) new-record? 0exit score @ record ! ;
+  \ Update the record, if needed.
 
   \ ===========================================================
   cr .( Players config) ?depth debug-point \ {{{1
@@ -3845,7 +3864,7 @@ create trigger-intervals \ ticks
 
   \ : defeat-tune ( -- )
   \   100 200 do  i 20 beep  -5 +loop ;
-  \ XXX TODO -- original code in Ace Forth
+  \ XXX REMARK -- original code in Ace Forth
 
 : defeat-tune ( -- )
   10470 5233 do  i 20 dhz>bleep bleep  261 +loop ;
@@ -3864,7 +3883,7 @@ create trigger-intervals \ ticks
   preserve-attributes
   radiation defeat-tune 2 seconds fade-display
   restore-attributes
-  check-record ;
+  update-record ;
   \ XXX TODO -- Finish.
   \ XXX TODO -- Factor.
 
