@@ -9,10 +9,6 @@ Older first:
 Several players, say 1..4. Simply, save their controls number and score in a
 table.
 
-== 2016-10-15
-
-Show a graphic of the ammo left.
-
 == 2016-10-16, 2018-01-07
 
 - Effect: the invaders eat the containers.
@@ -34,7 +30,6 @@ Use stamina to calculate the damages to the mothership.
 
 == 2017-02-26, 2017-05-14, 2018-01-11
 
-- Max ammo.
 - Get more ammo below the building.
 
 == 2017-02-28, 2017-12-19
@@ -65,7 +60,6 @@ remove duplicated frames from the UDG set.
 == 2017-04-18
 
 - Write Z80 code to print 2x1 sprites faster.
-- Simplify the status bar, remove the texts, display only "0000/0000".
 
 == 2017-05-12
 
@@ -147,26 +141,6 @@ to address.
 - Generalize the detection of the projectile in the flying invader
   actions: detect also the wall and the containers.
 
-== 2018-01-18
-
-- New status bar:
-
-....
-<------------------------------>
-Bullets:00/000 Missiles:0/00 Score:00000/00000
-Bullets:00 Missiles:0 Score:00000/00000
-Bul:00 Mis:0     Sco:00000/00000
-Ammo:00/000 0/00 Score:00000/00000
-B:00/000 M:0/00 S:00000/00000
-B:00/000 M:0/00    S:00000/00000
-B:00/000 M:0/00 S:00000 H:00000
-B:00/000 M:0/00  S:00000 H:00000
-B:00/00 M:0/00   S:00000 H:00000
-B:00/00 M:0/00     S:00000/00000
-B:00 M:0           S:00000/00000
-<------------------------------>
-....
-
 - Limit the number of bullets and missiles.
 
 == 2018-01-19
@@ -181,3 +155,12 @@ B:00 M:0           S:00000/00000
   invaders will never explode.
 - Convert `invader-proper-attr` to `stamina>attr` to reuse it for the
   mothership.
+
+- 64-cpl status bar:
+
+....
+<-------------------------------------------------------------->
+Bullets:00 Missiles:00                  Score:00000 Record:00000
+<-------------------------------------------------------------->
+....
+

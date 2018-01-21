@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.147.0-pre.4+201801211710" ;
+: version$ ( -- ca len ) s" 0.147.0+201801211952" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -419,12 +419,28 @@ here ," POENTARO"
 here ," SCORE"
 localized-string score$ ( -- ca len )
   \ Return string _ca len_ in the current language.
+  \
+  \ XXX REMARK -- Not used.
+
+here ," P:"
+here ," P:"
+here ," S:"
+localized-string score-label$ ( -- ca len )
+  \ Return string _ca len_ in the current language.
+
+here ," M:"
+here ," M:"
+here ," A:"
+localized-string ammo-label$ ( -- ca len )
+  \ Return string _ca len_ in the current language.
 
 here ," RÉCOR"
 here ," RIKORDO"
 here ," RECORD"
 localized-string record$ ( -- ca len )
   \ Return string _ca len_ in the current language.
+  \
+  \ XXX REMARK -- Not used.
 
   \ XXX TODO -- Simplify: use `sconstants` instead, using the
   \ language as index and a wrapper word to provide it.
@@ -714,39 +730,38 @@ cvariable used-udgs  used-udgs coff
   \ ===========================================================
   cr .( Score) ?depth debug-point \ {{{1
 
-                     0 cconstant status-bar-y
-                     5 cconstant score-digits
-          status-bar-y cconstant score-y
-                       cvariable score-x
-columns score-digits - cconstant record-x
+                                0 cconstant status-bar-y
+                                5 cconstant score-digits
+                                0 cconstant ammo-label-x
+   ammo-label-x ammo-label$ nip + cconstant ammo-x
+           columns score-digits - cconstant record-x
+                      record-x 1- cconstant record-separator-x
+record-separator-x score-digits - cconstant score-x
+       score-x score-label$ nip - cconstant score-label-x
 
 2 cconstant max-player
 
 cvariable players  1 players c! \ 1..max-player
 cvariable player   1 player  c! \ 1..max-player
 
-: ?[#] ( n -- ) 0 ?do postpone # loop ; immediate compile-only
+: [#] ( n -- ) 0 ?do postpone # loop ; immediate compile-only
   \ Compile `#` _n_ times.
 
 : (.score ( n col row -- )
-  at-xy s>d <# [ score-digits ] ?[#] #> text-attr attr! type ;
+  at-xy s>d <# [ score-digits ] [#] #> text-attr attr! type ;
   \ Display score _n_ at coordinates _col row_.
 
-: score-xy ( -- col row ) score-x c@ score-y ;
-  \ Coordinates of the score.
+' xdepth alias projectiles-left ( -- n )
 
-: at-score ( -- ) score-xy at-xy ;
-  \ Set the cursor position at the score.
+: .ammo ( n -- )
+  projectiles-left s>d <# # # #> text-attr attr!
+  ammo-x status-bar-y at-xy type ;
+  \ Display the number of projectiles left.
 
-cvariable invaders
-  \ Current number of invaders during the attack.
-  \
-  \ XXX TMP -- Moved here for debugging.
-
-: .score ( -- ) score @ score-xy (.score ;
+: .score ( -- ) score @ score-x status-bar-y (.score ;
   \ Display the score.
 
-: .record ( -- ) record @ record-x score-y (.score ;
+: .record ( -- ) record @ record-x status-bar-y (.score ;
   \ Display the record.
 
 : update-score ( n -- ) score +! .score ;
@@ -1922,17 +1937,18 @@ sky-top-y columns * attributes + constant sky-top-attribute
 status-bar-rows columns * cconstant /status-bar
   \ Characters occupied by the status bar.
 
-: .score-label ( -- ) score$ dup 1+ score-x c! home type ;
+: .ammo-label ( -- )
+  ammo-label-x status-bar-y at-xy ammo-label$ type ;
 
-: >record-label-x ( len -- col )
-  [ columns score-digits 1+ - ] cliteral swap - ;
-  \ Get the column _col_ of the record label from its length
-  \ _len_.
+: .score-label ( -- )
+  score-label-x status-bar-y at-xy score-label$ type ;
 
-: .record-label ( -- ) record$ dup >record-label-x at-x type ;
+: .record-separator ( -- )
+  record-separator-x status-bar-y at-xy '/' emit ;
 
-: status-bar ( -- )
-  text-attr attr! .score-label .score .record-label .record ;
+: status-bar ( -- ) text-attr attr! .ammo-label       .ammo
+                                    .score-label      .score
+                                    .record-separator .record ;
 
   \ ===========================================================
   cr .( Invaders data) ?depth debug-point \ {{{1
@@ -2539,13 +2555,7 @@ create projectiles /projectiles allot
 : projectile#>~ ( n -- a ) /projectile * projectiles + ;
   \ Convert projectile number _n_ to its data address _a_.
 
-0 projectile#>~ constant first-projectile~
-  \ Data address of the first projectile in the data table.
-
-#projectiles 1- projectile#>~ constant last-projectile~
-  \ Data address of the last projectile in the data table.
-
-first-projectile~ constant projectile~
+0 projectile#>~ constant projectile~
   \ Data address of the current projectile in the data table.
 
 cvariable #flying-projectiles
@@ -2582,11 +2592,14 @@ create flying-projectiles /flying-projectiles allot
 
 : destroy-projectile ( -- ) #flying-projectile c@ stop-flying ;
 
+: recharge-ammo ( -- )
+  xclear #projectiles 0 do i projectile#>~ >x loop ;
+
 : new-projectiles ( -- )
   used-projectiles off #flying-projectiles coff
   #flying-projectile coff
   projectiles /projectiles erase
-  xclear #projectiles 0 do i projectile#>~ >x loop ;
+  recharge-ammo ;
 
 : projectile-coords ( -- col row | gx gy )
   projectile~ ~projectile-x c@ projectile~ ~projectile-y c@ ;
@@ -2708,10 +2721,8 @@ false [if] \ XXX TODO --
   \ ===========================================================
   cr .( Invasion) ?depth debug-point \ {{{1
 
-  \ cvariable invaders
+cvariable invaders
   \ Current number of invaders during the attack.
-  \
-  \ XXX TMP -- Commented out for debugging.
 
 variable invader-time
   \ When the ticks clock reaches the contents of this variable,
@@ -3729,15 +3740,12 @@ create trigger-intervals \ ticks
 : launch-projectile ( -- )
   .projectile projectile~ start-flying fire-sound ;
 
-: fire ( -- ) get-projectile launch-projectile
+: fire ( -- ) get-projectile launch-projectile .ammo
               schedule-trigger damage-transmission ;
   \ Fire the gun of the tank.
 
 : flying-projectiles? ( -- f ) #flying-projectiles c@ 0<> ;
   \ Is there any projectile flying?
-
-: projectile-left? ( -- f ) xdepth 0<> ;
-  \ Is there any projectile left in the tank?
 
 : trigger-ready? ( -- f ) trigger-time @ past? ;
   \ Is the trigger ready?
@@ -3764,7 +3772,7 @@ create trigger-intervals \ ticks
 : shooting ( -- )
   trigger-pressed?    0exit
   trigger-ready?      0exit
-  projectile-left?    0exit
+  projectiles-left    0exit
   gun-below-building? ?exit fire ;
   \ Manage the gun.
 
@@ -3829,7 +3837,7 @@ create trigger-intervals \ ticks
   dup announce landscape>screen building repaired off ;
   \ Arrive to location _n_ by displaying its name and scenery.
 
-: settle ( -- ) location c@ arrive status-bar ;
+: settle ( -- ) location c@ arrive ;
   \ Settle in the current location.
 
   \ ===========================================================
@@ -4015,7 +4023,7 @@ localized-string about-next-location$ ( -- ca len )
 
 : weapons ( -- ) new-tank new-projectiles ;
 
-: prepare-battle ( -- ) settle weapons ;
+: prepare-battle ( -- ) settle weapons status-bar ;
 
 : interlude ( -- ) new-breach? ?exit repair-building ;
 
