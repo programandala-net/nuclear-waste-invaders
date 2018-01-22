@@ -145,7 +145,6 @@ to address.
 
 == 2018-01-21
 
-- Remove `damage-transmission` and friends.
 - Improve the logic of `(invader-impacted`: First `wounded`, then
   `mortal?`. But make the wound a bit random: otherwise the green
   invaders will never explode.
@@ -181,6 +180,6 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 <------------------------------>
 ....
 
-
 - Make missiles affected by wind and display a weather vane in the
   status bar.
+- Add sound effect to arm toggling.

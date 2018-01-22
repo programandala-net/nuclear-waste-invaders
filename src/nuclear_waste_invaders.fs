@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.150.0+201801221605" ;
+: version$ ( -- ca len ) s" 0.151.0+201801221634" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2374,8 +2374,6 @@ variable used-projectiles
 
 cvariable tank-x \ column
 
-variable transmission-damage
-
 variable tank-time
   \ When the ticks clock reaches the contents of this variable,
   \ the tank will move.
@@ -2388,8 +2386,8 @@ variable trigger-time
   \ When the ticks clock reaches the contents of this variable,
   \ the trigger can work.
 
-: repair-tank ( -- ) transmission-damage off tank-time off
-                     arming-time off trigger-time off ;
+: repair-tank ( -- )
+  tank-time off arming-time off trigger-time off ;
 
 columns udg/tank - 2/ cconstant parking-x
 
@@ -2406,11 +2404,8 @@ columns udg/tank - 1- cconstant tank-max-x
   gun-x building-left-x c@ building-right-x c@ between ;
   \ Is the tank's gun below the building?
 
-: transmission? ( -- f ) rnd transmission-damage @ u> ;
-  \ Is the transmission working?
-
 : tank-rudder ( -- -1|0|1 )
-  kk-left pressed? kk-right pressed? abs + transmission? and ;
+  kk-left pressed? kk-right pressed? abs + ;
   \ Does the tank move? Return its column increment.
 
 : outside? ( col -- f )
@@ -3801,8 +3796,6 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
   \ XXX TODO -- Move `hit-something?` here to simplify the
   \ logic.
 
-: damage-transmission ( -- ) transmission-damage 1+! ;
-
 : schedule-trigger ( -- )
   ticks arm~ ~arm-trigger-interval c@ + trigger-time ! ;
 
@@ -3827,7 +3820,7 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
   .projectile projectile~ start-flying fire-sound ;
 
 : fire ( -- ) get-projectile launch-projectile .ammo
-              schedule-trigger damage-transmission ;
+              schedule-trigger ;
   \ Fire the gun of the tank.
 
 : flying-projectiles? ( -- f ) #flying-projectiles c@ 0<> ;
