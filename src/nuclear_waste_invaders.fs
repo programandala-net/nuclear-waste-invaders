@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.149.1+201801221426" ;
+: version$ ( -- ca len ) s" 0.150.0+201801221605" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -1974,6 +1974,7 @@ status-bar-rows columns * cconstant /status-bar
   cfield: ~docked-sprite              \ UDG
   cfield: ~docked-sprite-frames       \ count
 cconstant /species
+  \ Data structure of an invader species.
 
 create species #species /species * allot
   \ Invaders species data table.
@@ -2034,6 +2035,7 @@ max-invaders 2/ cconstant half-max-invaders
   field:  ~species        \ data structure address
   field:  ~explosion-time \ ticks clock time
 cconstant /invader
+  \ Data structure of an species.
 
 max-invaders /invader * constant /invaders
 
@@ -2540,14 +2542,19 @@ constant tank-movements ( -- a )
   \ Create an extra stack to store the unused missiles.
 
 0
-  cfield: ~projectile-y
-  cfield: ~projectile-x
-  cfield: ~projectile-sprite
-  cfield: ~projectile-frames
-  cfield: ~projectile-altitude
+  cfield: ~projectile-y         \ row
+  cfield: ~projectile-x         \ column
+  cfield: ~projectile-sprite    \ UDG (*)
+  cfield: ~projectile-frames    \ count (*)
+  cfield: ~projectile-altitude  \ row (*)
+  cfield: ~projectile-delay     \ counter
+  cfield: ~projectile-max-delay \ bitmask (*)
 cconstant /projectile
-  \ XXX TODO -- Move the three last field to a structure of
-  \ projectile types.
+  \ Data structure of a projectile.
+  \
+  \ (*) = Constant value copied by `get-projectile` from the
+  \       structure pointed by `arm~`.
+
 
 #projectiles /projectile * constant /projectiles
 
@@ -3663,10 +3670,10 @@ variable mothership-explosion-time
                        else invader-impacted
                        then destroy-projectile ;
 
-: hit-something? ( -- f|f0 )
+: hit-something? ( -- f|0f )
   projectile-coords
   xy>attr [ sky-attr 0<> ] [if]   sky-attr <> ( f )
-                           [else] ( f0 ) [then] ;
+                           [else] ( 0f ) [then] ;
   \ Did the projectile hit something?
 
 : impacted? ( -- f ) hit-something? dup if impact then ;
@@ -3687,14 +3694,16 @@ cvariable arm#
   \ Data address of the current arm identified by `arm#`.
 
 0
-   field: ~arm-projectile-stack    \ address
-  cfield: ~arm-projectile-sprite   \ UDG
-  cfield: ~arm-projectile-frames   \ count
-  cfield: ~arm-projectile-altitude \ row
-  cfield: ~arm-projectile-x        \ column
-  cfield: ~arm-tank-sprite         \ UDG
-  cfield: ~arm-trigger-interval    \ ticks
+   field: ~arm-projectile-stack     \ address
+  cfield: ~arm-projectile-sprite    \ UDG
+  cfield: ~arm-projectile-frames    \ count
+  cfield: ~arm-projectile-altitude  \ row
+  cfield: ~arm-projectile-x         \ column
+  cfield: ~arm-tank-sprite          \ UDG
+  cfield: ~arm-trigger-interval     \ ticks
+  cfield: ~arm-projectile-max-delay \ bitmask
 cconstant /arm-projectile
+  \ Data structure of an arm projectile.
 
 arms /arm-projectile * cconstant /arm-projectiles
 
@@ -3740,6 +3749,9 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
  8 gun-machine~ ~arm-trigger-interval c!
 16 missile-gun~ ~arm-trigger-interval c!
 
+%001 gun-machine~ ~arm-projectile-max-delay c!
+%111 missile-gun~ ~arm-projectile-max-delay c!
+
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
 
@@ -3771,7 +3783,16 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
   projectile~ ~projectile-altitude c@ < ;
   \ Is the projectile lost?
 
+: projectile-delay ( -- n )
+  projectile~ ~projectile-delay c@1+
+  projectile~ ~projectile-max-delay c@ and dup
+  projectile~ ~projectile-delay c! ;
+  \ Update the delay counter of the current projectile
+  \ and return it. When _n_ is zero, the projectile is ready
+  \ to be moved.
+
 : move-projectile ( -- )
+  projectile-delay ?exit
   -projectile projectile-lost? if destroy-projectile exit then
   projectile~ ~projectile-y c1-!
   impacted? ?exit .projectile ;
@@ -3793,10 +3814,14 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
   projectile~ ~projectile-sprite c!
   arm~ ~arm-projectile-frames c@
   projectile~ ~projectile-frames c!
+  arm~ ~arm-projectile-max-delay c@
+  projectile~ ~projectile-max-delay c!
   arm~ ~arm-projectile-altitude c@
   projectile~ ~projectile-altitude c! ;
   \ Get a new projectile and set its data according to the
-  \ current value of `arm#`.
+  \ current value of `arm~`.  For the sake of run-time speed,
+  \ some fields are copied from the structure pointed by
+  \ `arm~`.
 
 : launch-projectile ( -- )
   .projectile projectile~ start-flying fire-sound ;
