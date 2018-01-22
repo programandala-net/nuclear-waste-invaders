@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.148.0-dev.1+201801220205" ;
+: version$ ( -- ca len ) s" 0.148.0+201801221141" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2573,6 +2573,7 @@ here !> projectiles-stacks
   cfield: ~projectile-x
   cfield: ~projectile-sprite
   cfield: ~projectile-frames
+  cfield: ~projectile-altitude
 cconstant /projectile
   \ XXX TODO -- Move the three last field to a structure of
   \ projectile types.
@@ -3727,16 +3728,10 @@ variable mothership-explosion-time
   at-projectile .sky ;
   \ Delete the projectile.
 
-create projectile-altitudes
-  invader-max-y   c, \ bullet
-  mothership-y 1+ c, \ missile
-
 : projectile-lost? ( -- f )
   projectile~ ~projectile-y c@
-  arm# c@ projectile-altitudes + c@ < ;
+  projectile~ ~projectile-altitude c@ < ;
   \ Is the projectile lost?
-  \
-  \ XXX TODO -- Move to the data table.
 
 : move-projectile ( -- )
   -projectile projectile-lost? if destroy-projectile exit then
@@ -3773,12 +3768,21 @@ create trigger-intervals \ ticks
 : schedule-trigger ( -- )
   ticks trigger-interval + trigger-time ! ;
 
+create projectile-altitudes
+  invader-max-y   c, \ bullet
+  mothership-y 1+ c, \ missile
+
+: arm-projectile-altitude ( -- row )
+  arm# c@ projectile-altitudes + c@ ;
+  \ Return maxmimu altitude _row_ of the current arm.
+
 : get-projectile ( -- )
   x> !> projectile~
   gun-x projectile~ ~projectile-x c!
   [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
   arm-sprite projectile~ ~projectile-sprite c!
-  arm-projectile-frames projectile~ ~projectile-frames c! ;
+  arm-projectile-frames projectile~ ~projectile-frames c!
+  arm-projectile-altitude projectile~ ~projectile-altitude c! ;
   \ Get a new projectile and set its data according to the
   \ current value of `arm#`.
 
