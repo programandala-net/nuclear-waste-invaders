@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-21
+:revdate: 2018-01-22
 
 Older first:
 
@@ -161,6 +161,26 @@ to address.
 ....
 <-------------------------------------------------------------->
 Bullets:00 Missiles:00                  Score:00000 Record:00000
+B:00 M:00 Score:0000 Record:0000
+B:00 M:00 Puntos:0000 Récor:0000
+B:00 M:00 Poentoj:0000 Rikordo:0000
+B:00 M:00 Score:0000/0000
+B:00 M:00 Puntos:0000 Récor:0000
+B:00 M:00 Poentoj:0000 Rikordo:0000
 <-------------------------------------------------------------->
 ....
 
+== 2018-01-22
+
+- 32-cpl status bar with icons (X) and full labels:
+
+....
+<------------------------------>
+X00 X00          Score:0000/0000
+X00 X00         Puntos:0000/0000
+X00 X00        Poentoj:0000/0000
+X00 X00   Score:0000 Record:0000
+X00 X00   Puntos:0000 Récor:0000
+X00 X00 Poentoj:0000 Rikordo:0000 [!]
+<------------------------------>
+....

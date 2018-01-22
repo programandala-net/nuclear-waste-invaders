@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.148.0-dev.0+201801212304" ;
+: version$ ( -- ca len ) s" 0.148.0-dev.1+201801220205" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -731,7 +731,7 @@ cvariable used-udgs  used-udgs coff
   \ Abort if there is not free space to define _n_ UDGs.
 
   \ ===========================================================
-  cr .( Score) ?depth debug-point \ {{{1
+  cr .( Status bar, part 1) ?depth debug-point \ {{{1
 
                 bullets-label$ nip cconstant /bullets-label
                missiles-label$ nip cconstant /missiles-label
@@ -751,11 +751,6 @@ missiles-label-x /missiles-label + cconstant missiles-x
  record-separator-x score-digits - cconstant score-x
         score-x score-label$ nip - cconstant score-label-x
 
-2 cconstant max-player
-
-cvariable players  1 players c! \ 1..max-player
-cvariable player   1 player  c! \ 1..max-player
-
 : [#] ( n -- ) 0 ?do postpone # loop ; immediate compile-only
   \ Compile `#` _n_ times.
 
@@ -765,16 +760,23 @@ cvariable player   1 player  c! \ 1..max-player
 
 ' xdepth alias projectiles-left ( -- n )
 
-: .ammo ( n col -- )
-  status-bar-y at-xy s>d <# [ ammo-digits ] [#] #>
-  text-attr attr! type ;
-  \ Display the number _n_ of ammo left at column _col_ of the
-  \ status bar.
+0 cconstant ammo-x
 
-: .bullets ( -- ) projectiles-left bullets-x .ammo ;
+: .ammo ( n -- )
+  projectiles-left s>d <# [ ammo-digits ] [#] #>
+  text-attr attr! ammo-x status-bar-y at-xy type ;
+  \ Display the current ammo left at the status bar.
+
+0 cconstant gun-machine-id
+1 cconstant missile-gun-id
+
+defer set-arm ( n -- )
+  \ Set the current arm (0=gun machine; 1=missile gun).
+
+: .bullets ( -- ) gun-machine-id set-arm .ammo ;
   \ Display the number of bullets left.
 
-: .missiles ( -- ) projectiles-left missiles-x .ammo ;
+: .missiles ( -- ) missile-gun-id set-arm .ammo ;
   \ Display the number of bullets left.
   \
   \ XXX TODO --
@@ -1956,23 +1958,6 @@ sky-top-y columns * attributes + constant sky-top-attribute
 status-bar-rows columns * cconstant /status-bar
   \ Characters occupied by the status bar.
 
-: .label ( ca len col -- ) status-bar-y at-xy type ;
-
-: .bullets-label ( -- ) bullets-label$ bullets-label-x .label ;
-
-: .missiles-label ( -- )
-  missiles-label$ missiles-label-x .label ;
-
-: .score-label ( -- ) score-label$ score-label-x .label ;
-
-: .record-separator ( -- )
-  record-separator-x status-bar-y at-xy '/' emit ;
-
-: status-bar ( -- ) text-attr attr! .bullets-label    .bullets
-                                    .missiles-label   .missiles
-                                    .score-label      .score
-                                    .record-separator .record ;
-
   \ ===========================================================
   cr .( Invaders data) ?depth debug-point \ {{{1
 
@@ -2515,12 +2500,24 @@ create tank-sprites
   \ If the middle part of the tank is visible (i.e. outside the
   \ building), display it.
 
-: (set-arm ( n -- )
-  dup arm# c! tank-sprites + c@ c!> tank-sprite ;
+0 constant projectiles-stacks
+  \ Address of an array, configured later, used by `set-arm`
+  \ to select the proper stack.
 
-: set-arm ( n -- ) (set-arm .tank-arm ;
+create ammo-xs
+  bullets-x c, missiles-x c,
+  \ Array of columns were each type of ammo must be displayed
+  \ in the status bar.
 
-: new-tank ( -- ) repair-tank 0 (set-arm park-tank .tank ;
+:noname ( n -- )
+  dup arm# c!
+  dup tank-sprites + c@ c!> tank-sprite
+  dup projectiles-stacks array> @ xstack
+      ammo-xs + c@ c!> ammo-x ; ' set-arm defer!
+  \ Set the current arm (0=gun machine; 1=missile gun).
+
+: new-tank ( -- )
+  repair-tank gun-machine-id set-arm park-tank .tank ;
 
 : <tank ( -- ) tank-x c1-! (.tank -tank-extreme drop ;
   \ Move the tank to the left.
@@ -2552,12 +2549,24 @@ constant tank-movements ( -- a )
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
 
-64 cconstant #projectiles
-  \ Number of projectiles the tank can hold.
+50 cconstant #bullets
+  \ Number of bullets the tank can hold.
 
-#projectiles allot-xstack xstack
-  \ Create and activate an extra stack to store the available
-  \ projectiles.
+5 cconstant #missiles
+  \ Number of missiles the tank can hold.
+
+#bullets #missiles + cconstant #projectiles
+  \ Total number of projectiles the tank can hold.
+
+#bullets allot-xstack constant bullets-stack
+  \ Create an extra stack to store the unused bullets.
+
+#missiles allot-xstack constant missiles-stack
+  \ Create an extra stack to store the unused missiles.
+
+here !> projectiles-stacks
+  bullets-stack , missiles-stack ,
+  \ Array used by `set-arm` to select the proper stack.
 
 0
   cfield: ~projectile-y
@@ -2613,14 +2622,24 @@ create flying-projectiles /flying-projectiles allot
 
 : destroy-projectile ( -- ) #flying-projectile c@ stop-flying ;
 
-: recharge-ammo ( -- )
-  xclear #projectiles 0 do i projectile#>~ >x loop ;
+: recharge-bullets ( -- )
+  bullets-stack xstack xclear
+  #bullets 0 do i projectile#>~ >x loop ;
 
-: new-projectiles ( -- )
-  used-projectiles off #flying-projectiles coff
-  #flying-projectile coff
-  projectiles /projectiles erase
-  recharge-ammo ;
+: recharge-missiles ( -- )
+  missiles-stack xstack xclear
+  #projectiles #bullets do i projectile#>~ >x loop ;
+
+: recharge-projectiles ( -- )
+  recharge-bullets recharge-missiles ;
+
+: prepare-projectiles ( -- ) #flying-projectiles coff
+                             #flying-projectile coff
+                             projectiles /projectiles erase ;
+
+: new-projectiles ( -- ) prepare-projectiles
+                         recharge-projectiles
+                         used-projectiles off ;
 
 : projectile-coords ( -- col row | gx gy )
   projectile~ ~projectile-x c@ projectile~ ~projectile-y c@ ;
@@ -2676,6 +2695,11 @@ create flying-projectiles /flying-projectiles allot
     \ XXX TODO --
   .controls-legend cr .control-keys ;
   \ Display controls at the current row.
+
+2 cconstant max-player
+
+cvariable players  1 players c! \ 1..max-player
+cvariable player   1 player  c! \ 1..max-player
 
 : change-players ( -- )
   players c@1+ dup max-player > if drop 1 then players c! ;
@@ -3761,8 +3785,7 @@ create trigger-intervals \ ticks
 : launch-projectile ( -- )
   .projectile projectile~ start-flying fire-sound ;
 
-: fire ( -- ) get-projectile launch-projectile
-              .bullets .missiles \ XXX TODO --
+: fire ( -- ) get-projectile launch-projectile .ammo
               schedule-trigger damage-transmission ;
   \ Fire the gun of the tank.
 
@@ -3798,7 +3821,7 @@ create trigger-intervals \ ticks
   gun-below-building? ?exit fire ;
   \ Manage the gun.
 
-: toggle-arm ( -- ) arm# c@ 0= abs set-arm ;
+: toggle-arm ( -- ) arm# c@ 0= abs set-arm .tank-arm ;
 
 10 cconstant arming-interval \ ticks
 
@@ -4015,6 +4038,26 @@ localized-string about-next-location$ ( -- ca len )
                       about-next-location$ paragraph ;
 
 : battle-report ( -- ) open-report about-battle end-report ;
+
+  \ ===========================================================
+  cr .( Status bar, part 2 ) ?depth debug-point \ {{{1
+
+: .label ( ca len col -- ) status-bar-y at-xy type ;
+
+: .bullets-label ( -- ) bullets-label$ bullets-label-x .label ;
+
+: .missiles-label ( -- )
+  missiles-label$ missiles-label-x .label ;
+
+: .score-label ( -- ) score-label$ score-label-x .label ;
+
+: .record-separator ( -- )
+  record-separator-x status-bar-y at-xy '/' emit ;
+
+: status-bar ( -- )
+  text-attr attr!
+  arm# c@ .bullets-label .bullets .missiles-label .missiles
+  set-arm .score-label .score .record-separator .record ;
 
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1
