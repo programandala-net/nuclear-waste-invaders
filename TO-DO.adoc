@@ -143,10 +143,6 @@ to address.
 
 - Limit the number of bullets and missiles.
 
-== 2018-01-19
-
-- Replace `arm#` with the address of a data record. 
-
 == 2018-01-21
 
 - Remove `damage-transmission` and friends.
@@ -184,3 +180,9 @@ X00 X00   Puntos:0000 Récor:0000
 X00 X00 Poentoj:0000 Rikordo:0000 [!]
 <------------------------------>
 ....
+
+
+- Fix: the ammo is not recharged when the building has been damaged.
+- Make missiles slower than bullets.
+- Make missiles affected by wind and display a weather vane in the
+  status bar.

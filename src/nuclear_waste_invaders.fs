@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.148.0+201801221141" ;
+: version$ ( -- ca len ) s" 0.149.0+201801221339" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2484,37 +2484,12 @@ columns udg/tank - 1- cconstant tank-max-x
 : .tank ( -- ) (.tank drop ;
   \ Display the tank at its current position.
 
-cvariable arm#
-  \ Number of the current tank arm:
-  \ 0 = gun machine;
-  \ 1 = missile gun.
-
-create tank-sprites
-  gun-machine-tank-sprite c,
-  missile-gun-tank-sprite c,
-
 : .tank-arm ( -- )
   tank-attr attr!
   tank-x c@ 1+ dup tank-y at-xy
                    tank-arm-udg ?emit-outside drop ;
   \ If the middle part of the tank is visible (i.e. outside the
   \ building), display it.
-
-0 constant projectiles-stacks
-  \ Address of an array, configured later, used by `set-arm`
-  \ to select the proper stack.
-
-create ammo-xs
-  bullets-x c, missiles-x c,
-  \ Array of columns were each type of ammo must be displayed
-  \ in the status bar.
-
-:noname ( n -- )
-  dup arm# c!
-  dup tank-sprites + c@ c!> tank-sprite
-  dup projectiles-stacks array> @ xstack
-      ammo-xs + c@ c!> ammo-x ; ' set-arm defer!
-  \ Set the current arm (0=gun machine; 1=missile gun).
 
 : new-tank ( -- )
   repair-tank gun-machine-id set-arm park-tank .tank ;
@@ -2563,10 +2538,6 @@ constant tank-movements ( -- a )
 
 #missiles allot-xstack constant missiles-stack
   \ Create an extra stack to store the unused missiles.
-
-here !> projectiles-stacks
-  bullets-stack , missiles-stack ,
-  \ Array used by `set-arm` to select the proper stack.
 
 0
   cfield: ~projectile-y
@@ -3703,6 +3674,73 @@ variable mothership-explosion-time
   \ _true_.  Otherwise do nothing and return _false_.
 
   \ ===========================================================
+  cr .( Arms) ?depth debug-point \ {{{1
+
+2 cconstant arms
+
+cvariable arm#
+  \ Number of the current tank arm:
+  \ 0 = gun machine;
+  \ 1 = missile gun.
+
+0 constant arm~
+  \ Data address of the current arm identified by `arm#`.
+
+0
+   field: ~arm-projectile-stack    \ address
+  cfield: ~arm-projectile-sprite   \ UDG
+  cfield: ~arm-projectile-frames   \ count
+  cfield: ~arm-projectile-altitude \ row
+  cfield: ~arm-projectile-x        \ column
+  cfield: ~arm-tank-sprite         \ UDG
+  cfield: ~arm-trigger-interval    \ ticks
+cconstant /arm-projectile
+
+arms /arm-projectile * cconstant /arm-projectiles
+
+create arm-projectiles /arm-projectiles allot
+
+: arm#>~ ( n -- a ) /arm-projectile * arm-projectiles + ;
+  \ Convert arm number _n_ to its data address _a_.
+
+gun-machine-id arm#>~ constant gun-machine~
+
+missile-gun-id arm#>~ constant missile-gun~
+
+:noname ( n -- )
+  dup arm# c!
+      arm#>~ dup !> arm~
+             dup ~arm-tank-sprite c@ c!> tank-sprite
+             dup ~arm-projectile-stack @ xstack
+                 ~arm-projectile-x c@ c!> ammo-x
+  ; ' set-arm defer!
+  \ Set _n_ as the current arm (0=gun machine; 1=missile gun).
+
+  \ --------------------------------------------
+  \ Set arms' data
+
+ bullets-stack gun-machine~ ~arm-projectile-stack !
+missiles-stack missile-gun~ ~arm-projectile-stack !
+
+ bullet-sprite gun-machine~ ~arm-projectile-sprite c!
+missile-sprite missile-gun~ ~arm-projectile-sprite c!
+
+frames/bullet  gun-machine~ ~arm-projectile-frames c!
+frames/missile missile-gun~ ~arm-projectile-frames c!
+
+invader-max-y   gun-machine~ ~arm-projectile-altitude c!
+mothership-y 1+ missile-gun~ ~arm-projectile-altitude c!
+
+ bullets-x gun-machine~ ~arm-projectile-x c!
+missiles-x missile-gun~ ~arm-projectile-x c!
+
+gun-machine-tank-sprite gun-machine~ ~arm-tank-sprite c!
+missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
+
+ 8 gun-machine~ ~arm-trigger-interval c!
+16 missile-gun~ ~arm-trigger-interval c!
+
+  \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
 
 : at-projectile ( -- ) projectile-coords at-xy ;
@@ -3744,45 +3782,19 @@ variable mothership-explosion-time
 
 : damage-transmission ( -- ) transmission-damage 1+! ;
 
-create projectile-sprites
-  bullet-sprite c,
-  missile-sprite c,
-
-: arm-sprite ( -- c ) arm# c@ projectile-sprites + c@ ;
-  \ UDG sprite _c_ of the current arm.
-
-create projectile-frames
-  frames/bullet c,
-  frames/missile c,
-
-: arm-projectile-frames ( -- n )
-  arm# c@ projectile-frames + c@ ;
-  \ Number _n_ of frames of the projectile of the current arm.
-
-create trigger-intervals \ ticks
-   8 c, \ gun machine
-  16 c, \ missile gun
-
-: trigger-interval ( -- n ) arm# c@ trigger-intervals + c@ ;
-
 : schedule-trigger ( -- )
-  ticks trigger-interval + trigger-time ! ;
-
-create projectile-altitudes
-  invader-max-y   c, \ bullet
-  mothership-y 1+ c, \ missile
-
-: arm-projectile-altitude ( -- row )
-  arm# c@ projectile-altitudes + c@ ;
-  \ Return maxmimu altitude _row_ of the current arm.
+  ticks arm~ ~arm-trigger-interval c@ + trigger-time ! ;
 
 : get-projectile ( -- )
   x> !> projectile~
   gun-x projectile~ ~projectile-x c!
   [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
-  arm-sprite projectile~ ~projectile-sprite c!
-  arm-projectile-frames projectile~ ~projectile-frames c!
-  arm-projectile-altitude projectile~ ~projectile-altitude c! ;
+  arm~ ~arm-projectile-sprite c@
+  projectile~ ~projectile-sprite c!
+  arm~ ~arm-projectile-frames c@
+  projectile~ ~projectile-frames c!
+  arm~ ~arm-projectile-altitude c@
+  projectile~ ~projectile-altitude c! ;
   \ Get a new projectile and set its data according to the
   \ current value of `arm#`.
 
