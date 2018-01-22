@@ -182,7 +182,6 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 ....
 
 
-- Fix: the ammo is not recharged when the building has been damaged.
 - Make missiles slower than bullets.
 - Make missiles affected by wind and display a weather vane in the
   status bar.
