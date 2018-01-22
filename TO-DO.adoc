@@ -141,8 +141,6 @@ to address.
 - Improve the logic of `(invader-impacted`: First `wounded`, then
   `mortal?`. But make the wound a bit random: otherwise the green
   invaders will never explode.
-- Convert `invader-proper-attr` to `stamina>attr` to reuse it for the
-  mothership.
 
 - 64-cpl status bar:
 
@@ -176,7 +174,6 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Make missiles affected by wind and display a weather vane in the
   status bar.
 - Add sound effect to arm toggling.
-- Make mothership create invaders with its own stamina.
 - Make `beam-y` a character variable, for speed.
 - Convert `invader-attr` to `~attr` and update it after `~stamina`.
   This saves run-time calculations.

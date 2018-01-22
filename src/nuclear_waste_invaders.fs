@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.152.0+201801222135" ;
+: version$ ( -- ca len ) s" 0.153.0+201801222340" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2188,9 +2188,11 @@ cconstant invader-bottom-y
 defer docked-invader-action ( -- )
   \ Action of the invaders that are docked.
 
+max-stamina cconstant mothership-stamina
+
 : create-invaders ( n1 n2 -- )
   ?do i set-invader
-      max-stamina invader~ ~stamina c!
+      mothership-stamina invader~ ~stamina c!
       ['] docked-invader-action invader~ ~action !
   loop ;
   \ Create new docked invaders from _n2_ to _n1-1_.  The data
@@ -3166,19 +3168,19 @@ variable mothership-time
 defer set-exploding-mothership ( -- )
   \ The mothership has been impacted. Set it accordingly.
 
-max-stamina cconstant mothership-stamina
-
 : beamy ( c1 -- c2 ) papery white + brighty ;
   \ Convert mothership attribute _c1_ to the corresponding
   \ beam attribute _c2_.
 
 0 cconstant mothership-attr
+0  constant mothership-cell-attr
 0 cconstant beam-attr
 0  constant beam-cell-attr
 
 : set-mothership-stamina ( n -- )
   dup c!> mothership-stamina
       stamina>attr dup c!> mothership-attr
+                   dup dup join !> mothership-cell-attr
                        beamy dup c!> beam-attr
                                  dup join !> beam-cell-attr ;
   \ Set mothership stamina to _n_ and set its corresponding
@@ -3367,7 +3369,7 @@ cvariable beam-invader
 
 : (beam-up ( -- )
   .mothership
-  reach-invader? if   healthy-invader-cell-attr
+  reach-invader? if   mothership-cell-attr
                  else sky-cell-attr
                  then mothership-x @ beam-y @ xy>attra ! ;
   \ Shrink the beam towards de mothership one character.
