@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.151.0+201801221634" ;
+: version$ ( -- ca len ) s" 0.152.0+201801222135" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -587,9 +587,6 @@ localized-string press-any-key$ ( -- ca len )
                          green cconstant healthy-invader-attr
                         yellow cconstant wounded-invader-attr
                            red cconstant dying-invader-attr
-
-                       magenta cconstant mothership-attr
-magenta papery white + brighty cconstant beam-attr
 
                          white cconstant tank-attr
                    red brighty cconstant projectile-attr
@@ -2211,11 +2208,14 @@ defer docked-invader-action ( -- )
 create stamina-attributes ( -- ca )   dying-invader-attr c,
                                     wounded-invader-attr c,
                                     healthy-invader-attr c,
-  \ Table to index the invader stamina to its proper attribute.
+  \ Table to index the stamina (1..3) to its proper attribute.
 
-: invader-proper-attr ( -- c )
-  invader~ ~stamina c@ [ stamina-attributes 1- ] literal + c@ ;
-  \ Return the proper attribute _c_ for the stamina of the
+: stamina>attr ( n -- c )
+  [ stamina-attributes 1- ] literal + c@ ;
+  \ Convert stamina _n_ to its corresponding attribute _c_.
+
+: invader-attr ( -- c ) invader~ ~stamina c@ stamina>attr ;
+  \ Return attribute _c_ corresponding to the stamina of the
   \ current invader.
 
 : +invaders ( n0 n1 n2 -- n3 )
@@ -2510,7 +2510,7 @@ constant tank-movements ( -- a )
 
 : tank-movement ( -- a ) tank-rudder tank-movements array> ;
 
-9 cconstant tank-interval \ ticks
+8 cconstant tank-interval \ ticks
 
 : schedule-tank ( -- ) ticks tank-interval + tank-time ! ;
 
@@ -2524,7 +2524,7 @@ constant tank-movements ( -- a )
 50 cconstant #bullets
   \ Number of bullets the tank can hold.
 
-5 cconstant #missiles
+10 cconstant #missiles
   \ Number of missiles the tank can hold.
 
 #bullets #missiles + cconstant #projectiles
@@ -2774,7 +2774,7 @@ variable invader-time
   \ deactivate this for docked invaders.
 
 : .invader ( -- )
-  invader-proper-attr attr! invader-udg .2x1-udg-sprite ;
+  invader-attr attr! invader-udg .2x1-udg-sprite ;
   \ Display the current invader.  at the cursor coordinates, in
   \ its proper attribute.
 
@@ -3163,8 +3163,39 @@ variable mothership-time
   explosion-sprite explosion-frames set-mothership-sprite ;
   \ Make the mothership use the explosion sprite.
 
+defer set-exploding-mothership ( -- )
+  \ The mothership has been impacted. Set it accordingly.
+
+max-stamina cconstant mothership-stamina
+
+: beamy ( c1 -- c2 ) papery white + brighty ;
+  \ Convert mothership attribute _c1_ to the corresponding
+  \ beam attribute _c2_.
+
+0 cconstant mothership-attr
+0 cconstant beam-attr
+0  constant beam-cell-attr
+
+: set-mothership-stamina ( n -- )
+  dup c!> mothership-stamina
+      stamina>attr dup c!> mothership-attr
+                       beamy dup c!> beam-attr
+                                 dup join !> beam-cell-attr ;
+  \ Set mothership stamina to _n_ and set its corresponding
+  \ attributes.
+
+' lightning1 alias damage-sound
+  \ XXX TMP --
+  \ XXX TODO -- look for a proper sound
+
+: mothership-impacted ( -- )
+  mothership-stamina 1- dup c!> mothership-stamina ?dup
+  if   set-mothership-stamina damage-sound
+  else set-exploding-mothership then ;
+
 : init-mothership ( -- )
   1 motherships c!
+  max-stamina set-mothership-stamina
   set-flying-mothership-sprite set-invisible-mothership-action
   mothership-stopped off mothership-time off
   place-mothership start-mothership ;
@@ -3278,8 +3309,6 @@ variable mothership-time
 0 layer>y cconstant invader-min-y \ bottom
 
 4 layer>y cconstant invader-max-y \ top
-
-beam-attr dup join constant beam-cell-attr
 
 healthy-invader-attr dup join
 constant healthy-invader-cell-attr
@@ -3501,7 +3530,7 @@ constant visible-mothership-movements ( -- a )
   ' invisible-mothership-action defer!
   \ Action of the mothership when it's invisible.
 
-7 cconstant mothership-interval \ ticks
+8 cconstant mothership-interval \ ticks
 
 : schedule-mothership ( -- )
   ticks mothership-interval + mothership-time ! ;
@@ -3550,11 +3579,12 @@ variable mothership-explosion-time
 : mothership-bonus ( -- n ) location c@1+ 250 * ;
   \ Bonus points for impacting the mothership.
 
-: set-exploding-mothership ( -- )
+:noname ( -- )
   set-exploding-mothership-sprite
   .mothership schedule-mothership-explosion
   ['] exploding-mothership-action mothership-action!
-  mothership-bang mothership-bonus update-score ;
+  mothership-bang mothership-bonus update-score
+  ; ' set-exploding-mothership defer!
   \ The mothership has been impacted. Set it accordingly.
 
 ' shoot alias invader-bang ( -- )
@@ -3661,7 +3691,7 @@ variable mothership-explosion-time
 
 : impact ( -- )
   mothership-impacted? if   mothership-exploding? ?exit
-                            set-exploding-mothership
+                            mothership-impacted
                        else invader-impacted
                        then destroy-projectile ;
 
@@ -4181,6 +4211,7 @@ localized-string about-next-location$ ( -- ca len )
 : -m ( -- ) -mothership ;
 : mx ( -- col ) mothership-x @ ;
 : im ( -- ) init-mothership ;
+: mim ( -- ) mothership-impacted ;
 : m ( -- ) begin key 'q' <> while manage-mothership repeat ;
 
 : beon ( -- ) beam-on ;

@@ -24,10 +24,6 @@ accordingly.
 
 Fix: sometimes the projectile erases half of the invader.
 
-== 2016-12-04, 2017-05-17
-
-Use stamina to calculate the damages to the mothership.
-
 == 2017-02-26, 2017-05-14, 2018-01-11
 
 - Get more ammo below the building.
@@ -96,10 +92,7 @@ to address.
 - Make the mothership's movement clever: stay longer above the
   building, and go probably to the side where invaders need help or
   the opposite side of the tank.
-- Add stamina control to the mothership, deactivate the beam when the
-  stamina is not the highest, and place the mothership above the
-  building for repairing.
-- Change the mothership's range randomly during the game.
+- Place the mothership above the building for repairing.
 
 == 2017-12-27
 
@@ -183,3 +176,9 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Make missiles affected by wind and display a weather vane in the
   status bar.
 - Add sound effect to arm toggling.
+- Make mothership create invaders with its own stamina.
+- Make `beam-y` a character variable, for speed.
+- Convert `invader-attr` to `~attr` and update it after `~stamina`.
+  This saves run-time calculations.
+- Reduce the range of the the mothership.
+- Make the mothership retreat when impacted.
