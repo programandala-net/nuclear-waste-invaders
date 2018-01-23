@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.153.0+201801222340" ;
+: version$ ( -- ca len ) s" 0.154.0+201801231818" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3128,8 +3128,6 @@ mothership-range negate     constant mothership-range-min-x
 mothership-range columns + cconstant mothership-range-max-x
   \ X-coordinate limits of the mothership range.
 
-: start-mothership ( -- ) -1|1 set-mothership-direction ;
-
 variable mothership-time
   \ When the ticks clock reaches the contents of this variable,
   \ the mothership will move.
@@ -3193,7 +3191,10 @@ defer set-exploding-mothership ( -- )
 : mothership-impacted ( -- )
   mothership-stamina 1- dup c!> mothership-stamina ?dup
   if   set-mothership-stamina damage-sound
+       mothership-turns-back
   else set-exploding-mothership then ;
+
+: start-mothership ( -- ) -1|1 set-mothership-direction ;
 
 : init-mothership ( -- )
   1 motherships c!
@@ -3790,9 +3791,6 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
   projectile~ ~projectile-sprite c@
   projectile~ ~projectile-frames c@ random + ;
   \ Return the UDG _c_ of a random frame of the projectile.
-  \
-  \ XXX TODO -- Adapt to missiles, whose frames should be
-  \ sequential, not random.
 
 : .projectile ( -- )
   projectile-attr attr! at-projectile projectile .1x1sprite ;

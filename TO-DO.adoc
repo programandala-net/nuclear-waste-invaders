@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-22
+:revdate: 2018-01-23
 
 Older first:
 
@@ -178,4 +178,3 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Convert `invader-attr` to `~attr` and update it after `~stamina`.
   This saves run-time calculations.
 - Reduce the range of the the mothership.
-- Make the mothership retreat when impacted.
