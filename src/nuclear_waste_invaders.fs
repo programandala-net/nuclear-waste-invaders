@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.155.0+201801231907" ;
+: version$ ( -- ca len ) s" 0.155.1+201801232018" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3604,7 +3604,7 @@ variable mothership-explosion-time
 
 : destroy-invader ( -- )
   -invader invader~ ~stamina coff invader~ ~action off
-  invaders c1-! invader-destroy-points update-score ;
+  invaders c1-! ;
 
 : impacted-invader ( -- n )
   projectile~ ~projectile-y c@ invader-top-y - 2/
@@ -3654,7 +3654,7 @@ variable mothership-explosion-time
   \ XXX TODO -- look for a proper sound
 
 : retreat ( -- )
-  retreat-sound invader-retreat-points update-score turn-back ;
+  retreat-sound turn-back invader-retreat-points update-score ;
   \ The current invader retreats.
 
 : wounded ( -- )

@@ -175,7 +175,3 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Convert `invader-attr` to `~attr` and update it after `~stamina`.
   This saves run-time calculations.
 - Reduce the range of the the mothership.
-
-== 2018-01-23
-
-- Fix: `invader-destroy-points update-score` is executed twice.
