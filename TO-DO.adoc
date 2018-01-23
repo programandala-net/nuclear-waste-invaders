@@ -106,7 +106,6 @@ to address.
 == 2018-01-07
 
 - Simplifly the way `hit-something?` and `impacted?` are used.
-- Improve `mortal?` using the y coordinate in the calculation.
 - Remove `turn-back` and use its factor `change-direction` instead,
   because the sprite does not need to be set when the direction is
   changed.
@@ -133,8 +132,6 @@ to address.
 
 - Generalize the detection of the projectile in the flying invader
   actions: detect also the wall and the containers.
-
-- Limit the number of bullets and missiles.
 
 == 2018-01-21
 
@@ -178,3 +175,7 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Convert `invader-attr` to `~attr` and update it after `~stamina`.
   This saves run-time calculations.
 - Reduce the range of the the mothership.
+
+== 2018-01-23
+
+- Fix: `invader-destroy-points update-score` is executed twice.

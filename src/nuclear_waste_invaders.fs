@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.154.0+201801231818" ;
+: version$ ( -- ca len ) s" 0.155.0+201801231907" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2031,6 +2031,7 @@ max-invaders 2/ cconstant half-max-invaders
   field:  ~action         \ execution token
   field:  ~species        \ data structure address
   field:  ~explosion-time \ ticks clock time
+  cfield: ~layer          \ 0 (lowest) .. 4 (highest)
 cconstant /invader
   \ Data structure of an species.
 
@@ -2153,7 +2154,8 @@ cconstant invader-bottom-y
   invader~ ~initial-x-inc ! invader~ ~x-inc off
   dup invader~ ~initial-x c!
       invader~ ~x c!
-  invader~ ~y c!
+  dup invader~ ~y c!
+      y>layer invader~ ~layer c!
   set-docked-invader-sprite ;
   \ Init invader_c0_ with the given data:
   \   c1 = row
@@ -3659,10 +3661,11 @@ variable mothership-explosion-time
   invader~ ~stamina c@1- 1 max invader~ ~stamina c! ;
   \ Reduce the invader's stamina after being shoot.
 
-: mortal? ( -- f ) invader~ ~stamina c@ 2* random 0= ;
-  \ Is it a mortal impact?  _f_ depends on a random calculation
-  \ based on the stamina: The more stamina, the less chances to
-  \ be a mortal impact.
+: mortal? ( -- f ) invader~ ~stamina c@ 2*
+                   invader~ ~layer   c@    + random 0= ;
+  \ Is it a mortal impact?  The random calculation depends on
+  \ the stamina and the altitude: The more stamina and the more
+  \ altitude, the less chances to be a mortal impact.
 
 : invader-exploding? ( -- f )
   invader~ ~action @ ['] exploding-invader-action = ;
