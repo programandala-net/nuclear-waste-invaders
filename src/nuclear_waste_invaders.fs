@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.155.1+201801232018" ;
+: version$ ( -- ca len ) s" 0.156.0+201801232135" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -161,8 +161,8 @@ need ticks need ms need seconds need ?seconds need past?
   \ --------------------------------------------
   cr .(   -Sound) ?depth \ {{{2
 
-need bleep need dhz>bleep need shoot
-need whip need lightning1
+need bleep need dhz>bleep need shoot-sound
+need whip-sound need lightning1-sound
 
   \ --------------------------------------------
   \ Files
@@ -3186,7 +3186,7 @@ defer set-exploding-mothership ( -- )
   \ Set mothership stamina to _n_ and set its corresponding
   \ attributes.
 
-' lightning1 alias damage-sound
+' lightning1-sound alias damage-sound
   \ XXX TMP --
   \ XXX TODO -- look for a proper sound
 
@@ -3550,7 +3550,7 @@ constant visible-mothership-movements ( -- a )
   \ ===========================================================
   cr .( Impact) ?depth debug-point \ {{{1
 
-' shoot alias mothership-bang ( -- )
+' shoot-sound alias mothership-bang ( -- )
   \ Make the explosion sound of the mothership.
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
@@ -3592,7 +3592,7 @@ variable mothership-explosion-time
   ; ' set-exploding-mothership defer!
   \ The mothership has been impacted. Set it accordingly.
 
-' shoot alias invader-bang ( -- )
+' shoot-sound alias invader-bang ( -- )
   \ Make the explosion sound of an invader.
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
@@ -3649,7 +3649,7 @@ variable mothership-explosion-time
   invader-bang invader-destroy-points update-score ;
   \ The current invader has been impacted. Set it accordingly.
 
-' lightning1 alias retreat-sound
+' lightning1-sound alias retreat-sound
   \ XXX TMP --
   \ XXX TODO -- look for a proper sound
 
@@ -3799,7 +3799,7 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
   projectile-attr attr! at-projectile projectile .1x1sprite ;
   \ Display the projectile.
 
-' whip alias fire-sound ( -- )
+' whip-sound alias fire-sound ( -- )
 
 : -projectile ( -- )
   projectile-coords xy>attr projectile-attr <> ?exit
