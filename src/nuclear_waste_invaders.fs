@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.156.0+201801232135" ;
+: version$ ( -- ca len ) s" 0.157.0+201801242114" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2899,7 +2899,7 @@ defer breaking-invader-action ( -- )
            then turn-back ;
   \ XXX TMP --
 
-: invader-front-coords ( -- col row )
+: invader-front-xy ( -- col row )
   invader~ ~x
   [ udg/invader 2 = ]
   [if]   c@2+ flying-to-the-left? 3* +
@@ -2908,14 +2908,11 @@ defer breaking-invader-action ( -- )
          [else] c@ udg/invader + flying-to-the-left?
                 [ udg/invader 1+ ] cliteral * +
          [then]
-  [then]
-  invader~ ~y c@ ;
+  [then] invader~ ~y c@ ;
   \ Return the coordinates _col row_ at the front of the
-  \ current invaders, i.e. the location the invader is heading
-  \ to on its current direction.
+  \ current invader.
 
-: hit-wall? ( -- f )
-  invader-front-coords xy>attr brick-attr = ;
+: hit-wall? ( -- f ) invader-front-xy xy>attr brick-attr = ;
   \ Has the current invader hit the wall of the building?
 
 : ?damages ( -- )
@@ -4286,6 +4283,9 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Development benchmarks) ?depth debug-point \ {{{1
 
+  \ --------------------------------------------
+  \ Compare `type-udg` and `.2x1-udg-sprite`
+
 0 [if]
 
 need bench{ need }bench.
@@ -4309,6 +4309,119 @@ need bench{ need }bench.
   \ | 10000 |     1122 |             937
   \ | 65535 |     7353 |            6142
   \ |===================================
+
+[then]
+
+  \ --------------------------------------------
+  \ Compare alternative implementations of `hit-wall?`
+
+0 [if]
+
+  \ 2018-01-24
+
+need ticks need timer
+
+: invader-front-coords ( -- col row )
+  invader~ ~x
+  [ udg/invader 2 = ]
+  [if]   c@2+ flying-to-the-left? 3* +
+  [else] [ udg/invader 1 = ]
+         [if]   c@1+ flying-to-the-left? 2* +
+         [else] c@ udg/invader + flying-to-the-left?
+                [ udg/invader 1+ ] cliteral * +
+         [then]
+  [then]
+  invader~ ~y c@ ;
+  \ Return the coordinates _col row_ at the front of the
+  \ current invaders, i.e. the location the invader is heading
+  \ to on its current direction.
+
+: hit-wall?-OLD ( -- f )
+  invader-front-coords xy>attr brick-attr = ;
+  \ Has the current invader hit the wall of the building?
+
+: invader-front-x ( -- col )
+  invader~ ~x
+  [ udg/invader 2 = ]
+  [if]   c@2+ flying-to-the-left? 3* +
+  [else] [ udg/invader 1 = ]
+         [if]   c@1+ flying-to-the-left? 2* +
+         [else] c@ udg/invader + flying-to-the-left?
+                [ udg/invader 1+ ] cliteral * +
+         [then]
+  [then] ;
+  \ Return column _col_ at the front of the current invader.
+
+cvariable building-right-x  cvariable building-left-x
+
+: building-near-x1 ( -- col )
+  flying-to-the-left? if   building-right-x
+                      else building-left-x
+                      then c@ ;
+
+: hit-wall?-NEW1 ( -- f ) invader-front-x building-near-x1 = ;
+  \ Has the current invader hit the wall of the building?
+
+: building-near-x2 ( -- col )
+  flying-to-the-left? if building-right-x c@ exit then
+                         building-left-x  c@ ;
+
+: hit-wall?-NEW2 ( -- f ) invader-front-x building-near-x2 = ;
+  \ Has the current invader hit the wall of the building?
+
+create building-xs ' building-left-x , ' building-right-x ,
+
+: building-near-x5 ( -- col )
+  flying-to-the-left? building-xs array> @ c@ ;
+
+: hit-wall?-NEW5 ( -- f ) invader-front-x building-near-x5 = ;
+  \ Has the current invader hit the wall of the building?
+
+0 cconstant building-right-x  0 cconstant building-left-x
+
+: building-near-x3 ( -- col )
+  flying-to-the-left? if building-right-x exit then
+                         building-left-x  ;
+
+: hit-wall?-NEW3 ( -- f ) invader-front-x building-near-x3 = ;
+  \ Has the current invader hit the wall of the building?
+
+create building-xs ' building-left-x , ' building-right-x ,
+
+: building-near-x4 ( -- col )
+  flying-to-the-left? building-xs array> perform ;
+
+: hit-wall?-NEW4 ( -- f ) invader-front-x building-near-x4 = ;
+  \ Has the current invader hit the wall of the building?
+
+: bench-hit-wall ( n -- )
+  dup ticks swap 0 ?do
+        i 1 and !> flying-to-the-left?
+        hit-wall?-OLD  drop loop cr ." old :" timer
+  dup ticks swap 0 ?do
+        i 1 and !> flying-to-the-left?
+        hit-wall?-NEW1 drop loop cr ." new1:" timer
+  dup ticks swap 0 ?do
+        i 1 and !> flying-to-the-left?
+        hit-wall?-NEW2 drop loop cr ." new2:" timer
+  dup ticks swap 0 ?do
+        i 1 and !> flying-to-the-left?
+        hit-wall?-NEW3 drop loop cr ." new3:" timer
+  dup ticks swap 0 ?do
+        i 1 and !> flying-to-the-left?
+        hit-wall?-NEW4 drop loop cr ." new4:" timer
+      ticks swap 0 ?do
+        i 1 and !> flying-to-the-left?
+        hit-wall?-NEW5 drop loop cr ." new5:" timer ;
+
+  \
+  \ |=====================================================
+  \ | Times |  old |  new1 |  new2 |  new3 |  new4 |  new5
+  \
+  \ |  1000 |   42 |    44 |    44 |    44 |    45 |    49
+  \ | 10000 |  426 |   442 |   435 |   429 |   447 |   454
+  \ | 65535 | 2786 |  2895 |  2852 |  2812 |  2927 |  2956
+  \ |=====================================================
 
 [then]
 

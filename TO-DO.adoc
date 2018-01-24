@@ -172,5 +172,3 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 == 2018-01-24
 
 - Change the sprite of the invaders that are breaking the wall.
-- Rewrite `hit-wall?`: compare the coordinates of the invader and the
-  wall. This will be faster.
