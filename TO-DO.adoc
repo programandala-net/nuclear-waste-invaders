@@ -1,13 +1,13 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-23
+:revdate: 2018-01-24
 
 Older first:
 
 == 2016-08-01
 
-Several players, say 1..4. Simply, save their controls number and score in a
-table.
+- Several players, say 1..4. Simply, save their controls number and
+  score in a table.
 
 == 2016-10-16, 2018-01-07
 
@@ -17,12 +17,12 @@ table.
 
 == 2016-10-22
 
-Detect if a wall is already broken, and change the graphic
-accordingly.
+- Detect if a wall is already broken, and change the graphic
+  accordingly.
 
 == 2016-12-02
 
-Fix: sometimes the projectile erases half of the invader.
+- Fix: sometimes the projectile erases half of the invader.
 
 == 2017-02-26, 2017-05-14, 2018-01-11
 
@@ -46,12 +46,12 @@ Improve the visibility of the projectile right above the tank.
 
 == 2017-03-01
 
-Add some inertia to the tank.
+- Add some inertia to the tank.
 
 == 2017-03-17
 
-Create a sprite frames table to point to UDG frames, in order to
-remove duplicated frames from the UDG set.
+- Create a sprite frames table to point to UDG frames, in order to
+  remove duplicated frames from the UDG set.
 
 == 2017-04-18
 
@@ -63,14 +63,14 @@ remove duplicated frames from the UDG set.
 
 == 2017-05-16
 
-Improve `battle-bonus`: Make the breach penalty depend on the altitude
-of the breachs.
+- Improve `battle-bonus`: Make the breach penalty depend on the
+  altitude of the breachs.
 
 == 2017-05-20, 2018-01-06
 
-Replace the UDG codes with the UDG addresses and write a new faster
-version of `.2x1-udg-sprite`, in Z80, without the conversion from code
-to address.
+- Replace the UDG codes with the UDG addresses and write a new faster
+  version of `.2x1-udg-sprite`, in Z80, without the conversion from
+  code to address.
 
 == 2017-12-06
 
@@ -94,10 +94,6 @@ to address.
   the opposite side of the tank.
 - Place the mothership above the building for repairing.
 
-== 2017-12-27
-
-- Remove `invader#` and use only the corresponding data addresses?
-
 == 2018-01-03
 
 - Finish regularizing the names of the sprites. The static graphics
@@ -106,9 +102,6 @@ to address.
 == 2018-01-07
 
 - Simplifly the way `hit-something?` and `impacted?` are used.
-- Remove `turn-back` and use its factor `change-direction` instead,
-  because the sprite does not need to be set when the direction is
-  changed.
 - Replace the run-time calculation done in `hit-wall?` and
   `prepare-wall` with a table of constants calculated at compile-time.
 - Use `,udg-block` to create the sprites and use their address instead
@@ -175,3 +168,9 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Convert `invader-attr` to `~attr` and update it after `~stamina`.
   This saves run-time calculations.
 - Reduce the range of the the mothership.
+
+== 2018-01-24
+
+- Change the sprite of the invaders that are breaking the wall.
+- Rewrite `hit-wall?`: compare the coordinates of the invader and the
+  wall. This will be faster.
