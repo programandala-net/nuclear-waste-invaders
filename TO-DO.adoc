@@ -52,7 +52,11 @@ Improve the visibility of the projectile right above the tank.
 
 == 2017-05-12
 
-- Don't repair the building automatically. Use the tank.
+- Don't repair the building automatically. Use the tank: Implement a
+  third type of projectile, a repairing projectile that must be
+  exploded with the trigger (therefore no other projectile can be
+  launched when the repairing projectile is flying). If the repairing
+  projectile explodes near a breach, it is repaired.
 
 == 2017-05-16
 

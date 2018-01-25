@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.159.0+201801250945" ;
+: version$ ( -- ca len ) s" 0.160.0+201801251416" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -122,6 +122,8 @@ need sconstants
 
 need xstack need allot-xstack need xdepth need >x need x>
 need xclear
+
+need .xs \ XXX TMP -- For debugging.
 
   \ --------------------------------------------
   cr .(   -Display) ?depth \ {{{2
@@ -428,13 +430,18 @@ here ," S:"
 localized-string score-label$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
-: missiles-label$ s" M:" ( -- ca len ) ;
+: missiles-label$ s" Mi:" ( -- ca len ) ;
+
+here ," Bu:"
+here ," Ku:"
+here ," Ba:"
+localized-string bullets-label$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
-here ," B:"
-here ," K:"
-here ," B:"
-localized-string bullets-label$ ( -- ca len )
+here ," Ba:"
+here ," Bu:"
+here ," Bo:"
+localized-string balls-label$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
 here ," RÉCOR"
@@ -699,7 +706,7 @@ current-controls c@ set-controls
   \ ===========================================================
   cr .( UDG) ?depth debug-point \ {{{1
 
-               204 cconstant last-udg \ last UDG code used
+               220 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
 create udg-set /udg-set allot  udg-set set-udg
@@ -732,6 +739,7 @@ cvariable used-udgs  used-udgs coff
 
                 bullets-label$ nip cconstant /bullets-label
                missiles-label$ nip cconstant /missiles-label
+                  balls-label$ nip cconstant /balls-label
 
                                  2 cconstant ammo-digits
                                  5 cconstant score-digits
@@ -742,6 +750,8 @@ cvariable used-udgs  used-udgs coff
   bullets-label-x /bullets-label + cconstant bullets-x
         bullets-x ammo-digits + 1+ cconstant missiles-label-x
 missiles-label-x /missiles-label + cconstant missiles-x
+       missiles-x ammo-digits + 1+ cconstant balls-label-x
+      balls-label-x /balls-label + cconstant balls-x
 
             columns score-digits - cconstant record-x
                        record-x 1- cconstant record-separator-x
@@ -764,17 +774,23 @@ missiles-label-x /missiles-label + cconstant missiles-x
   text-attr attr! ammo-x status-bar-y at-xy type ;
   \ Display the current ammo left at the status bar.
 
-0 cconstant gun-machine-id
+0 cconstant  bullet-gun-id
 1 cconstant missile-gun-id
+2 cconstant    ball-gun-id
 
-defer set-arm ( n -- )
+defer set-gun ( n -- )
   \ Set the current arm (0=gun machine; 1=missile gun).
 
-: .bullets ( -- ) gun-machine-id set-arm .ammo ;
+: .bullets ( -- ) bullet-gun-id set-gun .ammo ;
   \ Display the number of bullets left.
 
-: .missiles ( -- ) missile-gun-id set-arm .ammo ;
+: .missiles ( -- ) missile-gun-id set-gun .ammo ;
   \ Display the number of bullets left.
+  \
+  \ XXX TODO --
+
+: .balls ( -- ) ball-gun-id set-gun .ammo ;
+  \ Display the number of balls left.
   \
   \ XXX TODO --
 
@@ -1951,6 +1967,54 @@ X.....X........X
                        [else] here swap /udg /
                        [then] cconstant frames/missile
 
+  1 1 udg-sprite
+
+  ...XX...
+  ..XXX...
+  .XXXXXX.
+  XXXXXXXX
+  XXXXXXXX
+  .XXXXXX.
+  ..XXXX..
+  ...XX... sprite-id ball-sprite
+
+  1 1 udg-sprite
+
+  ...XX...
+  ..XXXX..
+  .XXXXXX.
+  XXXXXXXX
+  XXXXXXXX
+  .XXXXX..
+  ..XXXX..
+  ...XX... drop
+
+  1 1 udg-sprite
+
+  ...XX...
+  ..XXXX..
+  .XXXXXX.
+  XXXXXXXX
+  XXXXXXXX
+  .XXXXXX.
+  ...XXX..
+  ...XX... drop
+
+  1 1 udg-sprite
+
+  ...XX...
+  ..XXXX..
+  .XXXXXX.
+  .XXXXXXX
+  XXXXXXXX
+  .XXXXXX.
+  ..XXXX..
+  ...XX... drop
+
+  ball-sprite [udg] [if]   >udg c@ swap -
+                    [else] here swap /udg /
+                    [then] cconstant frames/ball
+
   \ -----------------------------------------------------------
   \ Building
 
@@ -2053,7 +2117,7 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX..XX..XX..XX..XX.XX.
 ...X.XXX.XXX.XXX.XXX.X..
-....X.X.X.X.X.X.X.X.X... sprite-id gun-machine-tank-sprite
+....X.X.X.X.X.X.X.X.X... sprite-id bullet-gun-tank-sprite
 
 udg/tank 1 udg-sprite
 ..........X..X..........
@@ -2119,6 +2183,46 @@ udg/tank 1 udg-sprite
 ..........XXXX..........
 ...XXXXXX.XXXX.XXXXXXX..
 ..XXXXXXX.XXXX.XXXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XXX.X.X.X.X.X.X.X.X.XXX
+..XX.XXX.XXX.XXX.XXX.XX.
+...X..XX..XX..XX..XX.X..
+...X.X.X.X.X.X.X.X.X.X.. drop
+
+udg/tank 1 udg-sprite
+........XXXXXXXX........
+...XXXX..XXXXXX..XXXXX..
+..XXXXXX..XXXX..XXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XX.X.X.X.X.X.X.X.X.X.XX
+..XX..XX..XX..XX..XX.XX.
+...X.XXX.XXX.XXX.XXX.X..
+....X.X.X.X.X.X.X.X.X... sprite-id ball-gun-tank-sprite
+
+udg/tank 1 udg-sprite
+........XXXXXXXX........
+...XXXX..XXXXXX..XXXXX..
+..XXXXXX..XXXX..XXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XXX.X.X.X.X.X.X.X.X.XXX
+..XX.XX..XX..XX..XX..XX.
+...X.XXX.XXX.XXX.XXX.X..
+...X.X.X.X.X.X.X.X.X.X.. drop
+
+udg/tank 1 udg-sprite
+........XXXXXXXX........
+...XXXX..XXXXXX..XXXXX..
+..XXXXXX..XXXX..XXXXXXX.
+.XXXXXXXXXXXXXXXXXXXXXXX
+.XX.X.X.X.X.X.X.X.X.X.XX
+..XX.XXX.XXX.XXX.XXX.XX.
+...X.XX..XX..XX..XX..X..
+....X.X.X.X.X.X.X.X.X... drop
+
+udg/tank 1 udg-sprite
+........XXXXXXXX........
+...XXXX..XXXXXX..XXXXX..
+..XXXXXX..XXXX..XXXXXXX.
 .XXXXXXXXXXXXXXXXXXXXXXX
 .XXX.X.X.X.X.X.X.X.X.XXX
 ..XX.XXX.XXX.XXX.XXX.XX.
@@ -2811,6 +2915,11 @@ columns udg/tank - 1- cconstant tank-max-x
 : .tank ( -- ) (.tank drop ;
   \ Display the tank at its current position.
 
+0 [if]
+
+  \ XXX OLD -- The balls gun is wider than the central UDG of
+  \ the tank. Therefore the whole tank must be displayed.
+
 : .tank-arm ( -- )
   tank-attr attr!
   tank-x c@ 1+ dup tank-y at-xy
@@ -2818,8 +2927,10 @@ columns udg/tank - 1- cconstant tank-max-x
   \ If the middle part of the tank is visible (i.e. outside the
   \ building), display it.
 
+[then]
+
 : new-tank ( -- )
-  repair-tank gun-machine-id set-arm park-tank .tank ;
+  repair-tank bullet-gun-id set-gun park-tank .tank ;
 
 : <tank ( -- ) tank-x c1-! (.tank -tank-extreme drop ;
   \ Move the tank to the left.
@@ -2857,7 +2968,10 @@ constant tank-movements ( -- a )
 10 cconstant #missiles
   \ Number of missiles the tank can hold.
 
-#bullets #missiles + cconstant #projectiles
+4 cconstant #balls
+  \ Number of balls the tank can hold.
+
+#bullets #missiles + #balls + cconstant #projectiles
   \ Total number of projectiles the tank can hold.
 
 #bullets allot-xstack constant bullets-stack
@@ -2865,6 +2979,9 @@ constant tank-movements ( -- a )
 
 #missiles allot-xstack constant missiles-stack
   \ Create an extra stack to store the unused missiles.
+
+#balls allot-xstack constant balls-stack
+  \ Create an extra stack to store the unused balls.
 
 0
   cfield: ~projectile-y         \ row
@@ -2926,16 +3043,22 @@ create flying-projectiles /flying-projectiles allot
 
 : destroy-projectile ( -- ) #flying-projectile c@ stop-flying ;
 
+: recharge ( n1 n2 -- ) do i projectile#>~ >x loop ;
+  \ Recharge projectiles from _n2_ to _n1-1_.
+
 : recharge-bullets ( -- )
-  bullets-stack xstack xclear
-  #bullets 0 do i projectile#>~ >x loop ;
+  bullets-stack xstack xclear #bullets 0 recharge ;
 
 : recharge-missiles ( -- )
   missiles-stack xstack xclear
-  #projectiles #bullets do i projectile#>~ >x loop ;
+  [ #bullets #missiles + ] xliteral #bullets recharge ;
+
+: recharge-balls ( -- )
+  balls-stack xstack xclear
+  #projectiles [ #bullets #missiles + ] xliteral recharge ;
 
 : recharge-projectiles ( -- )
-  recharge-bullets recharge-missiles ;
+  recharge-bullets recharge-missiles recharge-balls ;
 
 : prepare-projectiles ( -- ) #flying-projectiles coff
                              #flying-projectile coff
@@ -4051,74 +4174,83 @@ variable mothership-explosion-time
   \ ===========================================================
   cr .( Arms) ?depth debug-point \ {{{1
 
-2 cconstant arms
+3 cconstant #guns
 
-cvariable arm#
-  \ Number of the current tank arm:
-  \ 0 = gun machine;
-  \ 1 = missile gun.
+cvariable gun-type
+  \ Identifier of the current gun of the tank:
+  \ 0 = bullet gun
+  \ 1 = missile gun
+  \ 2 = ball gun
 
-0 constant arm~
-  \ Data address of the current arm identified by `arm#`.
+0 constant gun~
+  \ Data address of the current arm identified by `gun-type`.
 
 0
-   field: ~arm-projectile-stack     \ address
-  cfield: ~arm-projectile-sprite    \ UDG
-  cfield: ~arm-projectile-frames    \ count
-  cfield: ~arm-projectile-altitude  \ row
-  cfield: ~arm-projectile-x         \ column
-  cfield: ~arm-tank-sprite          \ UDG
-  cfield: ~arm-trigger-interval     \ ticks
-  cfield: ~arm-projectile-max-delay \ bitmask
-cconstant /arm-projectile
+   field: ~gun-projectile-stack     \ address
+  cfield: ~gun-projectile-sprite    \ UDG
+  cfield: ~gun-projectile-frames    \ count
+  cfield: ~gun-projectile-altitude  \ row
+  cfield: ~gun-projectile-x         \ column
+  cfield: ~gun-tank-sprite          \ UDG
+  cfield: ~gun-trigger-interval     \ ticks
+  cfield: ~gun-projectile-max-delay \ bitmask
+cconstant /gun
   \ Data structure of an arm projectile.
 
-arms /arm-projectile * cconstant /arm-projectiles
+#guns /gun * cconstant /guns
 
-create arm-projectiles /arm-projectiles allot
+create guns /guns allot
 
-: arm#>~ ( n -- a ) /arm-projectile * arm-projectiles + ;
+: gun-type>~ ( n -- a ) /gun * guns + ;
   \ Convert arm number _n_ to its data address _a_.
 
-gun-machine-id arm#>~ constant gun-machine~
-
-missile-gun-id arm#>~ constant missile-gun~
+ bullet-gun-id gun-type>~ constant bullet-gun~
+missile-gun-id gun-type>~ constant missile-gun~
+   ball-gun-id gun-type>~ constant ball-gun~
 
 :noname ( n -- )
-  dup arm# c!
-      arm#>~ dup !> arm~
-             dup ~arm-tank-sprite c@ c!> tank-sprite
-             dup ~arm-projectile-stack @ xstack
-                 ~arm-projectile-x c@ c!> ammo-x
-  ; ' set-arm defer!
+  dup gun-type c!
+      gun-type>~ dup !> gun~
+             dup ~gun-tank-sprite c@ c!> tank-sprite
+             dup ~gun-projectile-stack @ xstack
+                 ~gun-projectile-x c@ c!> ammo-x
+  ; ' set-gun defer!
   \ Set _n_ as the current arm (0=gun machine; 1=missile gun).
 
   \ --------------------------------------------
-  \ Set arms' data
+  \ Set guns' data
 
- bullets-stack gun-machine~ ~arm-projectile-stack !
-missiles-stack missile-gun~ ~arm-projectile-stack !
+ bullets-stack  bullet-gun~ ~gun-projectile-stack !
+missiles-stack missile-gun~ ~gun-projectile-stack !
+   balls-stack ball-gun~ ~gun-projectile-stack !
 
- bullet-sprite gun-machine~ ~arm-projectile-sprite c!
-missile-sprite missile-gun~ ~arm-projectile-sprite c!
+ bullet-sprite  bullet-gun~ ~gun-projectile-sprite c!
+missile-sprite missile-gun~ ~gun-projectile-sprite c!
+   ball-sprite    ball-gun~ ~gun-projectile-sprite c!
 
-frames/bullet  gun-machine~ ~arm-projectile-frames c!
-frames/missile missile-gun~ ~arm-projectile-frames c!
+frames/bullet   bullet-gun~ ~gun-projectile-frames c!
+frames/missile missile-gun~ ~gun-projectile-frames c!
+frames/ball       ball-gun~ ~gun-projectile-frames c!
 
-invader-max-y   gun-machine~ ~arm-projectile-altitude c!
-mothership-y 1+ missile-gun~ ~arm-projectile-altitude c!
+invader-max-y    bullet-gun~ ~gun-projectile-altitude c!
+mothership-y 1+ missile-gun~ ~gun-projectile-altitude c!
+building-top-y 1+  ball-gun~ ~gun-projectile-altitude c!
 
- bullets-x gun-machine~ ~arm-projectile-x c!
-missiles-x missile-gun~ ~arm-projectile-x c!
+ bullets-x  bullet-gun~ ~gun-projectile-x c!
+missiles-x missile-gun~ ~gun-projectile-x c!
+   balls-x    ball-gun~ ~gun-projectile-x c!
 
-gun-machine-tank-sprite gun-machine~ ~arm-tank-sprite c!
-missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
+ bullet-gun-tank-sprite  bullet-gun~ ~gun-tank-sprite c!
+missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
+   ball-gun-tank-sprite    ball-gun~ ~gun-tank-sprite c!
 
- 8 gun-machine~ ~arm-trigger-interval c!
-16 missile-gun~ ~arm-trigger-interval c!
+ 8  bullet-gun~ ~gun-trigger-interval c!
+16 missile-gun~ ~gun-trigger-interval c!
+24    ball-gun~ ~gun-trigger-interval c!
 
-%001 gun-machine~ ~arm-projectile-max-delay c!
-%111 missile-gun~ ~arm-projectile-max-delay c!
+%0001  bullet-gun~ ~gun-projectile-max-delay c!
+%0111 missile-gun~ ~gun-projectile-max-delay c!
+%1111    ball-gun~ ~gun-projectile-max-delay c!
 
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
@@ -4167,19 +4299,19 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
   \ logic.
 
 : schedule-trigger ( -- )
-  ticks arm~ ~arm-trigger-interval c@ + trigger-time ! ;
+  ticks gun~ ~gun-trigger-interval c@ + trigger-time ! ;
 
 : get-projectile ( -- )
   x> !> projectile~
   gun-x projectile~ ~projectile-x c!
   [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
-  arm~ ~arm-projectile-sprite c@
+  gun~ ~gun-projectile-sprite c@
   projectile~ ~projectile-sprite c!
-  arm~ ~arm-projectile-frames c@
+  gun~ ~gun-projectile-frames c@
   projectile~ ~projectile-frames c!
-  arm~ ~arm-projectile-max-delay c@
+  gun~ ~gun-projectile-max-delay c@
   projectile~ ~projectile-max-delay c!
-  arm~ ~arm-projectile-altitude c@
+  gun~ ~gun-projectile-altitude c@
   projectile~ ~projectile-altitude c! ;
   \ Get a new projectile and set its data according to the
   \ current value of `arm~`.  For the sake of run-time speed,
@@ -4225,7 +4357,13 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
   gun-below-building? ?exit fire ;
   \ Manage the gun.
 
-: toggle-arm ( -- ) arm# c@ 0= abs set-arm .tank-arm ;
+: tank-previous-frame ( -- )
+  tank-frame c@ tank-frame- tank-frame c! ;
+  \ Restore the previous frame of the tank.  This is used to
+  \ prevent the tank chain from moving when the gun is changed.
+
+: change-gun ( -- ) gun-type c@1+ dup #guns < and set-gun
+                    tank-previous-frame .tank ;
 
 10 cconstant arming-interval \ ticks
 
@@ -4234,7 +4372,7 @@ missile-gun-tank-sprite missile-gun~ ~arm-tank-sprite c!
 
 : arming ( -- ) arming-time @ past? 0exit
                 kk-down pressed?    0exit
-                toggle-arm schedule-arming ;
+                change-gun schedule-arming ;
 
 : manage-tank ( -- ) driving arming shooting ;
 
@@ -4453,6 +4591,8 @@ localized-string about-next-location$ ( -- ca len )
 : .missiles-label ( -- )
   missiles-label$ missiles-label-x .label ;
 
+: .balls-label ( -- ) balls-label$ balls-label-x .label ;
+
 : .score-label ( -- ) score-label$ score-label-x .label ;
 
 : .record-separator ( -- )
@@ -4460,8 +4600,10 @@ localized-string about-next-location$ ( -- ca len )
 
 : status-bar ( -- )
   text-attr attr!
-  arm# c@ .bullets-label .bullets .missiles-label .missiles
-  set-arm .score-label .score .record-separator .record ;
+  gun-type c@  .bullets-label  .bullets
+               .missiles-label .missiles
+               .balls-label    .balls     set-gun
+  .score-label .score .record-separator .record ;
 
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1
