@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.158.0+201801250125" ;
+: version$ ( -- ca len ) s" 0.159.0+201801250945" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3657,7 +3657,7 @@ constant healthy-invader-cell-attr
 sky-attr dup join constant sky-cell-attr
 
  variable beam-y-inc   \ 1|-1
- variable beam-y       \ row
+cvariable beam-y       \ row
 cvariable beam-first-y \ row
 cvariable beam-last-y  \ row
 
@@ -3666,7 +3666,7 @@ cvariable beam-invader
 
 : set-beam ( row1 row2 xt -- )
   mothership-action!
-  2dup beam-last-y c! dup beam-first-y c! beam-y !
+  2dup beam-last-y c! dup beam-first-y c! beam-y c!
        swap - polarity beam-y-inc ! ;
   \ Set the beam to grow or shrink from _row1_ to _row2_ with
   \ handler _xt_.
@@ -3694,13 +3694,13 @@ cvariable beam-invader
       swap rows/layer mod 0= and ;
   \ Is _row_ is a valid row of an invader layer?
 
-: reach-invader? ( -- f ) beam-y @ layer-y? ;
+: reach-invader? ( -- f ) beam-y c@ layer-y? ;
   \ Has the beam reached the row of an invader's layer?
 
-: update-beam ( -- ) beam-y-inc @ beam-y +! ;
+: update-beam ( -- ) beam-y-inc @ beam-y c+! ;
 
 : (beaming-up? ( -- )
-  beam-y @ beam-last-y c@ beam-first-y c@ between ;
+  beam-y c@ beam-last-y c@ beam-first-y c@ between ;
   \ Is the beam still shrinking?
 
 : beaming-up? ( -- f ) update-beam (beaming-up? ;
@@ -3710,7 +3710,7 @@ cvariable beam-invader
   .mothership
   reach-invader? if   mothership-cell-attr
                  else sky-cell-attr
-                 then mothership-x @ beam-y @ xy>attra ! ;
+                 then mothership-x @ beam-y c@ xy>attra ! ;
   \ Shrink the beam towards de mothership one character.
 
 : beaming-up-mothership-action ( -- )
@@ -3740,14 +3740,15 @@ cvariable beam-invader
   \ Display the new invader and update its number.
 
 : (beaming-down? ( -- f )
-  beam-y @ beam-first-y c@ beam-last-y c@ between ;
+  beam-y c@ beam-first-y c@ beam-last-y c@ between ;
   \ Is the beam still growing?
 
 : beaming-down? ( -- f ) update-beam (beaming-down? ;
   \ Update a growing beam. Is it still growing?
 
 : (beam-down ( -- )
-  .mothership beam-cell-attr mothership-x @ beam-y @ xy>attra !
+  .mothership
+  beam-cell-attr mothership-x @ beam-y c@ xy>attra !
   reach-invader? if create-invader then ;
   \ Grow the beam towards the ground one character.
 
