@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.160.0+201801251416" ;
+: version$ ( -- ca len ) s" 0.161.0+201801251946" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -706,7 +706,7 @@ current-controls c@ set-controls
   \ ===========================================================
   cr .( UDG) ?depth debug-point \ {{{1
 
-               220 cconstant last-udg \ last UDG code used
+               221 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
 create udg-set /udg-set allot  udg-set set-udg
@@ -1939,7 +1939,7 @@ X.....X........X
 
   bullet-sprite [udg] [if]   >udg c@ swap -
                       [else] here swap /udg /
-                      [then] cconstant frames/bullet
+                      [then] cconstant bullet-frames
 
   1 1 udg-sprite
 
@@ -1965,13 +1965,70 @@ X.....X........X
 
   missile-sprite [udg] [if]   >udg c@ swap -
                        [else] here swap /udg /
-                       [then] cconstant frames/missile
+                       [then] cconstant missile-frames
+
+  1 1 udg-sprite
+
+  ..XXXX..
+  .XXXXXX.
+  XXXXX.XX
+  XXXXXX.X
+  XXXXXXXX
+  XXXXXXXX
+  .XXXXXX.
+  ..XXXX.. sprite-id ball-sprite
+
+  1 1 udg-sprite
+
+  ..XXXX..
+  .XXXXXX.
+  XXXXXXXX
+  XXXXXXXX
+  XXXXXX.X
+  XXXXX.XX
+  .XXXXXX.
+  ..XXXX.. drop
+
+  1 1 udg-sprite
+
+  ..XXXX..
+  .XXXXXX.
+  XXXXXXXX
+  XXXXXXXX
+  XXXXXXXX
+  XXX..XXX
+  .XXXXXX.
+  ..XXXX.. drop
+
+  1 1 udg-sprite
+
+  ..XXXX..
+  .XXXXXX.
+  XXXXXXXX
+  X.XXXXXX
+  XX.XXXXX
+  XXXXXXXX
+  .XXXXXX.
+  ..XXXX.. drop
+
+  1 1 udg-sprite
+
+  ..XXXX..
+  .XX.XXX.
+  XX.XXXXX
+  XXXXXXXX
+  XXXXXXXX
+  XXXXXXXX
+  .XXXXXX.
+  ..XXXX.. drop
+
+0 [if] \ XXX OLD
 
   1 1 udg-sprite
 
   ...XX...
-  ..XXX...
-  .XXXXXX.
+  ..XXXX..
+  .XXXX.X.
   XXXXXXXX
   XXXXXXXX
   .XXXXXX.
@@ -1980,40 +2037,42 @@ X.....X........X
 
   1 1 udg-sprite
 
-  ...XX...
+  ....XX..
   ..XXXX..
-  .XXXXXX.
-  XXXXXXXX
-  XXXXXXXX
-  .XXXXX..
-  ..XXXX..
-  ...XX... drop
-
-  1 1 udg-sprite
-
-  ...XX...
-  ..XXXX..
-  .XXXXXX.
-  XXXXXXXX
-  XXXXXXXX
-  .XXXXXX.
-  ...XXX..
-  ...XX... drop
-
-  1 1 udg-sprite
-
-  ...XX...
-  ..XXXX..
-  .XXXXXX.
+  XXXXXXX.
+  XXXXXXX.
+  .XXXX.XX
   .XXXXXXX
+  ..XXXX..
+  ..XX.... drop
+
+  1 1 udg-sprite
+
+  ...XX...
+  ..XXXX..
+  .XXXXXX.
   XXXXXXXX
+  XX.XXXXX
   .XXXXXX.
   ..XXXX..
   ...XX... drop
+
+  1 1 udg-sprite
+
+  ..XX....
+  ..XXXX..
+  .X.XXXXX
+  .XXXXXXX
+  XXXXXXX.
+  XXXXXXX.
+  ..XXXX..
+  ....XX.. drop
+
+[then]
 
   ball-sprite [udg] [if]   >udg c@ swap -
                     [else] here swap /udg /
-                    [then] cconstant frames/ball
+                    [then] cconstant ball-frames
 
   \ -----------------------------------------------------------
   \ Building
@@ -2964,12 +3023,15 @@ constant tank-movements ( -- a )
 
 50 cconstant #bullets
   \ Number of bullets the tank can hold.
+  \ XXX TMP -- provisional value, for testing
 
-10 cconstant #missiles
+20 cconstant #missiles
   \ Number of missiles the tank can hold.
+  \ XXX TMP -- provisional value, for testing
 
-4 cconstant #balls
+20 cconstant #balls
   \ Number of balls the tank can hold.
+  \ XXX TMP -- provisional value, for testing
 
 #bullets #missiles + #balls + cconstant #projectiles
   \ Total number of projectiles the tank can hold.
@@ -4222,15 +4284,15 @@ missile-gun-id gun-type>~ constant missile-gun~
 
  bullets-stack  bullet-gun~ ~gun-projectile-stack !
 missiles-stack missile-gun~ ~gun-projectile-stack !
-   balls-stack ball-gun~ ~gun-projectile-stack !
+   balls-stack    ball-gun~ ~gun-projectile-stack !
 
  bullet-sprite  bullet-gun~ ~gun-projectile-sprite c!
 missile-sprite missile-gun~ ~gun-projectile-sprite c!
    ball-sprite    ball-gun~ ~gun-projectile-sprite c!
 
-frames/bullet   bullet-gun~ ~gun-projectile-frames c!
-frames/missile missile-gun~ ~gun-projectile-frames c!
-frames/ball       ball-gun~ ~gun-projectile-frames c!
+bullet-frames   bullet-gun~ ~gun-projectile-frames c!
+missile-frames missile-gun~ ~gun-projectile-frames c!
+ball-frames       ball-gun~ ~gun-projectile-frames c!
 
 invader-max-y    bullet-gun~ ~gun-projectile-altitude c!
 mothership-y 1+ missile-gun~ ~gun-projectile-altitude c!
@@ -4248,9 +4310,9 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 16 missile-gun~ ~gun-trigger-interval c!
 24    ball-gun~ ~gun-trigger-interval c!
 
-%0001  bullet-gun~ ~gun-projectile-max-delay c!
-%0111 missile-gun~ ~gun-projectile-max-delay c!
-%1111    ball-gun~ ~gun-projectile-max-delay c!
+%00001  bullet-gun~ ~gun-projectile-max-delay c!
+%00111 missile-gun~ ~gun-projectile-max-delay c!
+%11111    ball-gun~ ~gun-projectile-max-delay c!
 
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
