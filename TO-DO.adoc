@@ -169,3 +169,9 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 
 - Reduce the fields that hold frame counts in the species structure.
 
+== 2018-01-25
+
+- Use different colors for each type of projectile. Use bright colors
+  and use the brightness bit to check the projectiles.
+- Limit the flying balls to one, because balls must be exploded
+  manually with a key.

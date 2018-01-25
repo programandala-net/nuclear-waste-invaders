@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.161.0+201801251946" ;
+: version$ ( -- ca len ) s" 0.161.1+201801252016" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -416,46 +416,50 @@ localized-string not-in-this-language$ ( -- ca len )
 'n' cconstant language-key
   \ Key to change the current language.
 
+0 [if] \ XXX OLD
+
 here ," PUNTUACIÓN"
 here ," POENTARO"
 here ," SCORE"
 localized-string score$ ( -- ca len )
   \ Return string _ca len_ in the current language.
-  \
-  \ XXX REMARK -- Not used.
 
-here ," P:"
-here ," P:"
-here ," S:"
+[then]
+
+here ," Pu:"
+here ," Po:"
+here ," Sc:"
 localized-string score-label$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
 : missiles-label$ s" Mi:" ( -- ca len ) ;
 
-here ," Bu:"
-here ," Ku:"
 here ," Ba:"
+here ," Ku:"
+here ," Bu:"
 localized-string bullets-label$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
-here ," Ba:"
-here ," Bu:"
 here ," Bo:"
+here ," Bu:"
+here ," Ba:"
 localized-string balls-label$ ( -- ca len )
   \ Return string _ca len_ in the current language.
+
+0 [if] \ XXX OLD
 
 here ," RÉCOR"
 here ," RIKORDO"
 here ," RECORD"
 localized-string record$ ( -- ca len )
   \ Return string _ca len_ in the current language.
-  \
-  \ XXX REMARK -- Not used.
 
   \ XXX TODO -- Simplify: use `sconstants` instead, using the
   \ language as index and a wrapper word to provide it.
 
-0 [if]
+[then]
+
+0 [if] \ XXX OLD
 
 here ," jugadores"
 here ," ludantoj"
