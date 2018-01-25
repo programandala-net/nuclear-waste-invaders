@@ -175,3 +175,9 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
   and use the brightness bit to check the projectiles.
 - Limit the flying balls to one, because balls must be exploded
   manually with a key.
+- Make `flying-to-the-left?` a field? Pro: the current invader could
+  be saved just by preserving `invader~`, without calling
+  `set-invader` to restore it. Con: A field would be a bit slower than
+  a constant.
+- Remove `get-invader`. Use `invader# c@` directly? Pro: a bit faster.
+  Con: Less legible when used as the counterpart of `set-invader`.
