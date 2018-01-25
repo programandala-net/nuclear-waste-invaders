@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.157.0+201801242114" ;
+: version$ ( -- ca len ) s" 0.158.0+201801250125" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -699,7 +699,7 @@ current-controls c@ set-controls
   \ ===========================================================
   cr .( UDG) ?depth debug-point \ {{{1
 
-               156 cconstant last-udg \ last UDG code used
+               204 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
 create udg-set /udg-set allot  udg-set set-udg
@@ -1001,6 +1001,110 @@ rom-font bl /udg * constant bl-udg
 ....XX.XX.XX....
 ..XX........XX.. drop
 
+  \ invader species 0, left breaking, frame 0:
+
+2 1 udg-sprite
+
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXX..XX..XXX..
+..XXXXXXXXXXXX..
+.....XX..XX.....
+....XX.XX.XX....
+..XX........XX.. sprite-id left-breaking-invader-0-sprite
+
+  \ invader species 0, left breaking, frame 1:
+
+2 1 udg-sprite
+
+.....XXXX.......
+..XXXXXXXXXX....
+.XXXXXXXXXXXX...
+.XX..XX..XXXX...
+.XXXXXXXXXXXX...
+...XXX..XXX.....
+..XX..XX..XX....
+..XX.......XX... drop
+
+  \ invader species 0, left breaking, frame 2:
+
+2 1 udg-sprite
+
+....XXXX........
+.XXXXXXXXXX.....
+XXXXXXXXXXXX....
+X..XX..XXXXX....
+XXXXXXXXXXXX....
+..XXX..XXX......
+.XX..XX..XX.....
+..XX......XX.... drop
+
+  \ invader species 0, left breaking, frame 3:
+
+2 1 udg-sprite
+
+.....XXXX.......
+..XXXXXXXXXX....
+.XXXXXXXXXXXX...
+.XX..XX..XXXX...
+.XXXXXXXXXXXX...
+...XXX..XXX.....
+..XX..XX..XX....
+..XX.......XX... drop
+
+  \ invader species 0, right breaking, frame 0:
+
+2 1 udg-sprite
+
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXX..XX..XXX..
+..XXXXXXXXXXXX..
+.....XX..XX.....
+....XX.XX.XX....
+..XX........XX.. sprite-id right-breaking-invader-0-sprite
+
+  \ invader species 0, right breaking, frame 1:
+
+2 1 udg-sprite
+
+.......XXXX.....
+....XXXXXXXXXX..
+...XXXXXXXXXXXX.
+...XXXX..XX..XX.
+...XXXXXXXXXXXX.
+.....XXX..XXX...
+....XX..XX..XX..
+...XX.......XX.. drop
+
+  \ invader species 0, right breaking, frame 2:
+
+2 1 udg-sprite
+
+........XXXX....
+.....XXXXXXXXXX.
+....XXXXXXXXXXXX
+....XXXXX..XX..X
+....XXXXXXXXXXXX
+......XXX..XXX..
+.....XX..XX..XX.
+....XX......XX.. drop
+
+  \ invader species 0, right breaking, frame 3:
+
+2 1 udg-sprite
+
+.......XXXX.....
+....XXXXXXXXXX..
+...XXXXXXXXXXXX.
+...XXXX..XX..XX.
+...XXXXXXXXXXXX.
+.....XXX..XXX...
+....XX..XX..XX..
+...XX.......XX.. drop
+
   \ -----------------------------------------------------------
   \ Invader species 1
 
@@ -1147,6 +1251,110 @@ XXXX.XXX.XXXXXX.
 ..X.X.....X.X...
 .....XX.XX...... drop
 
+  \ invader species 1, left breaking, frame 0:
+
+2 1 udg-sprite
+
+.....X...X......
+.....X...X......
+....XXXXXXX.....
+...XX.XXX.XX....
+..XXXXXXXXXXX...
+..XXXXXXXXXXX...
+..X.X.....X.X...
+....X.....X..... sprite-id left-breaking-invader-1-sprite
+
+  \ invader species 1, left breaking, frame 1:
+
+2 1 udg-sprite
+
+.....X...X......
+....X...X.......
+...XXXXXXX......
+..X.XXX.XXXXXX..
+.XXXXXXXXXXX....
+.XXXXXXXXXX.....
+..XX.....X......
+....X.....X..... drop
+
+  \ invader species 1, left breaking, frame 2:
+
+2 1 udg-sprite
+
+....X...X.......
+...X...X..X.....
+..XXXXXXX.X.....
+.XX.XXX.XXX.....
+XXXXXXXXXXX.....
+XXXXXXXXXX......
+.XX.....X.......
+..X.....X....... drop
+
+  \ invader species 1, left breaking, frame 3:
+
+2 1 udg-sprite
+
+.....X...X......
+....X...X.......
+...XXXXXXX......
+..X.XXX.XXXXXX..
+.XXXXXXXXXXX....
+.XXXXXXXXXX.....
+..XX.....X......
+....X.....X..... drop
+
+  \ invader species 1, right breaking, frame 0:
+
+2 1 udg-sprite
+
+......X...X.....
+......X...X.....
+.....XXXXXXX....
+....XX.XXX.XX...
+...XXXXXXXXXXX..
+...XXXXXXXXXXX..
+...X.X.....X.X..
+.....X.....X.... sprite-id right-breaking-invader-1-sprite
+
+  \ invader species 1, right breaking, frame 1:
+
+2 1 udg-sprite
+
+......X...X.....
+.......X...X....
+......XXXXXXX...
+..XXXXXX.XXX.X..
+....XXXXXXXXXXX.
+.....XXXXXXXXXX.
+......X.....XX..
+.....X.....X.... drop
+
+  \ invader species 1, right breaking, frame 2:
+
+2 1 udg-sprite
+
+.......X...X....
+.....X..X...X...
+.....X.XXXXXXX..
+.....XXX.XXX.XX.
+.....XXXXXXXXXXX
+......XXXXXXXXXX
+.......X.....XX.
+.......X.....X.. drop
+
+  \ invader species 1, right breaking, frame 3:
+
+2 1 udg-sprite
+
+......X...X.....
+.......X...X....
+......XXXXXXX...
+..XXXXXX.XXX.X..
+....XXXXXXXXXXX.
+.....XXXXXXXXXX.
+......X.....XX..
+.....X.....X.... drop
+
   \ -----------------------------------------------------------
   \ Invader species 2
 
@@ -1292,6 +1500,110 @@ XXXX.XXX.XXXXXX.
 ......X..X......
 .....X.XX.X.....
 ....X.X..X.X.... drop
+
+  \ invader species 2, left breaking, frame 0:
+
+2 1 udg-sprite
+
+.....XX.........
+....XXXX........
+...XXXXXX.......
+..XX.XX.XX......
+..XXXXXXXX......
+....X..X........
+...X.XX.X.......
+..X.X..X.X...... sprite-id left-breaking-invader-2-sprite
+
+  \ invader species 2, left breaking, frame 1:
+
+2 1 udg-sprite
+
+....XX..........
+...XXXX.........
+..XXXXXX........
+.X.XX.XXX.......
+.XXXXXXXX.......
+...X..X.........
+...X.XX.X.......
+..X.X..X.X...... drop
+
+  \ invader species 2, left breaking, frame 2:
+
+2 1 udg-sprite
+
+...XX...........
+..XXXX..........
+.XXXXXX.........
+XX.XX.XX........
+XXXXXXXX........
+..X..X..........
+...X.XX.X.......
+..X.X..X.X...... drop
+
+  \ invader species 2, left breaking, frame 3:
+
+2 1 udg-sprite
+
+....XX..........
+...XXXX.........
+..XXXXXX........
+.X.XX.XXX.......
+.XXXXXXXX.......
+...X..X.........
+...X.XX.X.......
+..X.X..X.X...... drop
+
+  \ invader species 2, right breaking, frame 0:
+
+2 1 udg-sprite
+
+.........XX.....
+........XXXX....
+.......XXXXXX...
+......XX.XX.XX..
+......XXXXXXXX..
+........X..X....
+.......X.XX.X...
+......X.X..X.X.. sprite-id right-breaking-invader-2-sprite
+
+  \ invader species 2, right breaking, frame 1:
+
+2 1 udg-sprite
+
+..........XX....
+.........XXXX...
+........XXXXXX..
+.......XXX.XX.X.
+.......XXXXXXXX.
+.........X..X...
+.......X.XX.X...
+......X.X..X.X.. drop
+
+  \ invader species 2, right breaking, frame 2:
+
+2 1 udg-sprite
+
+...........XX...
+..........XXXX..
+.........XXXXXX.
+........XX.XX.XX
+........XXXXXXXX
+..........X..X..
+.......X.XX.X...
+......X.X..X.X.. drop
+
+  \ invader species 2, right breaking, frame 3:
+
+2 1 udg-sprite
+
+..........XX....
+.........XXXX...
+........XXXXXX..
+.......XXX.XX.X.
+.......XXXXXXXX.
+.........X..X...
+.......X.XX.X...
+......X.X..X.X.. drop
 
   \ -----------------------------------------------------------
   \ Mothership
@@ -1964,12 +2276,16 @@ status-bar-rows columns * cconstant /status-bar
 3 cconstant #species
 
 0
-  cfield: ~flying-left-sprite         \ UDG
-  cfield: ~flying-left-sprite-frames  \ count
-  cfield: ~flying-right-sprite        \ UDG
-  cfield: ~flying-right-sprite-frames \ count
-  cfield: ~docked-sprite              \ UDG
-  cfield: ~docked-sprite-frames       \ count
+  cfield: ~flying-left-sprite           \ UDG
+  cfield: ~flying-left-sprite-frames    \ count
+  cfield: ~flying-right-sprite          \ UDG
+  cfield: ~flying-right-sprite-frames   \ count
+  cfield: ~breaking-left-sprite         \ UDG
+  cfield: ~breaking-left-sprite-frames  \ count
+  cfield: ~breaking-right-sprite        \ UDG
+  cfield: ~breaking-right-sprite-frames \ count
+  cfield: ~docked-sprite                \ UDG
+  cfield: ~docked-sprite-frames         \ count
 cconstant /species
   \ Data structure of an invader species.
 
@@ -1983,6 +2299,10 @@ create species #species /species * allot
               4 r@ ~flying-right-sprite-frames c!
                 r@ ~flying-left-sprite c!
               4 r@ ~flying-left-sprite-frames c!
+                r@ ~breaking-right-sprite c!
+              4 r@ ~breaking-right-sprite-frames c!
+                r@ ~breaking-left-sprite c!
+              4 r@ ~breaking-left-sprite-frames c!
                 r@ ~docked-sprite c!
               3 r> ~docked-sprite-frames c! ;
   \ Init the data of invaders species _c4_:
@@ -1991,16 +2311,22 @@ create species #species /species * allot
   \   c3 = right flying sprite
 
 docked-invader-0-sprite
+left-breaking-invader-0-sprite
+right-breaking-invader-0-sprite
 left-flying-invader-0-sprite
 right-flying-invader-0-sprite
 0 set-species
 
 docked-invader-1-sprite
+left-breaking-invader-1-sprite
+right-breaking-invader-1-sprite
 left-flying-invader-1-sprite
 right-flying-invader-1-sprite
 1 set-species
 
 docked-invader-2-sprite
+left-breaking-invader-2-sprite
+right-breaking-invader-2-sprite
 left-flying-invader-2-sprite
 right-flying-invader-2-sprite
 2 set-species
@@ -2893,9 +3219,21 @@ here  ' noop ,
 defer breaking-invader-action ( -- )
   \ Action of the invaders that are breaking the wall.
 
+: set-breaking-invader-sprite ( -- )
+  invader~ ~species @ dup
+  flying-to-the-left?
+  if   ~breaking-left-sprite c@ swap
+       ~breaking-left-sprite-frames c@
+  else ~breaking-right-sprite c@ swap
+       ~breaking-right-sprite-frames c@
+  then set-invader-sprite ;
+
+: start-breaking-the-wall ( -- )
+  set-breaking-invader-sprite
+  ['] breaking-invader-action invader~ ~action ! ;
+
 : hit-wall ( -- )
-  healthy? if   ['] breaking-invader-action invader~ ~action !
-                exit
+  healthy? if   start-breaking-the-wall exit
            then turn-back ;
   \ XXX TMP --
 
@@ -3038,6 +3376,7 @@ cvariable cure-factor  20 cure-factor c!
 :noname ( -- ) ?break-wall at-invader .invader
                ; ' breaking-invader-action defer!
   \ Action of the invaders that are breaking the wall.
+  \ XXX TODO --
 
 : last-invader? ( -- f )
   get-invader [ max-invaders 1- ] cliteral = ;

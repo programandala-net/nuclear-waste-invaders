@@ -37,13 +37,6 @@ Older first:
 
 Improve the visibility of the projectile right above the tank.
 
-== 2017-03-01, 2017-12-19
-
-- Add a data field to hold the identifier of the current status
-  (attacking, docked, breaking the wall, retreating...). This will be
-  simpler to use and more versatile.
-- Change the graphics of the invaders that are delayed at the wall.
-
 == 2017-03-01
 
 - Add some inertia to the tank.
@@ -171,4 +164,5 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 
 == 2018-01-24
 
-- Change the sprite of the invaders that are breaking the wall.
+- Reduce the fields that hold frame counts in the species structure.
+
