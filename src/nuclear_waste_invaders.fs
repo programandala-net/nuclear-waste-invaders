@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.161.1+201801252016" ;
+: version$ ( -- ca len ) s" 0.162.0+201801260120" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -623,7 +623,6 @@ cvariable location          \ counter
  variable score             \ counter
  variable record record off \ max score
 
- cvariable invader# \ current invader's number (0..9)
 0 constant invader~ \ current invader's data structure address
 
 variable catastrophe \ flag (game end condition)
@@ -2503,9 +2502,10 @@ right-flying-invader-2-sprite
                     0 cconstant invaders-min-x
 columns udg/invader - cconstant invaders-max-x
 
-10 cconstant max-invaders
-
+             10 cconstant max-invaders
 max-invaders 2/ cconstant half-max-invaders
+              0 cconstant first-invader#
+max-invaders 1- cconstant last-invader#
 
 0
 
@@ -2519,7 +2519,8 @@ max-invaders 2/ cconstant half-max-invaders
   cfield: ~frame          \ counter
   cfield: ~initial-x      \ column
   field:  ~x-inc          \ -1|1
-  field:  ~initial-x-inc  \  -1|1
+  field:  ~initial-x-inc  \ -1|1
+  field:  ~to-the-left    \ flag
   cfield: ~stamina        \ 0..3
   field:  ~action         \ execution token
   field:  ~species        \ data structure address
@@ -2536,17 +2537,11 @@ create invaders-data /invaders allot
 : invader#>~ ( n -- a ) /invader * invaders-data + ;
   \ Convert invader number _n_ to its data address _a_.
 
-0 constant flying-to-the-left? ( f )
-  \ A configurable constant containing a flag:
-  \ Is the current invader flying to the left?
+first-invader# invader#>~ constant first-invader~
+ last-invader# invader#>~ constant last-invader~
 
-: set-invader ( n -- )
-  dup invader# c! invader#>~ !> invader~
-  invader~ ~x-inc @ 0< !> flying-to-the-left? ;
+: set-invader ( n -- ) invader#>~ !> invader~ ;
   \ Set invader _n_ as the current invader.
-
-: get-invader ( -- n ) invader# c@ ;
-  \ Return number _n_ of the current invader.
 
 max-invaders 2/ 1- cconstant top-invader-layer
   \ The number of the highest invader "layer". The pair
@@ -2598,14 +2593,7 @@ cconstant invader-bottom-y
 : .y/n ( f -- ) if ." Y" else ." N" then space ;
   \ XXX TMP -- for debugging
 
-: ~~invader-info ( -- )
-  home get-invader 2 .r
-  ." Att.:" attacking? .y/n
-  ." Sta.:" invader~ ~stamina c@ . ;
-  \ XXX TMP -- for debugging
-
-  \ ' ~~invader-info ' ~~app-info defer!
-  \ XXX TMP -- for debugging
+1 cconstant min-stamina
 
 3 cconstant max-stamina
 
@@ -2618,7 +2606,7 @@ cconstant invader-bottom-y
 
 : set-flying-invader-sprite ( -- )
   invader~ ~species @ dup
-  flying-to-the-left?
+  invader~ ~to-the-left @
   if   ~flying-left-sprite c@ swap
        ~flying-left-sprite-frames c@
   else ~flying-right-sprite c@ swap
@@ -3358,11 +3346,11 @@ defer break-the-wall ( col1 row1 col2 row2 -- )
 
 : break-container ( -- )
   container-attr attr!
-  flying-to-the-left? if   break-right-container exit
-                      then break-left-container  ;
+  invader~ ~to-the-left @ if   break-right-container exit
+                          then break-left-container  ;
 
 : break-container? ( -- f )
-  invader~ ~x c@ flying-to-the-left?
+  invader~ ~x c@ invader~ ~to-the-left @
   if      containers-right-x c@ = exit
   then 1+ containers-left-x  c@ = ;
   \ Has the current invader broken a container?
@@ -3388,8 +3376,8 @@ here  ' noop ,
   \ increment _-1..1_.
 
 : set-invader-direction ( -1..1 -- )
-  dup 0< !> flying-to-the-left?
   dup invader~ ~x-inc !
+  dup 0< invader~ ~to-the-left !
       set-invader-move-action ;
   \ Set the direction of the current invader after x-coordinate
   \ increment _-1..1_.
@@ -3410,7 +3398,7 @@ defer breaking-invader-action ( -- )
 
 : set-breaking-invader-sprite ( -- )
   invader~ ~species @ dup
-  flying-to-the-left?
+  invader~ ~to-the-left @
   if   ~breaking-left-sprite c@ swap
        ~breaking-left-sprite-frames c@
   else ~breaking-right-sprite c@ swap
@@ -3429,10 +3417,10 @@ defer breaking-invader-action ( -- )
 : invader-front-xy ( -- col row )
   invader~ ~x
   [ udg/invader 2 = ]
-  [if]   c@2+ flying-to-the-left? 3* +
+  [if]   c@2+ invader~ ~to-the-left @ 3* +
   [else] [ udg/invader 1 = ]
-         [if]   c@1+ flying-to-the-left? 2* +
-         [else] c@ udg/invader + flying-to-the-left?
+         [if]   c@1+ invader~ ~to-the-left @ 2* +
+         [else] c@ udg/invader + invader~ ~to-the-left @
                 [ udg/invader 1+ ] cliteral * +
          [then]
   [then] invader~ ~y c@ ;
@@ -3536,13 +3524,13 @@ cvariable cure-factor  20 cure-factor c!
 
 : prepare-wall ( -- col )
   invader~ ~x
-  flying-to-the-left? if   c@1-
-                           ['] break-right-wall
-                      else [ udg/invader 2 = ]
-                           [if]   c@2+
-                           [else] c@ udg/invader + [then]
-                           ['] break-left-wall
-                      then ['] break-the-wall defer! ;
+  invader~ ~to-the-left @ if   c@1-
+                              ['] break-right-wall
+                         else [ udg/invader 2 = ]
+                              [if]   c@2+
+                              [else] c@ udg/invader + [then]
+                              ['] break-left-wall
+                         then ['] break-the-wall defer! ;
   \ Prepare the wall to break: Return the column _col_ of the
   \ wall the current invader has hit, and set the action of
   \ `break-the-wall` accordingly.
@@ -3567,17 +3555,16 @@ cvariable cure-factor  20 cure-factor c!
   \ Action of the invaders that are breaking the wall.
   \ XXX TODO --
 
-: last-invader? ( -- f )
-  get-invader [ max-invaders 1- ] cliteral = ;
+: last-invader? ( -- f ) invader~ last-invader~ = ;
   \ Is the current invader the last one?
 
 : alive? ( -- f ) invader~ ~stamina c@ 0<> ;
   \ Is the current invader alive?
 
-: next-invader ( -- )
-  last-invader? if   0 set-invader exit
-                then get-invader 1+ set-invader ;
-  \ Update the invader to the next one.
+: next-invader ( -- ) last-invader? if   first-invader~
+                                    else invader~ /invader +
+                                    then !> invader~ ;
+  \ Point the current invader to the next one.
 
 1 cconstant invader-interval \ ticks
 
@@ -3850,7 +3837,7 @@ cvariable beam-y       \ row
 cvariable beam-first-y \ row
 cvariable beam-last-y  \ row
 
-cvariable beam-invader
+cvariable beam-invader#
   \ Number of the next invader to be created by the beam.
 
 : set-beam ( row1 row2 xt -- )
@@ -3921,11 +3908,11 @@ cvariable beam-invader
   \ current attribute.
 
 : create-invader ( -- )
-  get-invader
-    beam-invader dup c@ set-invader set-docked-invader-sprite
-                     beam-attr attr! .new-invader
-                 c1+!
-  set-invader ;
+  invader~
+    beam-invader# dup c@ set-invader set-docked-invader-sprite
+                      beam-attr attr! .new-invader
+                  c1+!
+  !> invader~ ;
   \ Display the new invader and update its number.
 
 : (beaming-down? ( -- f )
@@ -3947,14 +3934,14 @@ cvariable beam-invader
   \ If it's finished, display the new invaders and start
   \ shrinking the beam.
 
-: first-new-invader ( -- n )
+: first-new-invader# ( -- n )
   half-max-invaders over-left-invaders? 0= and ;
   \ Return the number of the first invader to create,
   \ depending on the position of the mothership.
 
 : beam-on ( -- )
   set-beaming-mothership-sprite
-  first-new-invader beam-invader c!
+  first-new-invader# beam-invader# c!
   mothership-y 1+ invader-min-y 1+
   ['] beaming-down-mothership-action set-beam ;
   \ Turn the mothership's beam on, i.e. start launching it
@@ -4184,7 +4171,7 @@ variable mothership-explosion-time
   \ The current invader retreats.
 
 : wounded ( -- )
-  invader~ ~stamina c@1- 1 max invader~ ~stamina c! ;
+  invader~ ~stamina c@1- min-stamina max invader~ ~stamina c! ;
   \ Reduce the invader's stamina after being shoot.
 
 : mortal? ( -- f ) invader~ ~stamina c@ 2*
@@ -4208,8 +4195,8 @@ variable mothership-explosion-time
   \ death.
 
 : invader-impacted ( -- )
-  get-invader impacted-invader set-invader (invader-impacted
-  set-invader ;
+  invader~ impacted-invader set-invader (invader-impacted
+  !> invader~ ;
   \ An invader has been impacted by the projectile.
   \ Make it the current one and manage it.
 
@@ -4868,6 +4855,8 @@ need bench{ need }bench.
   \ 2018-01-24
 
 need ticks need timer
+
+0 constant flying-to-the-left? ( f )
 
 : invader-front-coords ( -- col row )
   invader~ ~x
