@@ -165,17 +165,14 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 
 - Reduce the fields that hold frame counts in the species structure.
 
-== 2018-01-25, 2018-01-26
-
-- Limit the flying balls to one, because balls must be exploded
-  manually with a key. Or simply limit it with the delay.
-
 == 2018-01-26
 
-- Increase the score also when the mothership is hit and not destroyed.
 - The layer-0 invaders are hard to explode. Check `mortal?`.
 - Add `~invader-type` to use it in `mortal?`.
 - Rename invader data fields with prefix `~invader-`.
 - Rename species data fields with prefix `~species-`.
 - When a ball hits an invader, color the invader blue and halt it for
   a while.
+- Make the ball sprite different when the ball is touching the wall.
+- Make the wall repairing process automatic: the first breach the ball
+  reaches is repaired. This makes things simpler.

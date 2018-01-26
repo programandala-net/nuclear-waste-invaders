@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.163.0+201801261208" ;
+: version$ ( -- ca len ) s" 0.164.0+201801261249" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2587,9 +2587,13 @@ cconstant invader-bottom-y
   \
   \ XXX REMARK -- Not used.
 
-: invader-retreat-points ( -- n ) invader~ ~y c@ y>layer 1+ ;
+: invader-retreat-bonus ( -- n ) invader~ ~y c@ y>layer 1+ ;
+  \ Bonus points for making the invader retreat.
+  \
+  \ XXX TODO -- Use `~layer`.
 
-: invader-destroy-points ( -- n ) invader-retreat-points 10 * ;
+: invader-destroy-bonus ( -- n ) invader-retreat-bonus 8* ;
+  \ Bonus points for destroying the invader.
 
 : attacking? ( -- f )
   invader~ ~initial-x-inc @ invader~ ~x-inc @ = ;
@@ -3708,10 +3712,14 @@ defer set-exploding-mothership ( -- )
   \ XXX TMP --
   \ XXX TODO -- look for a proper sound
 
+: mothership-retreat-bonus ( -- n ) location c@1+ 8* ;
+  \ Bonus points for making the mothership retreat.
+
 : mothership-impacted ( -- )
   mothership-stamina 1- dup c!> mothership-stamina ?dup
   if   set-mothership-stamina damage-sound
        mothership-turns-back
+       mothership-retreat-bonus update-score
   else set-exploding-mothership then ;
 
 : start-mothership ( -- ) -1|1 set-mothership-direction ;
@@ -4100,14 +4108,15 @@ variable mothership-explosion-time
   mothership-explosion? ?exit destroy-mothership ;
   \ Action of the mothership when it's exploding.
 
-: mothership-bonus ( -- n ) location c@1+ 250 * ;
-  \ Bonus points for impacting the mothership.
+: mothership-destroy-bonus ( -- n )
+  mothership-retreat-bonus location 8* ;
+  \ Bonus points for destroying the mothership.
 
 :noname ( -- )
   set-exploding-mothership-sprite
   .mothership schedule-mothership-explosion
   ['] exploding-mothership-action mothership-action!
-  mothership-bang mothership-bonus update-score
+  mothership-bang mothership-destroy-bonus update-score
   ; ' set-exploding-mothership defer!
   \ The mothership has been impacted. Set it accordingly.
 
@@ -4165,7 +4174,7 @@ variable mothership-explosion-time
   set-exploding-invader-sprite
   at-invader .invader schedule-invader-explosion
   ['] exploding-invader-action invader~ ~action !
-  invader-bang invader-destroy-points update-score ;
+  invader-bang invader-destroy-bonus update-score ;
   \ The current invader has been impacted. Set it accordingly.
 
 ' lightning1-sound alias retreat-sound
@@ -4173,7 +4182,7 @@ variable mothership-explosion-time
   \ XXX TODO -- look for a proper sound
 
 : retreat ( -- )
-  retreat-sound turn-back invader-retreat-points update-score ;
+  retreat-sound turn-back invader-retreat-bonus update-score ;
   \ The current invader retreats.
 
 : wounded ( -- )
