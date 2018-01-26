@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.165.0+201801261616" ;
+: version$ ( -- ca len ) s" 0.166.0-dev.0+201801262029" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3175,6 +3175,7 @@ constant tank-movements ( -- a )
   cfield: ~projectile-altitude  \ row (*)
   cfield: ~projectile-delay     \ counter
   cfield: ~projectile-max-delay \ bitmask (*)
+   field: ~projectile-action    \ xt
 cconstant /projectile
   \ Data structure of a projectile.
   \
@@ -4383,6 +4384,7 @@ cvariable gun-type
   cfield: ~gun-tank-sprite          \ UDG
   cfield: ~gun-trigger-interval     \ ticks
   cfield: ~gun-projectile-max-delay \ bitmask
+   field: ~gun-projectile-action    \ xt
 cconstant /gun
   \ Data structure of an arm projectile.
 
@@ -4495,37 +4497,60 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   \ XXX TODO -- Move `hit-something?` here to simplify the
   \ logic.
 
+' move-projectile  bullet-gun~ ~gun-projectile-action !
+' move-projectile missile-gun~ ~gun-projectile-action !
+
+: move-left-wall-ball-projectile ( -- )
+  projectile-delay ?exit
+  -projectile projectile-lost? if destroy-projectile exit then
+  projectile~ ~projectile-y c1-!
+  impacted? ?exit .projectile ;
+  \ XXX TODO --
+
+: move-right-wall-ball-projectile ( -- )
+  projectile-delay ?exit
+  -projectile projectile-lost? if destroy-projectile exit then
+  projectile~ ~projectile-y c1-!
+  impacted? ?exit .projectile ;
+  \ XXX TODO --
+
 : schedule-trigger ( -- )
   ticks gun~ ~gun-trigger-interval c@ + trigger-time ! ;
 
-: get-projectile-sprite ( -- )
+: get-projectile-sprite&action ( -- )
   gun~ ~gun-projectile-sprite c@
   projectile~ ~projectile-sprite c!
   gun~ ~gun-projectile-frames c@
-  projectile~ ~projectile-frames c! ;
-  \ Get the sprite of the new current projectile.
+  projectile~ ~projectile-frames c!
+  ['] move-projectile projectile~ ~projectile-action ! ;
+  \ Get the sprite and action of the new current projectile.
 
-: get-ball-projectile-sprite ( -- )
+: get-ball-sprite&action ( -- )
   gun-x case
     building-left-x c@ 1- of
       left-wall-ball-sprite projectile~ ~projectile-sprite c!
       left-wall-ball-frames projectile~ ~projectile-frames c!
+      ['] move-left-wall-ball-projectile
+      projectile~ ~projectile-action !
     endof
     building-right-x c@ 1+ of
       right-wall-ball-sprite projectile~ ~projectile-sprite c!
       right-wall-ball-frames projectile~ ~projectile-frames c!
+      ['] move-right-wall-ball-projectile
+      projectile~ ~projectile-action !
     endof
-    get-projectile-sprite
+    get-projectile-sprite&action
   endcase ;
-  \ Get the proper sprite for the new current ball projectile.
-  \ The sprite is different when the gun is near a wall.
+  \ Get the proper sprite and action for the new current ball
+  \ projectile.  The sprite and action depend on the position
+  \ of the gun and the wall.
 
 : get-projectile ( -- )
   x> !> projectile~
   gun-x projectile~ ~projectile-x c!
   [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
-  gun~ ball-gun~ = if   get-ball-projectile-sprite
-                   else get-projectile-sprite then
+  gun~ ball-gun~ = if   get-ball-sprite&action
+                   else get-projectile-sprite&action then
   gun~ ~gun-projectile-attr c@
   projectile~ ~projectile-attr c!
   gun~ ~gun-projectile-max-delay c@
@@ -4533,9 +4558,9 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   gun~ ~gun-projectile-altitude c@
   projectile~ ~projectile-altitude c! ;
   \ Get a new projectile and set its data according to the
-  \ current value of `arm~`.  For the sake of run-time speed,
+  \ current value of `gun~`.  For the sake of run-time speed,
   \ some fields are copied from the structure pointed by
-  \ `arm~`.
+  \ `gun~`.
 
 : launch-projectile ( -- )
   .projectile projectile~ start-flying fire-sound ;
@@ -4562,7 +4587,8 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 
 : manage-projectiles ( -- )
   flying-projectiles? 0exit
-  move-projectile next-flying-projectile ;
+  projectile~ ~projectile-action perform
+  next-flying-projectile ;
   \ Manage a flying projectile, if any.
 
 : lose-projectiles ( -- )

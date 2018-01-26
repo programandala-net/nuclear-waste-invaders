@@ -178,3 +178,4 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Fix: projectiles can hit other slower projectiles. For example,
   missiles and bullets can reach balls. This case is not supported
   yet, and causes the nearest invader explode.
+- Improve the sprites of the wall balls.
