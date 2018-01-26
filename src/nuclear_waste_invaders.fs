@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.164.0+201801261249" ;
+: version$ ( -- ca len ) s" 0.165.0+201801261616" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -714,7 +714,7 @@ current-controls c@ set-controls
   \ ===========================================================
   cr .( UDG) ?depth debug-point \ {{{1
 
-               221 cconstant last-udg \ last UDG code used
+               229 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
 create udg-set /udg-set allot  udg-set set-udg
@@ -782,22 +782,22 @@ missiles-label-x /missiles-label + cconstant missiles-x
   text-attr attr! ammo-x status-bar-y at-xy type ;
   \ Display the current ammo left at the status bar.
 
-0 cconstant  bullet-gun-id
-1 cconstant missile-gun-id
-2 cconstant    ball-gun-id
+0 cconstant  bullet-gun#
+1 cconstant missile-gun#
+2 cconstant    ball-gun#
 
 defer set-gun ( n -- )
   \ Set the current arm (0=gun machine; 1=missile gun).
 
-: .bullets ( -- ) bullet-gun-id set-gun .ammo ;
+: .bullets ( -- ) bullet-gun# set-gun .ammo ;
   \ Display the number of bullets left.
 
-: .missiles ( -- ) missile-gun-id set-gun .ammo ;
+: .missiles ( -- ) missile-gun# set-gun .ammo ;
   \ Display the number of bullets left.
   \
   \ XXX TODO --
 
-: .balls ( -- ) ball-gun-id set-gun .ammo ;
+: .balls ( -- ) ball-gun# set-gun .ammo ;
   \ Display the number of balls left.
   \
   \ XXX TODO --
@@ -1835,200 +1835,200 @@ X.....X........X
   \ -----------------------------------------------------------
   \ Projectiles
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..X.....
-  .....X..
-  ..X.....
-  .....X..
-  ..X.....
-  .....X..
-  ..X.....
-  .....X.. sprite-id bullet-sprite
+..X.....
+.....X..
+..X.....
+.....X..
+..X.....
+.....X..
+..X.....
+.....X.. sprite-id bullet-sprite
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  .....X..
-  ..X.....
-  .....X..
-  ..X.....
-  .....X..
-  ..X.....
-  .....X..
-  ..X..... drop
+.....X..
+..X.....
+.....X..
+..X.....
+.....X..
+..X.....
+.....X..
+..X..... drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..X.....
-  ..X..X..
-  .....X..
-  ..X.....
-  ..X..X..
-  .....X..
-  ..X.....
-  ..X..X.. drop
+..X.....
+..X..X..
+.....X..
+..X.....
+..X..X..
+.....X..
+..X.....
+..X..X.. drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  .....X..
-  ..X..X..
-  ..X.....
-  .....X..
-  ..X..X..
-  ..X.....
-  .....X..
-  ..X..X.. drop
+.....X..
+..X..X..
+..X.....
+.....X..
+..X..X..
+..X.....
+.....X..
+..X..X.. drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..X.....
-  ........
-  ..X..X..
-  ........
-  .....X..
-  ..X.....
-  ........
-  ..X..X.. drop
+..X.....
+........
+..X..X..
+........
+.....X..
+..X.....
+........
+..X..X.. drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  .....X..
-  ........
-  ..X..X..
-  ........
-  ..X.....
-  .....X..
-  ........
-  ..X..X.. drop
+.....X..
+........
+..X..X..
+........
+..X.....
+.....X..
+........
+..X..X.. drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..X..X..
-  .....X..
-  ..X.....
-  ........
-  ..X..X..
-  .....X..
-  ..X.....
-  ........ drop
+..X..X..
+.....X..
+..X.....
+........
+..X..X..
+.....X..
+..X.....
+........ drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..X..X..
-  ..X.....
-  .....X..
-  ........
-  ..X..X..
-  ..X.....
-  .....X..
-  ........ drop
+..X..X..
+..X.....
+.....X..
+........
+..X..X..
+..X.....
+.....X..
+........ drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..X.....
-  ..X..X..
-  ........
-  ..X..X..
-  ..X.....
-  .....X..
-  ..X.....
-  ..X..X.. drop
+..X.....
+..X..X..
+........
+..X..X..
+..X.....
+.....X..
+..X.....
+..X..X.. drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  .....X..
-  ..X..X..
-  ........
-  ..X..X..
-  .....X..
-  ..X.....
-  .....X..
-  ..X..X.. drop
+.....X..
+..X..X..
+........
+..X..X..
+.....X..
+..X.....
+.....X..
+..X..X.. drop
 
-  bullet-sprite [udg] [if]   >udg c@ swap -
-                      [else] here swap /udg /
-                      [then] cconstant bullet-frames
+bullet-sprite [udg] [if]   >udg c@ swap -
+                    [else] here swap /udg /
+                    [then] cconstant bullet-frames
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ...XX...
-  ...XX...
-  ...XX...
-  ..XXXX..
-  ..XXXX..
-  ..XXXX..
-  ...X.X..
-  ..X.X... sprite-id missile-sprite
+...XX...
+...XX...
+...XX...
+..XXXX..
+..XXXX..
+..XXXX..
+...X.X..
+..X.X... sprite-id missile-sprite
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ...XX...
-  ...XX...
-  ...XX...
-  ..XXXX..
-  ..XXXX..
-  ..XXXX..
-  ..X.X...
-  ...X.X.. drop
+...XX...
+...XX...
+...XX...
+..XXXX..
+..XXXX..
+..XXXX..
+..X.X...
+...X.X.. drop
 
-  missile-sprite [udg] [if]   >udg c@ swap -
-                       [else] here swap /udg /
-                       [then] cconstant missile-frames
+missile-sprite [udg] [if]   >udg c@ swap -
+                     [else] here swap /udg /
+                     [then] cconstant missile-frames
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..XXXX..
-  .XXXXXX.
-  XXXXX.XX
-  XXXXXX.X
-  XXXXXXXX
-  XXXXXXXX
-  .XXXXXX.
-  ..XXXX.. sprite-id ball-sprite
+..XXXX..
+.XXXXXX.
+XXXXX.XX
+XXXXXX.X
+XXXXXXXX
+XXXXXXXX
+.XXXXXX.
+..XXXX.. sprite-id ball-sprite
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..XXXX..
-  .XXXXXX.
-  XXXXXXXX
-  XXXXXXXX
-  XXXXXX.X
-  XXXXX.XX
-  .XXXXXX.
-  ..XXXX.. drop
+..XXXX..
+.XXXXXX.
+XXXXXXXX
+XXXXXXXX
+XXXXXX.X
+XXXXX.XX
+.XXXXXX.
+..XXXX.. drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..XXXX..
-  .XXXXXX.
-  XXXXXXXX
-  XXXXXXXX
-  XXXXXXXX
-  XXX..XXX
-  .XXXXXX.
-  ..XXXX.. drop
+..XXXX..
+.XXXXXX.
+XXXXXXXX
+XXXXXXXX
+XXXXXXXX
+XXX..XXX
+.XXXXXX.
+..XXXX.. drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..XXXX..
-  .XXXXXX.
-  XXXXXXXX
-  X.XXXXXX
-  XX.XXXXX
-  XXXXXXXX
-  .XXXXXX.
-  ..XXXX.. drop
+..XXXX..
+.XXXXXX.
+XXXXXXXX
+X.XXXXXX
+XX.XXXXX
+XXXXXXXX
+.XXXXXX.
+..XXXX.. drop
 
-  1 1 udg-sprite
+1 1 udg-sprite
 
-  ..XXXX..
-  .XX.XXX.
-  XX.XXXXX
-  XXXXXXXX
-  XXXXXXXX
-  XXXXXXXX
-  .XXXXXX.
-  ..XXXX.. drop
+..XXXX..
+.XX.XXX.
+XX.XXXXX
+XXXXXXXX
+XXXXXXXX
+XXXXXXXX
+.XXXXXX.
+..XXXX.. drop
 
 0 [if] \ XXX OLD
 
@@ -2078,9 +2078,129 @@ X.....X........X
 
 [then]
 
-  ball-sprite [udg] [if]   >udg c@ swap -
-                    [else] here swap /udg /
-                    [then] cconstant ball-frames
+ball-sprite [udg] [if]   >udg c@ swap -
+                  [else] here swap /udg /
+                  [then] cconstant ball-frames
+
+1 1 udg-sprite
+
+XXXX.....
+XXXXX....
+XXX.XX...
+XXXX.X...
+XXXXXX...
+XXXXXX...
+XXXXX....
+XXXX..... sprite-id right-wall-ball-sprite
+
+1 1 udg-sprite
+
+XXXX.....
+XXXXX....
+XXXXXX...
+XXXXXX...
+XXXX.X...
+XXX.XX...
+XXXXX....
+XXXX..... drop
+
+1 1 udg-sprite
+
+XXXX.....
+XXXXX....
+XXXXXX...
+XXXXXX...
+XXXXXX...
+X..XXX...
+XXXXX....
+XXXX..... drop
+
+1 1 udg-sprite
+
+XXXX.....
+XXXXX....
+XXXXXX...
+XXXXXX...
+.XXXXX...
+XXXXXX...
+XXXXX....
+XXXX..... drop
+
+1 1 udg-sprite
+
+XXXX.....
+X.XXX....
+.XXXXX...
+XXXXXX...
+XXXXXX...
+XXXXXX...
+XXXXX....
+XXXX..... drop
+
+right-wall-ball-sprite
+[udg] [if]   >udg c@ swap -
+      [else] here swap /udg /
+      [then] cconstant right-wall-ball-frames
+
+1 1 udg-sprite
+
+....XXXX
+...XXXXX
+..XXXXX.
+..XXXXXX
+..XXXXXX
+..XXXXXX
+...XXXXX
+....XXXX sprite-id left-wall-ball-sprite
+
+1 1 udg-sprite
+
+....XXXX
+...XXXXX
+..XXXXXX
+..XXXXXX
+..XXXXXX
+..XXXXX.
+...XXXXX
+....XXXX drop
+
+1 1 udg-sprite
+
+....XXXX
+...XXXXX
+..XXXXXX
+..XXXXXX
+..XXXXXX
+..XXX..X
+...XXXXX
+....XXXX drop
+
+1 1 udg-sprite
+
+....XXXX
+...XXXXX
+..XXXXXX
+..X.XXXX
+..XX.XXX
+..XXXXXX
+...XXXXX
+....XXXX drop
+
+1 1 udg-sprite
+
+....XXXX
+...XX.XX
+..XX.XXX
+..XXXXXX
+..XXXXXX
+..XXXXXX
+...XXXXX
+....XXXX drop
+
+left-wall-ball-sprite
+[udg] [if]   >udg c@ swap -
+      [else] here swap /udg /
+      [then] cconstant left-wall-ball-frames
 
   \ -----------------------------------------------------------
   \ Building
@@ -2990,7 +3110,7 @@ columns udg/tank - 1- cconstant tank-max-x
 [then]
 
 : new-tank ( -- )
-  repair-tank bullet-gun-id set-gun park-tank .tank ;
+  repair-tank bullet-gun# set-gun park-tank .tank ;
 
 : <tank ( -- ) tank-x c1-! (.tank -tank-extreme drop ;
   \ Move the tank to the left.
@@ -3076,7 +3196,7 @@ create projectiles /projectiles allot
 cvariable #flying-projectiles
   \ Counter: number of currently flying projectiles.
 
-cvariable #flying-projectile
+cvariable flying-projectile#
   \ Index of the currently managed flying projectile in the
   \ array of flying projectiles.
 
@@ -3105,7 +3225,7 @@ create flying-projectiles /flying-projectiles allot
   \ Remove projectile _n_ from the array of flying projectiles
   \ and update the count of currently flying projectiles.
 
-: destroy-projectile ( -- ) #flying-projectile c@ stop-flying ;
+: destroy-projectile ( -- ) flying-projectile# c@ stop-flying ;
 
 : recharge ( n1 n2 -- ) do i projectile#>~ >x loop ;
   \ Recharge projectiles from _n2_ to _n1-1_.
@@ -3125,7 +3245,7 @@ create flying-projectiles /flying-projectiles allot
   recharge-bullets recharge-missiles recharge-balls ;
 
 : prepare-projectiles ( -- ) #flying-projectiles coff
-                             #flying-projectile coff
+                             flying-projectile# coff
                              projectiles /projectiles erase ;
 
 : new-projectiles ( -- ) prepare-projectiles
@@ -4270,16 +4390,16 @@ cconstant /gun
 
 create guns /guns allot
 
-: gun-type>~ ( n -- a ) /gun * guns + ;
-  \ Convert arm number _n_ to its data address _a_.
+: gun#>~ ( n -- a ) /gun * guns + ;
+  \ Convert gun number _n_ to its data address _a_.
 
- bullet-gun-id gun-type>~ constant bullet-gun~
-missile-gun-id gun-type>~ constant missile-gun~
-   ball-gun-id gun-type>~ constant ball-gun~
+ bullet-gun# gun#>~ constant bullet-gun~
+missile-gun# gun#>~ constant missile-gun~
+   ball-gun# gun#>~ constant ball-gun~
 
 :noname ( n -- )
   dup gun-type c!
-      gun-type>~ dup !> gun~
+      gun#>~ dup !> gun~
              dup ~gun-tank-sprite c@ c!> tank-sprite
              dup ~gun-projectile-stack @ xstack
                  ~gun-projectile-x c@ c!> ammo-x
@@ -4378,14 +4498,34 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 : schedule-trigger ( -- )
   ticks gun~ ~gun-trigger-interval c@ + trigger-time ! ;
 
+: get-projectile-sprite ( -- )
+  gun~ ~gun-projectile-sprite c@
+  projectile~ ~projectile-sprite c!
+  gun~ ~gun-projectile-frames c@
+  projectile~ ~projectile-frames c! ;
+  \ Get the sprite of the new current projectile.
+
+: get-ball-projectile-sprite ( -- )
+  gun-x case
+    building-left-x c@ 1- of
+      left-wall-ball-sprite projectile~ ~projectile-sprite c!
+      left-wall-ball-frames projectile~ ~projectile-frames c!
+    endof
+    building-right-x c@ 1+ of
+      right-wall-ball-sprite projectile~ ~projectile-sprite c!
+      right-wall-ball-frames projectile~ ~projectile-frames c!
+    endof
+    get-projectile-sprite
+  endcase ;
+  \ Get the proper sprite for the new current ball projectile.
+  \ The sprite is different when the gun is near a wall.
+
 : get-projectile ( -- )
   x> !> projectile~
   gun-x projectile~ ~projectile-x c!
   [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
-  gun~ ~gun-projectile-sprite c@
-  projectile~ ~projectile-sprite c!
-  gun~ ~gun-projectile-frames c@
-  projectile~ ~projectile-frames c!
+  gun~ ball-gun~ = if   get-ball-projectile-sprite
+                   else get-projectile-sprite then
   gun~ ~gun-projectile-attr c@
   projectile~ ~projectile-attr c!
   gun~ ~gun-projectile-max-delay c@
@@ -4414,8 +4554,8 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   \ Is the trigger pressed?
 
 : next-flying-projectile ( -- )
-  #flying-projectile c@1+ dup #flying-projectiles c@ < and
-  dup #flying-projectile c!
+  flying-projectile# c@1+ dup #flying-projectiles c@ < and
+  dup flying-projectile# c!
       flying-projectiles array> @ !> projectile~ ;
   \ Point to the next flying projectile and make it the current
   \ one.

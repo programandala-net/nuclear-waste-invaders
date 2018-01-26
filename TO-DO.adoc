@@ -173,6 +173,8 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Rename species data fields with prefix `~species-`.
 - When a ball hits an invader, color the invader blue and halt it for
   a while.
-- Make the ball sprite different when the ball is touching the wall.
 - Make the wall repairing process automatic: the first breach the ball
   reaches is repaired. This makes things simpler.
+- Fix: projectiles can hit other slower projectiles. For example,
+  missiles and bullets can reach balls. This case is not supported
+  yet, and causes the nearest invader explode.
