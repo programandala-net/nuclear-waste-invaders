@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.162.0+201801260120" ;
+: version$ ( -- ca len ) s" 0.163.0+201801261208" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -148,6 +148,7 @@ need black need blue   need red   need magenta need green
 need cyan  need yellow need white
 
 need papery need brighty need xy>attr need xy>attra
+need bright-mask
 
   \ --------------------------------------------
   cr .(   -Keyboard) ?depth \ {{{2
@@ -590,8 +591,9 @@ localized-string press-any-key$ ( -- ca len )
   \ ===========================================================
   cr .( Colors) ?depth debug-point \ {{{1
 
-  \ Note: `projectile-attr` must be different to all attributes
-  \ used by the invaders.
+  \ Note: The attributes of the projectiles must be bright; the
+  \ attributes used by the invaders, the walls and the
+  \ containers must not be bright.
 
                          black cconstant sky-attr
 
@@ -600,7 +602,10 @@ localized-string press-any-key$ ( -- ca len )
                            red cconstant dying-invader-attr
 
                          white cconstant tank-attr
-                   red brighty cconstant projectile-attr
+
+                   red brighty cconstant bullet-attr
+                 white brighty cconstant missile-attr
+                  blue brighty cconstant ball-attr
 
                   white papery cconstant unfocus-attr
   white papery brighty white + cconstant hide-report-attr
@@ -610,7 +615,7 @@ localized-string press-any-key$ ( -- ca len )
             white papery red + cconstant brick-attr
                          white cconstant door-attr
                            red cconstant broken-wall-attr
-                yellow brighty cconstant container-attr
+                        yellow cconstant container-attr
                 yellow brighty cconstant radiation-attr
 
 : init-colors ( -- ) [ white black papery + ] cliteral attr!
@@ -3042,6 +3047,7 @@ constant tank-movements ( -- a )
   cfield: ~projectile-x         \ column
   cfield: ~projectile-sprite    \ UDG (*)
   cfield: ~projectile-frames    \ count (*)
+  cfield: ~projectile-attr      \ attribute (*)
   cfield: ~projectile-altitude  \ row (*)
   cfield: ~projectile-delay     \ counter
   cfield: ~projectile-max-delay \ bitmask (*)
@@ -3049,7 +3055,7 @@ cconstant /projectile
   \ Data structure of a projectile.
   \
   \ (*) = Constant value copied by `get-projectile` from the
-  \       structure pointed by `arm~`.
+  \       structure pointed by `gun~`.
 
 
 #projectiles /projectile * constant /projectiles
@@ -3439,8 +3445,8 @@ defer breaking-invader-action ( -- )
                 set-flying-invader-sprite ;
   \ Undock the current invader.
 
-: is-there-a-projectile? ( col row -- f )
-  xy>attr projectile-attr = ;
+: is-there-a-projectile? ( col row -- 0f )
+  xy>attr bright-mask and ;
 
 : .sky ( -- ) sky-attr attr! space ;
   \ Display a sky-color space.
@@ -4242,6 +4248,7 @@ cvariable gun-type
    field: ~gun-projectile-stack     \ address
   cfield: ~gun-projectile-sprite    \ UDG
   cfield: ~gun-projectile-frames    \ count
+  cfield: ~gun-projectile-attr      \ attribute
   cfield: ~gun-projectile-altitude  \ row
   cfield: ~gun-projectile-x         \ column
   cfield: ~gun-tank-sprite          \ UDG
@@ -4285,6 +4292,10 @@ bullet-frames   bullet-gun~ ~gun-projectile-frames c!
 missile-frames missile-gun~ ~gun-projectile-frames c!
 ball-frames       ball-gun~ ~gun-projectile-frames c!
 
+bullet-attr   bullet-gun~ ~gun-projectile-attr c!
+missile-attr missile-gun~ ~gun-projectile-attr c!
+ball-attr       ball-gun~ ~gun-projectile-attr c!
+
 invader-max-y    bullet-gun~ ~gun-projectile-altitude c!
 mothership-y 1+ missile-gun~ ~gun-projectile-altitude c!
 building-top-y 1+  ball-gun~ ~gun-projectile-altitude c!
@@ -4317,16 +4328,20 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   projectile~ ~projectile-frames c@ random + ;
   \ Return the UDG _c_ of a random frame of the projectile.
 
-: .projectile ( -- )
-  projectile-attr attr! at-projectile projectile .1x1sprite ;
+: .projectile ( -- ) projectile~ ~projectile-attr c@ attr!
+                     at-projectile projectile .1x1sprite ;
   \ Display the projectile.
 
 ' whip-sound alias fire-sound ( -- )
 
-: -projectile ( -- )
-  projectile-coords xy>attr projectile-attr <> ?exit
-  at-projectile .sky ;
+: -projectile ( -- ) projectile-coords xy>attr
+                     projectile~ ~projectile-attr c@ <> ?exit
+                     at-projectile .sky ;
   \ Delete the projectile.
+  \
+  \ XXX REMARK -- Checking the attribute  prevents the
+  \ projectile from erasing part of an invader in some cases,
+  \ but the solution should be in the movement.
 
 : projectile-lost? ( -- f )
   projectile~ ~projectile-y c@
@@ -4362,6 +4377,8 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   projectile~ ~projectile-sprite c!
   gun~ ~gun-projectile-frames c@
   projectile~ ~projectile-frames c!
+  gun~ ~gun-projectile-attr c@
+  projectile~ ~projectile-attr c!
   gun~ ~gun-projectile-max-delay c@
   projectile~ ~projectile-max-delay c!
   gun~ ~gun-projectile-altitude c@
