@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.166.2+201801271802" ;
+: version$ ( -- ca len ) s" 0.167.0+201801271842" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3154,15 +3154,16 @@ constant tank-movements ( -- a )
   \ Create an extra stack to store the unused balls.
 
 0
-  cfield: ~projectile-y         \ row
-  cfield: ~projectile-x         \ column
-  cfield: ~projectile-sprite    \ UDG (*)
-  cfield: ~projectile-frames    \ count (*)
-  cfield: ~projectile-attr      \ attribute (*)
-  cfield: ~projectile-altitude  \ row (*)
-  cfield: ~projectile-delay     \ counter
-  cfield: ~projectile-max-delay \ bitmask (*)
-   field: ~projectile-action    \ xt
+  cfield: ~projectile-y            \ row
+  cfield: ~projectile-x            \ column
+  cfield: ~projectile-sprite       \ UDG (*)
+  cfield: ~projectile-frames       \ count (*)
+  cfield: ~projectile-attr         \ attribute (*)
+  cfield: ~projectile-altitude     \ row (*)
+  cfield: ~projectile-delay        \ counter
+  cfield: ~projectile-max-delay    \ bitmask (*)
+   field: ~projectile-action       \ xt
+  cfield: ~projectile-harmlessness \ level (0..x)
 cconstant /projectile
   \ Data structure of a projectile.
   \
@@ -4306,7 +4307,9 @@ variable mothership-explosion-time
   \ Reduce the invader's stamina after being shoot.
 
 : mortal? ( -- f ) invader~ ~stamina c@ 2*
-                   invader~ ~layer   c@    + random 0= ;
+                   invader~ ~layer c@ +
+                   projectile~ ~projectile-harmlessness c@ +
+                   random 0= ;
   \ Is it a mortal impact?  The random calculation depends on
   \ the stamina and the altitude: The more stamina and the more
   \ altitude, the less chances to be a mortal impact.
@@ -4370,16 +4373,17 @@ cvariable gun-type
   \ Data address of the current arm identified by `gun-type`.
 
 0
-   field: ~gun-projectile-stack     \ address
-  cfield: ~gun-projectile-sprite    \ UDG
-  cfield: ~gun-projectile-frames    \ count
-  cfield: ~gun-projectile-attr      \ attribute
-  cfield: ~gun-projectile-altitude  \ row
-  cfield: ~gun-projectile-x         \ column
-  cfield: ~gun-tank-sprite          \ UDG
-  cfield: ~gun-trigger-interval     \ ticks
-  cfield: ~gun-projectile-max-delay \ bitmask
-   field: ~gun-projectile-action    \ xt
+   field: ~gun-projectile-stack        \ address
+  cfield: ~gun-projectile-sprite       \ UDG
+  cfield: ~gun-projectile-frames       \ count
+  cfield: ~gun-projectile-attr         \ attribute
+  cfield: ~gun-projectile-altitude     \ row
+  cfield: ~gun-projectile-x            \ column
+  cfield: ~gun-tank-sprite             \ UDG
+  cfield: ~gun-trigger-interval        \ ticks
+  cfield: ~gun-projectile-max-delay    \ bitmask
+   field: ~gun-projectile-action       \ xt
+  cfield: ~gun-projectile-harmlessness \ level (0..x)
 cconstant /gun
   \ Data structure of an arm projectile.
 
@@ -4441,6 +4445,10 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 %00001  bullet-gun~ ~gun-projectile-max-delay c!
 %00111 missile-gun~ ~gun-projectile-max-delay c!
 %11111    ball-gun~ ~gun-projectile-max-delay c!
+
+1  bullet-gun~ ~gun-projectile-harmlessness c!
+0 missile-gun~ ~gun-projectile-harmlessness c!
+3    ball-gun~ ~gun-projectile-harmlessness c!
 
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
@@ -4578,7 +4586,9 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   gun~ ~gun-projectile-max-delay c@
   projectile~ ~projectile-max-delay c!
   gun~ ~gun-projectile-altitude c@
-  projectile~ ~projectile-altitude c! ;
+  projectile~ ~projectile-altitude c!
+  gun~ ~gun-projectile-harmlessness c@
+  projectile~ ~projectile-harmlessness c! ;
   \ Get a new projectile and set its data according to the
   \ current value of `gun~`.  For the sake of run-time speed,
   \ some fields are copied from the structure pointed by
@@ -4950,8 +4960,8 @@ localized-string about-next-location$ ( -- ca len )
 : tr ( -- ) tank> h ; \ move tank right
 
 : mm ( -- ) manage-mothership ;
-: im ( -- ) invisible-mothership-action ;
-: vm ( -- ) visible-mothership-action ;
+: ima ( -- ) invisible-mothership-action ;
+: vma ( -- ) visible-mothership-action ;
 : am ( -- ) advance-mothership ;
 : vm? ( -- f ) visible-mothership? ;
 : .m ( -- ) .mothership ;
