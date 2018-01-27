@@ -178,5 +178,3 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
   left, a ball.
 - Simplify the counting of breaches and its usage in the ending
   condition: Just finish when there's no breach.
-- Replace literals with constants in `set-species`: calculate the
-  constants during the creation of sprites.

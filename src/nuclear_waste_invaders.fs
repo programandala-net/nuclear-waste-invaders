@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.167.0+201801271842" ;
+: version$ ( -- ca len ) s" 0.168.0+201801271926" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -864,6 +864,9 @@ cvariable latest-sprite-udg
 2 cconstant udg/invader
 2 cconstant udg/mothership
 
+4 cconstant undocked-invader-sprite-frames
+3 cconstant   docked-invader-sprite-frames
+
 [udg] [if]
 
 0 0 0 0 0 0 0 0 1 free-udg dup cconstant bl-udg udg!
@@ -884,7 +887,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, left flying, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -897,7 +900,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, left flying, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -910,7 +913,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, left flying, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -923,7 +926,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, left flying, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -936,7 +939,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, right flying, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -949,7 +952,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, right flying, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -962,7 +965,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, right flying, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -975,7 +978,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, right flying, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -988,7 +991,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, docked, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1001,7 +1004,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, docked, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1014,7 +1017,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, docked, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1027,7 +1030,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, left breaking, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1040,7 +1043,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, left breaking, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....XXXX.......
 ..XXXXXXXXXX....
@@ -1053,7 +1056,7 @@ rom-font bl /udg * constant bl-udg
 
   \ invader species 0, left breaking, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ....XXXX........
 .XXXXXXXXXX.....
@@ -1066,7 +1069,7 @@ XXXXXXXXXXXX....
 
   \ invader species 0, left breaking, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....XXXX.......
 ..XXXXXXXXXX....
@@ -1079,7 +1082,7 @@ XXXXXXXXXXXX....
 
   \ invader species 0, right breaking, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1092,7 +1095,7 @@ XXXXXXXXXXXX....
 
   \ invader species 0, right breaking, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XXXX.....
 ....XXXXXXXXXX..
@@ -1105,7 +1108,7 @@ XXXXXXXXXXXX....
 
   \ invader species 0, right breaking, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ........XXXX....
 .....XXXXXXXXXX.
@@ -1118,7 +1121,7 @@ XXXXXXXXXXXX....
 
   \ invader species 0, right breaking, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XXXX.....
 ....XXXXXXXXXX..
@@ -1134,7 +1137,7 @@ XXXXXXXXXXXX....
 
   \ invader species 1, left flying, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......X...X.....
 .....X...X......
@@ -1147,7 +1150,7 @@ XXXXXXXXXXXX....
 
   \ invader species 1, left flying, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......X...X.....
 .....X...X......
@@ -1160,7 +1163,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, left flying, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......X...X.....
 ..X..X...X..X...
@@ -1173,7 +1176,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, left flying, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......X...X.....
 .....X...X......
@@ -1186,7 +1189,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, right flying, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....X...X......
 ......X...X.....
@@ -1199,7 +1202,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, right flying, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....X...X......
 ......X...X.....
@@ -1212,7 +1215,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, right flying, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....X...X......
 ...X..X...X..X..
@@ -1225,7 +1228,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, right flying, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....X...X......
 ......X...X.....
@@ -1238,7 +1241,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, docked, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ....X.....X.....
 .....X...X......
@@ -1251,7 +1254,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, docked, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ....X.....X.....
 .....X...X......
@@ -1264,7 +1267,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, docked, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ....X.....X.....
 .....X...X......
@@ -1277,7 +1280,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, left breaking, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....X...X......
 .....X...X......
@@ -1290,7 +1293,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, left breaking, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....X...X......
 ....X...X.......
@@ -1303,7 +1306,7 @@ XXXX.XXX.XXXXXX.
 
   \ invader species 1, left breaking, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ....X...X.......
 ...X...X..X.....
@@ -1316,7 +1319,7 @@ XXXXXXXXXX......
 
   \ invader species 1, left breaking, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....X...X......
 ....X...X.......
@@ -1329,7 +1332,7 @@ XXXXXXXXXX......
 
   \ invader species 1, right breaking, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......X...X.....
 ......X...X.....
@@ -1342,7 +1345,7 @@ XXXXXXXXXX......
 
   \ invader species 1, right breaking, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......X...X.....
 .......X...X....
@@ -1355,7 +1358,7 @@ XXXXXXXXXX......
 
   \ invader species 1, right breaking, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......X...X....
 .....X..X...X...
@@ -1368,7 +1371,7 @@ XXXXXXXXXX......
 
   \ invader species 1, right breaking, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ......X...X.....
 .......X...X....
@@ -1384,7 +1387,7 @@ XXXXXXXXXX......
 
   \ invader species 2, left flying, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1397,7 +1400,7 @@ XXXXXXXXXX......
 
   \ invader species 2, left flying, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1410,7 +1413,7 @@ XXXXXXXXXX......
 
   \ invader species 2, left flying, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1423,7 +1426,7 @@ XXXXXXXXXX......
 
   \ invader species 2, left flying, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1436,7 +1439,7 @@ XXXXXXXXXX......
 
   \ invader species 2, right flying, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1449,7 +1452,7 @@ XXXXXXXXXX......
 
   \ invader species 2, right flying, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1462,7 +1465,7 @@ XXXXXXXXXX......
 
   \ invader species 2, right flying, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1475,7 +1478,7 @@ XXXXXXXXXX......
 
   \ invader species 2, right flying, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1488,7 +1491,7 @@ XXXXXXXXXX......
 
   \ invader species 2, docked, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1501,7 +1504,7 @@ XXXXXXXXXX......
 
   \ invader species 2, docked, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1514,7 +1517,7 @@ XXXXXXXXXX......
 
   \ invader species 2, docked, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .......XX.......
 ......XXXX......
@@ -1527,7 +1530,7 @@ XXXXXXXXXX......
 
   \ invader species 2, left breaking, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .....XX.........
 ....XXXX........
@@ -1540,7 +1543,7 @@ XXXXXXXXXX......
 
   \ invader species 2, left breaking, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ....XX..........
 ...XXXX.........
@@ -1553,7 +1556,7 @@ XXXXXXXXXX......
 
   \ invader species 2, left breaking, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ...XX...........
 ..XXXX..........
@@ -1566,7 +1569,7 @@ XXXXXXXX........
 
   \ invader species 2, left breaking, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ....XX..........
 ...XXXX.........
@@ -1579,7 +1582,7 @@ XXXXXXXX........
 
   \ invader species 2, right breaking, frame 0:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 .........XX.....
 ........XXXX....
@@ -1592,7 +1595,7 @@ XXXXXXXX........
 
   \ invader species 2, right breaking, frame 1:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ..........XX....
 .........XXXX...
@@ -1605,7 +1608,7 @@ XXXXXXXX........
 
   \ invader species 2, right breaking, frame 2:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ...........XX...
 ..........XXXX..
@@ -1618,7 +1621,7 @@ XXXXXXXX........
 
   \ invader species 2, right breaking, frame 3:
 
-2 1 udg-sprite
+udg/invader 1 udg-sprite
 
 ..........XX....
 .........XXXX...
@@ -1647,11 +1650,9 @@ cvariable mothership-frame
   \ ............................................
   \ Flying mothership
 
-4 cconstant flying-mothership-frames
-
   \ mothership, frame 0:
 
-2 1 udg-sprite
+udg/mothership 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1664,7 +1665,7 @@ XXXXXXXXXXXXXXXX
 
   \ mothership, frame 1:
 
-2 1 udg-sprite
+udg/mothership 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1677,7 +1678,7 @@ XXXXXXXXXXXXXXXX
 
   \ mothership, frame 2:
 
-2 1 udg-sprite
+udg/mothership 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1690,7 +1691,7 @@ XXXXXXXXXXXXXXXX
 
   \ mothership, frame 3:
 
-2 1 udg-sprite
+udg/mothership 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1701,12 +1702,15 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X... drop
 
+flying-mothership-sprite [udg]
+[if]   >udg c@ swap -
+[else] here swap /udg /
+[then] udg/mothership / cconstant flying-mothership-frames
+
   \ ............................................
   \ Beaming mothership
 
-2 cconstant beaming-mothership-frames
-
-2 1 udg-sprite
+udg/mothership 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1717,7 +1721,7 @@ XXXXXXXXXXXXXXXX
 .X.X.X.XX.X.X.X.
 X.X.X.X..X.X.X.X sprite-id beaming-mothership-sprite
 
-2 1 udg-sprite
+udg/mothership 1 udg-sprite
 
 ................
 .....XXXXXX.....
@@ -1728,12 +1732,17 @@ XXXXXXXXXXXXXXXX
 X.X.X.X..X.X.X.X
 .X.X.X.XX.X.X.X. drop
 
+beaming-mothership-sprite [udg]
+[if]   >udg c@ swap -
+[else] here swap /udg /
+[then] udg/mothership / cconstant beaming-mothership-frames
+
   \ -----------------------------------------------------------
   \ Explosion
 
-9 cconstant explosion-frames
+2 cconstant udg/explosion
 
-2 1 udg-sprite
+udg/explosion 1 udg-sprite
 
 ..............X.
 ..X......XX..X..
@@ -1744,7 +1753,7 @@ X.X.X.X..X.X.X.X
 X....XXXXX...X..
 ..X...XX...X..X. sprite-id explosion-sprite
 
-2 1 udg-sprite
+udg/explosion 1 udg-sprite
 
 ................
 ...X...X...X....
@@ -1755,7 +1764,7 @@ X....XXXXX...X..
 .X...XX.XX..X...
 .X...XX...X..X.X drop
 
-2 1 udg-sprite
+udg/explosion 1 udg-sprite
 
 .X...X..........
 X...X....X...X..
@@ -1766,7 +1775,7 @@ X...X.XXX.X.XX..
 ...X.XX.XXX.XX..
 X...XX.X..X..... drop
 
-2 1 udg-sprite
+udg/explosion 1 udg-sprite
 
 X......X........
 ....X....X......
@@ -1777,7 +1786,7 @@ X..X.X...X.XX..X
 ...X.XX.X.X.XX..
 .X..X..........X drop
 
-2 1 udg-sprite
+udg/explosion 1 udg-sprite
 
 ..X.............
 ....X....X..X...
@@ -1788,7 +1797,7 @@ X..X.X.X..X..X..
 ...X.X....X.....
 ....X....X...X.. drop
 
-2 1 udg-sprite
+udg/explosion 1 udg-sprite
 
 X............X..
 ....X....X......
@@ -1799,7 +1808,7 @@ X............X..
 ..........X.....
 ..X.......X....X drop
 
-2 1 udg-sprite
+udg/explosion 1 udg-sprite
 
 .X.........X....
 .....X.....X..X.
@@ -1810,7 +1819,7 @@ X...............
 X.....X........X
 ..X........X.... drop
 
-2 1 udg-sprite
+udg/explosion 1 udg-sprite
 
 ....X.......X..X
 ................
@@ -1821,7 +1830,7 @@ X.....X........X
 .............X..
 ......X......... drop
 
-2 1 udg-sprite
+udg/explosion 1 udg-sprite
 
 ................
 ................
@@ -1831,6 +1840,11 @@ X.....X........X
 ................
 ................
 ................ drop
+
+explosion-sprite [udg]
+[if]   >udg c@ swap -
+[else] here swap /udg /
+[then] udg/explosion / cconstant explosion-frames
 
   \ -----------------------------------------------------------
   \ Projectiles
@@ -2586,16 +2600,22 @@ create species #species /species * allot
 : species#>~ ( n -- a ) /species * species + ;
 
 : set-species ( c1 c2 c3 c4 -- )
-  species#>~ >r r@ ~flying-right-sprite c!
-              4 r@ ~flying-right-sprite-frames c!
-                r@ ~flying-left-sprite c!
-              4 r@ ~flying-left-sprite-frames c!
-                r@ ~breaking-right-sprite c!
-              4 r@ ~breaking-right-sprite-frames c!
-                r@ ~breaking-left-sprite c!
-              4 r@ ~breaking-left-sprite-frames c!
-                r@ ~docked-sprite c!
-              3 r> ~docked-sprite-frames c! ;
+  species#>~ >r
+  r@ ~flying-right-sprite c!
+  undocked-invader-sprite-frames
+  r@ ~flying-right-sprite-frames c!
+  r@ ~flying-left-sprite c!
+  undocked-invader-sprite-frames
+  r@ ~flying-left-sprite-frames c!
+  r@ ~breaking-right-sprite c!
+  undocked-invader-sprite-frames
+  r@ ~breaking-right-sprite-frames c!
+  r@ ~breaking-left-sprite c!
+  undocked-invader-sprite-frames
+  r@ ~breaking-left-sprite-frames c!
+  r@ ~docked-sprite c!
+  docked-invader-sprite-frames
+  r> ~docked-sprite-frames c! ;
   \ Init the data of invaders species _c4_:
   \   c1 = docked sprite
   \   c2 = left flying sprite
