@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.166.1+201801271742" ;
+: version$ ( -- ca len ) s" 0.166.2+201801271802" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2696,7 +2696,7 @@ cconstant invader-max-y
   \ supposed to be a valid row of an invader layer, otherwise
   \ the result will be wrong.
 
-: invader-retreat-bonus ( -- n ) invader~ ~layer 1+ ;
+: invader-retreat-bonus ( -- n ) invader~ ~layer c@ 1+ ;
   \ Bonus points for making the invader retreat.
 
 : invader-destroy-bonus ( -- n ) invader-retreat-bonus 8* ;
