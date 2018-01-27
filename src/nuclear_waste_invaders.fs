@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.166.0+201801271626" ;
+: version$ ( -- ca len ) s" 0.166.1+201801271742" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2668,49 +2668,36 @@ first-invader# invader#>~ constant first-invader~
 : set-invader ( n -- ) invader#>~ !> invader~ ;
   \ Set invader _n_ as the current invader.
 
-max-invaders 2/ 1- cconstant top-invader-layer
+max-invaders 2/ 1- cconstant invader-top-layer
   \ The number of the highest invader "layer". The pair
   \ of invaders that fly nearest the ground are layer 0.
   \ The pair above them are layer 1, and so on.
 
-top-invader-layer 1+ cconstant invader-layers
+invader-top-layer 1+ cconstant invader-layers
   \ Number of invader layers.
 
 2 cconstant rows/layer
 
-building-top-y 1+ cconstant invader-top-y
+building-top-y 1+ cconstant invader-min-y
 
-invader-top-y top-invader-layer rows/layer * +
-cconstant invader-bottom-y
+invader-min-y invader-top-layer rows/layer * +
+cconstant invader-max-y
 
 : layer>y ( n -- row )
-  top-invader-layer swap - rows/layer * invader-top-y + ;
+  invader-top-layer swap - rows/layer * invader-min-y + ;
   \ Convert invader layer _n_ to its equivalent row _row_. The
   \ pair of invaders that fly nearest the ground are layer 0.
   \ The pair above them are layer 1, and so on.
 
-: y>layer ( row -- n ) rows/layer / 1- invader-top-y swap - ;
+: y>layer ( row -- n ) invader-max-y - rows/layer / abs ;
   \ Convert invader row _row_ to its equilavent layer _n_. The
   \ pair of invaders that fly nearest the ground are layer 0.
   \ The pair above them are layer 1, and so on. Note: _row_ is
   \ supposed to be a valid row of an invader layer, otherwise
   \ the result will be wrong.
 
-: y>layer? ( row -- n f )
-  invader-top-y - rows/layer /mod swap 0= ;
-  \ If _row_ is a valid row of an invader layer, return layer
-  \ _n_ and _f_ is _true_; otherwise _n_ is invalid and _f_ is
-  \ false.  The pair of invaders that fly nearest the ground
-  \ are layer 0.  The pair above them are layer 1, and so on.
-  \ Note: If _row_ is greater than the last invader layer, the
-  \ result will be wrong.
-  \
-  \ XXX REMARK -- Not used.
-
-: invader-retreat-bonus ( -- n ) invader~ ~y c@ y>layer 1+ ;
+: invader-retreat-bonus ( -- n ) invader~ ~layer 1+ ;
   \ Bonus points for making the invader retreat.
-  \
-  \ XXX TODO -- Use `~layer`.
 
 : invader-destroy-bonus ( -- n ) invader-retreat-bonus 8* ;
   \ Bonus points for destroying the invader.
@@ -3970,10 +3957,6 @@ defer set-exploding-mothership ( -- )
   endcase advance-mothership ;
   \ Do move the visible mothership to the right.
 
-0 layer>y cconstant invader-min-y \ bottom
-
-4 layer>y cconstant invader-max-y \ top
-
 healthy-invader-attr dup join
 constant healthy-invader-cell-attr
 
@@ -4013,7 +3996,7 @@ cvariable beam-invader#
   \ their global count.
 
 : layer-y? ( row -- f )
-  dup invader-top-y invader-bottom-y between
+  dup invader-min-y invader-max-y between
       swap rows/layer mod 0= and ;
   \ Is _row_ is a valid row of an invader layer?
 
@@ -4043,7 +4026,7 @@ cvariable beam-invader#
   \ Action of the mothership when the beam is shrinking.
 
 : beam-off ( -- )
-  invader-min-y 1+ mothership-y 1+
+  invader-max-y 1+ mothership-y 1+
   ['] beaming-up-mothership-action set-beam ;
   \ Turn the mothership's beam off, i.e. start shrinking it
   \ back to the mothership.
@@ -4089,7 +4072,7 @@ cvariable beam-invader#
 : beam-on ( -- )
   set-beaming-mothership-sprite
   first-new-invader# beam-invader# c!
-  mothership-y 1+ invader-min-y 1+
+  mothership-y 1+ invader-max-y 1+
   ['] beaming-down-mothership-action set-beam ;
   \ Turn the mothership's beam on, i.e. start launching it
   \ towards the ground.
@@ -4268,7 +4251,7 @@ variable mothership-explosion-time
   invaders c1-! ;
 
 : impacted-invader ( -- n )
-  projectile~ ~projectile-y c@ invader-top-y - 2/
+  projectile~ ~projectile-y c@ invader-min-y - 2/
   projectile~ ~projectile-x c@ [ columns 2/ ] cliteral > abs
   half-max-invaders * + ;
   \ Return the impacted invader _n_, calculated from the
@@ -4439,7 +4422,7 @@ bullet-attr   bullet-gun~ ~gun-projectile-attr c!
 missile-attr missile-gun~ ~gun-projectile-attr c!
 ball-attr       ball-gun~ ~gun-projectile-attr c!
 
-invader-max-y    bullet-gun~ ~gun-projectile-altitude c!
+invader-min-y    bullet-gun~ ~gun-projectile-altitude c!
 mothership-y 1+ missile-gun~ ~gun-projectile-altitude c!
 building-top-y 1+  ball-gun~ ~gun-projectile-altitude c!
 
