@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-26
+:revdate: 2018-01-27
 
 Older first:
 
@@ -46,18 +46,10 @@ Improve the visibility of the projectile right above the tank.
 
 - Write Z80 code to print 2x1 sprites faster.
 
-== 2017-05-12
-
-- Don't repair the building automatically. Use the tank: Implement a
-  third type of projectile, a repairing projectile that must be
-  exploded with the trigger (therefore no other projectile can be
-  launched when the repairing projectile is flying). If the repairing
-  projectile explodes near a breach, it is repaired.
-
 == 2017-05-16
 
 - Improve `battle-bonus`: Make the breach penalty depend on the
-  altitude of the breachs.
+  altitude of the breaches.
 
 == 2017-05-20, 2018-01-06
 
@@ -173,9 +165,19 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Rename species data fields with prefix `~species-`.
 - When a ball hits an invader, color the invader blue and halt it for
   a while.
-- Make the wall repairing process automatic: the first breach the ball
-  reaches is repaired. This makes things simpler.
 - Fix: projectiles can hit other slower projectiles. For example,
   missiles and bullets can reach balls. This case is not supported
   yet, and causes the nearest invader explode.
 - Improve the sprites of the wall balls.
+- Improve repairing of the breaches with an effect done by an
+  independent action.
+
+== 2018-01-27
+
+- Fix: `lose-projectiles` moves the projectiles faster, because no
+  other tasks are done. This is clear when there's only one projectile
+  left, a ball.
+- Simplify the counting of breaches and its usage in the ending
+  condition: Just finish when there's no breach.
+- Improve `mortal?` with a projectile type factor: missile > bullet >
+  ball.

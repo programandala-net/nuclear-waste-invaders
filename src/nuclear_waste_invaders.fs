@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.166.0-dev.0+201801262029" ;
+: version$ ( -- ca len ) s" 0.166.0+201801271626" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2851,29 +2851,29 @@ create stamina-attributes ( -- ca )   dying-invader-attr c,
   \ ===========================================================
   cr .( Building) ?depth debug-point \ {{{1
 
-cvariable old-breachs
-  \ Number of breachs in the wall, at the start of the current
+cvariable old-breaches
+  \ Number of breaches in the wall, at the start of the current
   \ attack.
 
-cvariable breachs
-  \ Number of new breachs in the wall, during the current
+cvariable breaches
+  \ Number of new breaches in the wall, during the current
   \ attack.
 
-cvariable battle-breachs
-  \ Total number of breachs in the wall, during the current
+cvariable battle-breaches
+  \ Total number of breaches in the wall, during the current
   \ battle.
 
-: check-breachs ( -- ) breachs c@ old-breachs c! ;
-  \ Remember the current number of breachs.
+: check-breaches ( -- ) breaches c@ old-breaches c! ;
+  \ Remember the current number of breaches.
 
 : no-breach ( -- )
-  old-breachs coff breachs coff battle-breachs coff ;
-  \ Reset the number of breachs.
+  old-breaches coff breaches coff battle-breaches coff ;
+  \ Reset the number of breaches.
 
-: breachs? ( -- f ) breachs c@ 0<> ;
+: breaches? ( -- f ) breaches c@ 0<> ;
   \ Has the building any breach caused during an attack?
 
-: new-breach? ( -- f ) breachs c@ old-breachs c@ > ;
+: new-breach? ( -- f ) breaches c@ old-breaches c@ > ;
   \ Has got the building any new breach during the current
   \ attack?
 
@@ -2952,7 +2952,7 @@ variable repaired
   \
   \ XXX TODO -- Simpler and faster.
 
-: repair-building ( -- ) building repaired on check-breachs ;
+: repair-building ( -- ) building repaired on check-breaches ;
 
   \ ===========================================================
   cr .( Locations) ?depth debug-point \ {{{1
@@ -2969,7 +2969,7 @@ variable used-projectiles
   \ Counter.
 
 : battle-bonus ( -- n ) location c@1+ 500 *
-                        battle-breachs c@ 100 * -
+                        battle-breaches c@ 100 * -
                         used-projectiles @ -
                         0 max ;
   \ Calculate bonus _n_ after winning a battle.
@@ -3416,7 +3416,7 @@ variable invader-time
   \ Display the current invader.  at the cursor coordinates, in
   \ its proper attribute.
 
-: broken-bricks-coordinates
+: breach-x>bricks-xy
   ( col1 -- col1 row1 col2 row2 col3 row3 )
   invader~ ~y c@ 2dup 1+ 2dup 2- ;
   \ Convert the column _col1_ of the broken wall to the
@@ -3424,38 +3424,49 @@ variable invader-time
   \ row3_, below it, _col3 row3_, and in front of it, _col1
   \ row1_.
 
-defer break-the-wall ( col1 row1 col2 row2 -- )
-  \ Display the broken wall at the given coordinates of the
-  \ broken brick above the invader, _col3 row3_, and below it,
-  \ _col2 row2_, and in front of it, _col1 row1_.
-  \ The action of this deferred word is set to
-  \ `break-left-wall` or `break-right-word`.
+defer break-bricks ( col1 row1 col2 row2 col3 row3 -- )
+  \ Display the broken bricks at the given coordinates: above
+  \ the invader, _col3 row3_; below the invader, _col2 row2_;
+  \ in front of the invader, _col1 row1_.  The action of this
+  \ deferred word is set to `break-left-bricks` or
+  \ `break-right-bricks`.
+  \ XXX TODO -- Description.
 
-: break-left-wall ( col1 row1 col2 row2 -- )
+: break-left-bricks ( col1 row1 col2 row2 col3 row3 -- )
+  broken-wall-attr attr!
   at-xy broken-top-left-brick .1x1sprite
   at-xy broken-bottom-left-brick .1x1sprite
-  at-xy space ;
-  \ Display the broken left wall at the given coordinates of
-  \ the broken brick above the invader, _col3 row3_, and below
-  \ it, _col2 row2_, and in front of it, _col1 row1_.
+  sky-attr attr! at-xy space ;
+  \ Display the broken bricks at the given coordinates: above
+  \ the invader, _col3 row3_; below the invader, _col2 row2_;
+  \ and an empy space
+  \ in front of the invader, _col1 row1_. 
+  \ XXX TODO -- Description.
   \
   \ XXX TODO -- Graphic instead of space.
 
-: break-right-wall ( col1 row1 col2 row2 col3 row3 -- )
+: break-right-bricks ( col1 row1 col2 row2 col3 row3 -- )
+  broken-wall-attr attr!
   at-xy broken-top-right-brick .1x1sprite
   at-xy broken-bottom-right-brick .1x1sprite
-  at-xy space ;
+  sky-attr attr! at-xy space ;
   \ Display the broken right wall at the given coordinates of
   \ the broken brick above the invader, _col3 row3_, and below
   \ it, _col2 row2_, and in front of it, _col1 row1_.
+  \ XXX TODO -- Description.
   \
   \ XXX TODO -- Graphic instead of space.
 
-: (break-wall ( col -- )
-  broken-bricks-coordinates broken-wall-attr attr!
-  break-the-wall ;
-  \ Display the broken wall of the building. The wall is at
-  \ column _col_, and word _xt_ is used to manage the breaking.
+0 [if] \ XXX REMARK -- Not used.
+
+: c@udg/invader+ ( -- )
+  udg/invader case
+    1 of postpone c@1+ endof
+    2 of postpone c@2+ endof
+    postpone c@ postpone udg/invader postpone +
+  endcase ; immediate
+
+[then]
 
 : break-left-container ( -- )
   invader~ ~x c@2+ invader~ ~y c@ at-xy
@@ -3651,27 +3662,28 @@ cvariable cure-factor  20 cure-factor c!
 :noname ( -- ) docked? 0exit dock ; ' ?dock defer!
   \ If the current invader is at the dock, dock it.
 
-: new-breach ( -- ) breachs c1+! battle-breachs c1+! ;
+: one-more-breach ( -- ) breaches c1+! battle-breaches c1+! ;
 
-: prepare-wall ( -- col )
+: breach-x ( -- col )
   invader~ ~x
-  invader~ ~to-the-left @ if   c@1-
-                              ['] break-right-wall
+  invader~ ~to-the-left @ if  c@1-
+                              ['] break-right-bricks
                          else [ udg/invader 2 = ]
                               [if]   c@2+
                               [else] c@ udg/invader + [then]
-                              ['] break-left-wall
-                         then ['] break-the-wall defer! ;
+                              ['] break-left-bricks
+                         then ['] break-bricks defer! ;
   \ Prepare the wall to break: Return the column _col_ of the
   \ wall the current invader has hit, and set the action of
-  \ `break-the-wall` accordingly.
+  \ `break-bricks` accordingly.
   \
   \ XXX TODO -- Reuse the calculation already done in
   \ `hit-wall?`. Better yet: Keep the columns in a table of
   \ constants, two per level, calculated at compile-time.
 
 : break-wall ( -- )
-  prepare-wall (break-wall new-breach impel-invader ;
+  breach-x breach-x>bricks-xy break-bricks
+  one-more-breach impel-invader ;
   \ Break the wall the current invader has hit.
 
 : ?break-wall ( -- ) invaders c@ random ?exit break-wall ;
@@ -4492,27 +4504,54 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   -projectile projectile-lost? if destroy-projectile exit then
   projectile~ ~projectile-y c1-!
   impacted? ?exit .projectile ;
-  \ Manage the projectile.
+  \ Default action of the projectiles.
   \
   \ XXX TODO -- Move `hit-something?` here to simplify the
   \ logic.
 
-' move-projectile  bullet-gun~ ~gun-projectile-action !
+' move-projectile bullet-gun~ ~gun-projectile-action !
+  \ Set the action of bullets.
+
 ' move-projectile missile-gun~ ~gun-projectile-action !
+  \ Set the action of missiles.
+
+: one-less-breach ( -- ) breaches c1-! battle-breaches c1-! ;
+
+: repair-breach ( col row -- ) 2dup 1+ at-xy .brick
+                               2dup    at-xy .brick
+                                    1- at-xy .brick
+                               one-less-breach ;
+
+: is-there-breach? ( col row -- f ) xy>attr sky-attr = ;
+  \ Is there a breach at coordinates _col row_?
+
+: right-of-projectile-xy ( -- col row )
+  projectile~ ~x c@ 1+ projectile~ ~y c@ ;
 
 : move-left-wall-ball-projectile ( -- )
-  projectile-delay ?exit
-  -projectile projectile-lost? if destroy-projectile exit then
+  projectile-delay ?exit -projectile
+  right-of-projectile-xy is-there-breach?
+  if right-of-projectile-xy repair-breach
+     destroy-projectile exit then
+  projectile-lost? if destroy-projectile exit then
   projectile~ ~projectile-y c1-!
   impacted? ?exit .projectile ;
-  \ XXX TODO --
+  \ Action of the balls that are flying on the left wall of the
+  \ building, and therefore can repaier the brechs.
+
+: left-of-projectile-xy ( -- col row )
+  projectile~ ~x c@ 1- projectile~ ~y c@ ;
 
 : move-right-wall-ball-projectile ( -- )
-  projectile-delay ?exit
-  -projectile projectile-lost? if destroy-projectile exit then
+  projectile-delay ?exit -projectile
+  left-of-projectile-xy is-there-breach?
+  if left-of-projectile-xy repair-breach
+     destroy-projectile exit then
+  projectile-lost? if destroy-projectile exit then
   projectile~ ~projectile-y c1-!
   impacted? ?exit .projectile ;
-  \ XXX TODO --
+  \ Action of the balls that are flying on the right wall of
+  \ the building, and therefore can repaier the brechs.
 
 : schedule-trigger ( -- )
   ticks gun~ ~gun-trigger-interval c@ + trigger-time ! ;
@@ -4869,10 +4908,10 @@ localized-string about-next-location$ ( -- ca len )
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
 
 : under-attack ( -- )
-  check-breachs attack-wave begin fight end-of-attack? until
+  check-breaches attack-wave begin fight end-of-attack? until
   lose-projectiles ;
 
-: another-attack? ( -- f ) breachs? catastrophe? 0= and ;
+: another-attack? ( -- f ) breaches? catastrophe? 0= and ;
 
 : prepare-attack ( -- ) new-projectiles status-bar ;
 
