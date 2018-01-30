@@ -95,7 +95,6 @@ Improve the visibility of the projectile right above the tank.
 == 2018-01-08
 
 - Improve the graphics of the explosion.
-- Make `mothership-bonus` faster with `flip`.
 
 == 2018-01-10
 
@@ -181,3 +180,5 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 == 2018-01-30
 
 - Adjust the calculation of `mortal?`. Try removing `2*`.
+- Fix: invaders without maximum stamina can break the containers using
+  a previous breach.

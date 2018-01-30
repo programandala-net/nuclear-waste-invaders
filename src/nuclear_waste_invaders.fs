@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.169.0+201801301358" ;
+: version$ ( -- ca len ) s" 0.169.1+201801301428" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4250,7 +4250,7 @@ variable mothership-explosion-time
   \ Action of the mothership when it's exploding.
 
 : mothership-destroy-bonus ( -- n )
-  mothership-retreat-bonus location 8* ;
+  mothership-retreat-bonus 8* ;
   \ Bonus points for destroying the mothership.
 
 :noname ( -- )
