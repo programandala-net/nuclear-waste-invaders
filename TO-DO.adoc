@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-27
+:revdate: 2018-01-30
 
 Older first:
 
@@ -159,7 +159,6 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 
 == 2018-01-26
 
-- Add `~invader-type` to use it in `mortal?`.
 - Rename invader data fields with prefix `~invader-`.
 - Rename species data fields with prefix `~species-`.
 - When a ball hits an invader, color the invader blue and halt it for
@@ -178,3 +177,7 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
   left, a ball.
 - Simplify the counting of breaches and its usage in the ending
   condition: Just finish when there's no breach.
+
+== 2018-01-30
+
+- Adjust the calculation of `mortal?`. Try removing `2*`.

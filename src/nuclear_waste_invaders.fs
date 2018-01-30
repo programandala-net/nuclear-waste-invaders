@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.168.0+201801271926" ;
+: version$ ( -- ca len ) s" 0.169.0+201801301358" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2591,6 +2591,7 @@ status-bar-rows columns * cconstant /status-bar
   cfield: ~breaking-right-sprite-frames \ count
   cfield: ~docked-sprite                \ UDG
   cfield: ~docked-sprite-frames         \ count
+  cfield: ~species-endurance
 cconstant /species
   \ Data structure of an invader species.
 
@@ -2600,7 +2601,8 @@ create species #species /species * allot
 : species#>~ ( n -- a ) /species * species + ;
 
 : set-species ( c1 c2 c3 c4 -- )
-  species#>~ >r
+  dup species#>~ >r
+  r@ ~species-endurance c!
   r@ ~flying-right-sprite c!
   undocked-invader-sprite-frames
   r@ ~flying-right-sprite-frames c!
@@ -2671,6 +2673,7 @@ max-invaders 1- cconstant last-invader#
   field:  ~species        \ data structure address
   field:  ~explosion-time \ ticks clock time
   cfield: ~layer          \ 0 (lowest) .. 4 (highest)
+  cfield: ~endurance      \ 0..2
 cconstant /invader
   \ Data structure of an species.
 
@@ -2767,6 +2770,7 @@ cconstant invader-max-y
   set-invader
   invader~ ~stamina coff
   invader~ ~action off
+  dup invader~ ~endurance c!
   species#>~ invader~ ~species !
   invader~ ~initial-x-inc ! invader~ ~x-inc off
   dup invader~ ~initial-x c!
@@ -2778,7 +2782,7 @@ cconstant invader-max-y
   \   c1 = row
   \   c2 = column = initial column
   \   c3 = initial column inc
-  \   c4 = species
+  \   c4 = species = endurance
   \ The sprite and the frame are set after the species.
   \ All other fields are set to zero.
 
@@ -4328,11 +4332,12 @@ variable mothership-explosion-time
 
 : mortal? ( -- f ) invader~ ~stamina c@ 2*
                    invader~ ~layer c@ +
+                   invader~ ~endurance c@ +
                    projectile~ ~projectile-harmlessness c@ +
                    random 0= ;
   \ Is it a mortal impact?  The random calculation depends on
-  \ the stamina and the altitude: The more stamina and the more
-  \ altitude, the less chances to be a mortal impact.
+  \ the stamina, the altitude, the species' endurance and the
+  \ type of projectile.
 
 : invader-exploding? ( -- f )
   invader~ ~action @ ['] exploding-invader-action = ;
@@ -4344,9 +4349,6 @@ variable mothership-explosion-time
   wounded attacking? 0exit retreat ;
   \ The current invader has been impacted by the projectile.
   \ It explodes or retreats.
-  \
-  \ XXX TODO -- Improve the logic: First wound, then check
-  \ death.
 
 : invader-impacted ( -- )
   invader~ impacted-invader set-invader (invader-impacted
