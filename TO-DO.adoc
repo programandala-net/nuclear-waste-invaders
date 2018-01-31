@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-30
+:revdate: 2018-01-31
 
 Older first:
 
@@ -105,10 +105,10 @@ Improve the visibility of the projectile right above the tank.
   (checking, timing and scheduling) into every action.  This will be a
   bit faster, saving one nesting level.
 
-== 2018-01-17
+== 2018-01-17, 2018-01-31
 
 - Generalize the detection of the projectile in the flying invader
-  actions: detect also the wall and the containers.
+  actions: detect also the wall and the containers. [XXX UNDER DEVELOPMENT].
 
 == 2018-01-21
 
@@ -169,11 +169,11 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Improve repairing of the breaches with an effect done by an
   independent action.
 
-== 2018-01-27
+== 2018-01-27, 2018-02-01
 
 - Fix: `lose-projectiles` moves the projectiles faster, because no
   other tasks are done. This is clear when there's only one projectile
-  left, a ball.
+  left, a ball. Possible solution: Add `driving` to the loop.
 - Simplify the counting of breaches and its usage in the ending
   condition: Just finish when there's no breach.
 
@@ -182,3 +182,14 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Adjust the calculation of `mortal?`. Try removing `2*`.
 - Fix: invaders without maximum stamina can break the containers using
   a previous breach.
+
+== 2018-01-31
+
+* Improve `set-invader-move-action` and `flying-invader-actions` with
+  two more actions, after the original increment of the invader, in
+  order to reduce the run-time calculations:
+** flying right towards the building
+** flying left towards the building
+** flying right towards the dock
+** flying left towards the dock
+* Improve `difficult-cure?`.

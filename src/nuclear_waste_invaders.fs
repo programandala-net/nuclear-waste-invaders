@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.169.1+201801301428" ;
+: version$ ( -- ca len ) s" 0.170.0-dev.0+201801312357" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -97,6 +97,7 @@ need upper need s+ need char>string need s\"
   cr .(   -Control structures) ?depth \ {{{2
 
 need case need 0exit need +perform need do need abort"
+need cond need thens
 
   \ --------------------------------------------
   cr .(   -Memory) ?depth \ {{{2
@@ -3543,6 +3544,7 @@ here  ' noop ,
 
 : change-direction ( -- )
   invader~ ~x-inc @ negate set-invader-direction ;
+  \ Change the direction of the current invader.
 
 : turn-back ( -- ) change-direction set-flying-invader-sprite ;
   \ Make the current invader turn back.
@@ -3619,16 +3621,22 @@ defer ?dock ( -- )
   \ position?
 
 :noname ( -- )
-  left-of-invader is-there-a-projectile?
-  if docked? ?exit turn-back exit then
+  left-of-invader cond
+    2dup is-there-a-projectile?
+    if 2drop docked? ?exit turn-back exit else
+    2drop
+  thens
   invader~ ~x c1-! at-invader .invader .sky ?flying ;
   ' flying-left-invader-action defer!
   \ Move the current invader, which is flying to the left,
   \ unless a projectile is at the left.
 
 :noname ( -- )
-  right-of-invader is-there-a-projectile?
-  if docked? ?exit turn-back exit then
+  right-of-invader cond
+    2dup is-there-a-projectile?
+    if 2drop docked? ?exit turn-back exit else
+    2drop
+  thens
   at-invader .sky .invader invader~ ~x c1+! ?flying ;
   ' flying-right-invader-action defer!
   \ Move the current invader, which is flying to the right,
