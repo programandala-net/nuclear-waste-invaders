@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.170.0-dev.1+201802011549" ;
+: version$ ( -- ca len ) s" 0.170.0-dev.2+201802012328" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -104,7 +104,7 @@ need cond need thens
 
 need c+! need c-! need c1+! need c1-! need ?c1-! need coff
 need dzx7t need bank-start need c@1+ need c@1- need c@2+
-need 1+!
+need 1+! need c@2-
 
   \ --------------------------------------------
   cr .(   -Math) ?depth \ {{{2
@@ -2434,7 +2434,9 @@ udg/tank 1 udg-sprite
   \ -----------------------------------------------------------
   \ Containers
 
-2 1 udg-sprite
+2 cconstant udg/container
+
+udg/container 1 udg-sprite
 
 ......XXXXX.....
 ...XXX.....XXX..
@@ -2445,7 +2447,7 @@ udg/tank 1 udg-sprite
 ..X....XXX....X.
 ..X.....X.....X. sprite-id container-top
 
-1 1 udg-sprite
+udg/container 2/ 1 udg-sprite
 
 ........
 ...XXX..
@@ -2456,7 +2458,7 @@ udg/tank 1 udg-sprite
 ..X....X
 ..X....X sprite-id broken-top-left-container
 
-1 1 udg-sprite
+udg/container 2/ 1 udg-sprite
 
 ........
 ...XXX..
@@ -2467,7 +2469,7 @@ udg/tank 1 udg-sprite
 .X....X.
 X.....X. sprite-id broken-top-right-container
 
-2 1 udg-sprite
+udg/container 1 udg-sprite
 
 ..X..X.X.X.X..X.
 ..X.XXXX.XXXX.X.
@@ -2478,7 +2480,7 @@ X.....X. sprite-id broken-top-right-container
 ......XXXXX.....
 ................ sprite-id container-bottom
 
-1 1 udg-sprite
+udg/container 2/ 1 udg-sprite
 
 .......X
 .....XXX
@@ -2489,7 +2491,7 @@ X.....X. sprite-id broken-top-right-container
 ......XX
 ........ sprite-id broken-bottom-left-container
 
-1 1 udg-sprite
+udg/container 2/ 1 udg-sprite
 
 XX......
 .XXX....
@@ -3415,8 +3417,10 @@ variable invader-time
 
 : invader-udg ( -- c )
   invader~ ~frame c@ dup invader-frame+ invader~ ~frame c!
-  [ udg/invader 2 = ] [if] 2* [else] udg/invader * [then]
-  invader~ ~sprite c@ + ;
+  [ udg/invader 1 = ] [if]
+  [else] [ udg/invader 2 = ] [if]   2*
+                             [else] udg/invader * [then]
+  [then] invader~ ~sprite c@ + ;
   \ First UDG _c_ of the current frame of the current invader's
   \ sprite, calculated from its sprite and its frame.
   \
@@ -3453,7 +3457,7 @@ defer break-bricks ( col1 row1 col2 row2 col3 row3 -- )
   \ Display the broken bricks at the given coordinates: above
   \ the invader, _col3 row3_; below the invader, _col2 row2_;
   \ and an empy space
-  \ in front of the invader, _col1 row1_. 
+  \ in front of the invader, _col1 row1_.
   \ XXX TODO -- Description.
   \
   \ XXX TODO -- Graphic instead of space.
@@ -3481,34 +3485,40 @@ defer break-bricks ( col1 row1 col2 row2 col3 row3 -- )
 
 [then]
 
-: break-left-container ( -- )
-  invader~ ~x c@2+ invader~ ~y c@ at-xy
-  broken-top-right-container .1x1sprite
-  invader~ ~x c@1+ invader~ ~y c@1+ at-xy
+: break-container ( -- ) container-attr attr! catastrophe on ;
+
+: break-container-at-the-right ( -- )
+  break-container
+  invader~ ~x c@ [ udg/invader udg/container 1- + ] cliteral +
+  invader~ ~y c@ at-xy broken-top-right-container .1x1sprite
+  invader~ ~x
+  [ udg/invader 1 = ]
+  [if]   c@1+
+  [else] [ udg/invader 2 = ]
+         [if] c@2+ [else] c@ udg/invader + [then]
+  [then]
+  invader~ ~y c@1+ at-xy
   broken-bottom-left-container .1x1sprite ;
-  \ Break the the left side of the container.
+  \ Break the left side of the container at the right of the
+  \ current invader.
   \
   \ XXX TODO -- Calculate alternatives to `c@2+` and `c@1+` at
   \ compile-time, depending on the size of the invaders, just
   \ in case.
 
-: break-right-container ( -- )
-  invader~ ~x c@1- invader~ ~y c@ at-xy
+: break-container-at-the-left ( -- )
+  break-container
+  invader~ ~x
+  [ udg/container 1 = ]
+  [if]   c@1-
+  [else] [ udg/container 2 = ] [if]   c@2-
+                               [else] c@ udg/container - [then]
+  [then] invader~ ~y c@ at-xy
   broken-top-left-container .1x1sprite
-  invader~ ~x c@ invader~ ~y c@1+ at-xy
+  invader~ ~x c@1- invader~ ~y c@1+ at-xy
   broken-bottom-right-container .1x1sprite ;
-  \ Break the the right side of the container.
-
-: break-container ( -- )
-  container-attr attr!
-  invader~ ~to-the-left @ if   break-right-container exit
-                          then break-left-container  ;
-
-: break-container? ( -- f )
-  invader~ ~x c@ invader~ ~to-the-left @
-  if      containers-right-x c@ = exit
-  then 1+ containers-left-x  c@ = ;
-  \ Has the current invader broken a container?
+  \ Break the right side of the container at the left of the
+  \ current invader.
 
 : healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
   \ Is the current invader healthy? Has it got maximum stamina?
@@ -3586,10 +3596,6 @@ defer breaking-invader-action ( -- )
 
 [then]
 
-: ?damages ( -- )
-  break-container? dup catastrophe ! 0exit break-container ;
-  \ Manage the possible damages caused by the current invader.
-
 : undock ( -- ) invader~ ~initial-x-inc @ set-invader-direction
                 set-flying-invader-sprite ;
   \ Undock the current invader.
@@ -3605,22 +3611,16 @@ defer breaking-invader-action ( -- )
   \ Coordinates _col row_ at the right of the current invader.
 
 : right-of-invader ( -- col row )
-  invader~ ~x 
+  invader~ ~x
   [ udg/invader 1 = ]
   [if]   c@1+
   [else] [ udg/invader 2 = ]
-         [if]   c@2+
-         [else] udg/invader *
-         [then]
+         [if] c@2+ [else] c@ udg/invader + [then]
   [then] invader~ ~y c@ ;
   \ Coordinates _col row_ at the left of the current invader.
 
 defer ?dock ( -- )
   \ If the current invader is at home, dock it.
-
-: ?flying ( -- ) attacking? if ?damages exit then ?dock ;
-  \ If the current invader has reached the wall, the containers
-  \ or the dock, manage the situation.
 
 : docked? ( -- f ) invader~ ~x c@ invader~ ~initial-x c@ = ;
   \ Is the current invader at the dock, i.e. at its start
@@ -3628,28 +3628,36 @@ defer ?dock ( -- )
 
 : is-there-a-wall? ( xy -- f ) xy>attr brick-attr = ;
 
+: is-there-a-container? ( xy -- f ) xy>attr container-attr = ;
+
+: <move-invader ( -- )
+  invader~ ~x c1-! at-invader .invader .sky ;
+  \ Move the current invader to the left.
+
 :noname ( -- )
   left-of-invader cond
-    2dup is-there-a-projectile?
-    if 2drop docked? ?exit turn-back exit else
-    2dup is-there-a-wall?
-    if 2drop hit-wall exit else
-    2drop
-  thens
-  invader~ ~x c1-! at-invader .invader .sky ?flying ;
+    2dup is-there-a-projectile? if 2drop docked? ?exit
+                                   turn-back exit else
+    2dup is-there-a-wall? if 2drop hit-wall exit else
+    is-there-a-container? if break-container-at-the-left
+                             <move-invader exit
+  thens <move-invader ?dock ;
   ' flying-left-invader-action defer!
   \ Move the current invader, which is flying to the left,
   \ detecting projectiles and walls.
 
+: move-invader> ( -- )
+  at-invader .sky .invader invader~ ~x c1+! ;
+  \ Move the current invader to the right.
+
 :noname ( -- )
   right-of-invader cond
-    2dup is-there-a-projectile?
-    if 2drop docked? ?exit turn-back exit else
-    2dup is-there-a-wall?
-    if 2drop hit-wall exit else
-    2drop
-  thens
-  at-invader .sky .invader invader~ ~x c1+! ?flying ;
+    2dup is-there-a-projectile? if 2drop docked? ?exit
+                                   turn-back exit else
+    2dup is-there-a-wall? if 2drop hit-wall exit else
+    is-there-a-container? if break-container-at-the-right
+                             move-invader> exit
+  thens move-invader> ?dock ;
   ' flying-right-invader-action defer!
   \ Move the current invader, which is flying to the right,
   \ detecting projectiles and walls.
@@ -3700,9 +3708,14 @@ cvariable cure-factor  20 cure-factor c!
   invader~ ~x
   invader~ ~to-the-left @ if  c@1-
                               ['] break-right-bricks
-                         else [ udg/invader 2 = ]
-                              [if]   c@2+
-                              [else] c@ udg/invader + [then]
+                         else [ udg/invader 1 = ]
+                              [if]
+                                c@1+
+                              [else]
+                                [ udg/invader 2 = ]
+                                [if]   c@2+
+                                [else] c@ udg/invader + [then]
+                              [then]
                               ['] break-left-bricks
                          then ['] break-bricks defer! ;
   \ Prepare the wall to break: Return the column _col_ of the

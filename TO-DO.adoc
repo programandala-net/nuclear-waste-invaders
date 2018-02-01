@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-01-31
+:revdate: 2018-02-02
 
 Older first:
 
@@ -105,11 +105,6 @@ Improve the visibility of the projectile right above the tank.
   (checking, timing and scheduling) into every action.  This will be a
   bit faster, saving one nesting level.
 
-== 2018-01-17, 2018-01-31
-
-- Generalize the detection of the projectile in the flying invader
-  actions: detect also the wall and the containers. [XXX UNDER DEVELOPMENT].
-
 == 2018-01-21
 
 - Improve the logic of `(invader-impacted`: First `wounded`, then
@@ -193,3 +188,20 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 ** flying right towards the dock
 ** flying left towards the dock
 * Improve `difficult-cure?`.
+
+== 2018-02-01
+
+- Improve `break-left-container` and `break-right-container`: reuse
+  the coordinates calculated by the flying actions.
+- Factor the following code into an immediate word `c@udg/invader+`,
+  better yet `c@x+`, usable for `udg/container` and others:
+
+----
+  [ udg/invader 1 = ]
+  [if]   c@1+
+  [else] [ udg/invader 2 = ]
+         [if]   c@2+
+         [else] c@ udg/invader +
+         [then]
+  [then]
+----
