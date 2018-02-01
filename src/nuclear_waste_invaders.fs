@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.170.0-dev.0+201801312357" ;
+: version$ ( -- ca len ) s" 0.170.0-dev.1+201802011549" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3490,7 +3490,7 @@ defer break-bricks ( col1 row1 col2 row2 col3 row3 -- )
   \
   \ XXX TODO -- Calculate alternatives to `c@2+` and `c@1+` at
   \ compile-time, depending on the size of the invaders, just
-  \ in case. See `hit-wall?`.
+  \ in case.
 
 : break-right-container ( -- )
   invader~ ~x c@1- invader~ ~y c@ at-xy
@@ -3568,7 +3568,8 @@ defer breaking-invader-action ( -- )
 : hit-wall ( -- )
   healthy? if   start-breaking-the-wall exit
            then turn-back ;
-  \ XXX TMP --
+
+0 [if] \ XXX OLD
 
 : invader-front-xy ( -- col row )
   invader~ ~x
@@ -3583,11 +3584,9 @@ defer breaking-invader-action ( -- )
   \ Return the coordinates _col row_ at the front of the
   \ current invader.
 
-: hit-wall? ( -- f ) invader-front-xy xy>attr brick-attr = ;
-  \ Has the current invader hit the wall of the building?
+[then]
 
 : ?damages ( -- )
-  hit-wall? if hit-wall exit then
   break-container? dup catastrophe ! 0exit break-container ;
   \ Manage the possible damages caused by the current invader.
 
@@ -3606,7 +3605,14 @@ defer breaking-invader-action ( -- )
   \ Coordinates _col row_ at the right of the current invader.
 
 : right-of-invader ( -- col row )
-  invader~ ~x c@1+ invader~ ~y c@ ;
+  invader~ ~x 
+  [ udg/invader 1 = ]
+  [if]   c@1+
+  [else] [ udg/invader 2 = ]
+         [if]   c@2+
+         [else] udg/invader *
+         [then]
+  [then] invader~ ~y c@ ;
   \ Coordinates _col row_ at the left of the current invader.
 
 defer ?dock ( -- )
@@ -3620,27 +3626,33 @@ defer ?dock ( -- )
   \ Is the current invader at the dock, i.e. at its start
   \ position?
 
+: is-there-a-wall? ( xy -- f ) xy>attr brick-attr = ;
+
 :noname ( -- )
   left-of-invader cond
     2dup is-there-a-projectile?
     if 2drop docked? ?exit turn-back exit else
+    2dup is-there-a-wall?
+    if 2drop hit-wall exit else
     2drop
   thens
   invader~ ~x c1-! at-invader .invader .sky ?flying ;
   ' flying-left-invader-action defer!
   \ Move the current invader, which is flying to the left,
-  \ unless a projectile is at the left.
+  \ detecting projectiles and walls.
 
 :noname ( -- )
   right-of-invader cond
     2dup is-there-a-projectile?
     if 2drop docked? ?exit turn-back exit else
+    2dup is-there-a-wall?
+    if 2drop hit-wall exit else
     2drop
   thens
   at-invader .sky .invader invader~ ~x c1+! ?flying ;
   ' flying-right-invader-action defer!
   \ Move the current invader, which is flying to the right,
-  \ unless a projectile is at the right.
+  \ detecting projectiles and walls.
 
 cvariable cure-factor  20 cure-factor c!
   \ XXX TMP -- for testing
@@ -3697,9 +3709,8 @@ cvariable cure-factor  20 cure-factor c!
   \ wall the current invader has hit, and set the action of
   \ `break-bricks` accordingly.
   \
-  \ XXX TODO -- Reuse the calculation already done in
-  \ `hit-wall?`. Better yet: Keep the columns in a table of
-  \ constants, two per level, calculated at compile-time.
+  \ XXX TODO -- Keep the columns in a table of constants, two
+  \ per level, calculated at compile-time.
 
 : break-wall ( -- )
   breach-x breach-x>bricks-xy break-bricks
