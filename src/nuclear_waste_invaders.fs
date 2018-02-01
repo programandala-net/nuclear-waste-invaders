@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.170.0-dev.2+201802012328" ;
+: version$ ( -- ca len ) s" 0.170.0-dev.3+201802020039" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -238,6 +238,48 @@ defer ((debug-point  ' noop ' ((debug-point defer!
 
 : borderx ( n -- )
   1024 0 ?do dup border white border loop drop black border ;
+
+  \ ===========================================================
+  cr .( Optimization) ?depth \ {{{1
+
+  \ Some words used to optimize during compilation, just in
+  \ case the size some important constants are changed in the
+  \ future, e.g. the size of the invaders or the containers.
+
+: c@x+ ( n -- )
+  case
+    1 of postpone c@1+ endof
+    2 of postpone c@2+ endof
+    postpone c@ dup postpone xliteral postpone +
+  endcase ; immediate compile-only
+  \ Compile `c@1+`, `c@2+` or `c@ n +`, depending on the value
+  \ of _n_.
+
+: c@x- ( n -- )
+  case
+    1 of postpone c@1- endof
+    2 of postpone c@2- endof
+    postpone c@ dup postpone xliteral postpone -
+  endcase ; immediate compile-only
+  \ Compile `c@1-`, `c@2-` or `c@ n -`, depending on the value
+  \ of _n_.
+
+: x* ( n -- )
+  case
+    1 of endof
+    2 of postpone 2* endof
+    dup postpone xliteral postpone *
+  endcase ; immediate compile-only
+  \ Compile `2*` or `n *` or nothing, depending on the value of
+  \ _n_.
+
+: x+ ( n -- )
+  case
+    1 of postpone 1+ endof
+    2 of postpone 2+ endof
+    dup postpone xliteral postpone +
+  endcase ; immediate compile-only
+  \ Compile `1+`, `2+` or `n +`, depending on the value of _n_.
 
   \ ===========================================================
   cr .( Constants) ?depth debug-point \ {{{1
@@ -3417,10 +3459,7 @@ variable invader-time
 
 : invader-udg ( -- c )
   invader~ ~frame c@ dup invader-frame+ invader~ ~frame c!
-  [ udg/invader 1 = ] [if]
-  [else] [ udg/invader 2 = ] [if]   2*
-                             [else] udg/invader * [then]
-  [then] invader~ ~sprite c@ + ;
+  [ udg/invader ] x* invader~ ~sprite c@ + ;
   \ First UDG _c_ of the current frame of the current invader's
   \ sprite, calculated from its sprite and its frame.
   \
@@ -3491,13 +3530,7 @@ defer break-bricks ( col1 row1 col2 row2 col3 row3 -- )
   break-container
   invader~ ~x c@ [ udg/invader udg/container 1- + ] cliteral +
   invader~ ~y c@ at-xy broken-top-right-container .1x1sprite
-  invader~ ~x
-  [ udg/invader 1 = ]
-  [if]   c@1+
-  [else] [ udg/invader 2 = ]
-         [if] c@2+ [else] c@ udg/invader + [then]
-  [then]
-  invader~ ~y c@1+ at-xy
+  invader~ ~x [ udg/invader ] c@x+ invader~ ~y c@1+ at-xy
   broken-bottom-left-container .1x1sprite ;
   \ Break the left side of the container at the right of the
   \ current invader.
@@ -3508,12 +3541,7 @@ defer break-bricks ( col1 row1 col2 row2 col3 row3 -- )
 
 : break-container-at-the-left ( -- )
   break-container
-  invader~ ~x
-  [ udg/container 1 = ]
-  [if]   c@1-
-  [else] [ udg/container 2 = ] [if]   c@2-
-                               [else] c@ udg/container - [then]
-  [then] invader~ ~y c@ at-xy
+  invader~ ~x [ udg/container ] c@x- invader~ ~y c@ at-xy
   broken-top-left-container .1x1sprite
   invader~ ~x c@1- invader~ ~y c@1+ at-xy
   broken-bottom-right-container .1x1sprite ;
@@ -3611,12 +3639,7 @@ defer breaking-invader-action ( -- )
   \ Coordinates _col row_ at the right of the current invader.
 
 : right-of-invader ( -- col row )
-  invader~ ~x
-  [ udg/invader 1 = ]
-  [if]   c@1+
-  [else] [ udg/invader 2 = ]
-         [if] c@2+ [else] c@ udg/invader + [then]
-  [then] invader~ ~y c@ ;
+  invader~ ~x [ udg/invader ] c@x+ invader~ ~y c@ ;
   \ Coordinates _col row_ at the left of the current invader.
 
 defer ?dock ( -- )
@@ -3708,14 +3731,7 @@ cvariable cure-factor  20 cure-factor c!
   invader~ ~x
   invader~ ~to-the-left @ if  c@1-
                               ['] break-right-bricks
-                         else [ udg/invader 1 = ]
-                              [if]
-                                c@1+
-                              [else]
-                                [ udg/invader 2 = ]
-                                [if]   c@2+
-                                [else] c@ udg/invader + [then]
-                              [then]
+                         else [ udg/invader ] c@x+
                               ['] break-left-bricks
                          then ['] break-bricks defer! ;
   \ Prepare the wall to break: Return the column _col_ of the
@@ -3940,8 +3956,7 @@ defer set-exploding-mothership ( -- )
 
 : mothership-udg ( -- c )
   mothership-frame c@ dup mothership-frame+ mothership-frame c!
-  [ udg/mothership 2 = ] [if] 2* [else] udg/mothership * [then]
-  mothership + ;
+  [ udg/mothership ] x* mothership + ;
   \ UDG _c_ of the mothership.
 
 : advance-mothership ( -- )
@@ -3996,9 +4011,7 @@ defer set-exploding-mothership ( -- )
   \ visible.
 
 : right-of-mothership ( -- col row )
-  mothership-x @ [ udg/mothership 2 = ] [if]   2+
-                                        [else] udg/mothership +
-                                        [then] mothership-y ;
+  mothership-x @ [ udg/mothership ] x+ mothership-y ;
   \ Return coordinates _col row_ of the position at the right
   \ of the mothership.
 

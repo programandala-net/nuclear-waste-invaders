@@ -193,15 +193,3 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 
 - Improve `break-left-container` and `break-right-container`: reuse
   the coordinates calculated by the flying actions.
-- Factor the following code into an immediate word `c@udg/invader+`,
-  better yet `c@x+`, usable for `udg/container` and others:
-
-----
-  [ udg/invader 1 = ]
-  [if]   c@1+
-  [else] [ udg/invader 2 = ]
-         [if]   c@2+
-         [else] c@ udg/invader +
-         [then]
-  [then]
-----
