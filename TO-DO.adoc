@@ -105,40 +105,13 @@ Improve the visibility of the projectile right above the tank.
   (checking, timing and scheduling) into every action.  This will be a
   bit faster, saving one nesting level.
 
-== 2018-01-21
+== 2018-01-21, 2018-02-02
 
 - Improve the logic of `(invader-impacted`: First `wounded`, then
   `mortal?`. But make the wound a bit random: otherwise the green
   invaders will never explode.
 
-- 64-cpl status bar:
-
-....
-<-------------------------------------------------------------->
-Bullets:00 Missiles:00                  Score:00000 Record:00000
-B:00 M:00 Score:0000 Record:0000
-B:00 M:00 Puntos:0000 Récor:0000
-B:00 M:00 Poentoj:0000 Rikordo:0000
-B:00 M:00 Score:0000/0000
-B:00 M:00 Puntos:0000 Récor:0000
-B:00 M:00 Poentoj:0000 Rikordo:0000
-<-------------------------------------------------------------->
-....
-
-== 2018-01-22
-
-- 32-cpl status bar with icons (X) and full labels:
-
-....
-<------------------------------>
-X00 X00          Score:0000/0000
-X00 X00         Puntos:0000/0000
-X00 X00        Poentoj:0000/0000
-X00 X00   Score:0000 Record:0000
-X00 X00   Puntos:0000 Récor:0000
-X00 X00 Poentoj:0000 Rikordo:0000 [!]
-<------------------------------>
-....
+== 2018-01-22, 2018-02-02
 
 - Make missiles affected by wind and display a weather vane in the
   status bar.
@@ -187,3 +160,4 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 - Fix: no explosion sound when stamina becomes 1?
 - Make `~to-the-left` unnecessary, because of the more specific
   actions.
+- Rename `gun-type`.

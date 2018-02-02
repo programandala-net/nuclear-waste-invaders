@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.170.1+201802021637" ;
+: version$ ( -- ca len ) s" 0.171.0+201802022057" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -470,24 +470,10 @@ localized-string score$ ( -- ca len )
 
 [then]
 
-here ," Pu:"
-here ," Po:"
-here ," Sc:"
+here ," Puntos:"
+here ," Poentoj:"
+here ," Score:"
 localized-string score-label$ ( -- ca len )
-  \ Return string _ca len_ in the current language.
-
-: missiles-label$ s" Mi:" ( -- ca len ) ;
-
-here ," Ba:"
-here ," Ku:"
-here ," Bu:"
-localized-string bullets-label$ ( -- ca len )
-  \ Return string _ca len_ in the current language.
-
-here ," Bo:"
-here ," Bu:"
-here ," Ba:"
-localized-string balls-label$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
 0 [if] \ XXX OLD
@@ -788,26 +774,21 @@ cvariable used-udgs  used-udgs coff
   \ ===========================================================
   cr .( Status bar, part 1) ?depth debug-point \ {{{1
 
-                bullets-label$ nip cconstant /bullets-label
-               missiles-label$ nip cconstant /missiles-label
-                  balls-label$ nip cconstant /balls-label
-
                                  2 cconstant ammo-digits
                                  5 cconstant score-digits
 
                                  0 cconstant status-bar-y
 
-                                 0 cconstant bullets-label-x
-  bullets-label-x /bullets-label + cconstant bullets-x
-        bullets-x ammo-digits + 1+ cconstant missiles-label-x
-missiles-label-x /missiles-label + cconstant missiles-x
-       missiles-x ammo-digits + 1+ cconstant balls-label-x
-      balls-label-x /balls-label + cconstant balls-x
+                                 0 cconstant bullets-icon-x
+                 bullets-icon-x 1+ cconstant bullets-x
+        bullets-x ammo-digits + 1+ cconstant missiles-icon-x
+                missiles-icon-x 1+ cconstant missiles-x
+       missiles-x ammo-digits + 1+ cconstant balls-icon-x
+                   balls-icon-x 1+ cconstant balls-x
 
             columns score-digits - cconstant record-x
                        record-x 1- cconstant record-separator-x
  record-separator-x score-digits - cconstant score-x
-        score-x score-label$ nip - cconstant score-label-x
 
 : [#] ( n -- ) 0 ?do postpone # loop ; immediate compile-only
   \ Compile `#` _n_ times.
@@ -820,9 +801,13 @@ missiles-label-x /missiles-label + cconstant missiles-x
 
 0 cconstant ammo-x
 
-: .ammo ( n -- )
+: (.ammo) ( n -- )
   projectiles-left s>d <# [ ammo-digits ] [#] #>
-  text-attr attr! ammo-x status-bar-y at-xy type ;
+  ammo-x status-bar-y at-xy type ;
+  \ Display the current ammo left at the status bar,
+  \ withe the current attribute.
+
+: .ammo ( n -- ) text-attr attr! (.ammo) ;
   \ Display the current ammo left at the status bar.
 
 0 cconstant  bullet-gun#
@@ -832,18 +817,14 @@ missiles-label-x /missiles-label + cconstant missiles-x
 defer set-gun ( n -- )
   \ Set the current arm (0=gun machine; 1=missile gun).
 
-: .bullets ( -- ) bullet-gun# set-gun .ammo ;
+: .bullets ( -- ) bullet-gun# set-gun (.ammo) ;
   \ Display the number of bullets left.
 
-: .missiles ( -- ) missile-gun# set-gun .ammo ;
+: .missiles ( -- ) missile-gun# set-gun (.ammo) ;
   \ Display the number of bullets left.
-  \
-  \ XXX TODO --
 
-: .balls ( -- ) ball-gun# set-gun .ammo ;
+: .balls ( -- ) ball-gun# set-gun (.ammo) ;
   \ Display the number of balls left.
-  \
-  \ XXX TODO --
 
 : .score ( -- ) score @ score-x status-bar-y (.score ;
   \ Display the score.
@@ -4952,16 +4933,17 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Status bar, part 2 ) ?depth debug-point \ {{{1
 
-: .label ( ca len col -- ) status-bar-y at-xy type ;
 
-: .bullets-label ( -- ) bullets-label$ bullets-label-x .label ;
+: .bullets-icon ( -- ) bullet-sprite .1x1sprite ;
 
-: .missiles-label ( -- )
-  missiles-label$ missiles-label-x .label ;
+: .missiles-icon ( -- ) missile-sprite .1x1sprite ;
 
-: .balls-label ( -- ) balls-label$ balls-label-x .label ;
+: .balls-icon ( -- ) ball-sprite .1x1sprite ;
 
-: .score-label ( -- ) score-label$ score-label-x .label ;
+: score-label-x ( -- col ) score-x score-label$ nip - ;
+
+: .score-label ( -- )
+  score-label$ score-label-x status-bar-y at-xy type ;
 
 : .record-separator ( -- )
   record-separator-x status-bar-y at-xy '/' emit ;
@@ -4973,13 +4955,13 @@ localized-string about-next-location$ ( -- ca len )
 : reveal-status-bar ( -- ) text-attr color-status-bar ;
 
 : (status-bar) ( -- )
-  gun-type c@  .bullets-label  .bullets
-               .missiles-label .missiles
-               .balls-label    .balls     set-gun
+  gun-type c@  .bullets-icon  .bullets  space
+               .missiles-icon .missiles space
+               .balls-icon    .balls            set-gun
   .score-label .score .record-separator .record ;
 
 : status-bar ( -- )
-  hide-status-bar (status-bar) reveal-status-bar ;
+  hide-status-bar home (status-bar) reveal-status-bar ;
 
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1
