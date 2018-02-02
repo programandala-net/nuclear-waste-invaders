@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.170.0-dev.3+201802020039" ;
+: version$ ( -- ca len ) s" 0.170.0+201802021550" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3551,20 +3551,30 @@ defer break-bricks ( col1 row1 col2 row2 col3 row3 -- )
 : healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
   \ Is the current invader healthy? Has it got maximum stamina?
 
-defer flying-left-invader-action ( -- )
-  \ Action of the invaders that are moving to the left.
+defer <attacking-invader-action ( -- )
+  \ Action of the invaders that are attacking to the left.
 
-defer flying-right-invader-action ( -- )
-  \ Action of the invaders that are moving to the right.
+defer attacking>-invader-action ( -- )
+  \ Action of the invaders that are attacking to the right.
 
-      ' flying-left-invader-action ,
+defer <retreating-invader-action ( -- )
+  \ Action of the invaders that are retreating to the left.
+
+defer retreating>-invader-action ( -- )
+  \ Action of the invaders that are retreating to the right.
+
+      ' <attacking-invader-action ,
+      ' <retreating-invader-action ,
+      ' noop ,
 here  ' noop ,
-      ' flying-right-invader-action ,
+      ' attacking>-invader-action ,
+      ' retreating>-invader-action ,
       constant flying-invader-actions ( a )
       \ Execution table.
 
 : set-invader-move-action ( -1..1 -- )
-  flying-invader-actions array> @ invader~ ~action ! ;
+  2* attacking? + flying-invader-actions array>
+  @ invader~ ~action ! ;
   \ Set the action of the current invader after x-coordinate
   \ increment _-1..1_.
 
@@ -3663,11 +3673,18 @@ defer ?dock ( -- )
                                    turn-back exit else
     2dup is-there-a-wall? if 2drop hit-wall exit else
     is-there-a-container? if break-container-at-the-left
-                             <move-invader exit
-  thens <move-invader ?dock ;
-  ' flying-left-invader-action defer!
-  \ Move the current invader, which is flying to the left,
-  \ detecting projectiles and walls.
+  thens <move-invader ;
+  ' <attacking-invader-action defer!
+  \ Move the current invader, which is attacking to the left,
+  \ detecting projectiles, wall and containers.
+
+:noname ( -- )
+  left-of-invader is-there-a-projectile?
+  if   docked? ?exit turn-back exit
+  then <move-invader ?dock ;
+  ' <retreating-invader-action defer!
+  \ Move the current invader, which is retreating to the left,
+  \ detecting projectiles and dock.
 
 : move-invader> ( -- )
   at-invader .sky .invader invader~ ~x c1+! ;
@@ -3679,11 +3696,18 @@ defer ?dock ( -- )
                                    turn-back exit else
     2dup is-there-a-wall? if 2drop hit-wall exit else
     is-there-a-container? if break-container-at-the-right
-                             move-invader> exit
-  thens move-invader> ?dock ;
-  ' flying-right-invader-action defer!
-  \ Move the current invader, which is flying to the right,
-  \ detecting projectiles and walls.
+  thens move-invader> ;
+  ' attacking>-invader-action defer!
+  \ Move the current invader, which is attacking to the right,
+  \ detecting projectiles, wall and containers.
+
+:noname ( -- )
+  right-of-invader is-there-a-projectile?
+  if   docked? ?exit turn-back exit
+  then move-invader> ?dock ;
+  ' retreating>-invader-action defer!
+  \ Move the current invader, which is retreating to the right,
+  \ detecting projectiles and dock.
 
 cvariable cure-factor  20 cure-factor c!
   \ XXX TMP -- for testing

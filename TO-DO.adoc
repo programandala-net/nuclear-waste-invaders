@@ -180,16 +180,12 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 
 == 2018-01-31
 
-* Improve `set-invader-move-action` and `flying-invader-actions` with
-  two more actions, after the original increment of the invader, in
-  order to reduce the run-time calculations:
-** flying right towards the building
-** flying left towards the building
-** flying right towards the dock
-** flying left towards the dock
-* Improve `difficult-cure?`.
+- Improve `difficult-cure?`.
 
-== 2018-02-01
+== 2018-02-02
 
-- Improve `break-left-container` and `break-right-container`: reuse
-  the coordinates calculated by the flying actions.
+- Make the status bar appear suddenly, using the attributes.
+- Fix: no explosion sound when stamina becomes 1?
+- Make `~to-the-left` unnecessary, because of the more specific
+  actions.
+
