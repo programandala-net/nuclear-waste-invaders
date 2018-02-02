@@ -184,8 +184,6 @@ X00 X00 Poentoj:0000 Rikordo:0000 [!]
 
 == 2018-02-02
 
-- Make the status bar appear suddenly, using the attributes.
 - Fix: no explosion sound when stamina becomes 1?
 - Make `~to-the-left` unnecessary, because of the more specific
   actions.
-

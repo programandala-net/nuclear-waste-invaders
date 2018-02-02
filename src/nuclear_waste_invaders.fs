@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.170.0+201802021550" ;
+: version$ ( -- ca len ) s" 0.170.1+201802021637" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4966,12 +4966,20 @@ localized-string about-next-location$ ( -- ca len )
 : .record-separator ( -- )
   record-separator-x status-bar-y at-xy '/' emit ;
 
-: status-bar ( -- )
-  text-attr attr!
+: color-status-bar ( b -- ) attributes columns rot fill ;
+
+: hide-status-bar ( -- ) sky-attr color-status-bar ;
+
+: reveal-status-bar ( -- ) text-attr color-status-bar ;
+
+: (status-bar) ( -- )
   gun-type c@  .bullets-label  .bullets
                .missiles-label .missiles
                .balls-label    .balls     set-gun
   .score-label .score .record-separator .record ;
+
+: status-bar ( -- )
+  hide-status-bar (status-bar) reveal-status-bar ;
 
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1
