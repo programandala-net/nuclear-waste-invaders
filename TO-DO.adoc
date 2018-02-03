@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-02
+:revdate: 2018-02-04
 
 Older first:
 
@@ -139,9 +139,6 @@ Improve the visibility of the projectile right above the tank.
 
 == 2018-01-27, 2018-02-01
 
-- Fix: `lose-projectiles` moves the projectiles faster, because no
-  other tasks are done. This is clear when there's only one projectile
-  left, a ball. Possible solution: Add `driving` to the loop.
 - Simplify the counting of breaches and its usage in the ending
   condition: Just finish when there's no breach.
 

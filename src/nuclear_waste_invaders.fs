@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.172.0+201802031819" ;
+: version$ ( -- ca len ) s" 0.172.1+201802032354" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4698,10 +4698,6 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   next-flying-projectile ;
   \ Manage a flying projectile, if any.
 
-: lose-projectiles ( -- )
-  begin manage-projectiles #flying-projectiles c@ 0= until ;
-  \ Lose all flying projectiles.
-
 : shooting ( -- )
   trigger-pressed?    0exit
   trigger-ready?      0exit
@@ -4983,6 +4979,13 @@ localized-string about-next-location$ ( -- ca len )
   manage-mothership manage-invaders ;
 
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
+
+: lose-projectiles ( -- )
+  begin driving arming flying-projectiles?
+  while manage-projectiles repeat ;
+  \ Lose all flying projectiles.
+  \ Note `driving` and `arming` are included only to prevent
+  \ the projectiles from flying much faster than usual.
 
 : under-attack ( -- )
   check-breaches attack-wave begin fight end-of-attack? until
