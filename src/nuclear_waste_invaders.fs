@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.171.0+201802022057" ;
+: version$ ( -- ca len ) s" 0.172.0+201802031819" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2916,30 +2916,33 @@ cvariable battle-breaches
 
 building-top-y 11 + cconstant building-bottom-y
 
-cvariable building-width
+0 cconstant building-width
+0 cconstant building-left-x
+0 cconstant building-right-x
 
-cvariable building-left-x     cvariable building-right-x
-cvariable containers-left-x   cvariable containers-right-x
+  \ 0 cconstant containers-left-x
+  \ 0 cconstant containers-right-x
+  \ XXX OLD -- Not used.
 
 : size-building ( -- )
   [ columns 2/ 1- ] cliteral  \ half of the screen
   location c@1+               \ half width of all containers
-  dup 2* 2+ building-width     c!
-  2dup 1- - containers-left-x  c!
-  2dup    - building-left-x    c!
-  2dup    + containers-right-x c!
-       1+ + building-right-x   c! ;
+  dup 2* 2+ c!> building-width
+  \ 2dup 1- - c!> containers-left-x \ XXX OLD
+  2dup    - c!> building-left-x
+  \ 2dup    + c!> containers-right-x \ XXX OLD
+       1+ + c!> building-right-x ;
   \ Set the size of the building after the current location.
 
 : floor ( row -- )
-  building-left-x c@ swap at-xy
-  brick-attr attr! brick building-width c@ .1x1sprites ;
+  building-left-x swap at-xy
+  brick-attr attr! brick building-width .1x1sprites ;
   \ Draw a floor of the building at row _row_.
 
 : ground-floor ( row -- )
-  building-left-x c@1+ swap at-xy
+  building-left-x 1+ swap at-xy
   door-attr attr!  left-door emit-udg
-  brick-attr attr! brick building-width c@ 4 - .1x1sprites
+  brick-attr attr! brick building-width 4 - .1x1sprites
   door-attr attr!  right-door emit-udg ;
   \ Draw the ground floor of the building at row _row_.
 
@@ -2977,7 +2980,7 @@ variable repaired
 
 : building ( -- )
   building-top
-  location c@1+  building-left-x c@
+  location c@1+  building-left-x
   building-bottom-y [ building-top-y 1+ ] cliteral
   do   2dup i at-xy .brick
                     i 1 and containers-half array> perform
@@ -3052,7 +3055,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ Return the column _col_ of the tank's gun.
 
 : gun-below-building? ( -- f )
-  gun-x building-left-x c@ building-right-x c@ between ;
+  gun-x building-left-x building-right-x between ;
   \ Is the tank's gun below the building?
 
 : tank-rudder ( -- -1|0|1 )
@@ -3060,7 +3063,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ Does the tank move? Return its column increment.
 
 : outside? ( col -- f )
-  building-left-x c@1+ building-right-x c@ within 0= ;
+  building-left-x 1+ building-right-x within 0= ;
   \ Is column _col_ outside the building?
   \ The most left and most right columns of the building
   \ are considered outside, because they are the doors.
@@ -4221,8 +4224,8 @@ constant visible-mothership-movements ( -- a )
 
 : above-building? ( -- f )
   mothership-x @
-  building-left-x c@
-  building-right-x c@ [ udg/mothership 1- ] cliteral -
+  building-left-x
+  building-right-x [ udg/mothership 1- ] cliteral -
   between ;
   \ Is the mothership above the building?
 
@@ -4629,13 +4632,13 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 
 : get-ball-sprite&action ( -- )
   gun-x case
-    building-left-x c@ 1- of
+    building-left-x 1- of
       left-wall-ball-sprite projectile~ ~projectile-sprite c!
       left-wall-ball-frames projectile~ ~projectile-frames c!
       ['] move-left-wall-ball-projectile
       projectile~ ~projectile-action !
     endof
-    building-right-x c@ 1+ of
+    building-right-x 1+ of
       right-wall-ball-sprite projectile~ ~projectile-sprite c!
       right-wall-ball-frames projectile~ ~projectile-frames c!
       ['] move-right-wall-ball-projectile
@@ -4957,8 +4960,8 @@ localized-string about-next-location$ ( -- ca len )
 : (status-bar) ( -- )
   gun-type c@  .bullets-icon  .bullets  space
                .missiles-icon .missiles space
-               .balls-icon    .balls            set-gun
-  .score-label .score .record-separator .record ;
+               .balls-icon    .balls
+  set-gun .score-label .score .record-separator .record ;
 
 : status-bar ( -- )
   hide-status-bar home (status-bar) reveal-status-bar ;
