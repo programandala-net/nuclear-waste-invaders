@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.172.1+201802032354" ;
+: version$ ( -- ca len ) s" 0.172.2+201802040053" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3651,13 +3651,18 @@ defer ?dock ( -- )
   invader~ ~x c1-! at-invader .invader .sky ;
   \ Move the current invader to the left.
 
+: hit-container-at-the-left ( -- )
+  healthy? if   break-container-at-the-left <move-invader exit
+           then turn-back ;
+
 :noname ( -- )
   left-of-invader cond
     2dup is-there-a-projectile? if 2drop docked? ?exit
                                    turn-back exit else
     2dup is-there-a-wall? if 2drop hit-wall exit else
-    is-there-a-container? if break-container-at-the-left
-  thens <move-invader ;
+    is-there-a-container? if hit-container-at-the-left else
+    <move-invader
+  thens ;
   ' <attacking-invader-action defer!
   \ Move the current invader, which is attacking to the left,
   \ detecting projectiles, wall and containers.
@@ -3674,13 +3679,18 @@ defer ?dock ( -- )
   at-invader .sky .invader invader~ ~x c1+! ;
   \ Move the current invader to the right.
 
+: hit-container-at-the-right ( -- )
+  healthy? if   break-container-at-the-right move-invader> exit
+           then turn-back ;
+
 :noname ( -- )
   right-of-invader cond
     2dup is-there-a-projectile? if 2drop docked? ?exit
                                    turn-back exit else
     2dup is-there-a-wall? if 2drop hit-wall exit else
-    is-there-a-container? if break-container-at-the-right
-  thens move-invader> ;
+    is-there-a-container? if hit-container-at-the-right else
+    move-invader>
+  thens ;
   ' attacking>-invader-action defer!
   \ Move the current invader, which is attacking to the right,
   \ detecting projectiles, wall and containers.
