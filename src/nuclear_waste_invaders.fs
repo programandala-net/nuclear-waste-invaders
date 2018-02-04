@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.172.2+201802040053" ;
+: version$ ( -- ca len ) s" 0.173.0+201802042143" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3456,8 +3456,7 @@ variable invader-time
   \ Display the current invader.  at the cursor coordinates, in
   \ its proper attribute.
 
-: breach-x>bricks-xy
-  ( col1 -- col1 row1 col2 row2 col3 row3 )
+: x>bricks-xy ( col1 -- col1 row1 col2 row2 col3 row3 )
   invader~ ~y c@ 2dup 1+ 2dup 2- ;
   \ Convert the column _col1_ of the broken wall to the
   \ coordinates of the broken brick above the invader, _col3
@@ -3510,27 +3509,25 @@ defer break-bricks ( col1 row1 col2 row2 col3 row3 -- )
 
 : break-container ( -- ) container-attr attr! catastrophe on ;
 
-: break-container-at-the-right ( -- )
+: break-container> ( -- )
   break-container
   invader~ ~x c@ [ udg/invader udg/container 1- + ] cliteral +
   invader~ ~y c@ at-xy broken-top-right-container .1x1sprite
   invader~ ~x [ udg/invader ] c@x+ invader~ ~y c@1+ at-xy
   broken-bottom-left-container .1x1sprite ;
-  \ Break the left side of the container at the right of the
-  \ current invader.
+  \ Break container that is at the right of the invader.
   \
   \ XXX TODO -- Calculate alternatives to `c@2+` and `c@1+` at
   \ compile-time, depending on the size of the invaders, just
   \ in case.
 
-: break-container-at-the-left ( -- )
+: <break-container ( -- )
   break-container
   invader~ ~x [ udg/container ] c@x- invader~ ~y c@ at-xy
   broken-top-left-container .1x1sprite
   invader~ ~x c@1- invader~ ~y c@1+ at-xy
   broken-bottom-right-container .1x1sprite ;
-  \ Break the right side of the container at the left of the
-  \ current invader.
+  \ Break container that is at the left of the invader.
 
 : healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
   \ Is the current invader healthy? Has it got maximum stamina?
@@ -3584,22 +3581,11 @@ here  ' noop ,
 defer breaking-invader-action ( -- )
   \ Action of the invaders that are breaking the wall.
 
-: set-breaking-invader-sprite ( -- )
-  invader~ ~species @ dup
-  invader~ ~to-the-left @
-  if   ~breaking-left-sprite c@ swap
-       ~breaking-left-sprite-frames c@
-  else ~breaking-right-sprite c@ swap
-       ~breaking-right-sprite-frames c@
-  then set-invader-sprite ;
-
-: start-breaking-the-wall ( -- )
-  set-breaking-invader-sprite
+: start-breaking-the-wall ( c n -- )
+  set-invader-sprite
   ['] breaking-invader-action invader~ ~action ! ;
-
-: hit-wall ( -- )
-  healthy? if   start-breaking-the-wall exit
-           then turn-back ;
+  \ Set invader sprite to UDG _c_ and frames _n_, and set its
+  \ action to breaking the wall.
 
 0 [if] \ XXX OLD
 
@@ -3651,16 +3637,27 @@ defer ?dock ( -- )
   invader~ ~x c1-! at-invader .invader .sky ;
   \ Move the current invader to the left.
 
-: hit-container-at-the-left ( -- )
-  healthy? if   break-container-at-the-left <move-invader exit
+: <hit-container ( -- )
+  healthy? if   <break-container <move-invader exit
            then turn-back ;
+  \ Hit the container that is at the left of the invader.
+
+: <start-breaking-the-wall ( -- )
+  invader~ ~species @ dup ~breaking-left-sprite c@ swap
+                          ~breaking-left-sprite-frames c@
+  start-breaking-the-wall ;
+
+: <hit-wall ( -- )
+  healthy? if   <start-breaking-the-wall exit
+           then turn-back ;
+  \ Hit the wall that is at the left of the invader.
 
 :noname ( -- )
   left-of-invader cond
     2dup is-there-a-projectile? if 2drop docked? ?exit
                                    turn-back exit else
-    2dup is-there-a-wall? if 2drop hit-wall exit else
-    is-there-a-container? if hit-container-at-the-left else
+    2dup is-there-a-wall? if 2drop <hit-wall exit else
+    is-there-a-container? if <hit-container else
     <move-invader
   thens ;
   ' <attacking-invader-action defer!
@@ -3679,16 +3676,27 @@ defer ?dock ( -- )
   at-invader .sky .invader invader~ ~x c1+! ;
   \ Move the current invader to the right.
 
-: hit-container-at-the-right ( -- )
-  healthy? if   break-container-at-the-right move-invader> exit
+: hit-container> ( -- )
+  healthy? if   break-container> move-invader> exit
            then turn-back ;
+  \ Hit the container that is at the right of the invader.
+
+: start-breaking-the-wall> ( -- )
+  invader~ ~species @ dup ~breaking-right-sprite c@ swap
+                          ~breaking-right-sprite-frames c@
+  start-breaking-the-wall ;
+
+: hit-wall> ( -- )
+  healthy? if   start-breaking-the-wall> exit
+           then turn-back ;
+  \ Hit the wall that is at the right of the invader.
 
 :noname ( -- )
   right-of-invader cond
     2dup is-there-a-projectile? if 2drop docked? ?exit
                                    turn-back exit else
-    2dup is-there-a-wall? if 2drop hit-wall exit else
-    is-there-a-container? if hit-container-at-the-right else
+    2dup is-there-a-wall? if 2drop hit-wall> exit else
+    is-there-a-container? if hit-container> else
     move-invader>
   thens ;
   ' attacking>-invader-action defer!
@@ -3759,9 +3767,8 @@ cvariable cure-factor  20 cure-factor c!
   \ XXX TODO -- Keep the columns in a table of constants, two
   \ per level, calculated at compile-time.
 
-: break-wall ( -- )
-  breach-x breach-x>bricks-xy break-bricks
-  one-more-breach impel-invader ;
+: break-wall ( -- ) breach-x x>bricks-xy break-bricks
+                    one-more-breach impel-invader ;
   \ Break the wall the current invader has hit.
 
 : ?break-wall ( -- ) invaders c@ random ?exit break-wall ;

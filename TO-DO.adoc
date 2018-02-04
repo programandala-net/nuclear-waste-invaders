@@ -163,5 +163,6 @@ Improve the visibility of the projectile right above the tank.
   was known in `attacking>-invader-action` and
   `<attacking-invader-action`. Problem: the _xt_ must be passed from
   those two words, and preserved or removed through `?break-wall` and
-  `break-wall`. Better yet: Split and rewrite `hit-wall` after `
-  `hit-container-at-the-right` and `hit-container-at-the-left`.
+  `break-wall`. Better yet: Improve `breaking-invader-action` to make
+  `~to-the-left` and other checks unnecessary.
+- Improve `?break-wall` with `~endurance`.
