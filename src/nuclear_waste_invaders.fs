@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.174.0+201802050056" ;
+: version$ ( -- ca len ) s" 0.175.0+201802051341" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3475,36 +3475,27 @@ variable invader-time
   \ row3_, below it, _col3 row3_, and in front of it, _col1
   \ row1_.
 
-defer break-bricks ( col1 row1 col2 row2 col3 row3 -- )
-  \ Display the broken bricks at the given coordinates: above
-  \ the invader, _col3 row3_; below the invader, _col2 row2_;
-  \ in front of the invader, _col1 row1_.  The action of this
-  \ deferred word is set to `break-left-bricks` or
-  \ `break-right-bricks`.
-  \ XXX TODO -- Description.
-
-: break-left-bricks ( col1 row1 col2 row2 col3 row3 -- )
+: break-bricks> ( col1 row1 col2 row2 col3 row3 -- )
   broken-wall-attr attr!
   at-xy broken-top-left-brick .1x1sprite
   at-xy broken-bottom-left-brick .1x1sprite
   sky-attr attr! at-xy space ;
-  \ Display the broken bricks at the given coordinates: above
-  \ the invader, _col3 row3_; below the invader, _col2 row2_;
-  \ and an empy space
-  \ in front of the invader, _col1 row1_.
-  \ XXX TODO -- Description.
+  \ Display the broken bricks at the given coordinates, which
+  \ are at the right of the current invader: above the invader,
+  \ _col3 row3_; below the invader, _col2 row2_; and an empty
+  \ space in front of it, _col1 row1_.
   \
   \ XXX TODO -- Graphic instead of space.
 
-: break-right-bricks ( col1 row1 col2 row2 col3 row3 -- )
+: <break-bricks ( col1 row1 col2 row2 col3 row3 -- )
   broken-wall-attr attr!
   at-xy broken-top-right-brick .1x1sprite
   at-xy broken-bottom-right-brick .1x1sprite
   sky-attr attr! at-xy space ;
-  \ Display the broken right wall at the given coordinates of
-  \ the broken brick above the invader, _col3 row3_, and below
-  \ it, _col2 row2_, and in front of it, _col1 row1_.
-  \ XXX TODO -- Description.
+  \ Display the broken bricks at the given coordinates, which
+  \ are at the left of the current invader: above the invader,
+  \ _col3 row3_; below it, _col2 row2_; and an empty space in
+  \ front of it, _col1 row1_.
   \
   \ XXX TODO -- Graphic instead of space.
 
@@ -3590,14 +3581,13 @@ here  ' noop ,
 : turn-back ( -- ) change-direction set-flying-invader-sprite ;
   \ Make the current invader turn back.
 
-defer breaking-invader-action ( -- )
-  \ Action of the invaders that are breaking the wall.
+defer <breaking-invader-action ( -- )
+  \ Action of the invaders that are breaking the wall at the
+  \ left.
 
-: start-breaking-the-wall ( c n -- )
-  set-invader-sprite
-  ['] breaking-invader-action invader~ ~action ! ;
-  \ Set invader sprite to UDG _c_ and frames _n_, and set its
-  \ action to breaking the wall.
+defer breaking>-invader-action ( -- )
+  \ Action of the invaders that are breaking the wall at the
+  \ right.
 
 0 [if] \ XXX OLD
 
@@ -3655,14 +3645,16 @@ defer ?dock ( -- )
   \ Hit the container that is at the left of the invader.
 
 : <start-breaking-the-wall ( -- )
-  invader~ ~species @ dup ~breaking-left-sprite c@ swap
-                          ~breaking-left-sprite-frames c@
-  start-breaking-the-wall ;
+  invader~ ~species @ ~breaking-left-sprite c@
+  invader~ ~species @ ~breaking-left-sprite-frames c@
+  set-invader-sprite
+  ['] <breaking-invader-action invader~ ~action ! ;
 
 : <hit-wall ( -- )
   healthy? if   <start-breaking-the-wall exit
            then turn-back ;
-  \ Hit the wall that is at the left of the invader.
+  \ If the current invader is healthy, start breaking the wall
+  \ at its left; else turn back.
 
 :noname ( -- )
   left-of-invader cond
@@ -3694,14 +3686,16 @@ defer ?dock ( -- )
   \ Hit the container that is at the right of the invader.
 
 : start-breaking-the-wall> ( -- )
-  invader~ ~species @ dup ~breaking-right-sprite c@ swap
-                          ~breaking-right-sprite-frames c@
-  start-breaking-the-wall ;
+  invader~ ~species @ ~breaking-right-sprite c@
+  invader~ ~species @ ~breaking-right-sprite-frames c@
+  set-invader-sprite
+  ['] breaking>-invader-action invader~ ~action ! ;
 
 : hit-wall> ( -- )
   healthy? if   start-breaking-the-wall> exit
            then turn-back ;
-  \ Hit the wall that is at the right of the invader.
+  \ If the current invader is healthy, start breaking the wall
+  \ at its right; else turn back.
 
 :noname ( -- )
   right-of-invader cond
@@ -3765,34 +3759,38 @@ cvariable cure-factor  20 cure-factor c!
 
 : one-more-breach ( -- ) breaches c1+! battle-breaches c1+! ;
 
-: breach-x ( -- col )
-  invader~ ~x
-  invader~ ~to-the-left @ if  c@1-
-                              ['] break-right-bricks
-                         else [ udg/invader ] c@x+
-                              ['] break-left-bricks
-                         then ['] break-bricks defer! ;
-  \ Prepare the wall to break: Return the column _col_ of the
-  \ wall the current invader has hit, and set the action of
-  \ `break-bricks` accordingly.
-  \
-  \ XXX TODO -- Keep the columns in a table of constants, two
-  \ per level, calculated at compile-time.
+: <break-wall ( -- )
+  invader~ ~x c@1- x>bricks-xy
+  <break-bricks one-more-breach impel-invader ;
+  \ Break the wall at the left of the current invader.
 
-: break-wall ( -- ) breach-x x>bricks-xy break-bricks
-                    one-more-breach impel-invader ;
-  \ Break the wall the current invader has hit.
-
-: ?break-wall ( -- )
+: weak? ( -- f )
   [ max-endurance 2* ] cliteral invader~ ~endurance c@ -
-  random ?exit break-wall ;
-  \ Break the wall randomly, depending on the number of
-  \ invaders.
+  random ;
+  \ Is the current invader too weak to break the wall?
 
-:noname ( -- ) ?break-wall at-invader .invader
-               ; ' breaking-invader-action defer!
-  \ Action of the invaders that are breaking the wall.
-  \ XXX TODO --
+: ?<break-wall ( -- ) weak? ?exit <break-wall ;
+  \ If the current invader pushes hard enough, break the wall
+  \ at the left.
+
+:noname ( -- ) ?<break-wall at-invader .invader
+               ; ' <breaking-invader-action defer!
+  \ Action of the invaders that are breaking the wall at the
+  \ left.
+
+: break-wall> ( -- ) 
+  invader~ ~x [ udg/invader ] c@x+ x>bricks-xy
+  break-bricks> one-more-breach impel-invader ;
+  \ Break the wall at the right of the current invader.
+
+: ?break-wall> ( -- ) weak? ?exit break-wall> ;
+  \ If the current invader pushes hard enough, break the wall
+  \ at the right.
+
+:noname ( -- ) ?break-wall> at-invader .invader
+               ; ' breaking>-invader-action defer!
+  \ Action of the invaders that are breaking the wall at the
+  \ right.
 
 : last-invader? ( -- f ) invader~ last-invader~ = ;
   \ Is the current invader the last one?

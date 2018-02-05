@@ -156,12 +156,3 @@ Improve the visibility of the projectile right above the tank.
 - Make `~to-the-left` unnecessary, because of the more specific
   actions.
 - Rename `gun-type`.
-
-== 2018-02-04
-
-- Split `breach-x`, into two words, because the position of the wall
-  was known in `attacking>-invader-action` and
-  `<attacking-invader-action`. Problem: the _xt_ must be passed from
-  those two words, and preserved or removed through `?break-wall` and
-  `break-wall`. Better yet: Improve `breaking-invader-action` to make
-  `~to-the-left` and other checks unnecessary.
