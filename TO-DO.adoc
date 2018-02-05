@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-04
+:revdate: 2018-02-05
 
 Older first:
 
@@ -165,4 +165,3 @@ Improve the visibility of the projectile right above the tank.
   those two words, and preserved or removed through `?break-wall` and
   `break-wall`. Better yet: Improve `breaking-invader-action` to make
   `~to-the-left` and other checks unnecessary.
-- Improve `?break-wall` with `~endurance`.
