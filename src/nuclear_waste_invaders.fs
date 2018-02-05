@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.176.0+201802051736" ;
+: version$ ( -- ca len ) s" 0.177.0+201802051807" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3322,7 +3322,7 @@ create flying-projectiles /flying-projectiles allot
                          recharge-projectiles
                          used-projectiles off ;
 
-: projectile-coords ( -- col row | gx gy )
+: projectile-xy ( -- col row | gx gy )
   projectile~ ~projectile-x c@ projectile~ ~projectile-y c@ ;
   \ Coordinates of the projectile.
 
@@ -4451,10 +4451,17 @@ variable mothership-explosion-time
                        else invader-impacted
                        then destroy-projectile ;
 
-: hit-something? ( -- f|0f )
-  projectile-coords
-  xy>attr [ sky-attr 0<> ] [if]   sky-attr <> ( f )
-                           [else] ( 0f ) [then] ;
+: sky-attr<>
+  \ Compilation: ( -- )
+  \ Run-time:    ( c -- f|0f )
+  [ sky-attr 0<> ] [if]   postpone sky-attr postpone <> ( f )
+                   [else] ( 0f ) [then] ; immediate
+  \ Compile the words needed to check if _c_ is different from
+  \ `sky-attr`. If the value of `sky-attr` is zero, compile
+  \ nothing. This is used only in case the value of `sky-attr`
+  \ changes in future versions.
+
+: hit-something? ( -- f|0f ) projectile-xy xy>attr sky-attr<> ;
   \ Did the projectile hit something?
 
 : impacted? ( -- f ) hit-something? dup if impact then ;
@@ -4556,7 +4563,7 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
 
-: at-projectile ( -- ) projectile-coords at-xy ;
+: at-projectile ( -- ) projectile-xy at-xy ;
   \ Set the cursor position at the coordinates of the
   \ projectile.
 
@@ -4571,7 +4578,7 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 
 ' whip-sound alias fire-sound ( -- )
 
-: -projectile ( -- ) projectile-coords xy>attr
+: -projectile ( -- ) projectile-xy xy>attr
                      projectile~ ~projectile-attr c@ <> ?exit
                      at-projectile .sky ;
   \ Delete the projectile.
@@ -5197,7 +5204,7 @@ need ticks need timer
 
 0 constant flying-to-the-left? ( f )
 
-: invader-front-coords ( -- col row )
+: invader-front-xy ( -- col row )
   invader~ ~x
   [ udg/invader 2 = ]
   [if]   c@2+ flying-to-the-left? 3* +
@@ -5213,7 +5220,7 @@ need ticks need timer
   \ to on its current direction.
 
 : hit-wall?-OLD ( -- f )
-  invader-front-coords xy>attr brick-attr = ;
+  invader-front-xy xy>attr brick-attr = ;
   \ Has the current invader hit the wall of the building?
 
 : invader-front-x ( -- col )
