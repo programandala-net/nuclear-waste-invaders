@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.175.0+201802051341" ;
+: version$ ( -- ca len ) s" 0.176.0+201802051736" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2705,7 +2705,6 @@ max-invaders 1- cconstant last-invader#
   cfield: ~initial-x      \ column
   field:  ~x-inc          \ -1|1
   field:  ~initial-x-inc  \ -1|1
-  field:  ~to-the-left    \ flag
   cfield: ~stamina        \ 0..3
   field:  ~action         \ execution token
   field:  ~species        \ data structure address
@@ -2781,20 +2780,37 @@ cconstant invader-max-y
   \ sprite of the current invader, and _n_ as the number of
   \ frames.
 
-: set-flying-invader-sprite ( -- )
+: flying-to-the-left? ( -- f ) invader~ ~x-inc @ 0< ;
+  \ Is the current invader flying to the left?
+
+: set-<flying-invader-sprite ( -- )
   invader~ ~species @ dup
-  invader~ ~to-the-left @
-  if   ~flying-left-sprite c@ swap
-       ~flying-left-sprite-frames c@
-  else ~flying-right-sprite c@ swap
-       ~flying-right-sprite-frames c@
-  then set-invader-sprite ;
+  ~flying-left-sprite c@ swap
+  ~flying-left-sprite-frames c@ set-invader-sprite ;
+  \ Set the flying-to-the-left sprite of the current invader.
   \
   \ XXX TODO -- Use double-cell fields to copy both fields with
-  \ one operation or use `move`.
+  \ one operation.
   \
   \ XXX TODO -- If the maximum frames in both directions are
   \ identical, there's no need to initiate `~frame`.
+
+: set-flying>-invader-sprite ( -- )
+  invader~ ~species @ dup
+  ~flying-right-sprite c@ swap
+  ~flying-right-sprite-frames c@ set-invader-sprite ;
+  \ Set the flying-to-the-right sprite of the current invader.
+  \
+  \ XXX TODO -- Use double-cell fields to copy both fields with
+  \ one operation.
+  \
+  \ XXX TODO -- If the maximum frames in both directions are
+  \ identical, there's no need to initiate `~frame`.
+
+: set-flying-invader-sprite ( -- )
+  flying-to-the-left?  if   set-<flying-invader-sprite
+                       else set-flying>-invader-sprite then ;
+  \ Set the flying sprite of the current invader.
   \
   \ XXX TODO -- Combine with `set-invader-direction`.
 
@@ -3484,8 +3500,6 @@ variable invader-time
   \ are at the right of the current invader: above the invader,
   \ _col3 row3_; below the invader, _col2 row2_; and an empty
   \ space in front of it, _col1 row1_.
-  \
-  \ XXX TODO -- Graphic instead of space.
 
 : <break-bricks ( col1 row1 col2 row2 col3 row3 -- )
   broken-wall-attr attr!
@@ -3496,8 +3510,6 @@ variable invader-time
   \ are at the left of the current invader: above the invader,
   \ _col3 row3_; below it, _col2 row2_; and an empty space in
   \ front of it, _col1 row1_.
-  \
-  \ XXX TODO -- Graphic instead of space.
 
 0 [if] \ XXX REMARK -- Not used.
 
@@ -3564,7 +3576,6 @@ here  ' noop ,
 
 : set-invader-direction ( -1..1 -- )
   dup invader~ ~x-inc !
-  dup 0< invader~ ~to-the-left !
       set-invader-move-action ;
   \ Set the direction of the current invader after x-coordinate
   \ increment _-1..1_.
@@ -3581,30 +3592,21 @@ here  ' noop ,
 : turn-back ( -- ) change-direction set-flying-invader-sprite ;
   \ Make the current invader turn back.
 
+: <turn-back ( -- )
+  -1 set-invader-direction set-<flying-invader-sprite ;
+  \ Make the current invader turn back to the left.
+
+: turn-back> ( -- )
+  1 set-invader-direction set-flying>-invader-sprite ;
+  \ Make the current invader turn back to the right.
+
 defer <breaking-invader-action ( -- )
-  \ Action of the invaders that are breaking the wall at the
+  \ Action of the invaders that are breaking the wall to the
   \ left.
 
 defer breaking>-invader-action ( -- )
-  \ Action of the invaders that are breaking the wall at the
+  \ Action of the invaders that are breaking the wall to the
   \ right.
-
-0 [if] \ XXX OLD
-
-: invader-front-xy ( -- col row )
-  invader~ ~x
-  [ udg/invader 2 = ]
-  [if]   c@2+ invader~ ~to-the-left @ 3* +
-  [else] [ udg/invader 1 = ]
-         [if]   c@1+ invader~ ~to-the-left @ 2* +
-         [else] c@ udg/invader + invader~ ~to-the-left @
-                [ udg/invader 1+ ] cliteral * +
-         [then]
-  [then] invader~ ~y c@ ;
-  \ Return the coordinates _col row_ at the front of the
-  \ current invader.
-
-[then]
 
 : undock ( -- ) invader~ ~initial-x-inc @ set-invader-direction
                 set-flying-invader-sprite ;
@@ -3641,7 +3643,7 @@ defer ?dock ( -- )
 
 : <hit-container ( -- )
   healthy? if   <break-container <move-invader exit
-           then turn-back ;
+           then turn-back> ;
   \ Hit the container that is at the left of the invader.
 
 : <start-breaking-the-wall ( -- )
@@ -3652,16 +3654,16 @@ defer ?dock ( -- )
 
 : <hit-wall ( -- )
   healthy? if   <start-breaking-the-wall exit
-           then turn-back ;
+           then turn-back> ;
   \ If the current invader is healthy, start breaking the wall
   \ at its left; else turn back.
 
 :noname ( -- )
   left-of-invader cond
-    2dup is-there-a-projectile? if 2drop docked? ?exit
-                                   turn-back exit else
-    2dup is-there-a-wall? if 2drop <hit-wall exit else
-    is-there-a-container? if <hit-container else
+    2dup is-there-a-projectile? if 2drop docked?   ?exit
+                                         turn-back> exit else
+    2dup is-there-a-wall?       if 2drop <hit-wall  exit else
+    is-there-a-container?       if <hit-container        else
     <move-invader
   thens ;
   ' <attacking-invader-action defer!
@@ -3670,7 +3672,7 @@ defer ?dock ( -- )
 
 :noname ( -- )
   left-of-invader is-there-a-projectile?
-  if   docked? ?exit turn-back exit
+  if   turn-back> exit
   then <move-invader ?dock ;
   ' <retreating-invader-action defer!
   \ Move the current invader, which is retreating to the left,
@@ -3682,7 +3684,7 @@ defer ?dock ( -- )
 
 : hit-container> ( -- )
   healthy? if   break-container> move-invader> exit
-           then turn-back ;
+           then <turn-back ;
   \ Hit the container that is at the right of the invader.
 
 : start-breaking-the-wall> ( -- )
@@ -3693,16 +3695,16 @@ defer ?dock ( -- )
 
 : hit-wall> ( -- )
   healthy? if   start-breaking-the-wall> exit
-           then turn-back ;
+           then <turn-back ;
   \ If the current invader is healthy, start breaking the wall
   \ at its right; else turn back.
 
 :noname ( -- )
   right-of-invader cond
-    2dup is-there-a-projectile? if 2drop docked? ?exit
-                                   turn-back exit else
-    2dup is-there-a-wall? if 2drop hit-wall> exit else
-    is-there-a-container? if hit-container> else
+    2dup is-there-a-projectile? if 2drop docked?  ?exit
+                                       <turn-back  exit else
+    2dup is-there-a-wall?       if 2drop hit-wall> exit else
+    is-there-a-container?       if hit-container>       else
     move-invader>
   thens ;
   ' attacking>-invader-action defer!
@@ -3711,7 +3713,7 @@ defer ?dock ( -- )
 
 :noname ( -- )
   right-of-invader is-there-a-projectile?
-  if   docked? ?exit turn-back exit
+  if   <turn-back exit
   then move-invader> ?dock ;
   ' retreating>-invader-action defer!
   \ Move the current invader, which is retreating to the right,
@@ -3775,10 +3777,10 @@ cvariable cure-factor  20 cure-factor c!
 
 :noname ( -- ) ?<break-wall at-invader .invader
                ; ' <breaking-invader-action defer!
-  \ Action of the invaders that are breaking the wall at the
+  \ Action of the invaders that are breaking the wall to the
   \ left.
 
-: break-wall> ( -- ) 
+: break-wall> ( -- )
   invader~ ~x [ udg/invader ] c@x+ x>bricks-xy
   break-bricks> one-more-breach impel-invader ;
   \ Break the wall at the right of the current invader.
@@ -3789,7 +3791,7 @@ cvariable cure-factor  20 cure-factor c!
 
 :noname ( -- ) ?break-wall> at-invader .invader
                ; ' breaking>-invader-action defer!
-  \ Action of the invaders that are breaking the wall at the
+  \ Action of the invaders that are breaking the wall to the
   \ right.
 
 : last-invader? ( -- f ) invader~ last-invader~ = ;

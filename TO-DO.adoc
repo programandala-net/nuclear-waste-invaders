@@ -153,6 +153,4 @@ Improve the visibility of the projectile right above the tank.
 == 2018-02-02
 
 - Fix: no explosion sound when stamina becomes 1?
-- Make `~to-the-left` unnecessary, because of the more specific
-  actions.
 - Rename `gun-type`.
