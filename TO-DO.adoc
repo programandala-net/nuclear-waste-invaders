@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-05
+:revdate: 2018-02-06
 
 Older first:
 
@@ -130,9 +130,6 @@ Improve the visibility of the projectile right above the tank.
 - Rename species data fields with prefix `~species-`.
 - When a ball hits an invader, color the invader blue and halt it for
   a while.
-- Fix: projectiles can hit other slower projectiles. For example,
-  missiles and bullets can reach balls. This case is not supported
-  yet, and causes the nearest invader explode.
 - Improve the sprites of the wall balls.
 - Improve repairing of the breaches with an effect done by an
   independent action.
@@ -154,3 +151,8 @@ Improve the visibility of the projectile right above the tank.
 
 - Fix: no explosion sound when stamina becomes 1?
 - Rename `gun-type`.
+
+== 2018-02-06
+
+- Improve projectile explosions with sequential frames.
+- Improve projectile explosions with specific sprites for every type.

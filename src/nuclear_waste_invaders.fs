@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.177.0+201802051807" ;
+: version$ ( -- ca len ) s" 0.178.0+201802061530" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -104,7 +104,7 @@ need cond need thens
 
 need c+! need c-! need c1+! need c1-! need ?c1-! need coff
 need dzx7t need bank-start need c@1+ need c@1- need c@2+
-need 1+! need c@2-
+need 1+! need c@2- need con
 
   \ --------------------------------------------
   cr .(   -Math) ?depth \ {{{2
@@ -123,8 +123,6 @@ need sconstants
 
 need xstack need allot-xstack need xdepth need >x need x>
 need xclear
-
-need .xs \ XXX TMP -- For debugging.
 
   \ --------------------------------------------
   cr .(   -Display) ?depth \ {{{2
@@ -172,6 +170,11 @@ need whip-sound need lightning1-sound
   \ Files
 
 need tape-file> need last-tape-header
+
+  \ --------------------------------------------
+  \ Debugging tools
+
+need .xs need dump
 
   \ --------------------------------------------
 
@@ -743,7 +746,7 @@ current-controls c@ set-controls
   \ ===========================================================
   cr .( UDG) ?depth debug-point \ {{{1
 
-               229 cconstant last-udg \ last UDG code used
+               235 cconstant last-udg \ last UDG code used
 last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
 
 create udg-set /udg-set allot  udg-set set-udg
@@ -1870,8 +1873,11 @@ explosion-sprite [udg]
 [else] here swap /udg /
 [then] udg/explosion / cconstant explosion-frames
 
-  \ -----------------------------------------------------------
+  \ --------------------------------------------
   \ Projectiles
+
+  \ ............................
+  \ Bullet
 
 1 1 udg-sprite
 
@@ -1987,6 +1993,9 @@ bullet-sprite [udg] [if]   >udg c@ swap -
                     [else] here swap /udg /
                     [then] cconstant bullet-frames
 
+  \ ............................
+  \ Missile
+
 1 1 udg-sprite
 
 ...XX...
@@ -2012,6 +2021,9 @@ bullet-sprite [udg] [if]   >udg c@ swap -
 missile-sprite [udg] [if]   >udg c@ swap -
                      [else] here swap /udg /
                      [then] cconstant missile-frames
+
+  \ ............................
+  \ Ball
 
 1 1 udg-sprite
 
@@ -2067,54 +2079,6 @@ XXXXXXXX
 XXXXXXXX
 .XXXXXX.
 ..XXXX.. drop
-
-0 [if] \ XXX OLD
-
-  1 1 udg-sprite
-
-  ...XX...
-  ..XXXX..
-  .XXXX.X.
-  XXXXXXXX
-  XXXXXXXX
-  .XXXXXX.
-  ..XXXX..
-  ...XX... sprite-id ball-sprite
-
-  1 1 udg-sprite
-
-  ....XX..
-  ..XXXX..
-  XXXXXXX.
-  XXXXXXX.
-  .XXXX.XX
-  .XXXXXXX
-  ..XXXX..
-  ..XX.... drop
-
-  1 1 udg-sprite
-
-  ...XX...
-  ..XXXX..
-  .XXXXXX.
-  XXXXXXXX
-  XX.XXXXX
-  .XXXXXX.
-  ..XXXX..
-  ...XX... drop
-
-  1 1 udg-sprite
-
-  ..XX....
-  ..XXXX..
-  .X.XXXXX
-  .XXXXXXX
-  XXXXXXX.
-  XXXXXXX.
-  ..XXXX..
-  ....XX.. drop
-
-[then]
 
 ball-sprite [udg] [if]   >udg c@ swap -
                   [else] here swap /udg /
@@ -2239,6 +2203,93 @@ left-wall-ball-sprite
 [udg] [if]   >udg c@ swap -
       [else] here swap /udg /
       [then] cconstant left-wall-ball-frames
+
+  \ ............................
+  \ Explosion
+
+  \ XXX TMP --
+
+1 1 udg-sprite
+
+........
+........
+..X.X...
+...X.X..
+..X.X...
+...X.X..
+........
+........ sprite-id projectile-explosion-sprite
+
+1 1 udg-sprite
+
+........
+..X.X...
+.....X..
+..X...X.
+.X.X.X..
+..X...X.
+.X...X..
+........ drop
+
+1 1 udg-sprite
+
+.X...X..
+....X...
+.....X..
+X.X...X.
+...X.X..
+..X...X.
+X....X..
+..X...X. drop
+
+1 1 udg-sprite
+
+........
+.X..X...
+.....X..
+X..X....
+..X...X.
+.X..X...
+..X..X..
+....X... drop
+
+1 1 udg-sprite
+
+........
+....X...
+..X..X..
+...X..X.
+..X..X..
+...X..X.
+..X..X..
+........ drop
+
+1 1 udg-sprite
+
+........
+........
+........
+...X.X..
+..X..X..
+...XX...
+........
+........ drop
+
+1 1 udg-sprite
+
+........
+........
+........
+........
+........
+........
+........
+........ drop
+
+projectile-explosion-sprite
+[udg] [if]   >udg c@ swap -
+      [else] here swap /udg /
+      [then] cconstant projectile-explosion-frames
 
   \ -----------------------------------------------------------
   \ Building
@@ -3314,17 +3365,61 @@ create flying-projectiles /flying-projectiles allot
 : recharge-projectiles ( -- )
   recharge-bullets recharge-missiles recharge-balls ;
 
+: -projectiles ( -- ) projectiles /projectiles erase ;
+  \ Erase the projectiles data table.
+
+tank-y 1- cconstant projectile-y0
+  \ Initial row of the projectiles.
+
+projectile-y0 columns * constant /hit-projectiles
+
+here /hit-projectiles allot
+     dup columns - constant hit-projectiles>
+                   constant hit-projectiles
+  \ Byte array to mark the projectiles that have been hit by
+  \ another projectile. The array is indexed by rows and
+  \ columns, as a logical copy of the attributes area. The size
+  \ of the array is calculated to contain only the rows used by
+  \ projectiles, except `projectile-y0`, the initial one, where
+  \ projectiles can not be hit yet. `hit-projectiles>` returns
+  \ the address of one row above the actual data, simulating
+  \ the row used by the status bar is part of the array, in
+  \ order to save a run-time calculation when the array items
+  \ are accessed. `hit-projectiles` returns the address of the
+  \ actual data.
+
+: -hit-projectiles ( -- )
+  hit-projectiles /hit-projectiles erase ;
+  \ Erase the array of hit projectiles.
+
+: xy>hit-projectile ( col row -- ca )
+  columns * + hit-projectiles> + ;
+  \ Convert projectile coordinates _col row_ into their
+  \ corresponding address _ca_ in array `hit-projectiles`.
+
+: projectile-xy ( -- col row )
+  projectile~ ~projectile-x c@ projectile~ ~projectile-y c@ ;
+  \ Coordinates of the current projectile.
+
+: hit-projectile? ( -- 0f )
+  projectile-xy xy>hit-projectile c@ ;
+  \ Has the current projectile been hit by other projectile?
+
+: hit-projectile ( -- )
+  projectile-xy xy>hit-projectile con ;
+  \ Mark the current projectile as hit by other projectile.
+
+: -hit-projectile ( -- )
+  projectile-xy xy>hit-projectile coff ;
+  \ Mark the current projectile as not hit by other projectile.
+
 : prepare-projectiles ( -- ) #flying-projectiles coff
                              flying-projectile# coff
-                             projectiles /projectiles erase ;
+                             -projectiles -hit-projectiles ;
 
 : new-projectiles ( -- ) prepare-projectiles
                          recharge-projectiles
                          used-projectiles off ;
-
-: projectile-xy ( -- col row | gx gy )
-  projectile~ ~projectile-x c@ projectile~ ~projectile-y c@ ;
-  \ Coordinates of the projectile.
 
   \ ===========================================================
   cr .( Instructions) ?depth debug-point \ {{{1
@@ -4567,6 +4662,37 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   \ Set the cursor position at the coordinates of the
   \ projectile.
 
+0 [if]
+
+  \ XXX TODO -- Alternative mode to display projectiles, with
+  \ sequential frames, to be used with projectile explosions.
+
+defer projectile ( -- c )
+  \ Return the UDG _c_ of a frame of the projectile.
+
+: projectile-frame+ ( n1 -- n2 )
+  1+ dup invader~ ~frames c@ < and ;
+  \ Increase frame _n1_ resulting frame _n2_.
+  \ If the limit was reached, _n2_ is zero.
+  \
+  \ XXX TODO -- Use `~max-frame <>` for speed.
+
+: sequential-projectile ( -- c )
+  projectile~ ~projectile-sprite dup c@
+  projectile~ ~projectile-frame c@
+  dup projectile-projectile-frame+
+  projectile~ ~projectile-frame c!
+  projectile~ ~projectile-frames c@ + ;
+  \ Return the UDG _c_ of the sequential frame of the
+  \ projectile.
+
+: random-projectile ( -- c )
+  projectile~ ~projectile-sprite c@
+  projectile~ ~projectile-frames c@ random + ;
+  \ Return the UDG _c_ of a random frame of the projectile.
+
+[then]
+
 : projectile ( -- c )
   projectile~ ~projectile-sprite c@
   projectile~ ~projectile-frames c@ random + ;
@@ -4600,10 +4726,66 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   \ and return it. When _n_ is zero, the projectile is ready
   \ to be moved.
 
+: set-projectile-sprite ( c n -- )
+  projectile~ ~projectile-frames c!
+  projectile~ ~projectile-sprite c! ;
+  \ Set character _c_ as the first character of the first
+  \ sprite of the current projectile, and _n_ as the number of
+  \ frames.
+
+: set-exploding-projectile-sprite ( -- )
+  projectile-explosion-sprite projectile-explosion-frames
+  set-projectile-sprite ;
+  \ Make the projectile use the explosion sprite.
+
+8 cconstant projectile-explosion-interval
+  \ Ticks between the frames of the explosion.
+
+variable projectile-explosion-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the explosion advances to the next frame.
+
+: schedule-projectile-explosion ( -- )
+  ticks projectile-explosion-interval +
+  projectile-explosion-time ! ;
+
+cvariable projectile-frame
+  \ Current frame of the exploding projectile sprite.
+
+: projectile-explosion? ( -- f ) projectile-frame c@ 0<> ;
+  \ Is the projectile explosion still active? When the frame
+  \ counter is zero (first frame), the explosion cycle has been
+  \ completed and _f_ is _false_.
+
+: exploding-projectile-action ( -- )
+  projectile-explosion-time @ past? 0exit \ exit if too soon
+  at-projectile .projectile
+  schedule-projectile-explosion
+  projectile-explosion? ?exit -projectile destroy-projectile ;
+  \ Action of the projectile when it's exploding.
+  \
+  \ XXX TMP -- `-projectile` is used at the end, because the
+  \ frame of the explosion sprite is chosen randomly.
+
+' shoot-sound alias projectile-bang ( -- )
+  \ Make the explosion sound of the projectile.
+  \ XXX TMP --
+  \ XXX TODO -- look for a better sound
+
+: set-exploding-projectile ( -- )
+  set-exploding-projectile-sprite
+  .projectile schedule-projectile-explosion
+  ['] exploding-projectile-action
+  projectile~ ~projectile-action !  projectile-bang ;
+
 : move-projectile ( -- )
+  hit-projectile?
+  if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit
   -projectile projectile-lost? if destroy-projectile exit then
   projectile~ ~projectile-y c1-!
+  projectile-xy is-there-a-projectile?
+  if projectile-xy hit-projectile destroy-projectile exit then
   impacted? ?exit .projectile ;
   \ Default action of the projectiles.
   \
@@ -4630,6 +4812,8 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   projectile~ ~x c@ 1+ projectile~ ~y c@ ;
 
 : move-left-wall-ball-projectile ( -- )
+  hit-projectile?
+  if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   right-of-projectile-xy is-there-breach?
   if right-of-projectile-xy repair-breach
@@ -4644,6 +4828,8 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
   projectile~ ~x c@ 1- projectile~ ~y c@ ;
 
 : move-right-wall-ball-projectile ( -- )
+  hit-projectile?
+  if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   left-of-projectile-xy is-there-breach?
   if left-of-projectile-xy repair-breach
@@ -4659,23 +4845,22 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 
 : get-projectile-sprite&action ( -- )
   gun~ ~gun-projectile-sprite c@
-  projectile~ ~projectile-sprite c!
   gun~ ~gun-projectile-frames c@
-  projectile~ ~projectile-frames c!
+  set-projectile-sprite
   ['] move-projectile projectile~ ~projectile-action ! ;
   \ Get the sprite and action of the new current projectile.
 
 : get-ball-sprite&action ( -- )
   gun-x case
     building-left-x 1- of
-      left-wall-ball-sprite projectile~ ~projectile-sprite c!
-      left-wall-ball-frames projectile~ ~projectile-frames c!
+      left-wall-ball-sprite left-wall-ball-frames
+      set-projectile-sprite
       ['] move-left-wall-ball-projectile
       projectile~ ~projectile-action !
     endof
     building-right-x 1+ of
-      right-wall-ball-sprite projectile~ ~projectile-sprite c!
-      right-wall-ball-frames projectile~ ~projectile-frames c!
+      right-wall-ball-sprite right-wall-ball-frames
+      set-projectile-sprite
       ['] move-right-wall-ball-projectile
       projectile~ ~projectile-action !
     endof
@@ -4688,7 +4873,7 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 : get-projectile ( -- )
   x> !> projectile~
   gun-x projectile~ ~projectile-x c!
-  [ tank-y 1- ] cliteral projectile~ ~projectile-y c!
+  projectile-y0 projectile~ ~projectile-y c!
   gun~ ball-gun~ = if   get-ball-sprite&action
                    else get-projectile-sprite&action then
   gun~ ~gun-projectile-attr c@
@@ -5051,6 +5236,8 @@ localized-string about-next-location$ ( -- ca len )
 
   \ ===========================================================
   cr .( Debugging tools) ?depth debug-point \ {{{1
+
+: h ( -- ) home ;
 
 : half ( -- ) half-max-invaders c!> max-invaders ;
   \ Reduce the actual invaders to the left half.
