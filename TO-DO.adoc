@@ -87,8 +87,6 @@ Improve the visibility of the projectile right above the tank.
 == 2018-01-07
 
 - Simplifly the way `hit-something?` and `impacted?` are used.
-- Replace the run-time calculation done in `hit-wall?` and
-  `prepare-wall` with a table of constants calculated at compile-time.
 - Use `,udg-block` to create the sprites and use their address instead
   of their character codes.
 
