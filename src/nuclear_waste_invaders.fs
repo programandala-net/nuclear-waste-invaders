@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.178.0+201802061530" ;
+: version$ ( -- ca len ) s" 0.179.0+201802072229" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -675,6 +675,8 @@ variable catastrophe \ flag (game end condition)
 0 cconstant kk-right# 0. 2constant kk-right
 0 cconstant kk-fire#  0. 2constant kk-fire
 0 cconstant kk-down#  0. 2constant kk-down
+0 cconstant kk-down#  0. 2constant kk-down
+0 cconstant kk-up#    0. 2constant kk-up
 
 : wait ( -- ) begin inkey until ;
   \ Wait until any key is pressed.
@@ -818,7 +820,10 @@ cvariable used-udgs  used-udgs coff
 2 cconstant    ball-gun#
 
 defer set-gun ( n -- )
-  \ Set the current arm (0=gun machine; 1=missile gun).
+  \ Set the current arm:
+  \ 0=bullet gun
+  \ 1=missile gun
+  \ 2=ball gun
 
 : .bullets ( -- ) bullet-gun# set-gun (.ammo) ;
   \ Display the number of bullets left.
@@ -3258,6 +3263,15 @@ constant tank-movements ( -- a )
   tank-time @ past? 0exit \ exit if too soon
   tank-movement perform schedule-tank ;
 
+: recharge-gun ( -- ) ;
+  \ XXX TODO --
+
+: recharging ( -- )
+  gun-below-building? 0exit
+  kk-down pressed?    0exit
+  recharge-gun ;
+  \ XXX TODO --
+
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
 
@@ -3284,6 +3298,10 @@ constant tank-movements ( -- a )
 
 #balls allot-xstack constant balls-stack
   \ Create an extra stack to store the unused balls.
+
+#projectiles allot-xstack constant used-projectiles-stack
+  \ Create an extra stack to store the used projectiles,
+  \ any type.
 
 0
   cfield: ~projectile-y            \ row
@@ -3331,7 +3349,7 @@ cvariable flying-projectile#
 max-flying-projectiles cells cconstant /flying-projectiles
 
 create flying-projectiles /flying-projectiles allot
-  \ Array of flying projectiles
+  \ Array of flying projectiles.
 
 : start-flying ( a -- )
   #flying-projectiles c@ flying-projectiles array> !
@@ -3339,34 +3357,50 @@ create flying-projectiles /flying-projectiles allot
   \ Store projectile _a_ into the array of flying projectiles
   \ and update the count of currently flying projectiles.
 
-: stop-flying ( n -- )
+: -flying-projectile ( n -- )
   flying-projectiles /flying-projectiles rot 1+ cells /string
   over cell- swap cmove
   #flying-projectiles c1-! ;
   \ Remove projectile _n_ from the array of flying projectiles
   \ and update the count of currently flying projectiles.
 
-: destroy-projectile ( -- ) flying-projectile# c@ stop-flying ;
+defer gun-stack ( -- )
+  \ Activate the projectile stack of the current gun.
 
-: recharge ( n1 n2 -- ) do i projectile#>~ >x loop ;
-  \ Recharge projectiles from _n2_ to _n1-1_.
+: destroy-projectile ( -- )
+  flying-projectile# c@ -flying-projectile
+  used-projectiles-stack xstack projectile~ >x gun-stack ;
 
-: recharge-bullets ( -- )
-  bullets-stack xstack xclear #bullets 0 recharge ;
+: recharge ( a n -- )
+  0 do used-projectiles-stack xstack x>
+                         over xstack >x loop drop ;
+  \ Recharge the projectiles stack _a_ with _n_ projectiles
+  \ from the used projectiles stack.
 
-: recharge-missiles ( -- )
-  missiles-stack xstack xclear
-  [ #bullets #missiles + ] xliteral #bullets recharge ;
+: recharge-bullet-gun ( -- )
+  bullets-stack dup xstack xclear #bullets recharge ;
+  \ Empty and recharge the bullet gun.
 
-: recharge-balls ( -- )
-  balls-stack xstack xclear
-  #projectiles [ #bullets #missiles + ] xliteral recharge ;
+: recharge-missile-gun ( -- )
+  missiles-stack dup xstack xclear #missiles recharge ;
+  \ Empty and recharge the missile gun.
 
-: recharge-projectiles ( -- )
-  recharge-bullets recharge-missiles recharge-balls ;
+: recharge-ball-gun ( -- )
+  balls-stack dup xstack xclear #balls recharge ;
+  \ Empty and recharge the ball gun.
+
+: recharge-guns ( -- )
+  recharge-bullet-gun recharge-missile-gun recharge-ball-gun ;
+  \ Empty and recharge all guns.
 
 : -projectiles ( -- ) projectiles /projectiles erase ;
   \ Erase the projectiles data table.
+
+: -unused-projectiles ( -- )
+  used-projectiles-stack xstack xclear
+  #projectiles 0 do i projectile#>~ >x loop ;
+  \ Fill the stack of unused projectiles with the data
+  \ addresses of all projectiles.
 
 tank-y 1- cconstant projectile-y0
   \ Initial row of the projectiles.
@@ -3415,10 +3449,12 @@ here /hit-projectiles allot
 
 : prepare-projectiles ( -- ) #flying-projectiles coff
                              flying-projectile# coff
-                             -projectiles -hit-projectiles ;
+                             -projectiles
+                             -hit-projectiles
+                             -unused-projectiles ;
 
 : new-projectiles ( -- ) prepare-projectiles
-                         recharge-projectiles
+                         recharge-guns
                          used-projectiles off ;
 
   \ ===========================================================
@@ -4603,12 +4639,16 @@ create guns /guns allot
 missile-gun# gun#>~ constant missile-gun~
    ball-gun# gun#>~ constant ball-gun~
 
+:noname ( -- ) gun~ ~gun-projectile-stack @ xstack
+               ; ' gun-stack defer!
+  \ Activate the projectile stack of the current gun.
+
 :noname ( n -- )
   dup gun-type c!
       gun#>~ dup !> gun~
              dup ~gun-tank-sprite c@ c!> tank-sprite
-             dup ~gun-projectile-stack @ xstack
                  ~gun-projectile-x c@ c!> ammo-x
+  gun-stack
   ; ' set-gun defer!
   \ Set _n_ as the current arm (0=gun machine; 1=missile gun).
 
