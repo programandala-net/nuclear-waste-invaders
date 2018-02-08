@@ -74,9 +74,6 @@ Improve the visibility of the projectile right above the tank.
 == 2017-12-22
 
 - Make launching the beam a bit random.
-- Make the mothership's movement clever: stay longer above the
-  building, and go probably to the side where invaders need help or
-  the opposite side of the tank.
 - Place the mothership above the building for repairing.
 
 == 2018-01-03
@@ -114,7 +111,7 @@ Improve the visibility of the projectile right above the tank.
 - Make missiles affected by wind and display a weather vane in the
   status bar.
 - Add sound effect to arm toggling.
-- Reduce the range of the the mothership.
+- Reduce the range of the mothership.
 
 == 2018-01-24
 
@@ -152,3 +149,9 @@ Improve the visibility of the projectile right above the tank.
 == 2018-02-07
 
 - Fix: do limit the number of flying projectiles.
+
+== 2018-02-08
+
+- Replace `+invaders` with a real-time counter.
+- Make `(new-mothership-x-inc` faster. Maybe calculate the weight of
+  invaders at both sides with one single loop.

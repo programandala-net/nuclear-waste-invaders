@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.182.0+201802081939" ;
+: version$ ( -- ca len ) s" 0.183.0+201802082216" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -111,13 +111,13 @@ need 1+! need c@2- need con
 
 need d< need -1|1 need 2/ need between need random need binary
 need within need even? need 8* need random-between
-need join need 3*
+need join need 3* need polarity
 
   \ --------------------------------------------
   cr .(   -Data structures) ?depth \ {{{2
 
 need roll need cfield: need field: need +field-opt-0124
-need array> need !> need c!> need 2!>
+need array> need !> need c!> need 2!> need 0dup
 
 need sconstants
 
@@ -808,13 +808,13 @@ cvariable used-udgs  used-udgs coff
 
 0 cconstant ammo-x
 
-: (.ammo) ( n -- )
+: (.ammo ( n -- )
   projectiles-left s>d <# [ ammo-digits ] [#] #>
   ammo-x status-bar-y at-xy type ;
   \ Display the current ammo left at the status bar,
   \ withe the current attribute.
 
-: .ammo ( n -- ) text-attr attr! (.ammo) ;
+: .ammo ( n -- ) text-attr attr! (.ammo ;
   \ Display the current ammo left at the status bar.
 
 0 cconstant  bullet-gun#
@@ -827,13 +827,13 @@ defer set-gun ( n -- )
   \ 1=missile gun
   \ 2=ball gun
 
-: .bullets ( -- ) bullet-gun# set-gun (.ammo) ;
+: .bullets ( -- ) bullet-gun# set-gun (.ammo ;
   \ Display the number of bullets left.
 
-: .missiles ( -- ) missile-gun# set-gun (.ammo) ;
+: .missiles ( -- ) missile-gun# set-gun (.ammo ;
   \ Display the number of bullets left.
 
-: .balls ( -- ) ball-gun# set-gun (.ammo) ;
+: .balls ( -- ) ball-gun# set-gun (.ammo ;
   \ Display the number of balls left.
 
 : .score ( -- ) score @ score-x status-bar-y (.score ;
@@ -3976,8 +3976,8 @@ defer visible-mothership-action ( -- )
   \ the mothership.
 
 defer stopped-mothership-action ( -- )
-  \ Action of the flying mothership when it's visible but
-  \ stopped above the building.
+  \ Action of the mothership when it's stopped above the
+  \ building.
 
 : set-stopped-mothership-action ( -- )
   ['] stopped-mothership-action mothership-action! ;
@@ -4005,11 +4005,11 @@ variable mothership-stopped  mothership-stopped off
   \ ' ~~mothership-info ' ~~app-info defer!
   \ XXX TMP -- For debugging.
 
-defer set-mothership-direction ( -1..1 -- )
+defer set-mothership-x-inc ( -1..1 -- )
 
 : mothership-turns-back ( -- )
   mothership-stopped off
-  mothership-x-inc @ negate set-mothership-direction ;
+  mothership-x-inc @ negate set-mothership-x-inc ;
 
 32 cconstant mothership-range
   \ Allowed columns of the mothership out of the screen, in
@@ -4094,7 +4094,7 @@ defer set-exploding-mothership ( -- )
   max-stamina set-mothership-stamina
   set-flying-mothership-sprite set-invisible-mothership-action
   mothership-stopped off mothership-time off
-  place-mothership -1|1 set-mothership-direction ;
+  place-mothership -1|1 set-mothership-x-inc ;
 
 : visible-mothership? ( -- f )
   mothership-x @
@@ -4384,7 +4384,7 @@ constant visible-mothership-movements ( -- a )
   dup mothership-x-inc !
       visible-mothership-movements array> @
       ['] move-visible-mothership defer!
-  ; ' set-mothership-direction defer!
+  ; ' set-mothership-x-inc defer!
 
 : above-building? ( -- f )
   mothership-x @
@@ -4393,7 +4393,7 @@ constant visible-mothership-movements ( -- a )
   between ;
   \ Is the mothership above the building?
 
-: stop-mothership ( -- ) 0 set-mothership-direction
+: stop-mothership ( -- ) 0 set-mothership-x-inc
                          set-stopped-mothership-action
                          mothership-stopped on ;
 
@@ -4402,13 +4402,29 @@ constant visible-mothership-movements ( -- a )
                                       3 random ?exit
                                stop-mothership ;
 
-: start-mothership? ( -- f ) 9 random 0= ;
-  \ XXX TODO -- Calculate the start direction after the number
-  \ of invaders on each side and the position of the tank.
+: tank<mothership? ( -- f ) tank-x c@ mothership-x @ < ;
+  \ Is the tank at the left of the mothership?
+
+: tank>mothership? ( -- f ) tank-x c@ mothership-x @ > ;
+  \ Is the tank at the right of the mothership?
+
+: (new-mothership-x-inc ( -- -1|0|1 )
+  left-side-invaders  0=
+  right-side-invaders 0= abs +
+  tank>mothership?           +
+  tank<mothership?       abs + polarity ;
+  \ Return the new direction of the mothership, which is
+  \ stopped above the building.
+
+: new-mothership-x-inc ( -- -1|0|1 )
+  5 random 0= 0dup 0exit (new-mothership-x-inc ;
+  \ Return the new direction of the mothership, which is
+  \ stopped above the building. Four times out of five, the
+  \ result is zero.
 
 : ?start-mothership ( -- )
-  start-mothership? 0exit
-  -1|1 set-mothership-direction set-visible-mothership-action ;
+  new-mothership-x-inc ?dup 0exit
+  set-mothership-x-inc set-visible-mothership-action ;
 
 :noname ( -- )
   move-visible-mothership
@@ -4416,7 +4432,7 @@ constant visible-mothership-movements ( -- a )
   if set-invisible-mothership-action exit then
   ?stop-mothership
   ; ' visible-mothership-action defer!
-  \ Action of the mothership when it's visible.
+  \ Action of the mothership when it's visible and not stopped.
 
 :noname ( -- )
   ?start-mothership
@@ -5230,14 +5246,14 @@ localized-string about-next-location$ ( -- ca len )
 
 : reveal-status-bar ( -- ) text-attr color-status-bar ;
 
-: (status-bar) ( -- )
+: (status-bar ( -- )
   gun-type c@  .bullets-icon  .bullets  space
                .missiles-icon .missiles space
                .balls-icon    .balls
   set-gun .score-label .score .record-separator .record ;
 
 : status-bar ( -- )
-  hide-status-bar home (status-bar) reveal-status-bar ;
+  hide-status-bar home (status-bar reveal-status-bar ;
 
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1
