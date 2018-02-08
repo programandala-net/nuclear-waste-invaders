@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.184.0+201802082246" ;
+: version$ ( -- ca len ) s" 0.185.0+201802082317" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -76,7 +76,7 @@ here 512 dup allot !> /stringer !> stringer empty-stringer
   \ Create a new 512-byte `stringer` in data space.
 
   \ --------------------------------------------
-  cr .(   -Development tools) .s \ {{{2
+  cr .(   -Development tools) \ {{{2
 
 need [if] need ~~
 need warn.message need order need see need rdepth need where
@@ -677,7 +677,6 @@ variable catastrophe \ flag (game end condition)
 0 cconstant kk-right# 0. 2constant kk-right
 0 cconstant kk-fire#  0. 2constant kk-fire
 0 cconstant kk-down#  0. 2constant kk-down
-0 cconstant kk-down#  0. 2constant kk-down
 0 cconstant kk-up#    0. 2constant kk-up
 
 : wait ( -- ) begin inkey until ;
@@ -702,22 +701,36 @@ variable catastrophe \ flag (game end condition)
 
   \ Controls
 
-4 cconstant /controls
+5 cconstant /controls
   \ Bytes per item in the `controls` table.
 
 create controls
-  \ left    right     fire       down
-  kk-5# c,  kk-8# c,  kk-en# c,  kk-6#  c, \ cursor+enter
-  kk-r# c,  kk-t# c,  kk-en# c,  kk-m#  c, \ Spanish Dvorak
-  kk-z# c,  kk-x# c,  kk-en# c,  kk-sp# c, \ QWERTY
-  kk-5# c,  kk-8# c,  kk-0#  c,  kk-6#  c, \ cursor joystick
-  kk-5# c,  kk-8# c,  kk-sp# c,  kk-6#  c, \ cursor+space
-  kk-1# c,  kk-2# c,  kk-5#  c,  kk-3#  c, \ Sinclair 1
-  kk-6# c,  kk-7# c,  kk-0#  c,  kk-8#  c, \ Sinclair 2
-  kk-o# c,  kk-p# c,  kk-q#  c,  kk-a#  c, \ QWERTY
-  kk-n# c,  kk-m# c,  kk-q#  c,  kk-a#  c, \ QWERTY
-  kk-q# c,  kk-w# c,  kk-p#  c,  kk-en# c, \ QWERTY
-  kk-z# c,  kk-x# c,  kk-p#  c,  kk-en# c, \ QWERTY
+
+  \ left    right     fire       down      up
+  \ ---------------------------------------------------
+
+  kk-5# c,  kk-8# c,  kk-en# c,  kk-6#  c,  kk-7# c,
+    \ cursor+enter
+  kk-r# c,  kk-t# c,  kk-en# c,  kk-m#  c,  kk-g# c,
+    \ Spanish Dvorak
+  kk-z# c,  kk-x# c,  kk-en# c,  kk-sp# c,  kk-p# c,
+    \ QWERTY
+  kk-5# c,  kk-8# c,  kk-0#  c,  kk-6#  c,  kk-7# c,
+    \ cursor joystick
+  kk-5# c,  kk-8# c,  kk-sp# c,  kk-6#  c,  kk-7# c,
+    \ cursor+space
+  kk-1# c,  kk-2# c,  kk-5#  c,  kk-3#  c,  kk-4# c,
+    \ Sinclair 1
+  kk-6# c,  kk-7# c,  kk-0#  c,  kk-8#  c,  kk-9# c,
+    \ Sinclair 2
+  kk-o# c,  kk-p# c,  kk-q#  c,  kk-a#  c,  kk-7# c,
+    \ QWERTY
+  kk-n# c,  kk-m# c,  kk-sp# c,  kk-a#  c,  kk-q# c,
+    \ QWERTY
+  kk-q# c,  kk-w# c,  kk-en# c,  kk-l#  c,  kk-p# c,
+    \ QWERTY
+  kk-z# c,  kk-x# c,  kk-sp# c,  kk-l#  c,  kk-p# c,
+    \ QWERTY
 
 here controls - /controls / cconstant max-controls
   \ Number of controls stored in `controls`.
@@ -731,7 +744,8 @@ max-controls 1- cconstant last-control
   >controls     dup c@  dup c!> kk-left#   #>kk 2!> kk-left
              1+ dup c@  dup c!> kk-right#  #>kk 2!> kk-right
              1+ dup c@  dup c!> kk-fire#   #>kk 2!> kk-fire
-             1+     c@  dup c!> kk-down#   #>kk 2!> kk-down ;
+             1+ dup c@  dup c!> kk-down#   #>kk 2!> kk-down
+             1+     c@  dup c!> kk-up#     #>kk 2!> kk-up   ;
   \ Make controls number _n_ (item of the `controls` table) the
   \ current controls.
 
@@ -3111,171 +3125,6 @@ variable used-projectiles
   \ Init the location number and the related variables.
 
   \ ===========================================================
-  cr .( Tank) ?depth debug-point \ {{{1
-
-cvariable tank-x \ column
-
-variable tank-time
-  \ When the ticks clock reaches the contents of this variable,
-  \ the tank will move.
-
-variable arming-time
-  \ When the ticks clock reaches the contents of this variable,
-  \ the tank can change its gun type.
-
-variable trigger-time
-  \ When the ticks clock reaches the contents of this variable,
-  \ the trigger can work.
-
-: repair-tank ( -- )
-  tank-time off arming-time off trigger-time off ;
-
-columns udg/tank - 2/ cconstant parking-x
-
-: park-tank ( -- ) parking-x tank-x c! tank-frame coff ;
-
-                    1 cconstant tank-min-x
-columns udg/tank - 1- cconstant tank-max-x
-  \ Mininum and maximum columns of the tank.
-
-: gun-x ( -- col ) tank-x c@1+ ;
-  \ Return the column _col_ of the tank's gun.
-
-: gun-below-building? ( -- f )
-  gun-x building-left-x building-right-x between ;
-  \ Is the tank's gun below the building?
-
-: tank-rudder ( -- -1|0|1 )
-  kk-left pressed? kk-right pressed? abs + ;
-  \ Does the tank move? Return its column increment.
-
-: outside? ( col -- f )
-  building-left-x 1+ building-right-x within 0= ;
-  \ Is column _col_ outside the building?
-  \ The most left and most right columns of the building
-  \ are considered outside, because they are the doors.
-
-: next-col ( col -- ) 1+ 33 swap - 23688 c! 23684 1+! ;
-  \ Set the current column to _col+1_, by modifing the
-  \ contents of OS byte variable S_POSN (23688) and increasing
-  \ the OS cell variable DF_CC (23684) (printing address in the
-  \ screen bitmap).  Unfortunately, a bug in the ROM prevents
-  \ control character 9 (cursor right) from working.
-  \ This word is needed because `emit-udg` does not update
-  \ the current coordinates.
-
-: ?emit-outside ( col1 c -- col2 )
-  over outside? if   emit-udg 1+          exit
-                then drop dup next-col 1+ ;
-  \ If column _col1_ is outside the building, display character
-  \ _c_ at the current cursor position.  Increment _col1_ and
-  \ return it as _col2_.
-
-: left-tank-udg   ( -- c )
-  tank-frame c@ udg/tank * tank-sprite + ;
-
-: middle-tank-udg ( -- c ) left-tank-udg 1+ ;
-
-: right-tank-udg  ( -- c ) left-tank-udg 2+ ;
-
-: tank-frame+ ( n1 -- n2 ) 1+ dup tank-frames <> and ;
-  \ Increase tank frame _n1_ resulting frame _n2_.
-  \ If the limit was reached, _n2_ is zero.
-
-: tank-frame- ( n1 -- n2 )
-  ?dup if 1- else tank-max-frame then ;
-  \ Decrease tank frame _n1_ resulting frame _n2_.
-
-: tank-arm-udg ( -- c )
-  tank-frame c@ tank-frame- udg/tank * tank-sprite + 1+ ;
-  \ Return UDG _c_ of the tank arm. This is identical to
-  \ `middle-tank-udg`, except the frame has to be decreased
-  \ in order to prevent the tank chains from moving.
-
-: tank-next-frame ( -- )
-  tank-frame c@ tank-frame+ tank-frame c! ;
-  \ Update the tank frame.
-
-: tank-parts ( col1 -- col2 )
-  tank-attr attr! left-tank-udg   ?emit-outside
-                  middle-tank-udg ?emit-outside
-                  right-tank-udg  ?emit-outside
-  tank-next-frame ;
-  \ Display every visible part of the tank (the parts that are
-  \ outside the building) and update the frame.
-
-: -tank-extreme ( col1 -- col2 )
-  sky-attr attr! bl-udg ?emit-outside ;
-
-: at-tank@ ( -- col ) tank-x c@ dup tank-y at-xy ;
-  \ Set the cursor position at the tank's coordinates
-  \ and return its column _col_.
-
-: tank> ( -- )
-  at-tank@ -tank-extreme tank-parts drop tank-x c1+! ;
-  \ Move the tank to the right.
-
-: (.tank ( -- col ) at-tank@ tank-parts ;
-  \ Display the tank at its current position and return column
-  \ _col_ at its right.
-
-: .tank ( -- ) (.tank drop ;
-  \ Display the tank at its current position.
-
-0 [if]
-
-  \ XXX OLD -- The balls gun is wider than the central UDG of
-  \ the tank. Therefore the whole tank must be displayed.
-
-: .tank-arm ( -- )
-  tank-attr attr!
-  tank-x c@ 1+ dup tank-y at-xy
-                   tank-arm-udg ?emit-outside drop ;
-  \ If the middle part of the tank is visible (i.e. outside the
-  \ building), display it.
-
-[then]
-
-: new-tank ( -- )
-  repair-tank bullet-gun# set-gun park-tank .tank ;
-
-: <tank ( -- ) tank-x c1-! (.tank -tank-extreme drop ;
-  \ Move the tank to the left.
-
-: ?<tank ( -- ) tank-x c@ tank-min-x = ?exit <tank ;
-  \ If the tank column is not the minimum, move the tank to the
-  \ left.
-
-: ?tank> ( -- ) tank-x c@ tank-max-x = ?exit tank> ;
-  \ If the tank column is not the maximum, move the tank to the
-  \ right.
-
-      ' ?<tank , \ move tank to the left
-here  0 ,        \ do nothing
-      ' ?tank> , \ move tank to the right
-constant tank-movements ( -- a )
-  \ Execution table of tank movements.
-
-: tank-movement ( -- a ) tank-rudder tank-movements array> ;
-
-8 cconstant tank-interval \ ticks
-
-: schedule-tank ( -- ) ticks tank-interval + tank-time ! ;
-
-: driving ( -- )
-  tank-time @ past? 0exit \ exit if too soon
-  tank-movement perform schedule-tank ;
-
-: recharge-gun ( -- ) ;
-  \ XXX TODO --
-
-: recharging ( -- )
-  gun-below-building? 0exit
-  kk-down pressed?    0exit
-  recharge-gun ;
-  \ XXX TODO --
-
-  \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
 
 50 cconstant #bullets
@@ -3458,6 +3307,171 @@ here /hit-projectiles allot
 : new-projectiles ( -- ) prepare-projectiles
                          recharge-guns
                          used-projectiles off ;
+
+  \ ===========================================================
+  cr .( Tank) ?depth debug-point \ {{{1
+
+cvariable tank-x \ column
+
+variable tank-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the tank will move.
+
+variable arming-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the tank can change its gun type.
+
+variable trigger-time
+  \ When the ticks clock reaches the contents of this variable,
+  \ the trigger can work.
+
+: repair-tank ( -- )
+  tank-time off arming-time off trigger-time off ;
+
+columns udg/tank - 2/ cconstant parking-x
+
+: park-tank ( -- ) parking-x tank-x c! tank-frame coff ;
+
+                    1 cconstant tank-min-x
+columns udg/tank - 1- cconstant tank-max-x
+  \ Mininum and maximum columns of the tank.
+
+: gun-x ( -- col ) tank-x c@1+ ;
+  \ Return the column _col_ of the tank's gun.
+
+: gun-below-building? ( -- f )
+  gun-x building-left-x building-right-x between ;
+  \ Is the tank's gun below the building?
+
+: tank-rudder ( -- -1|0|1 )
+  kk-left pressed? kk-right pressed? abs + ;
+  \ Does the tank move? Return its column increment.
+
+: outside? ( col -- f )
+  building-left-x 1+ building-right-x within 0= ;
+  \ Is column _col_ outside the building?
+  \ The most left and most right columns of the building
+  \ are considered outside, because they are the doors.
+
+: next-col ( col -- ) 1+ 33 swap - 23688 c! 23684 1+! ;
+  \ Set the current column to _col+1_, by modifing the
+  \ contents of OS byte variable S_POSN (23688) and increasing
+  \ the OS cell variable DF_CC (23684) (printing address in the
+  \ screen bitmap).  Unfortunately, a bug in the ROM prevents
+  \ control character 9 (cursor right) from working.
+  \ This word is needed because `emit-udg` does not update
+  \ the current coordinates.
+
+: ?emit-outside ( col1 c -- col2 )
+  over outside? if   emit-udg 1+          exit
+                then drop dup next-col 1+ ;
+  \ If column _col1_ is outside the building, display character
+  \ _c_ at the current cursor position.  Increment _col1_ and
+  \ return it as _col2_.
+
+: left-tank-udg   ( -- c )
+  tank-frame c@ udg/tank * tank-sprite + ;
+
+: middle-tank-udg ( -- c ) left-tank-udg 1+ ;
+
+: right-tank-udg  ( -- c ) left-tank-udg 2+ ;
+
+: tank-frame+ ( n1 -- n2 ) 1+ dup tank-frames <> and ;
+  \ Increase tank frame _n1_ resulting frame _n2_.
+  \ If the limit was reached, _n2_ is zero.
+
+: tank-frame- ( n1 -- n2 )
+  ?dup if 1- else tank-max-frame then ;
+  \ Decrease tank frame _n1_ resulting frame _n2_.
+
+: tank-arm-udg ( -- c )
+  tank-frame c@ tank-frame- udg/tank * tank-sprite + 1+ ;
+  \ Return UDG _c_ of the tank arm. This is identical to
+  \ `middle-tank-udg`, except the frame has to be decreased
+  \ in order to prevent the tank chains from moving.
+
+: tank-next-frame ( -- )
+  tank-frame c@ tank-frame+ tank-frame c! ;
+  \ Update the tank frame.
+
+: tank-parts ( col1 -- col2 )
+  tank-attr attr! left-tank-udg   ?emit-outside
+                  middle-tank-udg ?emit-outside
+                  right-tank-udg  ?emit-outside
+  tank-next-frame ;
+  \ Display every visible part of the tank (the parts that are
+  \ outside the building) and update the frame.
+
+: -tank-extreme ( col1 -- col2 )
+  sky-attr attr! bl-udg ?emit-outside ;
+
+: at-tank@ ( -- col ) tank-x c@ dup tank-y at-xy ;
+  \ Set the cursor position at the tank's coordinates
+  \ and return its column _col_.
+
+: tank> ( -- )
+  at-tank@ -tank-extreme tank-parts drop tank-x c1+! ;
+  \ Move the tank to the right.
+
+: (.tank ( -- col ) at-tank@ tank-parts ;
+  \ Display the tank at its current position and return column
+  \ _col_ at its right.
+
+: .tank ( -- ) (.tank drop ;
+  \ Display the tank at its current position.
+
+0 [if]
+
+  \ XXX OLD -- The balls gun is wider than the central UDG of
+  \ the tank. Therefore the whole tank must be displayed.
+
+: .tank-arm ( -- )
+  tank-attr attr!
+  tank-x c@ 1+ dup tank-y at-xy
+                   tank-arm-udg ?emit-outside drop ;
+  \ If the middle part of the tank is visible (i.e. outside the
+  \ building), display it.
+
+[then]
+
+: new-tank ( -- )
+  repair-tank bullet-gun# set-gun park-tank .tank ;
+
+: <tank ( -- ) tank-x c1-! (.tank -tank-extreme drop ;
+  \ Move the tank to the left.
+
+: ?<tank ( -- ) tank-x c@ tank-min-x = ?exit <tank ;
+  \ If the tank column is not the minimum, move the tank to the
+  \ left.
+
+: ?tank> ( -- ) tank-x c@ tank-max-x = ?exit tank> ;
+  \ If the tank column is not the maximum, move the tank to the
+  \ right.
+
+      ' ?<tank , \ move tank to the left
+here  0 ,        \ do nothing
+      ' ?tank> , \ move tank to the right
+constant tank-movements ( -- a )
+  \ Execution table of tank movements.
+
+: tank-movement ( -- a ) tank-rudder tank-movements array> ;
+
+8 cconstant tank-interval \ ticks
+
+: schedule-tank ( -- ) ticks tank-interval + tank-time ! ;
+
+: driving ( -- )
+  tank-time @ past? 0exit \ exit if too soon
+  tank-movement perform schedule-tank ;
+
+: recharge-gun ( -- ) ;
+  \ XXX TODO --
+
+: recharging ( -- )
+  gun-below-building? 0exit
+  kk-up pressed?      0exit
+  recharge-gun ;
+  \ XXX TODO --
 
   \ ===========================================================
   cr .( Instructions) ?depth debug-point \ {{{1
@@ -5012,7 +5026,7 @@ cvariable projectile-frame
                 kk-down pressed?    0exit
                 change-gun schedule-arming ;
 
-: manage-tank ( -- ) driving arming shooting ;
+: manage-tank ( -- ) driving arming shooting recharging ;
 
 : new-record? ( -- f ) score @ record @ > ;
   \ Is there a new record?
