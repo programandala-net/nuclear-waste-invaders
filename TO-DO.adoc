@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-06
+:revdate: 2018-02-08
 
 Older first:
 
@@ -141,10 +141,6 @@ Improve the visibility of the projectile right above the tank.
 
 - Adjust the calculation of `mortal?`. Try removing `2*`.
 
-== 2018-01-31
-
-- Improve `difficult-cure?`.
-
 == 2018-02-02
 
 - Fix: no explosion sound when stamina becomes 1?
@@ -154,3 +150,7 @@ Improve the visibility of the projectile right above the tank.
 
 - Improve projectile explosions with sequential frames.
 - Improve projectile explosions with specific sprites for every type.
+
+== 2018-02-07
+
+- Fix: do limit the number of flying projectiles.

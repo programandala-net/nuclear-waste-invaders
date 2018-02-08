@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.179.0+201802072229" ;
+: version$ ( -- ca len ) s" 0.180.0+201802081730" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3035,12 +3035,12 @@ building-top-y 11 + cconstant building-bottom-y
 
 : containers-bottom ( n -- )
   container-attr attr!
-  0 ?do  container-bottom .2x1-udg-sprite  loop ;
+  0 ?do container-bottom .2x1-udg-sprite loop ;
   \ Draw a row of _n_ bottom parts of containers.
 
 : containers-top ( n -- )
   container-attr attr!
-  0 ?do  container-top .2x1-udg-sprite  loop ;
+  0 ?do container-top .2x1-udg-sprite loop ;
   \ Draw a row of _n_ top parts of containers.
 
 : .brick ( -- ) brick-attr attr! brick .1x1sprite ;
@@ -3053,9 +3053,8 @@ create containers-half
     \ change their order, depending on the building position
   , ,
 
-: yard ( row -- )
-                         0 over at-xy .brick
-  [ last-column ] cliteral swap at-xy .brick ;
+: yard ( row -- )                        0 over at-xy .brick
+                  [ last-column ] cliteral swap at-xy .brick ;
   \ Draw the yard limits.
 
 variable repaired
@@ -3319,7 +3318,6 @@ cconstant /projectile
   \
   \ (*) = Constant value copied by `get-projectile` from the
   \       structure pointed by `gun~`.
-
 
 #projectiles /projectile * constant /projectiles
 
@@ -3850,17 +3848,13 @@ defer ?dock ( -- )
   \ Move the current invader, which is retreating to the right,
   \ detecting projectiles and dock.
 
-cvariable cure-factor  20 cure-factor c!
+10 cconstant cure-factor
   \ XXX TMP -- for testing
 
-: difficult-cure? ( -- f )
-  max-stamina invader~ ~stamina c@ -
-  cure-factor c@ * \ XXX TMP -- for testing
-  random 0<> ;
-  \ Is it a difficult cure? The flag _f_ is calculated
-  \ randomly, based on the stamina: The less stamina, the more
-  \ chances to be a difficult cure. This is used to delay the
-  \ cure.
+: difficult-cure? ( -- 0f )
+  max-stamina invader~ ~stamina c@ - cure-factor * random ;
+  \ Is it a difficult cure?  The less stamina, the more chances
+  \ to be a difficult cure. This is used to delay the cure.
 
 : cure ( -- ) invader~ ~stamina c@1+ max-stamina min
               invader~ ~stamina c! ;
@@ -5192,7 +5186,6 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Status bar, part 2 ) ?depth debug-point \ {{{1
 
-
 : .bullets-icon ( -- ) bullet-sprite .1x1sprite ;
 
 : .missiles-icon ( -- ) missile-sprite .1x1sprite ;
@@ -5295,7 +5288,6 @@ localized-string about-next-location$ ( -- ca len )
     i flying-projectiles array> @ u.
   loop cr ;
 
-
 : ni ( -- ) next-invader ;
 : mi ( -- ) manage-invaders ;
 : ia ( -- ) invader~ ~action perform ;
@@ -5341,7 +5333,6 @@ localized-string about-next-location$ ( -- ca len )
 
 : kill-right ( -- ) max-invaders half-max-invaders (kill ;
   \ Kill the right-side invaders.
-
 
 : .i ( n -- )
   >r
