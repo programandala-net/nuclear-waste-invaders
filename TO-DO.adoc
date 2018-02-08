@@ -114,8 +114,6 @@ Improve the visibility of the projectile right above the tank.
 - Make missiles affected by wind and display a weather vane in the
   status bar.
 - Add sound effect to arm toggling.
-- Convert `invader-attr` to `~attr` and update it after `~stamina`.
-  This saves run-time calculations.
 - Reduce the range of the the mothership.
 
 == 2018-01-24

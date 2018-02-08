@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.180.0+201802081730" ;
+: version$ ( -- ca len ) s" 0.181.0+201802081757" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2762,10 +2762,11 @@ max-invaders 1- cconstant last-invader#
   field:  ~x-inc          \ -1|1
   field:  ~initial-x-inc  \ -1|1
   cfield: ~stamina        \ 0..3
+  cfield: ~attr           \ color attribute
   field:  ~action         \ execution token
   field:  ~species        \ data structure address
   field:  ~explosion-time \ ticks clock time
-  cfield: ~layer          \ 0 (lowest) .. 4 (highest)
+  cfield: ~layer          \ 0 (bottom) .. 4 (top)
   cfield: ~endurance      \ 1..max-endurance
 cconstant /invader
   \ Data structure of an species.
@@ -2923,9 +2924,23 @@ defer docked-invader-action ( -- )
 
 max-stamina cconstant mothership-stamina
 
+create stamina-attributes ( -- ca )   dying-invader-attr c,
+                                    wounded-invader-attr c,
+                                    healthy-invader-attr c,
+  \ Table to index the stamina (1..3) to its proper attribute.
+
+: stamina>attr ( n -- c )
+  [ stamina-attributes 1- ] literal + c@ ;
+  \ Convert stamina _n_ to its corresponding attribute _c_.
+
+: invader-stamina! ( n -- )
+  dup invader~ ~stamina c!  stamina>attr invader~ ~attr c! ;
+  \ Make _n_ the stamina of the current invader and change its
+  \ attribute accordingly.
+
 : create-invaders ( n1 n2 -- )
   ?do i set-invader
-      mothership-stamina invader~ ~stamina c!
+      mothership-stamina invader-stamina!
       ['] docked-invader-action invader~ ~action !
   loop ;
   \ Create new docked invaders from _n2_ to _n1-1_.  The data
@@ -2939,19 +2954,6 @@ max-stamina cconstant mothership-stamina
 : create-right-squadron ( -- )
   init-right-invaders-data
   max-invaders half-max-invaders create-invaders ;
-
-create stamina-attributes ( -- ca )   dying-invader-attr c,
-                                    wounded-invader-attr c,
-                                    healthy-invader-attr c,
-  \ Table to index the stamina (1..3) to its proper attribute.
-
-: stamina>attr ( n -- c )
-  [ stamina-attributes 1- ] literal + c@ ;
-  \ Convert stamina _n_ to its corresponding attribute _c_.
-
-: invader-attr ( -- c ) invader~ ~stamina c@ stamina>attr ;
-  \ Return attribute _c_ corresponding to the stamina of the
-  \ current invader.
 
 : +invaders ( n0 n1 n2 -- n3 )
   ?do i invader#>~ ~stamina c@ 0<> abs + loop ;
@@ -3609,7 +3611,7 @@ variable invader-time
   \ deactivate this for docked invaders.
 
 : .invader ( -- )
-  invader-attr attr! invader-udg .2x1-udg-sprite ;
+  invader~ ~attr c@ attr! invader-udg .2x1-udg-sprite ;
   \ Display the current invader.  at the cursor coordinates, in
   \ its proper attribute.
 
@@ -3857,7 +3859,7 @@ defer ?dock ( -- )
   \ to be a difficult cure. This is used to delay the cure.
 
 : cure ( -- ) invader~ ~stamina c@1+ max-stamina min
-              invader~ ~stamina c! ;
+              invader-stamina! ;
   \ Cure the current invader, increasing its stamina.
 
 : ?cure ( -- ) difficult-cure? ?exit cure ;
@@ -4533,7 +4535,7 @@ variable mothership-explosion-time
   \ The current invader retreats.
 
 : wounded ( -- )
-  invader~ ~stamina c@1- min-stamina max invader~ ~stamina c! ;
+  invader~ ~stamina c@1- min-stamina max invader-stamina! ;
   \ Reduce the invader's stamina after being shoot.
 
 : mortal? ( -- f ) invader~ ~stamina c@ 2*
