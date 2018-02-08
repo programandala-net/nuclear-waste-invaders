@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.181.0+201802081757" ;
+: version$ ( -- ca len ) s" 0.182.0+201802081939" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -234,6 +234,8 @@ defer ((debug-point  ' noop ' ((debug-point defer!
 
 : ~~stack-info ( -- )
   0 ~~y c@ at-xy ." D:" depth . ." R:" rdepth . space ;
+  \ XXX TMP -- for debugging
+
 ' ~~stack-info ' ~~app-info defer!
   \ XXX TMP -- for debugging
 
@@ -3796,16 +3798,16 @@ defer ?dock ( -- )
     2dup is-there-a-wall?       if 2drop <hit-wall  exit else
     is-there-a-container?       if <hit-container        else
     <move-invader
-  thens ;
-  ' <attacking-invader-action defer!
+  thens
+  ; ' <attacking-invader-action defer!
   \ Move the current invader, which is attacking to the left,
   \ detecting projectiles, wall and containers.
 
 :noname ( -- )
   left-of-invader is-there-a-projectile?
   if   turn-back> exit
-  then <move-invader ?dock ;
-  ' <retreating-invader-action defer!
+  then <move-invader ?dock
+  ; ' <retreating-invader-action defer!
   \ Move the current invader, which is retreating to the left,
   \ detecting projectiles and dock.
 
@@ -3837,16 +3839,16 @@ defer ?dock ( -- )
     2dup is-there-a-wall?       if 2drop hit-wall> exit else
     is-there-a-container?       if hit-container>       else
     move-invader>
-  thens ;
-  ' attacking>-invader-action defer!
+  thens
+  ; ' attacking>-invader-action defer!
   \ Move the current invader, which is attacking to the right,
   \ detecting projectiles, wall and containers.
 
 :noname ( -- )
   right-of-invader is-there-a-projectile?
   if   <turn-back exit
-  then move-invader> ?dock ;
-  ' retreating>-invader-action defer!
+  then move-invader> ?dock
+  ; ' retreating>-invader-action defer!
   \ Move the current invader, which is retreating to the right,
   \ detecting projectiles and dock.
 
@@ -3973,6 +3975,15 @@ defer visible-mothership-action ( -- )
   \ Set `visible-mothership-action` as the current action of
   \ the mothership.
 
+defer stopped-mothership-action ( -- )
+  \ Action of the flying mothership when it's visible but
+  \ stopped above the building.
+
+: set-stopped-mothership-action ( -- )
+  ['] stopped-mothership-action mothership-action! ;
+  \ Set `stopped-mothership-action` as the current action of
+  \ the mothership.
+
 1 cconstant mothership-y
   \ Row of the mothership.
 
@@ -4078,14 +4089,12 @@ defer set-exploding-mothership ( -- )
        mothership-retreat-bonus update-score
   else set-exploding-mothership then ;
 
-: start-mothership ( -- ) -1|1 set-mothership-direction ;
-
 : init-mothership ( -- )
   1 motherships c!
   max-stamina set-mothership-stamina
   set-flying-mothership-sprite set-invisible-mothership-action
   mothership-stopped off mothership-time off
-  place-mothership start-mothership ;
+  place-mothership -1|1 set-mothership-direction ;
 
 : visible-mothership? ( -- f )
   mothership-x @
@@ -4374,8 +4383,8 @@ constant visible-mothership-movements ( -- a )
 :noname ( -1..1 -- )
   dup mothership-x-inc !
       visible-mothership-movements array> @
-      ['] move-visible-mothership defer! ;
-' set-mothership-direction defer!
+      ['] move-visible-mothership defer!
+  ; ' set-mothership-direction defer!
 
 : above-building? ( -- f )
   mothership-x @
@@ -4384,9 +4393,8 @@ constant visible-mothership-movements ( -- a )
   between ;
   \ Is the mothership above the building?
 
-: stopped-mothership? ( -- f ) mothership-x-inc @ 0= ;
-
 : stop-mothership ( -- ) 0 set-mothership-direction
+                         set-stopped-mothership-action
                          mothership-stopped on ;
 
 : ?stop-mothership ( -- ) mothership-stopped @ ?exit
@@ -4394,21 +4402,35 @@ constant visible-mothership-movements ( -- a )
                                       3 random ?exit
                                stop-mothership ;
 
-: ?start-mothership ( -- ) 9 random ?exit start-mothership ;
+: start-mothership? ( -- f ) 9 random 0= ;
+  \ XXX TODO -- Calculate the start direction after the number
+  \ of invaders on each side and the position of the tank.
+
+: ?start-mothership ( -- )
+  start-mothership? 0exit
+  -1|1 set-mothership-direction set-visible-mothership-action ;
 
 :noname ( -- )
-  stopped-mothership? if ?start-mothership exit then
   move-visible-mothership
   visible-mothership? 0=
   if set-invisible-mothership-action exit then
-  ?stop-mothership ; ' visible-mothership-action defer!
+  ?stop-mothership
+  ; ' visible-mothership-action defer!
   \ Action of the mothership when it's visible.
+
+:noname ( -- )
+  ?start-mothership
+  ; ' stopped-mothership-action defer!
+  \ Action of the mothership when it's visible but stopped
+  \ above the building.
+  \
+  \ XXX TODO -- Add curing.
 
 :noname ( -- )
   advance-mothership visible-mothership?
   if   .visible-mothership set-visible-mothership-action exit
-  then mothership-in-range? ?exit mothership-turns-back ;
-  ' invisible-mothership-action defer!
+  then mothership-in-range? ?exit mothership-turns-back
+  ; ' invisible-mothership-action defer!
   \ Action of the mothership when it's invisible.
 
 8 cconstant mothership-interval \ ticks
