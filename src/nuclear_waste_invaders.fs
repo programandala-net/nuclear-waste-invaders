@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.183.0+201802082216" ;
+: version$ ( -- ca len ) s" 0.184.0+201802082246" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4626,12 +4626,8 @@ variable mothership-explosion-time
   \ nothing. This is used only in case the value of `sky-attr`
   \ changes in future versions.
 
-: hit-something? ( -- f|0f ) projectile-xy xy>attr sky-attr<> ;
-  \ Did the projectile hit something?
-
-: impacted? ( -- f ) hit-something? dup if impact then ;
-  \ If the projectil impacted, manage the impact and return
-  \ _true_.  Otherwise do nothing and return _false_.
+: impact? ( -- f|0f ) projectile-xy xy>attr sky-attr<> ;
+  \ Did the projectile impacted?
 
   \ ===========================================================
   cr .( Arms) ?depth debug-point \ {{{1
@@ -4860,7 +4856,7 @@ cvariable projectile-frame
   projectile~ ~projectile-y c1-!
   projectile-xy is-there-a-projectile?
   if projectile-xy hit-projectile destroy-projectile exit then
-  impacted? ?exit .projectile ;
+  impact? if impact exit then .projectile ;
   \ Default action of the projectiles.
   \
   \ XXX TODO -- Move `hit-something?` here to simplify the
@@ -4894,7 +4890,7 @@ cvariable projectile-frame
      destroy-projectile exit then
   projectile-lost? if destroy-projectile exit then
   projectile~ ~projectile-y c1-!
-  impacted? ?exit .projectile ;
+  impact? if impact exit then .projectile ;
   \ Action of the balls that are flying on the left wall of the
   \ building, and therefore can repaier the brechs.
 
@@ -4910,7 +4906,7 @@ cvariable projectile-frame
      destroy-projectile exit then
   projectile-lost? if destroy-projectile exit then
   projectile~ ~projectile-y c1-!
-  impacted? ?exit .projectile ;
+  impact? if impact exit then .projectile ;
   \ Action of the balls that are flying on the right wall of
   \ the building, and therefore can repaier the brechs.
 
