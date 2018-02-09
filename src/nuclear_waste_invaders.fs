@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.186.1+201802091315" ;
+: version$ ( -- ca len ) s" 0.187.0+201802091340" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3127,15 +3127,15 @@ variable used-projectiles
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
 
-50 cconstant #bullets
+25 cconstant #bullets
   \ Number of bullets the tank can hold.
   \ XXX TMP -- provisional value, for testing
 
-20 cconstant #missiles
+04 cconstant #missiles
   \ Number of missiles the tank can hold.
   \ XXX TMP -- provisional value, for testing
 
-20 cconstant #balls
+02 cconstant #balls
   \ Number of balls the tank can hold.
   \ XXX TMP -- provisional value, for testing
 
