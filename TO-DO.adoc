@@ -152,3 +152,6 @@ Improve the visibility of the projectile right above the tank.
 == 2018-02-09
 
 - Move `recharging` to save the deferring of `recharge-gun`.
+- Improve the recharging: recharge every projectile individually and
+  update the status bar.
+

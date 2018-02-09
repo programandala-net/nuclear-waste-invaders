@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.191.0+201802091902" ;
+: version$ ( -- ca len ) s" 0.192.0+201802091925" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3551,13 +3551,16 @@ false [if] \ XXX TODO --
 
 [breakable] [if]
 
-defer quit-key? ( -- f )
+defer quit-game ( -- )
 
-' break-key? ' quit-key? defer!
+' noop ' quit-game defer!
 
-: quit-game ( -- ) mode-32 default-colors quit ;
+: (quit-game ( -- ) mode-32 default-colors quit ;
 
-: ?quit-game ( -- ) quit-key? 0exit quit-game ;
+: ?quit-game ( -- ) break-key? 0exit quit-game ;
+
+: breakable ( -- ) ['] (quit-game ['] quit-game defer! ;
+  \ Make the game breakable.
 
 [then]
 
@@ -5582,7 +5585,10 @@ cr cr greeting
 
 cr cr .( Type RUN to start) cr
 
-[breakable] 0= ?\ cr .( The BREAK key quits the game) cr
+[breakable] 0= ?(
+    \ <------------------------------>
+cr .( Type BREAKABLE to make the game)
+cr .( breakable by the BREAK key.) cr ?)
 
 end-program
 
