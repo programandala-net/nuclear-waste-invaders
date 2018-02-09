@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.186.0+201802091251" ;
+: version$ ( -- ca len ) s" 0.186.1+201802091315" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3192,10 +3192,7 @@ cvariable flying-projectile#
 
 16 cconstant max-flying-projectiles
   \ Maximum number of projectiles that can be flying at the
-  \ same time. This is used only to create the array, i.e.  no
-  \ check is done at run-time. Therefore, the value must be
-  \ enough according to the configuration of the shooting
-  \ intervals.
+  \ same time.
 
 max-flying-projectiles cells cconstant /flying-projectiles
 
@@ -3801,9 +3798,9 @@ defer ?dock ( -- )
   \ Is the current invader at the dock, i.e. at its start
   \ position?
 
-: is-there-a-wall? ( xy -- f ) xy>attr brick-attr = ;
+: is-there-a-wall? ( x y -- f ) xy>attr brick-attr = ;
 
-: is-there-a-container? ( xy -- f ) xy>attr container-attr = ;
+: is-there-a-container? ( x y -- f ) xy>attr container-attr = ;
 
 : <move-invader ( -- )
   invader~ ~x c1-! at-invader .invader .sky ;
@@ -3823,8 +3820,9 @@ defer ?dock ( -- )
 : <hit-wall ( -- )
   healthy? if   <start-breaking-the-wall exit
            then turn-back> ;
+  \ Hit the wall that is at the left of the current invader:
   \ If the current invader is healthy, start breaking the wall
-  \ at its left; else turn back.
+  \ at its left; else turn back to the right.
 
 :noname ( -- )
   left-of-invader cond
@@ -3864,8 +3862,9 @@ defer ?dock ( -- )
 : hit-wall> ( -- )
   healthy? if   start-breaking-the-wall> exit
            then <turn-back ;
+  \ Hit the wall that is at the right of the current invader:
   \ If the current invader is healthy, start breaking the wall
-  \ at its right; else turn back.
+  \ at its right; else turn back to the left.
 
 :noname ( -- )
   right-of-invader cond
@@ -5010,7 +5009,7 @@ cvariable projectile-frame
               schedule-trigger ;
   \ Fire the gun of the tank.
 
-: flying-projectiles? ( -- f ) #flying-projectiles c@ 0<> ;
+: flying-projectiles? ( -- 0f ) #flying-projectiles c@ ;
   \ Is there any projectile flying?
 
 : trigger-ready? ( -- f ) trigger-time @ past? ;
@@ -5032,11 +5031,15 @@ cvariable projectile-frame
   next-flying-projectile ;
   \ Manage a flying projectile, if any.
 
+: max-flying-projectiles? ( -- f )
+  #flying-projectiles c@ max-flying-projectiles = ;
+
 : shooting ( -- )
-  trigger-pressed?    0exit
-  trigger-ready?      0exit
-  projectiles-left    0exit
-  gun-below-building? ?exit fire ;
+  trigger-pressed?        0exit
+  trigger-ready?          0exit
+  projectiles-left        0exit
+  max-flying-projectiles? ?exit
+  gun-below-building?     ?exit fire ;
   \ Manage the gun.
 
 : tank-previous-frame ( -- )
@@ -5359,7 +5362,7 @@ localized-string about-next-location$ ( -- ca len )
   \ Display all game UDGs.
 
 : mp ( -- ) manage-projectiles ;
-: fp? ( -- f ) flying-projectiles? ;
+: fp? ( -- 0f ) flying-projectiles? ;
 : mop ( -- ) move-projectile ;
 : np ( -- ) next-flying-projectile ;
 
