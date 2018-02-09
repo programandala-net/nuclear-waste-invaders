@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.187.0+201802091340" ;
+: version$ ( -- ca len ) s" 0.188.0+201802091428" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -465,44 +465,6 @@ localized-string not-in-this-language$ ( -- ca len )
 'n' cconstant language-key
   \ Key to change the current language.
 
-0 [if] \ XXX OLD
-
-here ," PUNTUACIÓN"
-here ," POENTARO"
-here ," SCORE"
-localized-string score$ ( -- ca len )
-  \ Return string _ca len_ in the current language.
-
-[then]
-
-here ," Puntos:"
-here ," Poentoj:"
-here ," Score:"
-localized-string score-label$ ( -- ca len )
-  \ Return string _ca len_ in the current language.
-
-0 [if] \ XXX OLD
-
-here ," RÉCOR"
-here ," RIKORDO"
-here ," RECORD"
-localized-string record$ ( -- ca len )
-  \ Return string _ca len_ in the current language.
-
-  \ XXX TODO -- Simplify: use `sconstants` instead, using the
-  \ language as index and a wrapper word to provide it.
-
-[then]
-
-0 [if] \ XXX OLD
-
-here ," jugadores"
-here ," ludantoj"
-here ," players"
-localized-string players$ ( -- ca len )
-
-[then]
-
 here ," [E]mpezar"
 here ," [E]ki"
 here ," [S]tart"
@@ -796,7 +758,7 @@ cvariable used-udgs  used-udgs coff
   cr .( Status bar, part 1) ?depth debug-point \ {{{1
 
                                  2 cconstant ammo-digits
-                                 5 cconstant score-digits
+                                 4 cconstant score-digits
 
                                  0 cconstant status-bar-y
 
@@ -5275,11 +5237,6 @@ localized-string about-next-location$ ( -- ca len )
 
 : .balls-icon ( -- ) ball-sprite .1x1sprite ;
 
-: score-label-x ( -- col ) score-x score-label$ nip - ;
-
-: .score-label ( -- )
-  score-label$ score-label-x status-bar-y at-xy type ;
-
 : .record-separator ( -- )
   record-separator-x status-bar-y at-xy '/' emit ;
 
@@ -5293,7 +5250,7 @@ localized-string about-next-location$ ( -- ca len )
   gun-type c@  .bullets-icon  .bullets  space
                .missiles-icon .missiles space
                .balls-icon    .balls
-  set-gun .score-label .score .record-separator .record ;
+  set-gun .score .record-separator .record ;
 
 : status-bar ( -- )
   hide-status-bar home (status-bar reveal-status-bar ;
