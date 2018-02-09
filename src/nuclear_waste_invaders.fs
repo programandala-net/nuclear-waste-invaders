@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.190.0+201802091846" ;
+: version$ ( -- ca len ) s" 0.191.0+201802091902" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -780,7 +780,7 @@ cvariable used-udgs  used-udgs coff
   \ Compile `#` _n_ times.
 
 : (.score ( n col row -- )
-  at-xy s>d <# [ score-digits ] [#] #> text-attr attr! type ;
+  at-xy 0 <# [ score-digits ] [#] #> text-attr attr! type ;
   \ Display score _n_ at coordinates _col row_.
 
 ' xdepth alias projectiles-left ( -- n )
@@ -788,7 +788,7 @@ cvariable used-udgs  used-udgs coff
 0 cconstant ammo-x
 
 : (.ammo ( n -- )
-  projectiles-left s>d <# [ ammo-digits ] [#] #>
+  projectiles-left 0 <# [ ammo-digits ] [#] #>
   ammo-x status-bar-y at-xy type ;
   \ Display the current ammo left at the status bar,
   \ with the current attribute.
