@@ -153,3 +153,4 @@ Improve the visibility of the projectile right above the tank.
 
 - Move `recharging` to save the deferring of `recharge-gun`.
 - Replace `s>d` with `0`.
+- Make mothership windows move when it's halted above the building.

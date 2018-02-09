@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.188.0+201802091428" ;
+: version$ ( -- ca len ) s" 0.189.0+201802091739" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -47,6 +47,7 @@ cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
 true constant [breakable] immediate
   \ Make the program breakable with the BREAK key combination?
+  \ XXX TMP -- for debugging
 
 true constant [udg] immediate
   \ Reference graphics with their UDG codes (old method)
@@ -637,7 +638,8 @@ variable catastrophe \ flag (game end condition)
 
 0 cconstant kk-left#  0. 2constant kk-left
 0 cconstant kk-right# 0. 2constant kk-right
-0 cconstant kk-fire#  0. 2constant kk-fire
+0 cconstant kk-fire1# 0. 2constant kk-fire1
+0 cconstant kk-fire2# 0. 2constant kk-fire2
 0 cconstant kk-down#  0. 2constant kk-down
 0 cconstant kk-up#    0. 2constant kk-up
 
@@ -663,35 +665,35 @@ variable catastrophe \ flag (game end condition)
 
   \ Controls
 
-5 cconstant /controls
+6 cconstant /controls
   \ Bytes per item in the `controls` table.
 
 create controls
 
-  \ left    right     fire       down      up
+  \ left   right    fire1     fire2     down     up
   \ ---------------------------------------------------
 
-  kk-5# c,  kk-8# c,  kk-en# c,  kk-6#  c,  kk-7# c,
-    \ cursor+enter
-  kk-r# c,  kk-t# c,  kk-en# c,  kk-m#  c,  kk-g# c,
+  kk-5# c, kk-8# c, kk-en# c, kk-sp# c, kk-6# c, kk-7# c,
+    \ cursor+enter+space
+  kk-r# c, kk-t# c, kk-en# c, kk-sp# c, kk-q# c, kk-a# c,
     \ Spanish Dvorak
-  kk-z# c,  kk-x# c,  kk-en# c,  kk-sp# c,  kk-p# c,
+  kk-z# c, kk-x# c, kk-en# c, kk-sp# c, kk-a# c, kk-q# c,
     \ QWERTY
-  kk-5# c,  kk-8# c,  kk-0#  c,  kk-6#  c,  kk-7# c,
-    \ cursor joystick
-  kk-5# c,  kk-8# c,  kk-sp# c,  kk-6#  c,  kk-7# c,
-    \ cursor+space
-  kk-1# c,  kk-2# c,  kk-5#  c,  kk-3#  c,  kk-4# c,
+  kk-5# c, kk-8# c, kk-0#  c, kk-sp# c, kk-6# c, kk-7# c,
+    \ cursor joystick + space
+  kk-5# c, kk-8# c, kk-sp# c, kk-0#  c, kk-6# c, kk-7# c,
+    \ cursor+space+0
+  kk-1# c, kk-2# c, kk-5#  c, kk-en# c, kk-3# c, kk-4# c,
     \ Sinclair 1
-  kk-6# c,  kk-7# c,  kk-0#  c,  kk-8#  c,  kk-9# c,
+  kk-6# c, kk-7# c, kk-0#  c, kk-a#  c, kk-8# c, kk-9# c,
     \ Sinclair 2
-  kk-o# c,  kk-p# c,  kk-q#  c,  kk-a#  c,  kk-7# c,
+  kk-o# c, kk-p# c, kk-x#  c, kk-sp# c, kk-a# c, kk-q# c,
     \ QWERTY
-  kk-n# c,  kk-m# c,  kk-sp# c,  kk-a#  c,  kk-q# c,
+  kk-n# c, kk-m# c, kk-1#  c, kk-b#  c, kk-a# c, kk-q# c,
     \ QWERTY
-  kk-q# c,  kk-w# c,  kk-en# c,  kk-l#  c,  kk-p# c,
+  kk-q# c, kk-w# c, kk-sp# c, kk-x#  c, kk-l# c, kk-p# c,
     \ QWERTY
-  kk-z# c,  kk-x# c,  kk-sp# c,  kk-l#  c,  kk-p# c,
+  kk-z# c, kk-x# c, kk-sp# c, kk-en# c, kk-l# c, kk-p# c,
     \ QWERTY
 
 here controls - /controls / cconstant max-controls
@@ -705,7 +707,8 @@ max-controls 1- cconstant last-control
 : set-controls ( n -- )
   >controls     dup c@  dup c!> kk-left#   #>kk 2!> kk-left
              1+ dup c@  dup c!> kk-right#  #>kk 2!> kk-right
-             1+ dup c@  dup c!> kk-fire#   #>kk 2!> kk-fire
+             1+ dup c@  dup c!> kk-fire1#  #>kk 2!> kk-fire1
+             1+ dup c@  dup c!> kk-fire2#  #>kk 2!> kk-fire2
              1+ dup c@  dup c!> kk-down#   #>kk 2!> kk-down
              1+     c@  dup c!> kk-up#     #>kk 2!> kk-up   ;
   \ Make controls number _n_ (item of the `controls` table) the
@@ -3450,7 +3453,7 @@ defer recharge-gun ( -- )
 
 : recharging ( -- )
   gun-below-building? 0exit
-  kk-up pressed?      0exit
+  kk-fire2 pressed?   0exit
   recharge-gun .ammo ;
 
   \ ===========================================================
@@ -3477,14 +3480,14 @@ defer recharge-gun ( -- )
   \   row dup s" [Space] to change controls:" rot center-type
   \   9 over 2+  at-xy ." Left " kk-left#  .control
   \   9 over 3 + at-xy ." Right" kk-right# .control
-  \   9 swap 4 + at-xy ." Fire " kk-fire#  .control ;
+  \   9 swap 4 + at-xy ." Fire " kk-fire1#  .control ;
   \   \ Display controls at the current row.
 
 : left-key$ ( -- ca len ) kk-left# kk#>string ;
 
 : right-key$ ( -- ca len ) kk-right# kk#>string ;
 
-: fire-key$ ( -- ca len ) kk-fire# kk#>string ;
+: fire1-key$ ( -- ca len ) kk-fire1# kk#>string ;
 
 : .controls-legend ( -- )
   10 at-x left-arrow  .2x1-udg-sprite
@@ -3494,7 +3497,7 @@ defer recharge-gun ( -- )
 
 : .control-keys ( -- )
   10 at-x left-key$  2 type-right-field
-  13 at-x fire-key$  6 type-center-field
+  13 at-x fire1-key$ 6 type-center-field
   20 at-x right-key$ 2 type-left-field ;
   \ Display control keys at the current row.
 
@@ -3548,11 +3551,13 @@ false [if] \ XXX TODO --
 
 [breakable] [if]
 
-: quit-game ( -- ) mode-32 default-colors quit ;
-  \ XXX TMP -- for debugging
+defer quit-key? ( -- f )
 
-: ?quit-game ( -- ) break-key? if quit-game then ;
-  \ XXX TMP -- for debugging
+' break-key? ' quit-key? defer!
+
+: quit-game ( -- ) mode-32 default-colors quit ;
+
+: ?quit-game ( -- ) quit-key? 0exit quit-game ;
 
 [then]
 
@@ -4630,14 +4635,16 @@ variable mothership-explosion-time
 
 3 cconstant #guns
 
-cvariable gun-type
+#guns 1- cconstant max-gun#
+
+cvariable gun#
   \ Identifier of the current gun of the tank:
   \ 0 = bullet gun
   \ 1 = missile gun
   \ 2 = ball gun
 
 0 constant gun~
-  \ Data address of the current arm identified by `gun-type`.
+  \ Data address of the current arm identified by `gun#`.
 
 0
    field: ~gun-projectile-stack        \ address
@@ -4671,7 +4678,7 @@ missile-gun# gun#>~ constant missile-gun~
   \ Activate the projectile stack of the current gun.
 
 :noname ( n -- )
-  dup gun-type c!
+  dup gun# c!
       gun#>~ dup !> gun~
              dup ~gun-tank-sprite c@ c!> tank-sprite
                  ~gun-projectile-x c@ c!> ammo-x
@@ -4977,9 +4984,6 @@ cvariable projectile-frame
 : trigger-ready? ( -- f ) trigger-time @ past? ;
   \ Is the trigger ready?
 
-: trigger-pressed? ( -- f ) kk-fire pressed? ;
-  \ Is the trigger pressed?
-
 : next-flying-projectile ( -- )
   flying-projectile# c@1+ dup #flying-projectiles c@ < and
   dup flying-projectile# c!
@@ -4997,7 +5001,7 @@ cvariable projectile-frame
   #flying-projectiles c@ max-flying-projectiles = ;
 
 : shooting ( -- )
-  trigger-pressed?        0exit
+  kk-fire1 pressed?       0exit
   trigger-ready?          0exit
   projectiles-left        0exit
   max-flying-projectiles? ?exit
@@ -5009,17 +5013,22 @@ cvariable projectile-frame
   \ Restore the previous frame of the tank.  This is used to
   \ prevent the tank chain from moving when the gun is changed.
 
-: change-gun ( -- ) gun-type c@1+ dup #guns < and set-gun
-                    tank-previous-frame .tank ;
+: change-gun ( n -- ) set-gun tank-previous-frame .tank ;
+
+: next-gun ( -- ) gun# c@1+ dup #guns < and change-gun ;
+
+: previous-gun ( -- )
+  gun# c@1- dup 0< if drop max-gun# then change-gun ;
 
 10 cconstant arming-interval \ ticks
 
 : schedule-arming ( -- )
   ticks arming-interval + arming-time ! ;
 
-: arming ( -- ) arming-time @ past? 0exit
-                kk-down pressed?    0exit
-                change-gun schedule-arming ;
+: arming ( -- )
+  arming-time @ past? 0exit
+  kk-down pressed? if previous-gun schedule-arming exit then
+  kk-up   pressed? if next-gun     schedule-arming      then ;
 
 : manage-tank ( -- ) driving arming shooting recharging ;
 
@@ -5247,9 +5256,9 @@ localized-string about-next-location$ ( -- ca len )
 : reveal-status-bar ( -- ) text-attr color-status-bar ;
 
 : (status-bar ( -- )
-  gun-type c@  .bullets-icon  .bullets  space
-               .missiles-icon .missiles space
-               .balls-icon    .balls
+  gun# c@ .bullets-icon  .bullets  space
+          .missiles-icon .missiles space
+          .balls-icon    .balls
   set-gun .score .record-separator .record ;
 
 : status-bar ( -- )
