@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.192.0+201802091925" ;
+: version$ ( -- ca len ) s" 0.192.1+201802092046" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3464,15 +3464,10 @@ defer recharge-gun ( -- )
 
 : game-version ( -- ) version$ 1 center-type ;
 
-127 cconstant '(c)'
-  \ The code of the copyright symbol.
-
-: (.copyright ( -- )
-  row 1 over    at-xy '(c)' emit ."  2016..2018 Marcos Cruz"
-      8 swap 1+ at-xy            ." (programandala.net)" ;
-  \ Display the copyright notice at the current coordinates.
-
-: .copyright ( -- ) 0 22 at-xy (.copyright ;
+: .copyright ( -- )
+  1 22 at-xy ." (C) 2016..2018 Marcos Cruz"
+  5 23 at-xy ." (programandala.net)" ;
+  \ Display the copyright notice.
 
   \ XXX OLD -- maybe useful in a future version
   \ : .control ( n -- ) ."  = " .kk# 4 spaces ;
