@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.192.1+201802092046" ;
+: version$ ( -- ca len ) s" 0.193.0+201802092122" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3190,7 +3190,10 @@ defer gun-stack ( -- )
   \ Recharge the projectiles stack _a_ with _n_ projectiles
   \ from the used projectiles stack.
 
-: +recharge ( a n -- ) xdepth - recharge ;
+: +recharge ( a n -- )
+  xdepth -
+  0 ?do used-projectiles-stack xstack x>
+                          over xstack >x .ammo loop drop ;
   \ Recharge the projectiles stack _a_, which is the current
   \ one, with as many projectiles as needed to complete its
   \ maximun size _n_, from the used projectiles stack.
