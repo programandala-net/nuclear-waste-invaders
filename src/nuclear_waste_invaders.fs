@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.189.0+201802091739" ;
+: version$ ( -- ca len ) s" 0.190.0+201802091846" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3980,11 +3980,6 @@ defer stopped-mothership-action ( -- )
   \ Action of the mothership when it's stopped above the
   \ building.
 
-: set-stopped-mothership-action ( -- )
-  ['] stopped-mothership-action mothership-action! ;
-  \ Set `stopped-mothership-action` as the current action of
-  \ the mothership.
-
 1 cconstant mothership-y
   \ Row of the mothership.
 
@@ -4188,7 +4183,7 @@ defer set-exploding-mothership ( -- )
   \ Return coordinates _col row_ of the position at the right
   \ of the mothership.
 
-: (move-visible-mothership-right ( -- )
+: move-visible-mothership> ( -- )
   mothership-x @ case
     whole-mothership-max-x   of
       at-mothership .sky (.visible-left-mothership endof
@@ -4339,11 +4334,11 @@ cvariable beam-invader#
   \ If the help was effective, return _true_; otherwise return
   \ _false_.
 
-: move-visible-mothership-right ( -- )
+: ?move-visible-mothership> ( -- )
   right-of-mothership is-there-a-projectile?
   if mothership-turns-back exit then
   help-invaders? ?exit
-  (move-visible-mothership-right ;
+  move-visible-mothership> ;
   \ Move the visible mothership to the right, if possible.
 
 : left-of-mothership ( -- col row )
@@ -4351,7 +4346,7 @@ cvariable beam-invader#
   \ Return coordinates _col row_ of the position at the left
   \ of the mothership.
 
-: (move-visible-mothership-left ( -- )
+: <move-visible-mothership ( -- )
   mothership-x @ case
     whole-mothership-min-x                               of
       .visible-right-mothership .sky advance-mothership  endof
@@ -4364,19 +4359,19 @@ cvariable beam-invader#
   endcase ;
   \ Do move the visible mothership to the left.
 
-: move-visible-mothership-left ( -- )
+: ?<move-visible-mothership ( -- )
   left-of-mothership is-there-a-projectile?
   if mothership-turns-back exit then
   help-invaders? ?exit
-  (move-visible-mothership-left ;
+  <move-visible-mothership ;
   \ Move the visible mothership to the left, if possible.
 
 defer move-visible-mothership ( -- )
   \ Execute the proper movement of the mothership.
 
-      ' move-visible-mothership-left ,
+      ' ?<move-visible-mothership ,
 here  ' noop ,
-      ' move-visible-mothership-right ,
+      ' ?move-visible-mothership> ,
 
 constant visible-mothership-movements ( -- a )
   \ Execution table.
@@ -4394,9 +4389,10 @@ constant visible-mothership-movements ( -- a )
   between ;
   \ Is the mothership above the building?
 
-: stop-mothership ( -- ) 0 set-mothership-x-inc
-                         set-stopped-mothership-action
-                         mothership-stopped on ;
+: stop-mothership ( -- )
+  0 set-mothership-x-inc
+  ['] stopped-mothership-action mothership-action!
+  mothership-stopped on ;
 
 : ?stop-mothership ( -- ) mothership-stopped @ ?exit
                             above-building? 0= ?exit
@@ -4436,7 +4432,7 @@ constant visible-mothership-movements ( -- a )
   \ Action of the mothership when it's visible and not stopped.
 
 :noname ( -- )
-  ?start-mothership
+  .mothership ?start-mothership
   ; ' stopped-mothership-action defer!
   \ Action of the mothership when it's visible but stopped
   \ above the building.
