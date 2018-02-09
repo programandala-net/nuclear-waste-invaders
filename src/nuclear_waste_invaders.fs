@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.185.0+201802082317" ;
+: version$ ( -- ca len ) s" 0.186.0+201802091251" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -826,7 +826,7 @@ cvariable used-udgs  used-udgs coff
   projectiles-left s>d <# [ ammo-digits ] [#] #>
   ammo-x status-bar-y at-xy type ;
   \ Display the current ammo left at the status bar,
-  \ withe the current attribute.
+  \ with the current attribute.
 
 : .ammo ( n -- ) text-attr attr! (.ammo ;
   \ Display the current ammo left at the status bar.
@@ -3223,26 +3223,48 @@ defer gun-stack ( -- )
   used-projectiles-stack xstack projectile~ >x gun-stack ;
 
 : recharge ( a n -- )
-  0 do used-projectiles-stack xstack x>
-                         over xstack >x loop drop ;
+  0 ?do used-projectiles-stack xstack x>
+                          over xstack >x loop drop ;
   \ Recharge the projectiles stack _a_ with _n_ projectiles
   \ from the used projectiles stack.
 
-: recharge-bullet-gun ( -- )
-  bullets-stack dup xstack xclear #bullets recharge ;
+: +recharge ( a n -- ) xdepth - recharge ;
+  \ Recharge the projectiles stack _a_, which is the current
+  \ one, with as many projectiles as needed to complete its
+  \ maximun size _n_, from the used projectiles stack.
+
+: -recharge ( a n -- ) over xstack xclear recharge ;
+  \ Select, clear and recharge the projectiles stack _a_ with
+  \ _n_ projectiles from the used projectiles stack.
+
+: -recharge-bullet-gun ( -- )
+  bullets-stack #bullets -recharge ;
   \ Empty and recharge the bullet gun.
 
-: recharge-missile-gun ( -- )
-  missiles-stack dup xstack xclear #missiles recharge ;
+: -recharge-missile-gun ( -- )
+  missiles-stack #missiles -recharge ;
   \ Empty and recharge the missile gun.
 
-: recharge-ball-gun ( -- )
-  balls-stack dup xstack xclear #balls recharge ;
+: -recharge-ball-gun ( -- )
+  balls-stack #balls -recharge ;
   \ Empty and recharge the ball gun.
 
-: recharge-guns ( -- )
-  recharge-bullet-gun recharge-missile-gun recharge-ball-gun ;
+: recharge-guns ( -- ) -recharge-bullet-gun
+                       -recharge-missile-gun
+                       -recharge-ball-gun ;
   \ Empty and recharge all guns.
+
+: +recharge-bullet-gun ( -- )
+  bullets-stack #bullets +recharge ;
+  \ Recharge the bullet gun.
+
+: +recharge-missile-gun ( -- )
+  missiles-stack #missiles +recharge ;
+  \ Recharge the missile gun.
+
+: +recharge-ball-gun ( -- )
+  balls-stack #balls +recharge ;
+  \ Recharge the ball gun.
 
 : -projectiles ( -- ) projectiles /projectiles erase ;
   \ Erase the projectiles data table.
@@ -3464,14 +3486,13 @@ constant tank-movements ( -- a )
   tank-time @ past? 0exit \ exit if too soon
   tank-movement perform schedule-tank ;
 
-: recharge-gun ( -- ) ;
-  \ XXX TODO --
+defer recharge-gun ( -- )
+  \ Recharge the current gun.
 
 : recharging ( -- )
   gun-below-building? 0exit
   kk-up pressed?      0exit
-  recharge-gun ;
-  \ XXX TODO --
+  recharge-gun .ammo ;
 
   \ ===========================================================
   cr .( Instructions) ?depth debug-point \ {{{1
@@ -4669,6 +4690,7 @@ cvariable gun-type
   cfield: ~gun-projectile-max-delay    \ bitmask
    field: ~gun-projectile-action       \ xt
   cfield: ~gun-projectile-harmlessness \ level (0..x)
+   field: ~gun-recharger               \ xt
 cconstant /gun
   \ Data structure of an arm projectile.
 
@@ -4695,6 +4717,10 @@ missile-gun# gun#>~ constant missile-gun~
   gun-stack
   ; ' set-gun defer!
   \ Set _n_ as the current arm (0=gun machine; 1=missile gun).
+
+:noname ( -- ) gun~ ~gun-recharger perform
+  ; ' recharge-gun defer!
+  \ Recharge the current gun.
 
   \ --------------------------------------------
   \ Set guns' data
@@ -4738,6 +4764,10 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 1  bullet-gun~ ~gun-projectile-harmlessness c!
 0 missile-gun~ ~gun-projectile-harmlessness c!
 3    ball-gun~ ~gun-projectile-harmlessness c!
+
+' +recharge-bullet-gun   bullet-gun~ ~gun-recharger !
+' +recharge-missile-gun missile-gun~ ~gun-recharger !
+' +recharge-ball-gun       ball-gun~ ~gun-recharger !
 
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1

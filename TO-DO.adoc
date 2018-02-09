@@ -20,10 +20,6 @@ Older first:
 - Detect if a wall is already broken, and change the graphic
   accordingly.
 
-== 2017-02-26, 2017-05-14, 2018-01-11
-
-- Get more ammo below the building.
-
 == 2017-02-28, 2017-12-19
 
 - Make the tank delay through the building.
@@ -145,12 +141,20 @@ Improve the visibility of the projectile right above the tank.
 - Improve projectile explosions with sequential frames.
 - Improve projectile explosions with specific sprites for every type.
 
-== 2018-02-07
+== 2018-02-07, 2018-02-09
 
-- Fix: do limit the number of flying projectiles.
+- Fix: do limit the number of flying projectiles. There's no run-time
+  check, and the array can overflow and crash the system.
 
 == 2018-02-08
 
 - Replace `+invaders` with a real-time counter.
 - Make `(new-mothership-x-inc` faster. Maybe calculate the weight of
   invaders at both sides with one single loop.
+- Allow only one flying missile.
+- Reduce altitude of bullets below the top invader.
+
+== 2018-02-09
+
+- Move `recharging` to save the deferring of `recharge-gun`.
+- Replace `s>d` with `0`.
