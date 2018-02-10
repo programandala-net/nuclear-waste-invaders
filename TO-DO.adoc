@@ -160,7 +160,5 @@ Improve the visibility of the projectile right above the tank.
 - Remove `set-exploding-projectile-sprite`, which is used only once.
 - Remove `set-beaming-mothership-sprite`, which is used only once.
 - Remove `set-exploding-mothership-sprite`, which is used only once.
-- Use a different color to highlight the current gun, or inverse
-  video, not just bright.
 - Fix: timings.
 - Fix: eventual crash in the second level.

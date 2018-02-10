@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.194.0+201802092351" ;
+: version$ ( -- ca len ) s" 0.195.0+201802101618" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -148,7 +148,7 @@ need black need blue   need red   need magenta need green
 need cyan  need yellow need white
 
 need papery need brighty need xy>attr need xy>attra
-need bright-mask
+need bright-mask need inversely
 
   \ --------------------------------------------
   cr .(   -Keyboard) ?depth \ {{{2
@@ -5014,7 +5014,7 @@ cvariable projectile-frame
 : .gun-icon ( -- ) gun~ ~gun-icon-displayer perform ;
 
 : highlight-gun ( -- )
-  [ text-attr brighty ] cliteral attr! .gun-icon ;
+  [ text-attr inversely ] cliteral attr! .gun-icon ;
 
 : unhighlight-gun ( -- ) text-attr attr! .gun-icon ;
 
