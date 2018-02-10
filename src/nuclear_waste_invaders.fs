@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.196.0+201802101932" ;
+: version$ ( -- ca len ) s" 0.197.0+201802102320" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -52,6 +52,8 @@ true constant [breakable] immediate
 true constant [udg] immediate
   \ Reference graphics with their UDG codes (old method)
   \ instead of their addresses (new method).
+
+true constant [debugging] immediate
 
   \ ===========================================================
   cr .( Library) \ {{{1
@@ -244,6 +246,36 @@ defer ((debug-point  ' noop ' ((debug-point defer!
 
 : borderx ( n -- )
   1024 0 ?do dup border white border loop drop black border ;
+
+rows 1- cconstant debug-bar-y
+
+ 0 cconstant depth-x
+ 6 cconstant rdepth-x
+12 cconstant mothership-x-x
+
+white cconstant debug-attr
+
+: .depth ( -- )
+  debug-attr attr!
+  depth-x debug-bar-y at-xy ." S:" depth . space ;
+
+: .rdepth ( -- )
+  debug-attr attr!
+  rdepth-x debug-bar-y at-xy ." R:" rdepth . space ;
+
+variable mothership-x
+
+: .mothership-x ( -- )
+  debug-attr attr! mothership-x-x debug-bar-y at-xy
+  ." M:" mothership-x @ . space ;
+
+: debug-bar ( -- ) .depth .rdepth .mothership-x ;
+
+'d' cconstant debug-key
+
+: debug-key? ( -- f ) key? 0dup if key debug-key = then ;
+
+: ?debug-bar ( -- ) debug-key? 0exit debug-bar ;
 
   \ ===========================================================
   cr .( Optimization) ?depth \ {{{1
@@ -3981,7 +4013,6 @@ defer stopped-mothership-action ( -- )
 1 cconstant mothership-y
   \ Row of the mothership.
 
-variable mothership-x
 variable mothership-x-inc
 
 udg/mothership 1- negate  constant visible-mothership-min-x
@@ -5287,6 +5318,7 @@ localized-string about-next-location$ ( -- ca len )
 : attack-wave ( -- ) init-mothership init-invaders ;
 
 : fight ( -- )
+  [debugging] [if] ?debug-bar [then] \ XXX TMP --
   [breakable] [if] ?quit-game [then] \ XXX TMP --
   \ ~~stack-info \ XXX INFORMER
   manage-projectiles manage-tank
@@ -5307,7 +5339,8 @@ localized-string about-next-location$ ( -- ca len )
 
 : another-attack? ( -- f ) breaches? catastrophe? 0= and ;
 
-: prepare-attack ( -- ) new-projectiles status-bar ;
+: prepare-attack ( -- ) new-projectiles status-bar
+  [debugging] [if] debug-bar [then] ;
 
 : prepare-battle ( -- ) settle new-tank ;
 
