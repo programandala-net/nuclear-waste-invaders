@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.195.0+201802101618" ;
+: version$ ( -- ca len ) s" 0.196.0+201802101932" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3184,19 +3184,16 @@ defer gun-stack ( -- )
   flying-projectile# c@ -flying-projectile
   used-projectiles-stack xstack projectile~ >x gun-stack ;
 
-: recharge ( a n -- )
-  0 ?do used-projectiles-stack xstack x>
-                          over xstack >x loop drop ;
+: recharge1 ( a -- )
+  used-projectiles-stack xstack x>
+                    swap xstack >x .ammo ;
+  \ Recharge the projectiles stack _a_, which is the current
+  \ one, with one projectile from the used projectiles stack,
+  \ and update the ammo in the status bar.
+
+: recharge ( a n -- ) 0 ?do dup recharge1 loop drop ;
   \ Recharge the projectiles stack _a_ with _n_ projectiles
   \ from the used projectiles stack.
-
-: +recharge ( a n -- )
-  xdepth -
-  0 ?do used-projectiles-stack xstack x>
-                          over xstack >x .ammo loop drop ;
-  \ Recharge the projectiles stack _a_, which is the current
-  \ one, with as many projectiles as needed to complete its
-  \ maximun size _n_, from the used projectiles stack.
 
 : -recharge ( a n -- ) over xstack xclear recharge ;
   \ Select, clear and recharge the projectiles stack _a_ with
@@ -3219,17 +3216,17 @@ defer gun-stack ( -- )
                        -recharge-ball-gun ;
   \ Empty and recharge all guns.
 
-: +recharge-bullet-gun ( -- )
-  bullets-stack #bullets +recharge ;
-  \ Recharge the bullet gun.
+: recharge1-bullet-gun ( -- )
+  #bullets xdepth = ?exit bullets-stack recharge1 ;
+  \ Recharge the bullet gun with one projectile, if possible.
 
-: +recharge-missile-gun ( -- )
-  missiles-stack #missiles +recharge ;
-  \ Recharge the missile gun.
+: recharge1-missile-gun ( -- )
+  #missiles xdepth = ?exit missiles-stack recharge1 ;
+  \ Recharge the missile gun with one projectile, if possible.
 
-: +recharge-ball-gun ( -- )
-  balls-stack #balls +recharge ;
-  \ Recharge the ball gun.
+: recharge1-ball-gun ( -- )
+  #balls xdepth = ?exit balls-stack recharge1 ;
+  \ Recharge the ball gun with one projectile, if possible.
 
 : -projectiles ( -- ) projectiles /projectiles erase ;
   \ Erase the projectiles data table.
@@ -4731,9 +4728,9 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 0 missile-gun~ ~gun-projectile-harmlessness c!
 3    ball-gun~ ~gun-projectile-harmlessness c!
 
-' +recharge-bullet-gun   bullet-gun~ ~gun-recharger !
-' +recharge-missile-gun missile-gun~ ~gun-recharger !
-' +recharge-ball-gun       ball-gun~ ~gun-recharger !
+' recharge1-bullet-gun   bullet-gun~ ~gun-recharger !
+' recharge1-missile-gun missile-gun~ ~gun-recharger !
+' recharge1-ball-gun       ball-gun~ ~gun-recharger !
 
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
