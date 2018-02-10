@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.193.0+201802092122" ;
+: version$ ( -- ca len ) s" 0.194.0+201802092351" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4628,20 +4628,20 @@ variable mothership-explosion-time
   \ Did the projectile impacted?
 
   \ ===========================================================
-  cr .( Arms) ?depth debug-point \ {{{1
+  cr .( Guns) ?depth debug-point \ {{{1
 
 3 cconstant #guns
 
 #guns 1- cconstant max-gun#
 
 cvariable gun#
-  \ Identifier of the current gun of the tank:
+  \ Identifier of the current gun:
   \ 0 = bullet gun
   \ 1 = missile gun
   \ 2 = ball gun
 
 0 constant gun~
-  \ Data address of the current arm identified by `gun#`.
+  \ Data address of the current gun.
 
 0
    field: ~gun-projectile-stack        \ address
@@ -4656,8 +4656,9 @@ cvariable gun#
    field: ~gun-projectile-action       \ xt
   cfield: ~gun-projectile-harmlessness \ level (0..x)
    field: ~gun-recharger               \ xt
+   field: ~gun-icon-displayer          \ xt
 cconstant /gun
-  \ Data structure of an arm projectile.
+  \ Data structure of a gun.
 
 #guns /gun * cconstant /guns
 
@@ -5010,7 +5011,16 @@ cvariable projectile-frame
   \ Restore the previous frame of the tank.  This is used to
   \ prevent the tank chain from moving when the gun is changed.
 
-: change-gun ( n -- ) set-gun tank-previous-frame .tank ;
+: .gun-icon ( -- ) gun~ ~gun-icon-displayer perform ;
+
+: highlight-gun ( -- )
+  [ text-attr brighty ] cliteral attr! .gun-icon ;
+
+: unhighlight-gun ( -- ) text-attr attr! .gun-icon ;
+
+: change-gun ( n -- ) unhighlight-gun
+                      set-gun tank-previous-frame .tank
+                      highlight-gun ;
 
 : next-gun ( -- ) gun# c@1+ dup #guns < and change-gun ;
 
@@ -5237,11 +5247,18 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Status bar, part 2 ) ?depth debug-point \ {{{1
 
-: .bullets-icon ( -- ) bullet-sprite .1x1sprite ;
+: .bullets-icon ( -- ) bullets-icon-x status-bar-y at-xy
+                       bullet-sprite .1x1sprite ;
 
-: .missiles-icon ( -- ) missile-sprite .1x1sprite ;
+: .missiles-icon ( -- ) missiles-icon-x status-bar-y at-xy
+                        missile-sprite .1x1sprite ;
 
-: .balls-icon ( -- ) ball-sprite .1x1sprite ;
+: .balls-icon ( -- ) balls-icon-x status-bar-y at-xy
+                     ball-sprite .1x1sprite ;
+
+' .bullets-icon   bullet-gun~ ~gun-icon-displayer !
+' .missiles-icon missile-gun~ ~gun-icon-displayer !
+' .balls-icon       ball-gun~ ~gun-icon-displayer !
 
 : .record-separator ( -- )
   record-separator-x status-bar-y at-xy '/' emit ;
@@ -5250,7 +5267,8 @@ localized-string about-next-location$ ( -- ca len )
 
 : hide-status-bar ( -- ) sky-attr color-status-bar ;
 
-: reveal-status-bar ( -- ) text-attr color-status-bar ;
+: reveal-status-bar ( -- )
+  text-attr color-status-bar highlight-gun ;
 
 : (status-bar ( -- )
   gun# c@ .bullets-icon  .bullets  space
@@ -5259,7 +5277,7 @@ localized-string about-next-location$ ( -- ca len )
   set-gun .score .record-separator .record ;
 
 : status-bar ( -- )
-  hide-status-bar home (status-bar reveal-status-bar ;
+  hide-status-bar (status-bar reveal-status-bar ;
 
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1
