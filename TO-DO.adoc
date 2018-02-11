@@ -150,17 +150,9 @@ Improve the visibility of the projectile right above the tank.
 == 2018-02-09
 
 - Move `recharging` to save the deferring of `recharge-gun`.
-- Fix: updating the ammo while recharging bullets is too much work, it
-  halts the rest of game. The recharging could be an independent
-  action.
 - Highlight also the ammo of the current gun, not only the icon.
 - Remove `set-exploding-projectile-sprite`, which is used only once.
 - Remove `set-beaming-mothership-sprite`, which is used only once.
 - Remove `set-exploding-mothership-sprite`, which is used only once.
-- Fix: timings.
 - Fix: eventual crash in the second level.
 - Select each gun with an own key.
-
-== 2018-02-11
-
-- Replace `if` in `(beam-down` with `0exit`. It's faster.

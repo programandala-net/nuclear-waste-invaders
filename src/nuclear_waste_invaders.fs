@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.198.0+201802110123" ;
+: version$ ( -- ca len ) s" 0.199.0+201802112108" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -46,15 +46,19 @@ cr cr .( Nuclear Waste Invaders) cr version$ type cr
   \ development.
 
 true constant [breakable] immediate
-  \ Make the program breakable with the BREAK key combination?
+  \ Compile code to make the program breakable with the BREAK
+  \ key combination?
+  \
   \ XXX TMP -- for debugging
 
 true constant [udg] immediate
   \ Reference graphics with their UDG codes (old method)
-  \ instead of their addresses (new method).
+  \ instead of their addresses (new method)?
 
-true constant [debugging] immediate
-  \ Compile debugging code.
+false constant [debugging] immediate
+  \ Compile debugging code?
+  \
+  \ XXX TMP -- for debugging
 
   \ ===========================================================
   cr .( Library) \ {{{1
@@ -114,14 +118,14 @@ need 1+! need c@2- need con
   cr .(   -Math) ?depth \ {{{2
 
 need d< need -1|1 need 2/ need between need random need binary
-need within need even? need 8* need random-between
+need within need even? need 8* need random-between need m+
 need join need 3* need polarity need <=> need -1..1
 
   \ --------------------------------------------
   cr .(   -Data structures) ?depth \ {{{2
 
 need roll need cfield: need field: need +field-opt-0124
-need array> need !> need c!> need 2!> need 0dup
+need array> need !> need c!> need 2!> need 0dup need 2field:
 
 need sconstants
 
@@ -162,7 +166,7 @@ need #>kk need inkey need new-key
   \ --------------------------------------------
   cr .(   -Time) ?depth \ {{{2
 
-need ticks need ms need seconds need ?seconds need past?
+need dticks need ms need seconds need ?seconds need dpast?
 
   \ --------------------------------------------
   cr .(   -Sound) ?depth \ {{{2
@@ -2779,7 +2783,7 @@ max-invaders 1- cconstant last-invader#
   cfield: ~attr           \ color attribute
   field:  ~action         \ execution token
   field:  ~species        \ data structure address
-  field:  ~explosion-time \ ticks clock time
+  2field: ~explosion-time \ ticks clock time
   cfield: ~layer          \ 0 (bottom) .. 4 (top)
   cfield: ~endurance      \ 1..max-endurance
 cconstant /invader
@@ -3330,16 +3334,16 @@ here /hit-projectiles allot
 
 cvariable tank-x \ column
 
-variable tank-time
-  \ When the ticks clock reaches the contents of this variable,
+2variable tank-time
+  \ When `dticks` reaches the contents of this variable,
   \ the tank will move.
 
-variable arming-time
-  \ When the ticks clock reaches the contents of this variable,
+2variable arming-time
+  \ When `dticks` reaches the contents of this variable,
   \ the tank can change its gun type.
 
-variable trigger-time
-  \ When the ticks clock reaches the contents of this variable,
+2variable trigger-time
+  \ When `dticks` reaches the contents of this variable,
   \ the trigger can work.
 
 : repair-tank ( -- )
@@ -3475,10 +3479,10 @@ constant tank-movements ( -- a )
 
 8 cconstant tank-interval \ ticks
 
-: schedule-tank ( -- ) ticks tank-interval + tank-time ! ;
+: schedule-tank ( -- ) dticks tank-interval m+ tank-time 2! ;
 
 : driving ( -- )
-  tank-time @ past? 0exit \ exit if too soon
+  tank-time 2@ dpast? 0exit \ exit if too soon
   tank-movement perform schedule-tank ;
 
 defer recharge-gun ( -- )
@@ -3613,8 +3617,8 @@ defer quit-game ( -- )
 cvariable invaders
   \ Current number of invaders during the attack.
 
-variable invader-time
-  \ When the ticks clock reaches the contents of this variable,
+2variable invader-time
+  \ When `dticks` reaches the contents of this variable,
   \ the current invader will move.
 
 : init-invaders ( -- ) init-invaders-data
@@ -3969,10 +3973,10 @@ defer ?dock ( -- )
 1 cconstant invader-interval \ ticks
 
 : schedule-invader ( -- )
-  ticks invader-interval + invader-time ! ;
+  dticks invader-interval m+ invader-time 2! ;
 
 : manage-invaders ( -- )
-  invader-time @ past? 0exit \ exit if too soon
+  invader-time 2@ dpast? 0exit \ exit if too soon
   alive? if invader~ ~action perform then
   next-invader schedule-invader ;
   \ If it's the right time, move the current invader, then
@@ -4045,8 +4049,8 @@ mothership-range negate     constant mothership-range-min-x
 mothership-range columns + cconstant mothership-range-max-x
   \ X-coordinate limits of the mothership range.
 
-variable mothership-time
-  \ When the ticks clock reaches the contents of this variable,
+2variable mothership-time
+  \ When `dticks` reaches the contents of this variable,
   \ the mothership will move.
 
 : mothership-x0 ( -- n )
@@ -4323,7 +4327,7 @@ cvariable beam-invader#
 : (beam-down ( -- )
   .mothership
   beam-cell-attr mothership-x @ beam-y c@ xy>attra !
-  reach-invader? if create-invader then ;
+  reach-invader? 0exit create-invader ;
   \ Grow the beam towards the ground one character.
 
 : beaming-down-mothership-action ( -- )
@@ -4471,13 +4475,13 @@ constant visible-mothership-movements ( -- a )
 8 cconstant mothership-interval \ ticks
 
 : schedule-mothership ( -- )
-  ticks mothership-interval + mothership-time ! ;
+  dticks mothership-interval m+ mothership-time 2! ;
 
 : mothership-destroyed? ( -- f ) motherships c@ 0= ;
 
 : manage-mothership ( -- )
-  mothership-destroyed?   ?exit \ exit if destroyed
-  mothership-time @ past? 0exit \ exit if too soon
+  mothership-destroyed?     ?exit \ exit if destroyed
+  mothership-time 2@ dpast? 0exit \ exit if too soon
   do-mothership-action schedule-mothership ;
 
   \ ===========================================================
@@ -4491,13 +4495,13 @@ constant visible-mothership-movements ( -- a )
 8 cconstant mothership-explosion-interval
   \ Ticks between the frames of the explosion.
 
-variable mothership-explosion-time
-  \ When the ticks clock reaches the contents of this variable,
+2variable mothership-explosion-time
+  \ When `dticks` reaches the contents of this variable,
   \ the explosion advances to the next frame.
 
 : schedule-mothership-explosion ( -- )
-  ticks mothership-explosion-interval +
-  mothership-explosion-time ! ;
+  dticks mothership-explosion-interval m+
+  mothership-explosion-time 2! ;
 
 : destroy-mothership ( -- )
   -mothership ['] noop mothership-action! motherships ?c1-! ;
@@ -4508,7 +4512,7 @@ variable mothership-explosion-time
   \ completed and _f_ is _false_.
 
 : exploding-mothership-action ( -- )
-  mothership-explosion-time @ past? 0exit \ exit if too soon
+  mothership-explosion-time 2@ dpast? 0exit \ exit if too soon
   at-mothership .mothership
   schedule-mothership-explosion
   mothership-explosion? ?exit destroy-mothership ;
@@ -4563,11 +4567,11 @@ variable mothership-explosion-time
   \ Ticks between the frames of the explosion.
 
 : schedule-invader-explosion ( -- )
-  ticks invader-explosion-interval +
-  invader~ ~explosion-time ! ;
+  dticks invader-explosion-interval m+
+  invader~ ~explosion-time 2! ;
 
 : exploding-invader-action ( -- )
-  invader~ ~explosion-time @ past? 0exit \ exit if too soon
+  invader~ ~explosion-time 2@ dpast? 0exit \ exit if too soon
   at-invader .invader schedule-invader-explosion
   invader-explosion? ?exit destroy-invader ;
   \ Action of the invader when it's exploding.
@@ -4842,13 +4846,13 @@ defer projectile ( -- c )
 8 cconstant projectile-explosion-interval
   \ Ticks between the frames of the explosion.
 
-variable projectile-explosion-time
-  \ When the ticks clock reaches the contents of this variable,
+2variable projectile-explosion-time
+  \ When `dticks` reaches the contents of this variable,
   \ the explosion advances to the next frame.
 
 : schedule-projectile-explosion ( -- )
-  ticks projectile-explosion-interval +
-  projectile-explosion-time ! ;
+  dticks projectile-explosion-interval m+
+  projectile-explosion-time 2! ;
 
 cvariable projectile-frame
   \ Current frame of the exploding projectile sprite.
@@ -4859,7 +4863,7 @@ cvariable projectile-frame
   \ completed and _f_ is _false_.
 
 : exploding-projectile-action ( -- )
-  projectile-explosion-time @ past? 0exit \ exit if too soon
+  projectile-explosion-time 2@ dpast? 0exit \ exit if too soon
   at-projectile .projectile
   schedule-projectile-explosion
   projectile-explosion? ?exit -projectile destroy-projectile ;
@@ -4942,7 +4946,7 @@ cvariable projectile-frame
   \ the building, and therefore can repaier the brechs.
 
 : schedule-trigger ( -- )
-  ticks gun~ ~gun-trigger-interval c@ + trigger-time ! ;
+  dticks gun~ ~gun-trigger-interval c@ m+ trigger-time 2! ;
 
 : get-projectile-sprite&action ( -- )
   gun~ ~gun-projectile-sprite c@
@@ -5000,9 +5004,6 @@ cvariable projectile-frame
 : flying-projectiles? ( -- 0f ) #flying-projectiles c@ ;
   \ Is there any projectile flying?
 
-: trigger-ready? ( -- f ) trigger-time @ past? ;
-  \ Is the trigger ready?
-
 : next-flying-projectile ( -- )
   flying-projectile# c@1+ dup #flying-projectiles c@ < and
   dup flying-projectile# c!
@@ -5021,7 +5022,7 @@ cvariable projectile-frame
 
 : shooting ( -- )
   kk-fire1 pressed?       0exit
-  trigger-ready?          0exit
+  trigger-time 2@ dpast?  0exit
   projectiles-left        0exit
   max-flying-projectiles? ?exit
   gun-below-building?     ?exit fire ;
@@ -5051,10 +5052,10 @@ cvariable projectile-frame
 10 cconstant arming-interval \ ticks
 
 : schedule-arming ( -- )
-  ticks arming-interval + arming-time ! ;
+  dticks arming-interval m+ arming-time 2! ;
 
 : arming ( -- )
-  arming-time @ past? 0exit
+  arming-time 2@ dpast? 0exit
   kk-down pressed? if previous-gun schedule-arming exit then
   kk-up   pressed? if next-gun     schedule-arming      then ;
 
