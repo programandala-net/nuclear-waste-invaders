@@ -160,3 +160,7 @@ Improve the visibility of the projectile right above the tank.
 - Fix: timings.
 - Fix: eventual crash in the second level.
 - Select each gun with an own key.
+
+== 2018-02-11
+
+- Replace `if` in `(beam-down` with `0exit`. It's faster.

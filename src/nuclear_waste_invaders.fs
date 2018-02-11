@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.197.0+201802102320" ;
+: version$ ( -- ca len ) s" 0.198.0+201802110123" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -54,6 +54,7 @@ true constant [udg] immediate
   \ instead of their addresses (new method).
 
 true constant [debugging] immediate
+  \ Compile debugging code.
 
   \ ===========================================================
   cr .( Library) \ {{{1
@@ -114,7 +115,7 @@ need 1+! need c@2- need con
 
 need d< need -1|1 need 2/ need between need random need binary
 need within need even? need 8* need random-between
-need join need 3* need polarity
+need join need 3* need polarity need <=> need -1..1
 
   \ --------------------------------------------
   cr .(   -Data structures) ?depth \ {{{2
@@ -4428,24 +4429,16 @@ constant visible-mothership-movements ( -- a )
                                       3 random ?exit
                                stop-mothership ;
 
-: tank<mothership? ( -- f ) tank-x c@ mothership-x @ < ;
-  \ Is the tank at the left of the mothership?
-
-: tank>mothership? ( -- f ) tank-x c@ mothership-x @ > ;
-  \ Is the tank at the right of the mothership?
-
 : (new-mothership-x-inc ( -- -1|0|1 )
-  left-side-invaders  0=
-  right-side-invaders 0= abs +
-  tank>mothership?           +
-  tank<mothership?       abs + polarity ;
+  left-side-invaders right-side-invaders <=>
+  mothership-x @     tank-x c@           <=> + -1..1 + ;
   \ Return the new direction of the mothership, which is
   \ stopped above the building.
 
 : new-mothership-x-inc ( -- -1|0|1 )
-  5 random 0= 0dup 0exit (new-mothership-x-inc ;
+  3 random 0= 0dup 0exit (new-mothership-x-inc ;
   \ Return the new direction of the mothership, which is
-  \ stopped above the building. Four times out of five, the
+  \ stopped above the building. Two times out of three, the
   \ result is zero.
 
 : ?start-mothership ( -- )
@@ -5629,12 +5622,13 @@ cr .( Loaded)
 
 cr cr greeting
 
-cr cr .( Type RUN to start) cr
+[breakable] [if]
+       \ <------------------------------>
+cr cr .( Type BREAKABLE to make the game)
+   cr .( breakable by the BREAK key.)
+[then]
 
-[breakable] 0= ?(
-    \ <------------------------------>
-cr .( Type BREAKABLE to make the game)
-cr .( breakable by the BREAK key.) cr ?)
+cr cr .( Type RUN to start.) cr
 
 end-program
 
