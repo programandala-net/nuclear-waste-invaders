@@ -152,8 +152,3 @@ Improve the visibility of the projectile right above the tank.
 - Move `recharging` to save the deferring of `recharge-gun`.
 - Highlight also the ammo of the current gun, not only the icon.
 - Select each gun with an own key.
-
-== 2018-02-12
-
-- Factor `2@ dpast?` out to `already?`.
-

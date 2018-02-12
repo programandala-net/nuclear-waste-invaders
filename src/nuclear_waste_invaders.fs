@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.201.2+201802122224" ;
+: version$ ( -- ca len ) s" 0.202.0+201802122253" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3483,8 +3483,12 @@ constant tank-movements ( -- a )
   \ Set the double-cell at _a_ with the current content of the
   \ ticks clock plus _n_ ticks.
 
+: already? ( a -- f ) 2@ dpast? ;
+  \ Is the double-cell ticks stored at _a_ greater than the
+  \ current ticks clock?
+
 : driving ( -- )
-  tank-time 2@ dpast? 0exit \ exit if too soon
+  tank-time already? 0exit \ exit if too soon
   tank-movement perform
   tank-time tank-interval schedule ;
 
@@ -3975,7 +3979,7 @@ defer ?dock ( -- )
 2 cconstant invader-interval \ ticks
 
 : manage-invaders ( -- )
-  invader-time 2@ dpast? 0exit \ exit if too soon
+  invader-time already? 0exit \ exit if too soon
   alive? if invader~ ~action perform then next-invader
   invader-time invader-interval schedule ;
   \ If it's the right time, move the current invader, then
@@ -4460,7 +4464,7 @@ constant visible-mothership-movements ( -- a )
 
 : manage-mothership ( -- )
   mothership-destroyed?     ?exit \ exit if destroyed
-  mothership-time 2@ dpast? 0exit \ exit if too soon
+  mothership-time already?  0exit \ exit if too soon
   mothership-action
   mothership-time mothership-interval schedule ;
 
@@ -4488,7 +4492,7 @@ constant visible-mothership-movements ( -- a )
   \ completed and _f_ is _false_.
 
 : exploding-mothership-action ( -- )
-  mothership-explosion-time 2@ dpast? 0exit \ exit if too soon
+  mothership-explosion-time already? 0exit \ exit if too soon
   at-mothership .mothership
   mothership-explosion-time mothership-explosion-interval
   schedule
@@ -4546,7 +4550,7 @@ constant visible-mothership-movements ( -- a )
   \ Ticks between the frames of the explosion.
 
 : exploding-invader-action ( -- )
-  invader~ ~explosion-time 2@ dpast? 0exit \ exit if too soon
+  invader~ ~explosion-time already? 0exit \ exit if too soon
   at-invader .invader
   invader~ ~explosion-time invader-explosion-interval schedule
   invader-explosion? ?exit destroy-invader ;
@@ -4827,7 +4831,7 @@ cvariable projectile-frame
   \ completed and _f_ is _false_.
 
 : exploding-projectile-action ( -- )
-  projectile-explosion-time 2@ dpast? 0exit \ exit if too soon
+  projectile-explosion-time already? 0exit \ exit if too soon
   at-projectile .projectile
   projectile-explosion-time projectile-explosion-interval
   schedule
@@ -4988,7 +4992,7 @@ cvariable projectile-frame
 
 : shooting ( -- )
   kk-fire1 pressed?       0exit
-  trigger-time 2@ dpast?  0exit
+  trigger-time already?   0exit
   projectiles-left        0exit
   max-flying-projectiles? ?exit
   gun-below-building?     ?exit fire ;
@@ -5018,7 +5022,7 @@ cvariable projectile-frame
 10 cconstant arming-interval \ ticks
 
 : arming ( -- )
-  arming-time 2@ dpast? 0exit
+  arming-time already? 0exit
   kk-down pressed? if previous-gun
                       arming-time arming-interval schedule
                       exit then
