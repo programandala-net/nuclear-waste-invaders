@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.200.0+201802121154" ;
+: version$ ( -- ca len ) s" 0.201.0+201802121154" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -55,7 +55,7 @@ true constant [udg] immediate
   \ Reference graphics with their UDG codes (old method)
   \ instead of their addresses (new method)?
 
-false constant [debugging] immediate
+true constant [debugging] immediate
   \ Compile debugging code?
   \
   \ XXX TMP -- for debugging
@@ -3479,11 +3479,14 @@ constant tank-movements ( -- a )
 
 8 cconstant tank-interval \ ticks
 
-: schedule-tank ( -- ) dticks tank-interval m+ tank-time 2! ;
+: schedule ( a n -- ) dticks rot m+ rot 2! ;
+  \ Set the double-cell at _a_ with the current content of the
+  \ ticks clock plus _n_ ticks.
 
 : driving ( -- )
   tank-time 2@ dpast? 0exit \ exit if too soon
-  tank-movement perform schedule-tank ;
+  tank-movement perform
+  tank-time tank-interval schedule ;
 
 defer recharge-gun ( -- )
   \ Recharge the current gun.
@@ -3971,13 +3974,10 @@ defer ?dock ( -- )
 
 1 cconstant invader-interval \ ticks
 
-: schedule-invader ( -- )
-  dticks invader-interval m+ invader-time 2! ;
-
 : manage-invaders ( -- )
   invader-time 2@ dpast? 0exit \ exit if too soon
-  alive? if invader~ ~action perform then
-  next-invader schedule-invader ;
+  alive? if invader~ ~action perform then next-invader
+  invader-time invader-interval schedule ;
   \ If it's the right time, move the current invader, then
   \ choose the next one.
 
@@ -4456,15 +4456,13 @@ constant visible-mothership-movements ( -- a )
 
 8 cconstant mothership-interval \ ticks
 
-: schedule-mothership ( -- )
-  dticks mothership-interval m+ mothership-time 2! ;
-
 : mothership-destroyed? ( -- f ) motherships c@ 0= ;
 
 : manage-mothership ( -- )
   mothership-destroyed?     ?exit \ exit if destroyed
   mothership-time 2@ dpast? 0exit \ exit if too soon
-  do-mothership-action schedule-mothership ;
+  do-mothership-action
+  mothership-time mothership-interval schedule ;
 
   \ ===========================================================
   cr .( Impact) ?depth debug-point \ {{{1
@@ -4481,10 +4479,6 @@ constant visible-mothership-movements ( -- a )
   \ When `dticks` reaches the contents of this variable,
   \ the explosion advances to the next frame.
 
-: schedule-mothership-explosion ( -- )
-  dticks mothership-explosion-interval m+
-  mothership-explosion-time 2! ;
-
 : destroy-mothership ( -- )
   -mothership ['] noop mothership-action! motherships ?c1-! ;
 
@@ -4496,7 +4490,8 @@ constant visible-mothership-movements ( -- a )
 : exploding-mothership-action ( -- )
   mothership-explosion-time 2@ dpast? 0exit \ exit if too soon
   at-mothership .mothership
-  schedule-mothership-explosion
+  mothership-explosion-time mothership-explosion-interval
+  schedule
   mothership-explosion? ?exit destroy-mothership ;
   \ Action of the mothership when it's exploding.
 
@@ -4506,7 +4501,9 @@ constant visible-mothership-movements ( -- a )
 
 :noname ( -- )
   explosion-sprite explosion-frames set-mothership-sprite
-  .mothership schedule-mothership-explosion
+  .mothership
+  mothership-explosion-time mothership-explosion-interval
+  schedule
   ['] exploding-mothership-action mothership-action!
   mothership-bang mothership-destroy-bonus update-score
   ; ' set-exploding-mothership defer!
@@ -4548,19 +4545,17 @@ constant visible-mothership-movements ( -- a )
 8 cconstant invader-explosion-interval
   \ Ticks between the frames of the explosion.
 
-: schedule-invader-explosion ( -- )
-  dticks invader-explosion-interval m+
-  invader~ ~explosion-time 2! ;
-
 : exploding-invader-action ( -- )
   invader~ ~explosion-time 2@ dpast? 0exit \ exit if too soon
-  at-invader .invader schedule-invader-explosion
+  at-invader .invader
+  invader~ ~explosion-time invader-explosion-interval schedule
   invader-explosion? ?exit destroy-invader ;
   \ Action of the invader when it's exploding.
 
 : set-exploding-invader ( -- )
   explosion-sprite explosion-frames set-invader-sprite
-  at-invader .invader schedule-invader-explosion
+  at-invader .invader
+  invader~ ~explosion-time invader-explosion-interval schedule
   ['] exploding-invader-action invader~ ~action !
   invader-bang invader-destroy-bonus update-score ;
   \ The current invader has been impacted. Set it accordingly.
@@ -4823,10 +4818,6 @@ defer projectile ( -- c )
   \ When `dticks` reaches the contents of this variable,
   \ the explosion advances to the next frame.
 
-: schedule-projectile-explosion ( -- )
-  dticks projectile-explosion-interval m+
-  projectile-explosion-time 2! ;
-
 cvariable projectile-frame
   \ Current frame of the exploding projectile sprite.
 
@@ -4838,7 +4829,8 @@ cvariable projectile-frame
 : exploding-projectile-action ( -- )
   projectile-explosion-time 2@ dpast? 0exit \ exit if too soon
   at-projectile .projectile
-  schedule-projectile-explosion
+  projectile-explosion-time projectile-explosion-interval
+  schedule
   projectile-explosion? ?exit -projectile destroy-projectile ;
   \ Action of the projectile when it's exploding.
   \
@@ -4853,7 +4845,9 @@ cvariable projectile-frame
 : set-exploding-projectile ( -- )
   projectile-explosion-sprite projectile-explosion-frames
   set-projectile-sprite
-  .projectile schedule-projectile-explosion
+  .projectile
+  projectile-explosion-time projectile-explosion-interval
+  schedule
   ['] exploding-projectile-action
   projectile~ ~projectile-action !  projectile-bang ;
 
@@ -4919,9 +4913,6 @@ cvariable projectile-frame
   \ Action of the balls that are flying on the right wall of
   \ the building, and therefore can repaier the brechs.
 
-: schedule-trigger ( -- )
-  dticks gun~ ~gun-trigger-interval c@ m+ trigger-time 2! ;
-
 : get-projectile-sprite&action ( -- )
   gun~ ~gun-projectile-sprite c@
   gun~ ~gun-projectile-frames c@
@@ -4971,8 +4962,9 @@ cvariable projectile-frame
 : launch-projectile ( -- )
   .projectile projectile~ start-flying fire-sound ;
 
-: fire ( -- ) get-projectile launch-projectile .ammo
-              schedule-trigger ;
+: fire ( -- )
+  get-projectile launch-projectile .ammo
+  trigger-time gun~ ~gun-trigger-interval schedule ;
   \ Fire the gun of the tank.
 
 : flying-projectiles? ( -- 0f ) #flying-projectiles c@ ;
@@ -5025,13 +5017,14 @@ cvariable projectile-frame
 
 10 cconstant arming-interval \ ticks
 
-: schedule-arming ( -- )
-  dticks arming-interval m+ arming-time 2! ;
-
 : arming ( -- )
   arming-time 2@ dpast? 0exit
-  kk-down pressed? if previous-gun schedule-arming exit then
-  kk-up   pressed? if next-gun     schedule-arming      then ;
+  kk-down pressed? if previous-gun
+                      arming-time arming-interval schedule
+                      exit then
+  kk-up   pressed? if next-gun
+                      arming-time arming-interval schedule
+                      then ;
 
 : manage-tank ( -- ) driving arming shooting recharging ;
 
