@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.202.0+201802122253" ;
+: version$ ( -- ca len ) s" 0.203.0+201802122327" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4576,7 +4576,7 @@ constant visible-mothership-movements ( -- a )
   invader~ ~stamina c@1- min-stamina max invader-stamina! ;
   \ Reduce the invader's stamina after being shoot.
 
-: mortal? ( -- f ) invader~ ~stamina c@ 2*
+: mortal? ( -- f ) invader~ ~stamina c@
                    invader~ ~layer c@ +
                    invader~ ~endurance c@ +
                    projectile~ ~projectile-harmlessness c@ +
