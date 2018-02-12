@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-10
+:revdate: 2018-02-12
 
 Older first:
 
@@ -151,8 +151,8 @@ Improve the visibility of the projectile right above the tank.
 
 - Move `recharging` to save the deferring of `recharge-gun`.
 - Highlight also the ammo of the current gun, not only the icon.
-- Remove `set-exploding-projectile-sprite`, which is used only once.
-- Remove `set-beaming-mothership-sprite`, which is used only once.
-- Remove `set-exploding-mothership-sprite`, which is used only once.
-- Fix: eventual crash in the second level.
 - Select each gun with an own key.
+
+== 2018-02-12
+
+- Fix crashes. The error condition is unknown yet.
