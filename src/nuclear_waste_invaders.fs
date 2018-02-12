@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.201.1+201802121944" ;
+: version$ ( -- ca len ) s" 0.201.2+201802122224" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3972,7 +3972,7 @@ defer ?dock ( -- )
                                     then !> invader~ ;
   \ Point the current invader to the next one.
 
-1 cconstant invader-interval \ ticks
+2 cconstant invader-interval \ ticks
 
 : manage-invaders ( -- )
   invader-time 2@ dpast? 0exit \ exit if too soon
@@ -3987,11 +3987,10 @@ defer ?dock ( -- )
 cvariable motherships
   \ Number of motherships. Used as a flag.
 
-defer do-mothership-action ( -- )
+defer mothership-action ( -- )
   \ The current action of the mothership.
 
-: mothership-action! ( xt -- )
-  ['] do-mothership-action defer! ;
+: mothership-action! ( xt -- ) ['] mothership-action defer! ;
   \ Set _xt_ as the current action of the mothership.
 
 defer invisible-mothership-action ( -- )
@@ -4415,7 +4414,8 @@ constant visible-mothership-movements ( -- a )
 
 : (new-mothership-x-inc ( -- -1|0|1 )
   left-side-invaders right-side-invaders <=>
-  mothership-x @     tank-x c@           <=> + -1..1 + ;
+  mothership-x @     tank-x c@           <=> +
+                                       -1..1 + polarity ;
   \ Return the new direction of the mothership, which is
   \ stopped above the building.
 
@@ -4461,7 +4461,7 @@ constant visible-mothership-movements ( -- a )
 : manage-mothership ( -- )
   mothership-destroyed?     ?exit \ exit if destroyed
   mothership-time 2@ dpast? 0exit \ exit if too soon
-  do-mothership-action
+  mothership-action
   mothership-time mothership-interval schedule ;
 
   \ ===========================================================
@@ -4602,7 +4602,7 @@ constant visible-mothership-movements ( -- a )
   projectile~ ~projectile-y c@ mothership-y = ;
 
 : mothership-exploding? ( -- f )
-  action-of do-mothership-action
+  action-of mothership-action
   ['] exploding-mothership-action = ;
   \ Is the mothership exploding?
 
@@ -5356,8 +5356,8 @@ localized-string about-next-location$ ( -- ca len )
 : tr ( -- ) tank> h ; \ move tank right
 
 : mm ( -- ) manage-mothership ;
-: ima ( -- ) invisible-mothership-action ;
-: vma ( -- ) visible-mothership-action ;
+: ima ( -- ) invisible-mothership-action text-attr attr! ;
+: vma ( -- ) visible-mothership-action text-attr attr! ;
 : am ( -- ) advance-mothership ;
 : vm? ( -- f ) visible-mothership? ;
 : .m ( -- ) .mothership ;
@@ -5368,6 +5368,9 @@ localized-string about-next-location$ ( -- ca len )
 : im ( -- ) init-mothership ;
 : mim ( -- ) mothership-impacted ;
 : m ( -- ) begin key 'q' <> while manage-mothership repeat ;
+: nmx ( -- ) new-mothership-x-inc . ;
+: (nmx ( -- ) (new-mothership-x-inc . ;
+
 
 : beon ( -- ) beam-on ;
 : beoff ( -- ) beam-off ;

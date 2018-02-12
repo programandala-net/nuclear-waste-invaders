@@ -155,6 +155,5 @@ Improve the visibility of the projectile right above the tank.
 
 == 2018-02-12
 
-- Fix crashes. The error condition is unknown yet.
 - Factor `2@ dpast?` out to `already?`.
 
