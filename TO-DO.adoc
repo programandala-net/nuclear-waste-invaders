@@ -151,3 +151,13 @@ Improve the visibility of the projectile right above the tank.
 == 2018-02-13
 
 - Fix: eventual crash. Error condition unknown.
+- Make missiles faster with `%00011 missile-gun~
+  ~gun-projectile-max-delay c!`.
+- Make balls faster with `%01111 ball-gun~ ~gun-projectile-max-delay
+  c!`
+- Reduce number of bullets with `12 bullet-gun~ ~gun-trigger-interval
+  c!`.
+- Rename `get-ball-sprite&action` and `get-projectile-sprite&action`.
+- Rewrite `get-ball-sprite&action` and `get-projectile-sprite&action`
+  to separate the parameters (sprite, frames and action) from their
+  use, sharing this one.
