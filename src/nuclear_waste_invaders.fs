@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.201.0+201802121154" ;
+: version$ ( -- ca len ) s" 0.201.1+201802121944" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -55,7 +55,7 @@ true constant [udg] immediate
   \ Reference graphics with their UDG codes (old method)
   \ instead of their addresses (new method)?
 
-true constant [debugging] immediate
+false constant [debugging] immediate
   \ Compile debugging code?
   \
   \ XXX TMP -- for debugging
@@ -3347,7 +3347,7 @@ cvariable tank-x \ column
   \ the trigger can work.
 
 : repair-tank ( -- )
-  tank-time off arming-time off trigger-time off ;
+  0. tank-time 2! 0. arming-time 2! 0. trigger-time 2! ;
 
 columns udg/tank - 2/ cconstant parking-x
 
@@ -3626,7 +3626,7 @@ cvariable invaders
 
 : init-invaders ( -- ) init-invaders-data
                        0 set-invader
-                       invader-time off
+                       0. invader-time 2!
                        invaders coff ;
 
 : at-invader ( -- ) invader~ ~x c@ invader~ ~y c@ at-xy ;
@@ -4100,7 +4100,7 @@ defer set-exploding-mothership ( -- )
   flying-mothership-sprite flying-mothership-frames
   set-mothership-sprite
   ['] invisible-mothership-action mothership-action!
-  mothership-stopped off mothership-time off
+  mothership-stopped off 0. mothership-time 2!
   place-mothership -1|1 set-mothership-x-inc ;
 
 : visible-mothership? ( -- f )
@@ -4964,7 +4964,7 @@ cvariable projectile-frame
 
 : fire ( -- )
   get-projectile launch-projectile .ammo
-  trigger-time gun~ ~gun-trigger-interval schedule ;
+  trigger-time gun~ ~gun-trigger-interval c@ schedule ;
   \ Fire the gun of the tank.
 
 : flying-projectiles? ( -- 0f ) #flying-projectiles c@ ;
