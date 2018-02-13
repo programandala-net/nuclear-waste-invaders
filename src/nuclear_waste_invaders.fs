@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.206.0+201802131702" ;
+: version$ ( -- ca len ) s" 0.207.0+201802131937" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -674,12 +674,12 @@ variable catastrophe \ flag (game end condition)
 
 13 cconstant enter-key
 
-0 cconstant kk-left#  0. 2constant kk-left
-0 cconstant kk-right# 0. 2constant kk-right
-0 cconstant kk-fire1# 0. 2constant kk-fire1
-0 cconstant kk-fire2# 0. 2constant kk-fire2
-0 cconstant kk-down#  0. 2constant kk-down
-0 cconstant kk-up#    0. 2constant kk-up
+0 cconstant kk-left#         0. 2constant kk-left
+0 cconstant kk-right#        0. 2constant kk-right
+0 cconstant kk-fire#         0. 2constant kk-fire
+0 cconstant kk-recharge#     0. 2constant kk-recharge
+0 cconstant kk-previous-gun# 0. 2constant kk-previous-gun
+0 cconstant kk-next-gun#     0. 2constant kk-next-gun
 
 : wait ( -- ) begin inkey until ;
   \ Wait until any key is pressed.
@@ -708,30 +708,41 @@ variable catastrophe \ flag (game end condition)
 
 create controls
 
-  \ left   right    fire1     fire2     down     up
-  \ ---------------------------------------------------
+  \ Order of the keys in the table:
+  \ next-gun previous-gun recharge fire right left
 
-  kk-5# c, kk-8# c, kk-en# c, kk-sp# c, kk-6# c, kk-7# c,
+  kk-7# kk-6# kk-sp# kk-en# kk-8# kk-5#
+  c, c, c, c, c, c,
     \ cursor+enter+space
-  kk-r# c, kk-t# c, kk-en# c, kk-sp# c, kk-q# c, kk-a# c,
+  kk-a# kk-q# kk-sp# kk-en# kk-t# kk-r#
+  c, c, c, c, c, c,
     \ Spanish Dvorak
-  kk-z# c, kk-x# c, kk-en# c, kk-sp# c, kk-a# c, kk-q# c,
+  kk-q# kk-a# kk-sp# kk-en# kk-x# kk-z#
+  c, c, c, c, c, c,
     \ QWERTY
-  kk-5# c, kk-8# c, kk-0#  c, kk-sp# c, kk-6# c, kk-7# c,
+  kk-7# kk-6# kk-sp# kk-0# kk-8# kk-5#
+  c, c, c, c, c, c,
     \ cursor joystick + space
-  kk-5# c, kk-8# c, kk-sp# c, kk-0#  c, kk-6# c, kk-7# c,
+  kk-7# kk-6# kk-0# kk-sp# kk-8# kk-5#
+  c, c, c, c, c, c,
     \ cursor+space+0
-  kk-1# c, kk-2# c, kk-5#  c, kk-en# c, kk-3# c, kk-4# c,
+  kk-4# kk-3# kk-en# kk-5# kk-2# kk-1#
+  c, c, c, c, c, c,
     \ Sinclair 1
-  kk-6# c, kk-7# c, kk-0#  c, kk-a#  c, kk-8# c, kk-9# c,
+  kk-9# kk-8# kk-a# kk-0# kk-7# kk-6#
+  c, c, c, c, c, c,
     \ Sinclair 2
-  kk-o# c, kk-p# c, kk-x#  c, kk-sp# c, kk-a# c, kk-q# c,
+  kk-q# kk-a# kk-sp# kk-x# kk-p# kk-o#
+  c, c, c, c, c, c,
     \ QWERTY
-  kk-n# c, kk-m# c, kk-1#  c, kk-b#  c, kk-a# c, kk-q# c,
+  kk-q# kk-a# kk-b# kk-1# kk-m# kk-n#
+  c, c, c, c, c, c,
     \ QWERTY
-  kk-q# c, kk-w# c, kk-sp# c, kk-x#  c, kk-l# c, kk-p# c,
+  kk-p# kk-l# kk-x# kk-sp# kk-w# kk-q#
+  c, c, c, c, c, c,
     \ QWERTY
-  kk-z# c, kk-x# c, kk-sp# c, kk-en# c, kk-l# c, kk-p# c,
+  kk-p# kk-l# kk-en# kk-sp# kk-x# kk-z#
+  c, c, c, c, c, c,
     \ QWERTY
 
 here controls - /controls / cconstant max-controls
@@ -743,12 +754,13 @@ max-controls 1- cconstant last-control
   \ Convert controls number _n_ to its address _a_.
 
 : set-controls ( n -- )
-  >controls     dup c@  dup c!> kk-left#   #>kk 2!> kk-left
-             1+ dup c@  dup c!> kk-right#  #>kk 2!> kk-right
-             1+ dup c@  dup c!> kk-fire1#  #>kk 2!> kk-fire1
-             1+ dup c@  dup c!> kk-fire2#  #>kk 2!> kk-fire2
-             1+ dup c@  dup c!> kk-down#   #>kk 2!> kk-down
-             1+     c@  dup c!> kk-up#     #>kk 2!> kk-up   ;
+  >controls
+     dup c@ dup c!> kk-left#         #>kk 2!> kk-left
+  1+ dup c@ dup c!> kk-right#        #>kk 2!> kk-right
+  1+ dup c@ dup c!> kk-fire#         #>kk 2!> kk-fire
+  1+ dup c@ dup c!> kk-recharge#     #>kk 2!> kk-recharge
+  1+ dup c@ dup c!> kk-previous-gun# #>kk 2!> kk-previous-gun
+  1+     c@ dup c!> kk-next-gun#     #>kk 2!> kk-next-gun ;
   \ Make controls number _n_ (item of the `controls` table) the
   \ current controls.
 
@@ -3497,8 +3509,8 @@ defer recharge-gun ( -- )
   \ Recharge the current gun.
 
 : recharging ( -- )
-  gun-below-building? 0exit
-  kk-fire2 pressed?   0exit
+  gun-below-building?  0exit
+  kk-recharge pressed? 0exit
   recharge-gun .ammo ;
 
   \ ===========================================================
@@ -3520,14 +3532,14 @@ defer recharge-gun ( -- )
   \   row dup s" [Space] to change controls:" rot center-type
   \   9 over 2+  at-xy ." Left " kk-left#  .control
   \   9 over 3 + at-xy ." Right" kk-right# .control
-  \   9 swap 4 + at-xy ." Fire " kk-fire1#  .control ;
+  \   9 swap 4 + at-xy ." Fire " kk-fire#  .control ;
   \   \ Display controls at the current row.
 
 : left-key$ ( -- ca len ) kk-left# kk#>string ;
 
 : right-key$ ( -- ca len ) kk-right# kk#>string ;
 
-: fire1-key$ ( -- ca len ) kk-fire1# kk#>string ;
+: fire1-key$ ( -- ca len ) kk-fire# kk#>string ;
 
 : .controls-legend ( -- )
   10 at-x left-arrow  .2x1-udg-sprite
@@ -3570,7 +3582,7 @@ false [if] \ XXX TODO --
 
 : .controls ( -- )
   0 12 at-xy (.controls
-  \ s" SPACE: change - ENTER: start" 18 center-type  ; XXX TMP
+  \ s" SPACE: change - ENTER: start" 18 center-type ; XXX TMP
   0 16 at-xy not-in-this-language$ columns type-center-field
   0 19 at-xy start$ columns type-center-field ;
   \ XXX TMP --
@@ -4972,7 +4984,7 @@ cvariable projectile-frame
   #flying-projectiles c@ max-flying-projectiles = ;
 
 : shooting ( -- )
-  kk-fire1 pressed?       0exit
+  kk-fire pressed?        0exit
   trigger-time already?   0exit
   projectiles-left        0exit
   max-flying-projectiles? ?exit
@@ -5004,12 +5016,10 @@ cvariable projectile-frame
 
 : arming ( -- )
   arming-time already? 0exit
-  kk-down pressed? if previous-gun
-                      arming-time arming-interval schedule
-                      exit then
-  kk-up   pressed? if next-gun
-                      arming-time arming-interval schedule
-                      then ;
+  kk-previous-gun pressed? if
+    previous-gun arming-time arming-interval schedule exit then
+  kk-next-gun pressed? if
+    next-gun arming-time arming-interval schedule then ;
 
 : manage-tank ( -- ) driving arming shooting recharging ;
 
@@ -5526,7 +5536,7 @@ create building-xs ' building-left-x , ' building-right-x ,
 
 : building-near-x3 ( -- col )
   flying-to-the-left? if building-right-x exit then
-                         building-left-x  ;
+                         building-left-x ;
 
 : hit-wall?-NEW3 ( -- f ) invader-front-x building-near-x3 = ;
   \ Has the current invader hit the wall of the building?

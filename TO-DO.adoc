@@ -150,8 +150,6 @@ Improve the visibility of the projectile right above the tank.
 
 == 2018-02-13
 
-- Improve compilation of `controls` with a word that replaces all
-  `c,`.
 - Improve effect of missiles.
 - Make the new direction of the mothership depend also on the number
   of missiles left: when there's no missile left, the 
