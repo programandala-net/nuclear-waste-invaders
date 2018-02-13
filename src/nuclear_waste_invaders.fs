@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.204.0+201802131406" ;
+: version$ ( -- ca len ) s" 0.205.0+201802131610" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4722,13 +4722,13 @@ missiles-x missile-gun~ ~gun-projectile-x c!
 missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
    ball-gun-tank-sprite    ball-gun~ ~gun-tank-sprite c!
 
- 8  bullet-gun~ ~gun-trigger-interval c!
+12  bullet-gun~ ~gun-trigger-interval c!
 16 missile-gun~ ~gun-trigger-interval c!
 24    ball-gun~ ~gun-trigger-interval c!
 
 %00001  bullet-gun~ ~gun-projectile-max-delay c!
-%00111 missile-gun~ ~gun-projectile-max-delay c!
-%11111    ball-gun~ ~gun-projectile-max-delay c!
+%00011 missile-gun~ ~gun-projectile-max-delay c!
+%01111    ball-gun~ ~gun-projectile-max-delay c!
 
 1  bullet-gun~ ~gun-projectile-harmlessness c!
 0 missile-gun~ ~gun-projectile-harmlessness c!
