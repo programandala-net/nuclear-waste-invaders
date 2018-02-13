@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.205.0+201802131610" ;
+: version$ ( -- ca len ) s" 0.206.0+201802131702" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3912,10 +3912,8 @@ defer ?dock ( -- )
 
 : ?undock ( -- ) invaders c@ random ?exit undock ;
   \ Undock the current invader randomly, depending on the
-  \ number of invaders.
-  \
-  \ XXX TODO -- Improve the random calculation. Why use
-  \ `invaders`?
+  \ current number of invaders: The few invaders alive, the
+  \ more chances to be undock.
 
 :noname ( -- )
   healthy? if   ?undock
@@ -4230,21 +4228,22 @@ cvariable beam-invader#
   \ Set the beam to grow or shrink from _row1_ to _row2_ with
   \ handler _xt_.
 
-: over-left-invaders? ( -- f )
+: above-left-invaders? ( -- f )
   mothership-x @ invaders-min-x = ;
-  \ Is the mothership over the left initial column of invaders?
+  \ Is the mothership above the left initial column of
+  \ invaders?
 
-: over-right-invaders? ( -- f )
+: above-right-invaders? ( -- f )
   mothership-x @ invaders-max-x = ;
-  \ Is the mothership over the right initial column of
+  \ Is the mothership above the right initial column of
   \ invaders?
 
 : enlist-squadron ( -- ) half-max-invaders invaders c+! ;
 
 : create-squadron ( -- )
-  over-left-invaders? if   create-left-squadron
-                      else create-right-squadron
-                      then enlist-squadron ;
+  above-left-invaders? if   create-left-squadron
+                       else create-right-squadron
+                       then enlist-squadron ;
   \ Activate the new invaders created by the beam and update
   \ their global count.
 
@@ -4320,7 +4319,7 @@ cvariable beam-invader#
   \ shrinking the beam.
 
 : first-new-invader# ( -- n )
-  half-max-invaders over-left-invaders? 0= and ;
+  half-max-invaders above-left-invaders? 0= and ;
   \ Return the number of the first invader to create,
   \ depending on the position of the mothership.
 
@@ -4333,24 +4332,14 @@ cvariable beam-invader#
   \ Turn the mothership's beam on, i.e. start launching it
   \ towards the ground.
 
-: need-help? ( n -- f ) 0= dup 0exit beam-on ;
-  \ If number of invaders _n_ is zero turn the beam on and
-  \ return _true_; otherwise do nothing and return _false_.
-
-: help-right-side? ( -- f ) right-side-invaders need-help? ;
-  \ If there's no invader at the right side, turn the beam on
-  \ and return _true_; otherwise do nothing and return _false_.
-
-: help-left-side? ( -- f ) left-side-invaders need-help? ;
-  \ If there's no invader at the left side, turn the beam on
-  \ and return _true_; otherwise do nothing and return _false_.
-
 : help-invaders? ( -- f )
-  over-left-invaders?  if help-left-side?  exit then
-  over-right-invaders? if help-right-side? exit then false ;
-  \ If needed, help the invaders below the mothership.
-  \ If the help was effective, return _true_; otherwise return
-  \ _false_.
+  above-left-invaders?  if left-side-invaders  0= dup 0exit
+                           beam-on exit then
+  above-right-invaders? if right-side-invaders 0= dup 0exit
+                           beam-on exit then
+  false ;
+  \ If needed, help the invaders below the mothership and
+  \ return _true_; otherwise return _false_.
 
 : ?move-visible-mothership> ( -- )
   right-of-mothership is-there-a-projectile?

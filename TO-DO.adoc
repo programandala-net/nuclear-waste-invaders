@@ -147,3 +147,12 @@ Improve the visibility of the projectile right above the tank.
 - Move `recharging` to save the deferring of `recharge-gun`.
 - Highlight also the ammo of the current gun, not only the icon.
 - Select each gun with an own key.
+
+== 2018-02-13
+
+- Improve compilation of `controls` with a word that replaces all
+  `c,`.
+- Improve effect of missiles.
+- Make the new direction of the mothership depend also on the number
+  of missiles left: when there's no missile left, the 
+  position of the tank is removed from the calculation.
