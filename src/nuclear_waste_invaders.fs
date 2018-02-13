@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.203.1+201802122350" ;
+: version$ ( -- ca len ) s" 0.204.0+201802131406" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -105,7 +105,7 @@ need upper need s+ need char>string need s\"
   cr .(   -Control structures) ?depth \ {{{2
 
 need case need 0exit need +perform need do need abort"
-need cond need thens
+need cond need thens need default-of
 
   \ --------------------------------------------
   cr .(   -Memory) ?depth \ {{{2
@@ -4809,13 +4809,6 @@ defer projectile ( -- c )
   \ and return it. When _n_ is zero, the projectile is ready
   \ to be moved.
 
-: set-projectile-sprite ( c n -- )
-  projectile~ ~projectile-frames c!
-  projectile~ ~projectile-sprite c! ;
-  \ Set character _c_ as the first character of the first
-  \ sprite of the current projectile, and _n_ as the number of
-  \ frames.
-
 8 cconstant projectile-explosion-interval
   \ Ticks between the frames of the explosion.
 
@@ -4848,8 +4841,8 @@ cvariable projectile-frame
   \ XXX TODO -- look for a better sound
 
 : set-exploding-projectile ( -- )
-  projectile-explosion-sprite projectile-explosion-frames
-  set-projectile-sprite
+  projectile-explosion-sprite projectile~ ~projectile-sprite c!
+  projectile-explosion-frames projectile~ ~projectile-frames c!
   .projectile
   projectile-explosion-time projectile-explosion-interval
   schedule
@@ -4918,39 +4911,37 @@ cvariable projectile-frame
   \ Action of the balls that are flying on the right wall of
   \ the building, and therefore can repaier the brechs.
 
-: get-projectile-sprite&action ( -- )
+: get-projectile-sprite&action ( -- c n xt )
   gun~ ~gun-projectile-sprite c@
   gun~ ~gun-projectile-frames c@
-  set-projectile-sprite
-  ['] move-projectile projectile~ ~projectile-action ! ;
-  \ Get the sprite and action of the new current projectile.
+  ['] move-projectile ;
+  \ Return sprite _c_, number of frames _n_ and action _xt_ of
+  \ the new current projectile.
 
-: get-ball-sprite&action ( -- )
+: get-ball-sprite&action ( -- c n xt )
   gun-x case
     building-left-x 1- of
       left-wall-ball-sprite left-wall-ball-frames
-      set-projectile-sprite
       ['] move-left-wall-ball-projectile
-      projectile~ ~projectile-action !
     endof
     building-right-x 1+ of
       right-wall-ball-sprite right-wall-ball-frames
-      set-projectile-sprite
       ['] move-right-wall-ball-projectile
-      projectile~ ~projectile-action !
     endof
-    get-projectile-sprite&action
+    default-of get-projectile-sprite&action endof
   endcase ;
-  \ Get the proper sprite and action for the new current ball
-  \ projectile.  The sprite and action depend on the position
-  \ of the gun and the wall.
+  \ Return sprite _c_, number of frames _n_ and action _xt_ of
+  \ the new current projectile, which is a ball.
 
 : get-projectile ( -- )
   x> !> projectile~
   gun-x projectile~ ~projectile-x c!
   projectile-y0 projectile~ ~projectile-y c!
   gun~ ball-gun~ = if   get-ball-sprite&action
-                   else get-projectile-sprite&action then
+                   else get-projectile-sprite&action
+                   then projectile~ ~projectile-action !
+                        projectile~ ~projectile-frames c!
+                        projectile~ ~projectile-sprite c!
   gun~ ~gun-projectile-attr c@
   projectile~ ~projectile-attr c!
   gun~ ~gun-projectile-max-delay c@
