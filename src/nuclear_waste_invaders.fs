@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.211.0+201802150005" ;
+: version$ ( -- ca len ) s" 0.212.0+201802150044" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3601,14 +3601,6 @@ constant tank-movements ( -- a )
   tank-movement perform
   tank-time tank-interval schedule ;
 
-defer recharge-gun ( -- )
-  \ Recharge the current gun.
-
-: recharging ( -- )
-  gun-below-building?  0exit
-  kk-recharge pressed? 0exit
-  recharge-gun .ammo ;
-
   \ ===========================================================
   cr .( Instructions) ?depth debug-point \ {{{1
 
@@ -4794,9 +4786,12 @@ missile-gun# gun#>~ constant missile-gun~
   ; ' set-gun defer!
   \ Set _n_ as the current arm (0=gun machine; 1=missile gun).
 
-:noname ( -- ) gun~ ~gun-recharger perform
-  ; ' recharge-gun defer!
+: recharge-gun ( -- ) gun~ ~gun-recharger perform ;
   \ Recharge the current gun.
+
+: recharging ( -- ) gun-below-building?  0exit
+                    kk-recharge pressed? 0exit
+                    recharge-gun .ammo ;
 
   \ --------------------------------------------
   \ Set guns' data
