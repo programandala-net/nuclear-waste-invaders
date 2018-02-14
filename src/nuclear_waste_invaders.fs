@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.209.0+201802142130" ;
+: version$ ( -- ca len ) s" 0.210.0+201802142153" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2900,10 +2900,10 @@ cconstant /invader
 
 max-invaders /invader * constant /invaders
 
-create invaders-data /invaders allot
+create invaders /invaders allot
   \ Invaders data table.
 
-: invader#>~ ( n -- a ) /invader * invaders-data + ;
+: invader#>~ ( n -- a ) /invader * invaders + ;
   \ Convert invader number _n_ to its data address _a_.
 
 first-invader# invader#>~ constant first-invader~
@@ -3038,7 +3038,7 @@ cconstant invader-max-y
   [ 3 layer>y ] cliteral invaders-max-x -1 1 6 init-invader
   [ 4 layer>y ] cliteral invaders-max-x -1 2 5 init-invader ;
 
-: -invaders-data ( -- ) invaders-data /invaders erase ;
+: -invaders-data ( -- ) invaders /invaders erase ;
   \ Erase the data of all invaders.
 
 : init-invaders-data ( -- )
@@ -3736,7 +3736,7 @@ defer quit-game ( -- )
   \ ===========================================================
   cr .( Invasion) ?depth debug-point \ {{{1
 
-cvariable invaders
+cvariable #invaders
   \ Current number of invaders during the attack.
 
 2variable invader-time
@@ -3746,7 +3746,7 @@ cvariable invaders
 : init-invaders ( -- ) init-invaders-data
                        0 set-invader
                        0. invader-time 2!
-                       invaders coff ;
+                       #invaders coff ;
 
 : at-invader ( -- ) invader~ ~x c@ invader~ ~y c@ at-xy ;
   \ Set the cursor position at the coordinates of the invader.
@@ -4024,7 +4024,7 @@ defer ?dock ( -- )
 : ?cure ( -- ) difficult-cure? ?exit cure ;
   \ Cure the current invader, depending on its status.
 
-: ?undock ( -- ) invaders c@ random ?exit undock ;
+: ?undock ( -- ) #invaders c@ random ?exit undock ;
   \ Undock the current invader randomly, depending on the
   \ current number of invaders: The few invaders alive, the
   \ more chances to be undock.
@@ -4351,7 +4351,7 @@ cvariable beam-invader#
   \ Is the mothership above the right initial column of
   \ invaders?
 
-: enlist-squadron ( -- ) half-max-invaders invaders c+! ;
+: enlist-squadron ( -- ) half-max-invaders #invaders c+! ;
 
 : create-squadron ( -- )
   above-left-invaders? if   create-left-squadron
@@ -4628,7 +4628,7 @@ constant visible-mothership-movements ( -- a )
 
 : destroy-invader ( -- )
   -invader invader~ ~stamina coff invader~ ~action off
-  invaders c1-! ;
+  #invaders c1-! ;
 
 : impacted-invader ( -- n )
   projectile~ ~projectile-y c@ invader-min-y - 2/
@@ -5375,7 +5375,7 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Main loop) ?depth debug-point \ {{{1
 
-: invaders-destroyed? ( -- f ) invaders c@ 0= ;
+: invaders-destroyed? ( -- f ) #invaders c@ 0= ;
 
 : extermination? ( -- f )
   invaders-destroyed? mothership-destroyed? and ;
