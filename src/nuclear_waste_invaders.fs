@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.207.0+201802131937" ;
+: version$ ( -- ca len ) s" 0.208.0+201802141700" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -161,7 +161,7 @@ need bright-mask need inversely
   cr .(   -Keyboard) ?depth \ {{{2
 
 need kk-ports need kk-1# need pressed? need kk-chars
-need #>kk need inkey need new-key
+need kk#>kk need inkey need new-key
 
   \ --------------------------------------------
   cr .(   -Time) ?depth \ {{{2
@@ -674,15 +674,17 @@ variable catastrophe \ flag (game end condition)
 
 13 cconstant enter-key
 
-0 cconstant kk-left#         0. 2constant kk-left
-0 cconstant kk-right#        0. 2constant kk-right
-0 cconstant kk-fire#         0. 2constant kk-fire
-0 cconstant kk-recharge#     0. 2constant kk-recharge
-0 cconstant kk-previous-gun# 0. 2constant kk-previous-gun
-0 cconstant kk-next-gun#     0. 2constant kk-next-gun
-
-: wait ( -- ) begin inkey until ;
-  \ Wait until any key is pressed.
+0. 2constant kk-left
+0. 2constant kk-right
+0. 2constant kk-fire
+0. 2constant kk-recharge
+0. 2constant kk-previous-gun
+0. 2constant kk-next-gun
+0. 2constant kk-bullet-gun
+0. 2constant kk-missile-gun
+0. 2constant kk-ball-gun
+  \ Constants to store the bitmask and port address of the
+  \ keys used in the game.
 
 : enter-key? ( -- f ) inkey enter-key = ;
   \ Is the Enter key pressed?
@@ -701,80 +703,174 @@ variable catastrophe \ flag (game end condition)
         dup kk#>c upper char>string rot \ default
   endcase ;
 
-  \ Controls
+  \ Controls data
 
-6 cconstant /controls
-  \ Bytes per item in the `controls` table.
+0
+  cfield: ~keyset-left
+  cfield: ~keyset-right
+  cfield: ~keyset-fire
+  cfield: ~keyset-recharge
+  cfield: ~keyset-next-gun
+  cfield: ~keyset-previous-gun
+  cfield: ~keyset-bullet-gun
+  cfield: ~keyset-missile-gun
+  cfield: ~keyset-ball-gun
+cconstant /keyset
 
-create controls
+9 cconstant #keysets
+  \ Number of keysets.
 
-  \ Order of the keys in the table:
+create keysets #keysets /keyset * allot
+  \ Data table for keysets.
+
+cvariable keyset#
+  \ Number of the current keyset in table `keysets`.
+
+0 constant keyset~
+  \ Data address of the current keyset in table `keysets`.
+
+: keyset#>~ ( n -- a ) /keyset * keysets + ;
+  \ Convert keyset number _n_ to its data address _a_.
+
+  \ next-gun previous-gun recharge fire right left
   \ next-gun previous-gun recharge fire right left
 
-  kk-7# kk-6# kk-sp# kk-en# kk-8# kk-5#
-  c, c, c, c, c, c,
-    \ cursor+enter+space
-  kk-a# kk-q# kk-sp# kk-en# kk-t# kk-r#
-  c, c, c, c, c, c,
-    \ Spanish Dvorak
-  kk-q# kk-a# kk-sp# kk-en# kk-x# kk-z#
-  c, c, c, c, c, c,
+0 keyset#>~ !> keyset~
+
+kk-5#  keyset~ ~keyset-left c!
+kk-8#  keyset~ ~keyset-right c!
+kk-en# keyset~ ~keyset-fire c!
+kk-sp# keyset~ ~keyset-recharge c!
+kk-7#  keyset~ ~keyset-next-gun c!
+kk-6#  keyset~ ~keyset-previous-gun c!
+kk-m#  keyset~ ~keyset-bullet-gun c!
+kk-w#  keyset~ ~keyset-missile-gun c!
+kk-v#  keyset~ ~keyset-ball-gun c!
+  \ Kinesis Advantage keyboard with Spanish Dvorak layout.
+
+1 keyset#>~ !> keyset~
+
+kk-r#  keyset~ ~keyset-left c!
+kk-t#  keyset~ ~keyset-right c!
+kk-sp# keyset~ ~keyset-fire c!
+kk-en# keyset~ ~keyset-recharge c!
+kk-i#  keyset~ ~keyset-next-gun c!
+kk-a#  keyset~ ~keyset-previous-gun c!
+kk-o#  keyset~ ~keyset-bullet-gun c!
+kk-e#  keyset~ ~keyset-missile-gun c!
+kk-e#  keyset~ ~keyset-ball-gun c!
+    \ Spanish Dvorak layout.
+
+2 keyset#>~ !> keyset~
+
+kk-z# keyset~ ~keyset-left c!
+kk-c# keyset~ ~keyset-right c!
+kk-x# keyset~ ~keyset-fire c!
+kk-v# keyset~ ~keyset-recharge c!
+kk-q# keyset~ ~keyset-next-gun c!
+kk-a# keyset~ ~keyset-previous-gun c!
+kk-s# keyset~ ~keyset-bullet-gun c!
+kk-d# keyset~ ~keyset-missile-gun c!
+kk-f# keyset~ ~keyset-ball-gun c!
     \ QWERTY
-  kk-7# kk-6# kk-sp# kk-0# kk-8# kk-5#
-  c, c, c, c, c, c,
-    \ cursor joystick + space
-  kk-7# kk-6# kk-0# kk-sp# kk-8# kk-5#
-  c, c, c, c, c, c,
-    \ cursor+space+0
-  kk-4# kk-3# kk-en# kk-5# kk-2# kk-1#
-  c, c, c, c, c, c,
-    \ Sinclair 1
-  kk-9# kk-8# kk-a# kk-0# kk-7# kk-6#
-  c, c, c, c, c, c,
-    \ Sinclair 2
-  kk-q# kk-a# kk-sp# kk-x# kk-p# kk-o#
-  c, c, c, c, c, c,
+
+3 keyset#>~ !> keyset~
+
+kk-5#  keyset~ ~keyset-left c!
+kk-8#  keyset~ ~keyset-right c!
+kk-0#  keyset~ ~keyset-fire c!
+kk-sp# keyset~ ~keyset-recharge c!
+kk-7#  keyset~ ~keyset-next-gun c!
+kk-6#  keyset~ ~keyset-previous-gun c!
+kk-1#  keyset~ ~keyset-bullet-gun c!
+kk-2#  keyset~ ~keyset-missile-gun c!
+kk-3#  keyset~ ~keyset-ball-gun c!
+    \ cursor joystick + space + digits
+
+4 keyset#>~ !> keyset~
+
+kk-5#  keyset~ ~keyset-left c!
+kk-8#  keyset~ ~keyset-right c!
+kk-7#  keyset~ ~keyset-fire c!
+kk-6#  keyset~ ~keyset-recharge c!
+kk-9#  keyset~ ~keyset-next-gun c!
+kk-0#  keyset~ ~keyset-previous-gun c!
+kk-1#  keyset~ ~keyset-bullet-gun c!
+kk-2#  keyset~ ~keyset-missile-gun c!
+kk-3#  keyset~ ~keyset-ball-gun c!
+    \ cursor+digits
+
+5 keyset#>~ !> keyset~
+
+kk-1# keyset~ ~keyset-left c!
+kk-2# keyset~ ~keyset-right c!
+kk-5# keyset~ ~keyset-fire c!
+kk-q# keyset~ ~keyset-recharge c!
+kk-4# keyset~ ~keyset-next-gun c!
+kk-3# keyset~ ~keyset-previous-gun c!
+kk-w# keyset~ ~keyset-bullet-gun c!
+kk-e# keyset~ ~keyset-missile-gun c!
+kk-r# keyset~ ~keyset-ball-gun c!
+    \ Sinclair 1 + QWERTY
+
+6 keyset#>~ !> keyset~
+
+kk-6# keyset~ ~keyset-left c!
+kk-7# keyset~ ~keyset-right c!
+kk-0# keyset~ ~keyset-fire c!
+kk-u# keyset~ ~keyset-recharge c!
+kk-9# keyset~ ~keyset-next-gun c!
+kk-8# keyset~ ~keyset-previous-gun c!
+kk-i# keyset~ ~keyset-bullet-gun c!
+kk-o# keyset~ ~keyset-missile-gun c!
+kk-p# keyset~ ~keyset-ball-gun c!
+    \ Sinclair 2 + QWERTY
+
+7 keyset#>~ !> keyset~
+
+kk-o#  keyset~ ~keyset-left c!
+kk-p#  keyset~ ~keyset-right c!
+kk-sp# keyset~ ~keyset-fire c!
+kk-en# keyset~ ~keyset-recharge c!
+kk-q#  keyset~ ~keyset-next-gun c!
+kk-a#  keyset~ ~keyset-previous-gun c!
+kk-1#  keyset~ ~keyset-bullet-gun c!
+kk-2#  keyset~ ~keyset-missile-gun c!
+kk-3#  keyset~ ~keyset-ball-gun c!
     \ QWERTY
-  kk-q# kk-a# kk-b# kk-1# kk-m# kk-n#
-  c, c, c, c, c, c,
+
+8 keyset#>~ !> keyset~
+
+kk-n# keyset~ ~keyset-left c!
+kk-m# keyset~ ~keyset-right c!
+kk-v# keyset~ ~keyset-fire c!
+kk-b# keyset~ ~keyset-recharge c!
+kk-q# keyset~ ~keyset-next-gun c!
+kk-a# keyset~ ~keyset-previous-gun c!
+kk-1# keyset~ ~keyset-bullet-gun c!
+kk-2# keyset~ ~keyset-missile-gun c!
+kk-3# keyset~ ~keyset-ball-gun c!
     \ QWERTY
-  kk-p# kk-l# kk-x# kk-sp# kk-w# kk-q#
-  c, c, c, c, c, c,
-    \ QWERTY
-  kk-p# kk-l# kk-en# kk-sp# kk-x# kk-z#
-  c, c, c, c, c, c,
-    \ QWERTY
 
-here controls - /controls / cconstant max-controls
-  \ Number of controls stored in `controls`.
+: set-keyset ( n -- )
+  dup keyset# c! keyset#>~ !> keyset~
+  keyset~ ~keyset-left         c@ kk#>kk 2!> kk-left
+  keyset~ ~keyset-right        c@ kk#>kk 2!> kk-right
+  keyset~ ~keyset-fire         c@ kk#>kk 2!> kk-fire
+  keyset~ ~keyset-recharge     c@ kk#>kk 2!> kk-recharge
+  keyset~ ~keyset-previous-gun c@ kk#>kk 2!> kk-previous-gun
+  keyset~ ~keyset-next-gun     c@ kk#>kk 2!> kk-next-gun
+  keyset~ ~keyset-bullet-gun   c@ kk#>kk 2!> kk-bullet-gun
+  keyset~ ~keyset-missile-gun  c@ kk#>kk 2!> kk-missile-gun
+  keyset~ ~keyset-ball-gun     c@ kk#>kk 2!> kk-ball-gun ;
+  \ Make keyset number _n_ the current one.
 
-max-controls 1- cconstant last-control
+0 set-keyset
 
-: >controls ( n -- a ) /controls * controls + ;
-  \ Convert controls number _n_ to its address _a_.
-
-: set-controls ( n -- )
-  >controls
-     dup c@ dup c!> kk-left#         #>kk 2!> kk-left
-  1+ dup c@ dup c!> kk-right#        #>kk 2!> kk-right
-  1+ dup c@ dup c!> kk-fire#         #>kk 2!> kk-fire
-  1+ dup c@ dup c!> kk-recharge#     #>kk 2!> kk-recharge
-  1+ dup c@ dup c!> kk-previous-gun# #>kk 2!> kk-previous-gun
-  1+     c@ dup c!> kk-next-gun#     #>kk 2!> kk-next-gun ;
-  \ Make controls number _n_ (item of the `controls` table) the
-  \ current controls.
-
-cvariable current-controls
-  \ Index of the current controls in `controls` table.
-
-current-controls coff
-current-controls c@ set-controls
-  \ Default controls.
-
-: next-controls ( -- )
-  current-controls c@1+  dup last-control > 0= abs *
-  dup current-controls c!  set-controls ;
-  \ Change the current controls.
+: next-keyset ( -- )
+  keyset# c@1+ dup #keysets < and set-keyset ;
+  \ Change the current keyset to the next one, in a circular
+  \ way.
 
   \ ===========================================================
   cr .( UDG) ?depth debug-point \ {{{1
@@ -3527,37 +3623,43 @@ defer recharge-gun ( -- )
   \ Display the copyright notice.
 
   \ XXX OLD -- maybe useful in a future version
-  \ : .control ( n -- ) ."  = " .kk# 4 spaces ;
-  \ : (.controls ( -- )
+  \ : .keyset ( n -- ) ."  = " .kk# 4 spaces ;
+  \ : (.keysets ( -- )
   \   row dup s" [Space] to change controls:" rot center-type
-  \   9 over 2+  at-xy ." Left " kk-left#  .control
-  \   9 over 3 + at-xy ." Right" kk-right# .control
-  \   9 swap 4 + at-xy ." Fire " kk-fire#  .control ;
-  \   \ Display controls at the current row.
+  \   9 over 2+  at-xy ." Left "
+  \   keyset~ ~keyset-left c@ .keyset
+  \   9 over 3 + at-xy ." Right"
+  \   keyset~ ~keyset-right c@ .keyset
+  \   9 swap 4 + at-xy ." Fire "
+  \   keyset~ ~keyset-fire c@  .keyset ;
+  \   \ Display keyset at the current row.
 
-: left-key$ ( -- ca len ) kk-left# kk#>string ;
+: left-key$ ( -- ca len )
+  keyset~ ~keyset-left c@ kk#>string ;
 
-: right-key$ ( -- ca len ) kk-right# kk#>string ;
+: right-key$ ( -- ca len )
+  keyset~ ~keyset-right c@ kk#>string ;
 
-: fire1-key$ ( -- ca len ) kk-fire# kk#>string ;
+: fire-key$ ( -- ca len )
+  keyset~ ~keyset-fire c@ kk#>string ;
 
-: .controls-legend ( -- )
+: .keyset-legend ( -- )
   10 at-x left-arrow  .2x1-udg-sprite
   15 at-x fire-button .2x1-udg-sprite
   20 at-x right-arrow .2x1-udg-sprite ;
-  \ Display controls legend at the current row.
+  \ Display keyset legend at the current row.
 
-: .control-keys ( -- )
+: .keyset-keys ( -- )
   10 at-x left-key$  2 type-right-field
-  13 at-x fire1-key$ 6 type-center-field
+  13 at-x fire-key$  6 type-center-field
   20 at-x right-key$ 2 type-left-field ;
-  \ Display control keys at the current row.
+  \ Display keyset keys at the current row.
 
-: (.controls ( -- )
+: (.keyset ( -- )
   \ s" [Space] to change controls:" row dup >r center-type
     \ XXX TODO --
-  .controls-legend cr .control-keys ;
-  \ Display controls at the current row.
+  .keyset-legend cr .keyset-keys ;
+  \ Display keyset at the current row.
 
 2 cconstant max-player
 
@@ -3580,8 +3682,8 @@ false [if] \ XXX TODO --
 
 [then]
 
-: .controls ( -- )
-  0 12 at-xy (.controls
+: .keyset ( -- )
+  0 12 at-xy (.keyset
   \ s" SPACE: change - ENTER: start" 18 center-type ; XXX TMP
   0 16 at-xy not-in-this-language$ columns type-center-field
   0 19 at-xy start$ columns type-center-field ;
@@ -3591,7 +3693,7 @@ false [if] \ XXX TODO --
   \ Display the parts of the menu screen that are invariable,
   \ i.e., don't depend on the current language.
 
-: variable-menu-screen ( -- ) game-title .players .controls ;
+: variable-menu-screen ( -- ) game-title .players .keyset ;
   \ Display the parts of the menu screen that are variable,
   \ i.e., depend on the current language.
 
@@ -3622,7 +3724,7 @@ defer quit-game ( -- )
     key lower case
     start-key    of  exit           endof \ XXX TMP --
     language-key of change-language variable-menu-screen endof
-    \ bl  of  next-controls .controls  endof
+    \ bl  of  next-keyset .keyset  endof
     \ 'p' of  change-players .players  endof
     \ XXX TMP --
     endcase
@@ -5014,12 +5116,20 @@ cvariable projectile-frame
 
 10 cconstant arming-interval \ ticks
 
+: schedule-arming ( -- ) arming-time arming-interval schedule ;
+
 : arming ( -- )
   arming-time already? 0exit
+  kk-bullet-gun pressed?   if
+    bullet-gun#  change-gun schedule-arming exit then
+  kk-missile-gun pressed?  if
+    missile-gun# change-gun schedule-arming exit then
+  kk-ball-gun pressed?     if
+    ball-gun#    change-gun schedule-arming exit then
   kk-previous-gun pressed? if
-    previous-gun arming-time arming-interval schedule exit then
-  kk-next-gun pressed? if
-    next-gun arming-time arming-interval schedule then ;
+    previous-gun            schedule-arming exit then
+  kk-next-gun pressed?     if
+    next-gun                schedule-arming      then ;
 
 : manage-tank ( -- ) driving arming shooting recharging ;
 
