@@ -153,7 +153,5 @@ Improve the visibility of the projectile right above the tank.
 - Make the new direction of the mothership depend also on the number
   of missiles left: when there's no missile left, the position of the
   tank is removed from the calculation.
-- Modify `weak?` to make the breaking harder. Rewrite it as `strong?`
-  to simplify the calculation.
 - Rename `invaders` `#invaders`, and rename `invaders-data`
   `invaders`. This is the convention used in all other cases.

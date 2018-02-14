@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.208.0+201802141700" ;
+: version$ ( -- ca len ) s" 0.209.0+201802142130" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4050,14 +4050,13 @@ defer ?dock ( -- )
   <break-bricks one-more-breach impel-invader ;
   \ Break the wall at the left of the current invader.
 
-: weak? ( -- f )
-  [ max-endurance 2* ] cliteral invader~ ~endurance c@ -
-  random ;
+: weak? ( -- 0f ) [ max-endurance 16 * ] cliteral
+                  invader~ ~endurance c@ - random ;
   \ Is the current invader too weak to break the wall?
 
 : ?<break-wall ( -- ) weak? ?exit <break-wall ;
-  \ If the current invader pushes hard enough, break the wall
-  \ at the left.
+  \ Break the wall at the left of the current invader, if it's
+  \ strong enough to do so.
 
 :noname ( -- ) ?<break-wall at-invader .invader
                ; ' <breaking-invader-action defer!
@@ -4070,8 +4069,8 @@ defer ?dock ( -- )
   \ Break the wall at the right of the current invader.
 
 : ?break-wall> ( -- ) weak? ?exit break-wall> ;
-  \ If the current invader pushes hard enough, break the wall
-  \ at the right.
+  \ Break the wall at the left of the current invader, if it's
+  \ strong enough to do so.
 
 :noname ( -- ) ?break-wall> at-invader .invader
                ; ' breaking>-invader-action defer!
