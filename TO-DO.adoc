@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-14
+:revdate: 2018-02-15
 
 Older first:
 
@@ -150,6 +150,3 @@ Improve the visibility of the projectile right above the tank.
 == 2018-02-13
 
 - Improve the effect of missiles.
-- Make the new direction of the mothership depend also on the number
-  of missiles left: when there's no missile left, the position of the
-  tank is removed from the calculation.

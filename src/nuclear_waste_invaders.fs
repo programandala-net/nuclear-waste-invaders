@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.210.0+201802142153" ;
+: version$ ( -- ca len ) s" 0.211.0+201802150005" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4519,10 +4519,15 @@ constant visible-mothership-movements ( -- a )
                                       3 random ?exit
                                stop-mothership ;
 
+: missiles-left ( -- n )
+  missiles-stack xstack projectiles-left gun-stack ;
+  \ Return the number _n_ of missiles left. The current gun is
+  \ preserved.
+
 : (new-mothership-x-inc ( -- -1|0|1 )
-  left-side-invaders right-side-invaders <=>
-  mothership-x @     tank-x c@           <=> +
-                                       -1..1 + polarity ;
+  left-side-invaders right-side-invaders      <=>
+  missiles-left if   mothership-x @ tank-x c@ <=> +
+                then                        -1..1 + polarity ;
   \ Return the new direction of the mothership, which is
   \ stopped above the building.
 
@@ -4754,7 +4759,7 @@ cvariable gun#
   cfield: ~gun-projectile-frames       \ count
   cfield: ~gun-projectile-attr         \ attribute
   cfield: ~gun-projectile-altitude     \ row
-  cfield: ~gun-projectile-x            \ column
+  cfield: ~gun-ammo-x                  \ column on status bar
   cfield: ~gun-tank-sprite             \ UDG
   cfield: ~gun-trigger-interval        \ ticks
   cfield: ~gun-projectile-max-delay    \ bitmask
@@ -4784,7 +4789,7 @@ missile-gun# gun#>~ constant missile-gun~
   dup gun# c!
       gun#>~ dup !> gun~
              dup ~gun-tank-sprite c@ c!> tank-sprite
-                 ~gun-projectile-x c@ c!> ammo-x
+                 ~gun-ammo-x      c@ c!> ammo-x
   gun-stack
   ; ' set-gun defer!
   \ Set _n_ as the current arm (0=gun machine; 1=missile gun).
@@ -4816,9 +4821,9 @@ invader-min-y    bullet-gun~ ~gun-projectile-altitude c!
 mothership-y 1+ missile-gun~ ~gun-projectile-altitude c!
 building-top-y 1+  ball-gun~ ~gun-projectile-altitude c!
 
- bullets-x  bullet-gun~ ~gun-projectile-x c!
-missiles-x missile-gun~ ~gun-projectile-x c!
-   balls-x    ball-gun~ ~gun-projectile-x c!
+ bullets-x  bullet-gun~ ~gun-ammo-x c!
+missiles-x missile-gun~ ~gun-ammo-x c!
+   balls-x    ball-gun~ ~gun-ammo-x c!
 
  bullet-gun-tank-sprite  bullet-gun~ ~gun-tank-sprite c!
 missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
