@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.212.0+201802150044" ;
+: version$ ( -- ca len ) s" 0.213.0+201802150110" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3267,16 +3267,16 @@ variable used-projectiles
   \ any type.
 
 0
-  cfield: ~projectile-y            \ row
-  cfield: ~projectile-x            \ column
-  cfield: ~projectile-sprite       \ UDG (*)
-  cfield: ~projectile-frames       \ count (*)
-  cfield: ~projectile-attr         \ attribute (*)
-  cfield: ~projectile-altitude     \ row (*)
-  cfield: ~projectile-delay        \ counter
-  cfield: ~projectile-max-delay    \ bitmask (*)
-   field: ~projectile-action       \ xt
-  cfield: ~projectile-harmlessness \ level (0..x)
+  cfield: ~projectile-y         \ row
+  cfield: ~projectile-x         \ column
+  cfield: ~projectile-sprite    \ UDG (*)
+  cfield: ~projectile-frames    \ count (*)
+  cfield: ~projectile-attr      \ attribute (*)
+  cfield: ~projectile-altitude  \ row (*)
+  cfield: ~projectile-delay     \ counter
+  cfield: ~projectile-max-delay \ bitmask (*)
+   field: ~projectile-action    \ xt
+  cfield: ~projectile-power     \ 1..x
 cconstant /projectile
   \ Data structure of a projectile.
   \
@@ -4679,8 +4679,8 @@ constant visible-mothership-movements ( -- a )
 : mortal? ( -- f ) invader~ ~stamina c@
                    invader~ ~layer c@ +
                    invader~ ~endurance c@ +
-                   projectile~ ~projectile-harmlessness c@ +
-                   random 0= ;
+                   projectile~ ~projectile-power c@ -
+                   0 max random 0= ;
   \ Is it a mortal impact?  The random calculation depends on
   \ the stamina, the altitude, the species' endurance and the
   \ type of projectile.
@@ -4746,19 +4746,19 @@ cvariable gun#
   \ Data address of the current gun.
 
 0
-   field: ~gun-projectile-stack        \ address
-  cfield: ~gun-projectile-sprite       \ UDG
-  cfield: ~gun-projectile-frames       \ count
-  cfield: ~gun-projectile-attr         \ attribute
-  cfield: ~gun-projectile-altitude     \ row
-  cfield: ~gun-ammo-x                  \ column on status bar
-  cfield: ~gun-tank-sprite             \ UDG
-  cfield: ~gun-trigger-interval        \ ticks
-  cfield: ~gun-projectile-max-delay    \ bitmask
-   field: ~gun-projectile-action       \ xt
-  cfield: ~gun-projectile-harmlessness \ level (0..x)
-   field: ~gun-recharger               \ xt
-   field: ~gun-icon-displayer          \ xt
+   field: ~gun-projectile-stack     \ address
+  cfield: ~gun-projectile-sprite    \ UDG
+  cfield: ~gun-projectile-frames    \ count
+  cfield: ~gun-projectile-attr      \ attribute
+  cfield: ~gun-projectile-altitude  \ row
+  cfield: ~gun-ammo-x               \ column on status bar
+  cfield: ~gun-tank-sprite          \ UDG
+  cfield: ~gun-trigger-interval     \ ticks
+  cfield: ~gun-projectile-max-delay \ bitmask
+   field: ~gun-projectile-action    \ xt
+  cfield: ~gun-projectile-power     \ 1..x
+   field: ~gun-recharger            \ xt
+   field: ~gun-icon-displayer       \ xt
 cconstant /gun
   \ Data structure of a gun.
 
@@ -4832,9 +4832,9 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite c!
 %00011 missile-gun~ ~gun-projectile-max-delay c!
 %01111    ball-gun~ ~gun-projectile-max-delay c!
 
-1  bullet-gun~ ~gun-projectile-harmlessness c!
-0 missile-gun~ ~gun-projectile-harmlessness c!
-3    ball-gun~ ~gun-projectile-harmlessness c!
+2  bullet-gun~ ~gun-projectile-power c!
+4 missile-gun~ ~gun-projectile-power c!
+1    ball-gun~ ~gun-projectile-power c!
 
 ' recharge1-bullet-gun   bullet-gun~ ~gun-recharger !
 ' recharge1-missile-gun missile-gun~ ~gun-recharger !
@@ -5050,8 +5050,8 @@ cvariable projectile-frame
   projectile~ ~projectile-max-delay c!
   gun~ ~gun-projectile-altitude c@
   projectile~ ~projectile-altitude c!
-  gun~ ~gun-projectile-harmlessness c@
-  projectile~ ~projectile-harmlessness c! ;
+  gun~ ~gun-projectile-power c@
+  projectile~ ~projectile-power c! ;
   \ Get a new projectile and set its data according to the
   \ current value of `gun~`.  For the sake of run-time speed,
   \ some fields are copied from the structure pointed by

@@ -145,7 +145,3 @@ Improve the visibility of the projectile right above the tank.
 == 2018-02-09
 
 - Highlight also the ammo of the current gun, not only the icon.
-
-== 2018-02-13
-
-- Improve the effect of missiles.
