@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.213.0+201802150110" ;
+: version$ ( -- ca len ) s" 0.214.0+201802151204" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -646,6 +646,8 @@ localized-string press-any-key$ ( -- ca len )
   white papery brighty white + cconstant hide-report-attr
           white papery brighty cconstant reveal-report-attr
                          white cconstant text-attr
+                         white cconstant status-attr
+         status-attr inversely cconstant ammo-attr
 
             white papery red + cconstant brick-attr
                          white cconstant door-attr
@@ -936,11 +938,10 @@ cvariable used-udgs  used-udgs coff
 : (.ammo ( n -- )
   projectiles-left 0 <# [ ammo-digits ] [#] #>
   ammo-x status-bar-y at-xy type ;
-  \ Display the current ammo left at the status bar,
-  \ with the current attribute.
+  \ Display the current ammo left, with the current attribute.
 
-: .ammo ( n -- ) text-attr attr! (.ammo ;
-  \ Display the current ammo left at the status bar.
+: .ammo ( n -- ) ammo-attr attr! (.ammo ;
+  \ Display the current ammo left.
 
 0 cconstant  bullet-gun#
 1 cconstant missile-gun#
@@ -4784,7 +4785,7 @@ missile-gun# gun#>~ constant missile-gun~
                  ~gun-ammo-x      c@ c!> ammo-x
   gun-stack
   ; ' set-gun defer!
-  \ Set _n_ as the current arm (0=gun machine; 1=missile gun).
+  \ Set _n_ as the current gun.
 
 : recharge-gun ( -- ) gun~ ~gun-recharger perform ;
   \ Recharge the current gun.
@@ -5099,14 +5100,19 @@ cvariable projectile-frame
 
 : .gun-icon ( -- ) gun~ ~gun-icon-displayer perform ;
 
-: highlight-gun ( -- )
-  [ text-attr inversely ] cliteral attr! .gun-icon ;
+: highlight-gun ( -- ) ammo-attr attr! .gun-icon (.ammo ;
+  \ Highlight the current gun icon and its ammo on the status
+  \ bar.
 
-: unhighlight-gun ( -- ) text-attr attr! .gun-icon ;
+: unhighlight-gun ( -- ) status-attr attr! .gun-icon (.ammo ;
+  \ Unhighlight the current gun icon and its ammo on the status
+  \ bar.
 
 : change-gun ( n -- ) unhighlight-gun
                       set-gun tank-previous-frame .tank
                       highlight-gun ;
+  \ Change the current gun for _n_, updating the status bar and
+  \ the tank.
 
 : next-gun ( -- ) gun# c@1+ dup #guns < and change-gun ;
 
@@ -5361,7 +5367,7 @@ localized-string about-next-location$ ( -- ca len )
 : hide-status-bar ( -- ) sky-attr color-status-bar ;
 
 : reveal-status-bar ( -- )
-  text-attr color-status-bar highlight-gun ;
+  status-attr color-status-bar highlight-gun ;
 
 : (status-bar ( -- )
   gun# c@ .bullets-icon  .bullets  space

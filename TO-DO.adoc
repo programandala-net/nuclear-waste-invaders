@@ -142,6 +142,8 @@ Improve the visibility of the projectile right above the tank.
 - Allow only one flying missile.
 - Reduce altitude of bullets below the top invader.
 
-== 2018-02-09
+== 2018-02-15
 
-- Highlight also the ammo of the current gun, not only the icon.
+- Erode the wall in `?<break-wall` and `?break-wall>`. Problem: the
+  wall attribute should be red on black instead of red on white...
+- Make `+invaders` faster: use only one `abs` at the end.
