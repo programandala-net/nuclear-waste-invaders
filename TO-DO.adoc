@@ -146,4 +146,5 @@ Improve the visibility of the projectile right above the tank.
 
 - Erode the wall in `?<break-wall` and `?break-wall>`. Problem: the
   wall attribute should be red on black instead of red on white...
-- Make `+invaders` faster: use only one `abs` at the end.
+- Move the repeated compile-time calculation of sprite frames to a
+  word.

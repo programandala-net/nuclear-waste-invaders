@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.214.0+201802151204" ;
+: version$ ( -- ca len ) s" 0.215.0+201802151221" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3084,7 +3084,7 @@ create stamina-attributes ( -- ca )   dying-invader-attr c,
   max-invaders half-max-invaders create-invaders ;
 
 : +invaders ( n0 n1 n2 -- n3 )
-  ?do i invader#>~ ~stamina c@ 0<> abs + loop ;
+  ?do i invader#>~ ~stamina c@ 0<> + loop abs ;
   \ Count the number of alive invaders, from invader
   \ _n2_ to invader _n1-1_, and add the result to _n0_,
   \ giving the final result _n3_.
