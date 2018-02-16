@@ -146,10 +146,6 @@ Improve the visibility of the projectile right above the tank.
 
 - Erode the wall in `?<break-wall` and `?break-wall>`. Problem: the
   wall attribute should be red on black instead of red on white...
-- Move the repeated compile-time calculation of sprite frames to a
-  word.
-- Replace `mothership-frames <` with `mothership-max-frame <>` in
-  `mothership-frame+`, for speed.
 
 == 2018-02-16
 

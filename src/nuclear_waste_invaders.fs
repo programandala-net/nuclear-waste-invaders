@@ -4319,8 +4319,6 @@ defer set-exploding-mothership ( -- )
   \ Increase frame _n1_ of the mothership, resulting frame
   \ _n2_.  If _n1_ is the maximum frame allowed, _n2_ is zero,
   \ which is the first one.
-  \
-  \ XXX TODO -- Use `mothership-max-frame <>` for speed.
 
 : mothership-udg ( -- c|ca )
   mothership-frame c@ dup mothership-frame+ mothership-frame c!
