@@ -148,3 +148,18 @@ Improve the visibility of the projectile right above the tank.
   wall attribute should be red on black instead of red on white...
 - Move the repeated compile-time calculation of sprite frames to a
   word.
+- Replace `mothership-frames <` with `mothership-max-frame <>` in
+  `mothership-frame+`, for speed.
+
+== 2018-02-16
+
+- Rename fields  "~WHATEVER-right-sprite" "~WHATEVER>-sprite".
+- Rename fields  "~WHATEVER-left-sprite" "~<WHATEVER-sprite".
+- Rename `.2x1-udg-sprite` `emit-2udga`, after the UDGa migration is
+  finished.
+- Use original `emit-udga` instead of alias `.1x1sprite`, after the
+  UDGa migration is finished.
+- Rename "start-breaking-the-wall" "start-breaking", or
+  "try-break-wall".
+- Make non-healthy invaders try to break the wall and modify `weak?`
+  accordingly.
