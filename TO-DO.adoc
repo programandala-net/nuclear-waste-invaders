@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-15
+:revdate: 2018-02-16
 
 Older first:
 
@@ -153,13 +153,9 @@ Improve the visibility of the projectile right above the tank.
 
 == 2018-02-16
 
-- Rename fields  "~WHATEVER-right-sprite" "~WHATEVER>-sprite".
-- Rename fields  "~WHATEVER-left-sprite" "~<WHATEVER-sprite".
 - Rename `.2x1-udg-sprite` `emit-2udga`, after the UDGa migration is
   finished.
 - Use original `emit-udga` instead of alias `.1x1sprite`, after the
   UDGa migration is finished.
 - Rename "start-breaking-the-wall" "start-breaking", or
   "try-break-wall".
-- Make non-healthy invaders try to break the wall and modify `weak?`
-  accordingly.

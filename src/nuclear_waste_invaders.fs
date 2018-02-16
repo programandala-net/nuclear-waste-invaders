@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.216.0+201802161336" ;
+: version$ ( -- ca len ) s" 0.217.0+201802161531" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2878,16 +2878,16 @@ status-bar-rows columns * cconstant /status-bar
 3 cconstant #species
 
 0
-  xfield: ~flying-left-sprite           \ UDG
-  cfield: ~flying-left-sprite-frames    \ count
-  xfield: ~flying-right-sprite          \ UDG
-  cfield: ~flying-right-sprite-frames   \ count
-  xfield: ~breaking-left-sprite         \ UDG
-  cfield: ~breaking-left-sprite-frames  \ count
-  xfield: ~breaking-right-sprite        \ UDG
-  cfield: ~breaking-right-sprite-frames \ count
-  xfield: ~docked-sprite                \ UDG
-  cfield: ~docked-sprite-frames         \ count
+  xfield: ~<flying-sprite          \ UDG
+  cfield: ~<flying-sprite-frames   \ count
+  xfield: ~flying>-sprite          \ UDG
+  cfield: ~flying>-sprite-frames   \ count
+  xfield: ~<breaking-sprite        \ UDG
+  cfield: ~<breaking-sprite-frames \ count
+  xfield: ~breaking>-sprite        \ UDG
+  cfield: ~breaking>-sprite-frames \ count
+  xfield: ~docked-sprite           \ UDG
+  cfield: ~docked-sprite-frames    \ count
   cfield: ~species-endurance
 cconstant /species
   \ Data structure of an invader species.
@@ -2900,21 +2900,16 @@ create species #species /species * allot
 : set-species ( c1 c2 c3 c4 c5 -- )
   species#>~ >r
   r@ ~species-endurance c!
-  r@ ~flying-right-sprite !sprite
-  undocked-invader-sprite-frames
-  r@ ~flying-right-sprite-frames c!
-  r@ ~flying-left-sprite !sprite
-  undocked-invader-sprite-frames
-  r@ ~flying-left-sprite-frames c!
-  r@ ~breaking-right-sprite !sprite
-  undocked-invader-sprite-frames
-  r@ ~breaking-right-sprite-frames c!
-  r@ ~breaking-left-sprite !sprite
-  undocked-invader-sprite-frames
-  r@ ~breaking-left-sprite-frames c!
+  r@ ~flying>-sprite !sprite
+  undocked-invader-sprite-frames r@ ~flying>-sprite-frames c!
+  r@ ~<flying-sprite !sprite
+  undocked-invader-sprite-frames r@ ~<flying-sprite-frames c!
+  r@ ~breaking>-sprite !sprite
+  undocked-invader-sprite-frames r@ ~breaking>-sprite-frames c!
+  r@ ~<breaking-sprite !sprite
+  undocked-invader-sprite-frames r@ ~<breaking-sprite-frames c!
   r@ ~docked-sprite !sprite
-  docked-invader-sprite-frames
-  r> ~docked-sprite-frames c! ;
+  docked-invader-sprite-frames r> ~docked-sprite-frames c! ;
   \ Init the data of invaders species _c5_:
   \   c1 = docked sprite
   \   c2 = left flying sprite
@@ -3056,8 +3051,8 @@ cconstant invader-max-y
   \ Is the current invader flying to the left?
 
 : set-<flying-invader-sprite ( -- )
-  invader~ ~species @ dup ~flying-left-sprite @sprite swap
-                          ~flying-left-sprite-frames c@
+  invader~ ~species @ dup ~<flying-sprite @sprite swap
+                          ~<flying-sprite-frames c@
   set-invader-sprite ;
   \ Set the flying-to-the-left sprite of the current invader.
   \
@@ -3068,8 +3063,8 @@ cconstant invader-max-y
   \ identical, there's no need to initiate `~frame`.
 
 : set-flying>-invader-sprite ( -- )
-  invader~ ~species @ dup ~flying-right-sprite @sprite swap
-                          ~flying-right-sprite-frames c@
+  invader~ ~species @ dup ~flying>-sprite @sprite swap
+                          ~flying>-sprite-frames c@
   set-invader-sprite ;
   \ Set the flying-to-the-right sprite of the current invader.
   \
@@ -4019,18 +4014,13 @@ defer ?dock ( -- )
            then turn-back> ;
   \ Hit the container that is at the left of the invader.
 
-: <start-breaking-the-wall ( -- )
-  invader~ ~species @ dup ~breaking-left-sprite @sprite swap
-                          ~breaking-left-sprite-frames c@
+: <hit-wall ( -- )
+  invader~ ~species @ dup ~<breaking-sprite @sprite swap
+                          ~<breaking-sprite-frames c@
   set-invader-sprite
   ['] <breaking-invader-action invader~ ~action ! ;
-
-: <hit-wall ( -- )
-  healthy? if   <start-breaking-the-wall exit
-           then turn-back> ;
-  \ Hit the wall that is at the left of the current invader:
-  \ If the current invader is healthy, start breaking the wall
-  \ at its left; else turn back to the right.
+  \ Hit the wall that is at the left of the current invader and
+  \ start breaking it.
 
 :noname ( -- )
   left-of-invader cond
@@ -4061,18 +4051,13 @@ defer ?dock ( -- )
            then <turn-back ;
   \ Hit the container that is at the right of the invader.
 
-: start-breaking-the-wall> ( -- )
-  invader~ ~species @ dup ~breaking-right-sprite @sprite swap
-                          ~breaking-right-sprite-frames c@
+: hit-wall> ( -- )
+  invader~ ~species @ dup ~breaking>-sprite @sprite swap
+                          ~breaking>-sprite-frames c@
   set-invader-sprite
   ['] breaking>-invader-action invader~ ~action ! ;
-
-: hit-wall> ( -- )
-  healthy? if   start-breaking-the-wall> exit
-           then <turn-back ;
-  \ Hit the wall that is at the right of the current invader:
-  \ If the current invader is healthy, start breaking the wall
-  \ at its right; else turn back to the left.
+  \ Hit the wall that is at the right of the current invader
+  \ and start breaking it.
 
 :noname ( -- )
   right-of-invader cond
@@ -4135,8 +4120,10 @@ defer ?dock ( -- )
   <break-bricks one-more-breach impel-invader ;
   \ Break the wall at the left of the current invader.
 
-: weak? ( -- 0f ) [ max-endurance 16 * ] cliteral
-                  invader~ ~endurance c@ - random ;
+: weak? ( -- 0f )
+  [ max-stamina max-endurance + 8 * ] cliteral
+  invader~ ~stamina   c@ -
+  invader~ ~endurance c@ - random ;
   \ Is the current invader too weak to break the wall?
 
 : ?<break-wall ( -- ) weak? ?exit <break-wall ;
@@ -5627,7 +5614,7 @@ localized-string about-next-location$ ( -- ca len )
   ." species             " r@ invader#>~ ~species dup u. cr @
   ." SPECIES DATA:" cr
   rdrop >r
-  ." flying-right-sprite " r@ ~flying-right-sprite @sprite . cr
+  ." flying>-sprite      " r@ ~flying>-sprite @sprite . cr
   ." docked-sprite       " r@ ~docked-sprite @sprite . cr
   rdrop ;
 
@@ -5662,23 +5649,27 @@ localized-string about-next-location$ ( -- ca len )
   \ --------------------------------------------
   \ Compare double use of `invader~ ~species @`
 
+0 [if]
+
   \ 2018-02-16
 
 need timer
 
 : bench-species ( n -- )
   dup ticks swap 0 ?do
-        invader~ ~species @ ~flying-left-sprite @sprite
-        invader~ ~species @ ~flying-left-sprite-frames c@
+        invader~ ~species @ ~<flying-sprite @sprite
+        invader~ ~species @ ~<flying-sprite-frames c@
         drop drop
         loop cr timer ."  duplicating the fetch"
       ticks swap 0 ?do
         invader~ ~species @ dup
-        ~flying-left-sprite @sprite swap
-        ~flying-left-sprite-frames c@
+        ~<flying-sprite @sprite swap
+        ~<flying-sprite-frames c@
         drop drop
         loop cr timer ."  duplicating the value" ;
-  \
+
+[then]
+
   \ |==========================================
   \ |       | Frames
   \ |       | =================================
