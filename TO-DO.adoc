@@ -150,5 +150,3 @@ Improve the visibility of the projectile right above the tank.
   UDGa migration is finished.
 - Rename "start-breaking-the-wall" "start-breaking", or
   "try-break-wall".
-- Fix: the tank is frozen at the start of a new atttack, if the
-  walls were left damaged at the end of the previous attack.
