@@ -120,11 +120,6 @@ Improve the visibility of the projectile right above the tank.
 - Improve repairing of the breaches with an effect done by an
   independent action.
 
-== 2018-01-27, 2018-02-01
-
-- Simplify the counting of breaches and its usage in the ending
-  condition: Just finish when there's no breach.
-
 == 2018-02-02
 
 - Fix: no explosion sound when stamina becomes 1?
@@ -155,3 +150,5 @@ Improve the visibility of the projectile right above the tank.
   UDGa migration is finished.
 - Rename "start-breaking-the-wall" "start-breaking", or
   "try-break-wall".
+- Fix: the tank is frozen at the start of a new atttack, if the
+  walls were left damaged at the end of the previous attack.

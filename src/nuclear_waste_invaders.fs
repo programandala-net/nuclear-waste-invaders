@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.217.0+201802161531" ;
+: version$ ( -- ca len ) s" 0.218.0+201802162253" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3184,31 +3184,15 @@ create stamina-attributes ( -- ca )   dying-invader-attr c,
   \ ===========================================================
   cr .( Building) ?depth debug-point \ {{{1
 
-cvariable old-breaches
-  \ Number of breaches in the wall, at the start of the current
-  \ attack.
-
 cvariable breaches
-  \ Number of new breaches in the wall, during the current
-  \ attack.
+  \ Number of current breaches in the wall.
 
 cvariable battle-breaches
   \ Total number of breaches in the wall, during the current
-  \ battle.
+  \ battle, even if they have been repaired.
 
-: check-breaches ( -- ) breaches c@ old-breaches c! ;
-  \ Remember the current number of breaches.
-
-: no-breach ( -- )
-  old-breaches coff breaches coff battle-breaches coff ;
+: no-breach ( -- ) breaches coff battle-breaches coff ;
   \ Reset the number of breaches.
-
-: breaches? ( -- f ) breaches c@ 0<> ;
-  \ Has the building any breach caused during an attack?
-
-: new-breach? ( -- f ) breaches c@ old-breaches c@ > ;
-  \ Has got the building any new breach during the current
-  \ attack?
 
 building-top-y 11 + cconstant building-bottom-y
 
@@ -3269,10 +3253,6 @@ create containers-half
                   [ last-column ] cliteral swap at-xy .brick ;
   \ Draw the yard limits.
 
-variable repaired
-  \ Flag: has the building been repaired at the start of the
-  \ current attack?
-
 : building ( -- )
   building-top
   location c@1+  building-left-x
@@ -3286,8 +3266,6 @@ variable repaired
   \ Draw the building and the nuclear containers.
   \
   \ XXX TODO -- Simpler and faster.
-
-: repair-building ( -- ) building repaired on check-breaches ;
 
   \ ===========================================================
   cr .( Locations) ?depth debug-point \ {{{1
@@ -5061,12 +5039,11 @@ cvariable projectile-frame
 ' move-projectile missile-gun~ ~gun-projectile-action !
   \ Set the action of missiles.
 
-: one-less-breach ( -- ) breaches c1-! battle-breaches c1-! ;
 
 : repair-breach ( col row -- ) 2dup 1+ at-xy .brick
                                2dup    at-xy .brick
                                     1- at-xy .brick
-                               one-less-breach ;
+                               breaches c1-! ;
 
 : is-there-breach? ( col row -- f ) xy>attr sky-attr = ;
   \ Is there a breach at coordinates _col row_?
@@ -5268,8 +5245,7 @@ cvariable projectile-frame
   blackout location-title 3 seconds blackout ;
   \ Announce arriving to location _n_ by displaying its name.
 
-: arrive ( n -- )
-  dup announce landscape>screen building repaired off ;
+: arrive ( n -- ) dup announce landscape>screen building ;
   \ Arrive to location _n_ by displaying its name and scenery.
 
 : settle ( -- ) location c@ arrive ;
@@ -5321,6 +5297,28 @@ here \ en (English)
 localized-string well-done$ ( -- ca len )
 
 here \ es (Spanish)
+  s" El ataque ha sido rechazado, " s,
+
+here \ eo (Esperanto)
+   s" La atako estis repuŝita, " s,
+
+here \ en (English)
+  s" The attack has been repelled, " s,
+
+localized-string about-repelled-attack$ ( -- ca len )
+
+here \ es (Spanish)
+  s" pero los muros están dañados." s,
+
+here \ eo (Esperanto)
+   s" sed la muroj estas damaĝitaj." s,
+
+here \ en (English)
+  s" but the walls are damaged." s,
+
+localized-string about-damaged-walls$ ( -- ca len )
+
+here \ es (Spanish)
   s" Se prevé un nuevo ataque inminente." s,
 
 here \ eo (Esperanto)
@@ -5332,56 +5330,16 @@ here \ en (English)
 localized-string about-new-attack$ ( -- ca len )
 
 here \ es (Spanish)
-  s" El ataque ha sido rechazado, "
-  s" pero los muros han sido dañados." s+ s,
-
-here \ eo (Esperanto)
-   s" La atako estis repuŝita, sed "
-   s" la muroj estas damaĝitaj." s+ s,
-
-here \ en (English)
-  s" The attack has been repelled, "
-  s" but the walls have been damaged." s+ s,
-
-localized-string about-new-damages$ ( -- ca len )
-
-here \ es (Spanish)
-  s" El ataque ha sido rechazado sin "
-  s" causar nuevos daños, pero los " s+
-  s" muros aún están dañados y deben " s+
-  s" ser reparados." s+ s,
-  \ XXX TODO -- Improve.
-
-here \ eo (Esperanto)
-   s" La atako estis repuŝita sen "
-   s" kaŭzi novajn damaĝojn, sed la " s+
-   s" muroj ankoraŭ estas damaĝitaj " s+
-   s" kaj devas esti riparitaj." s+ s,
-  \ XXX TODO -- Improve.
-
-here \ en (English)
-  s" The attack has been repelled "
-  s" without causing new damages, but " s+
-  s" the walls are still damaged and " s+
-  s" must be repaired." s+ s,
-  \ XXX TODO -- Improve.
-
-localized-string about-old-damages$ ( -- ca len )
-
-here \ es (Spanish)
   s" Los invasores han sido aniquilados "
-  s" antes de que pudieran dañar el edificio. " s+ s,
-  \ XXX TODO -- Improve.
+  s" y el edificio está en buen estado. " s+ s,
 
 here \ eo (Esperanto)
   s" La invadantoj estis destruitaj "
-  s" antaŭ ol ili povis damaĝi la konstruaĵon. " s+ s,
-  \ XXX TODO -- Improve.
+  s" kaj la konstruaĵo bonstatas. " s+ s,
 
 here \ en (English)
   s" The invaders have been destroyed "
-  s" before they were able to damage the building. " s+ s,
-  \ XXX TODO -- Improve.
+  s" and the building is in good condition. " s+ s,
 
 localized-string about-battle$ ( -- ca len )
 
@@ -5404,11 +5362,12 @@ localized-string about-next-location$ ( -- ca len )
 
 : paragraph ( ca len -- ) wltype wcr wcr ;
 
+: any-breach? ( -- f ) breaches c@ 0<> ;
+
 : about-attack ( -- )
-                   well-done$              paragraph
-  new-breach? if   about-new-damages$      paragraph
-                   about-new-attack$
-              else about-old-damages$ then paragraph ;
+  well-done$                                     paragraph
+  about-repelled-attack$ about-damaged-walls$ s+ paragraph
+  about-new-attack$                              paragraph ;
 
 : unfocus ( -- ) attributes /attributes unfocus-attr fill ;
   \ Unfocus the screen to contrast the report window.
@@ -5494,10 +5453,10 @@ localized-string about-next-location$ ( -- ca len )
   \ the projectiles from flying much faster than usual.
 
 : under-attack ( -- )
-  check-breaches attack-wave begin fight end-of-attack? until
+  attack-wave begin fight end-of-attack? until
   lose-projectiles ;
 
-: another-attack? ( -- f ) breaches? catastrophe? 0= and ;
+: another-attack? ( -- f ) any-breach? catastrophe? 0= and ;
 
 : prepare-attack ( -- )
   new-projectiles status-bar reset-dticks
@@ -5505,12 +5464,10 @@ localized-string about-next-location$ ( -- ca len )
 
 : prepare-battle ( -- ) settle new-tank ;
 
-: ?repair-building ( -- ) new-breach? ?exit repair-building ;
-
 : battle ( -- )
   prepare-battle
   begin prepare-attack under-attack another-attack?
-  while attack-report ?repair-building repeat ;
+  while attack-report repeat ;
 
 : campaign ( -- ) begin battle catastrophe? 0=
                   while battle-report reward travel repeat ;
