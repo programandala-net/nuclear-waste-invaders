@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.222.0+201802172119" ;
+: version$ ( -- ca len ) s" 0.223.0+201802172207" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4605,12 +4605,12 @@ constant visible-mothership-movements ( -- a )
 : sky-attr<>
   \ Compilation: ( -- )
   \ Run-time:    ( c -- f|0f )
-  [ sky-attr 0<> ] [if]   postpone sky-attr postpone <> ( f )
-                   [else] ( 0f ) [then] ; immediate
-  \ Compile the words needed to check if _c_ is different from
-  \ `sky-attr`. If the value of `sky-attr` is zero, compile
-  \ nothing. This is used only in case the value of `sky-attr`
-  \ changes in future versions.
+  [ sky-attr 0<> ] [if]   postpone sky-attr postpone <>
+                   [then] ; immediate
+  \ Compile, if needed, the words needed to check if _c_ is
+  \ different from `sky-attr`.  This is used to save a bit
+  \ execution time when `sky-attr` is zero, and also in case
+  \ the value changes in future versions.
 
 : impact? ( -- f|0f ) projectile-xy xy>attr sky-attr<> ;
   \ Did the projectile impacted?
@@ -4865,7 +4865,17 @@ cvariable projectile-frame
                                     1- at-xy .brick
                                breaches c1-! ;
 
-: is-there-breach? ( col row -- f ) xy>attr sky-attr = ;
+: sky-attr=
+  \ Compilation: ( -- )
+  \ Run-time:    ( c -- f )
+  [ sky-attr 0<> ] [if]   postpone sky-attr postpone =
+                   [else] postpone 0= [then] ; immediate
+  \ Compile the words needed to check if _c_ is equal to
+  \ `sky-attr`.  This is used to save a bit execution time when
+  \ `sky-attr` is zero, and also in case the value changes in
+  \ future versions.
+
+: is-there-breach? ( col row -- f ) xy>attr sky-attr= ;
   \ Is there a breach at coordinates _col row_?
 
 : right-of-projectile-xy ( -- col row )
@@ -5407,8 +5417,8 @@ localized-string about-next-location$ ( -- ca len )
 
 : sky ( -- )
   attributes /attributes bounds ?do
-    i c@ sky-attr = if   [ cyan papery brighty ] cliteral i c!
-                    then loop ;
+    i c@ sky-attr= if   [ cyan papery brighty ] cliteral i c!
+                   then loop ;
   \ Reveal the zones of the screen that have the sky attribute,
   \ by coloring them with brighy cyan.  This is useful to
   \ discover attributes that shoud be sky-colored but have been
