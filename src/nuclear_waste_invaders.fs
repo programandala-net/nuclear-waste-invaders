@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.221.0+201802172034" ;
+: version$ ( -- ca len ) s" 0.222.0+201802172119" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2365,10 +2365,10 @@ XXXXX...
 
 1 1 ,udg-block: broken-top-left-brick
 
-XXXXXXXX
-.XXXXXXX
-.X.XXXXX
-...XX.XX
+XXXXX.XX
+.XXXX.XX
+.X.XX.XX
+........
 ......XX
 .....XXX
 ......X.
@@ -2377,20 +2377,20 @@ XXXXXXXX
 1 1 ,udg-block: broken-bottom-left-brick
 
 ........
-........
+.......X
 .....XXX
-......XX
-...XX.XX
-.XXXXXXX
-XXXXXXXX
-XXXXXXXX
+........
+....X.XX
+.X.XXXXX
+XX.XXXXX
+........
 
 1 1 ,udg-block: broken-top-right-brick
 
-XXXXXXXX
-XXXXXXXX
+XXXXX.XX
+XXXXX.XX
 XXXXX...
-XXXXXX..
+........
 XXX..X..
 X.......
 ........
@@ -2401,11 +2401,11 @@ X.......
 ........
 X.......
 X.X.....
-XXX..X..
-XXXXXX..
-XXXXX...
-XXXXXX.X
-XXXXXXXX
+........
+XX.XXX..
+XX.XX...
+XX.XXX.X
+........
 
   \ -----------------------------------------------------------
   \ Tank
