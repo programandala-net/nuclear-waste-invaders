@@ -113,10 +113,9 @@ Older first:
 - Allow only one flying missile.
 - Reduce altitude of bullets below the top invader.
 
-== 2018-02-15
+== 2018-02-15, 2018-02-17
 
-- Erode the wall in `?<break-wall` and `?break-wall>`. Problem: the
-  wall attribute should be red on black instead of red on white...
+- Erode the wall in `?<break-wall` and `?break-wall>`.
 
 == 2018-02-16
 
@@ -135,3 +134,5 @@ Older first:
 - Add the current gun to `(new-mothership-x-inc`, combined with
   `missiles-left`? I.e., if the current gun is other than the missile
   gun, reduce the weight of the ammo in the calculation.
+- Round the corner bricks of the building. Use specific UDGs for the
+  corners or just calculate and plot those pixels.

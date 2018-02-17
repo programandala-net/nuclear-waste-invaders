@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.220.1+201802171715" ;
+: version$ ( -- ca len ) s" 0.221.0+201802172034" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -646,8 +646,7 @@ localized-string press-any-key$ ( -- ca len )
                          white cconstant status-attr
          status-attr inversely cconstant ammo-attr
 
-            white papery red + cconstant brick-attr
-                         white cconstant door-attr
+                           red cconstant brick-attr
                            red cconstant broken-wall-attr
                         yellow cconstant container-attr
                 yellow brighty cconstant radiation-attr
@@ -2344,25 +2343,25 @@ XX.XXXXX
 
 1 1 ,udg-block: left-door
 
-XXXXXXXX
-.XXXXXXX
+XXXXX.XX
+.XXXX.XX
+..XXX.XX
+........
 ..XXXXXX
 ..XXXXXX
 ..XXXXXX
-..XXXXXX
-..XXXXXX
-..XXXXXX
+...XXXXX
 
 1 1 ,udg-block: right-door
 
-XXXXXXXX
-XXXXXXX.
+XXXXX.XX
+XXXXX.X.
+XXXXX...
+........
 XXXXXX..
 XXXXXX..
 XXXXXX..
-XXXXXX..
-XXXXXX..
-XXXXXX..
+XXXXX...
 
 1 1 ,udg-block: broken-top-left-brick
 
@@ -2786,12 +2785,12 @@ max-invaders 1- cconstant last-invader#
   cfield: ~invader-frames         \ count
   cfield: ~invader-frame          \ counter
   cfield: ~invader-initial-x      \ column
-  field:  ~invader-x-inc          \ -1|1
-  field:  ~invader-initial-x-inc  \ -1|1
+   field: ~invader-x-inc          \ -1|1
+   field: ~invader-initial-x-inc  \ -1|1
   cfield: ~invader-stamina        \ 0..3
   cfield: ~invader-attr           \ color attribute
-  field:  ~invader-action         \ execution token
-  field:  ~invader-species        \ data structure address
+   field: ~invader-action         \ execution token
+   field: ~invader-species        \ data structure address
   2field: ~invader-explosion-time \ ticks clock time
   cfield: ~invader-layer          \ 0 (bottom) .. 4 (top)
   cfield: ~invader-endurance      \ 1..max-endurance
@@ -3040,10 +3039,10 @@ building-top-y 11 + cconstant building-bottom-y
   \ Draw a floor of the building at row _row_.
 
 : ground-floor ( row -- )
-  building-left-x 1+ swap at-xy
-  door-attr attr!  left-door emit-udga
-  brick-attr attr! brick building-width 4 - emits-udga
-  door-attr attr!  right-door emit-udga ;
+  building-left-x 1+ swap at-xy brick-attr attr!
+  left-door emit-udga
+  brick building-width 4 - emits-udga
+  right-door emit-udga ;
   \ Draw the ground floor of the building at row _row_.
 
 : building-top ( -- ) building-top-y floor ;
