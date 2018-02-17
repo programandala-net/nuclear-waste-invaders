@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.223.0+201802172207" ;
+: version$ ( -- ca len ) s" 0.224.0+201802172227" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2347,10 +2347,10 @@ XXXXX.XX
 .XXXX.XX
 ..XXX.XX
 ........
-..XXXXXX
-..XXXXXX
-..XXXXXX
 ...XXXXX
+...XXXXX
+.X.XXXXX
+XX.XXXXX
 
 1 1 ,udg-block: right-door
 
@@ -2358,10 +2358,10 @@ XXXXX.XX
 XXXXX.X.
 XXXXX...
 ........
-XXXXXX..
-XXXXXX..
-XXXXXX..
-XXXXX...
+XX.XXX..
+XX.XXX..
+XX.XXXX.
+XX.XXXXX
 
 1 1 ,udg-block: broken-top-left-brick
 
@@ -5314,7 +5314,7 @@ localized-string about-next-location$ ( -- ca len )
   \ ===========================================================
   cr .( Debugging tools) ?depth debug-point \ {{{1
 
-: h ( -- ) home ;
+: h ( -- ) text-attr attr! home ;
 
 : half ( -- ) half-max-invaders c!> max-invaders ;
   \ Reduce the actual invaders to the left half.
@@ -5335,7 +5335,6 @@ localized-string about-next-location$ ( -- ca len )
 : ini ( -- ) prepare-war prepare-battle prepare-attack
              attack-wave ;
 
-: h ( -- ) 7 attr! home ; \ home
 : b ( -- ) cls building h ; \ building
 : t ( -- ) .tank h ;
 : tl ( -- ) <tank h ; \ move tank left
