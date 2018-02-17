@@ -12,8 +12,6 @@ Older first:
 == 2016-10-16, 2018-01-07
 
 - Effect: the invaders eat the containers.
-- Keep moving the projectiles and the invaders after the invasion,
-  during the future final effect.
 
 == 2016-10-22
 
@@ -24,18 +22,10 @@ Older first:
 
 - Make a hit invader randomly move up to the next layer, if it's free.
 
-== 2017-01-13
-
-Improve the visibility of the projectile right above the tank.
-
-== 2017-03-01
-
-- Add some inertia to the tank.
-
-== 2017-03-17
+== 2017-03-17, 2018-02-17
 
 - Create a sprite frames table to point to UDG frames, in order to
-  remove duplicated frames from the UDG set.
+  remove duplicated frames.
 
 == 2017-04-18
 
@@ -46,20 +36,14 @@ Improve the visibility of the projectile right above the tank.
 - Improve `battle-bonus`: Make the breach penalty depend on the
   altitude of the breaches.
 
-== 2017-05-20, 2018-01-06
-
-- Replace the UDG codes with the UDG addresses and write a new faster
-  version of `.2x1-udg-sprite`, in Z80, without the conversion from
-  code to address.
-
 == 2017-12-06
 
 - Make `defeat-tune` an alarm and use it when an alien touches the
   wall.
 
-== 2017-12-18
+== 2017-12-18, 2018-02-17
 
-- Improve scoring: reduce the score with each movement and projectile.
+- Improve scoring: reduce the score with each lost projectile.
 - Move the localization tools to Solo Forth.
 
 == 2017-12-19
@@ -76,21 +60,16 @@ Improve the visibility of the projectile right above the tank.
 - Finish regularizing the names of the sprites. The static graphics
   have no suffix.
 
-== 2018-01-07
-
-- Use `,udg-block` to create the sprites and use their address instead
-  of their character codes.
-
 == 2018-01-08
 
 - Improve the graphics of the explosion.
 
-== 2018-01-10
+== 2018-01-10, 2018-02-17
 
 - Make sound of mothership explosion longer. Manage it in
   `exploding-mothership-action`.
 - Idea: Make `manage-mothership` deferred, replacing
-  `do-mothership-action`, and duplicate its current functions
+  `mothership-action`, and duplicate its current functions
   (checking, timing and scheduling) into every action.  This will be a
   bit faster, saving one nesting level.
 
