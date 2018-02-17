@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.224.0+201802172227" ;
+: version$ ( -- ca len ) s" 0.224.1+201802172258" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -5266,7 +5266,8 @@ localized-string about-next-location$ ( -- ca len )
 : extermination? ( -- f )
   invaders-destroyed? mothership-destroyed? and ;
 
-: attack-wave ( -- ) init-mothership init-invaders ;
+: attack-wave ( -- )
+  init-mothership init-invaders reset-dticks ;
 
 : fight ( -- )
   [debugging] [if] ?debug-bar [then] \ XXX TMP --
@@ -5291,7 +5292,7 @@ localized-string about-next-location$ ( -- ca len )
 : another-attack? ( -- f ) any-breach? catastrophe? 0= and ;
 
 : prepare-attack ( -- )
-  repair-tank new-projectiles status-bar reset-dticks
+  repair-tank new-projectiles status-bar
   [debugging] [if] debug-bar [then] ;
 
 : prepare-battle ( -- ) settle new-tank ;

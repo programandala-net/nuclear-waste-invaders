@@ -116,8 +116,8 @@ Older first:
 == 2018-02-15, 2018-02-17
 
 - Erode the wall in `?<break-wall` and `?break-wall>`.  Reuse
-  `break-bricks>` and `<break-bricks` to print the three eroded bricks
-  of the breach.
+  `break-bricks>` and `<break-bricks` for displaying the three eroded
+  bricks of the breach.
 
 == 2018-02-16
 
@@ -137,11 +137,6 @@ Older first:
   gun, reduce the weight of the ammo in the calculation.
 - Round the corner bricks of the building. Use specific UDGs for the
   corners or just calculate and plot those pixels.
-- Fix: the ticks clock is reset in `prepare-attack`, but
-  `mothership-time` is reset a bit later in `attack-wave`. That seems
-  to be the reason sometimes the mothership does not appear at the
-  start of a second attack. Solution: Move `reset-dticks` to the end
-  of `attack-wave`.
 - Make invaders become motherships inside the building, after eating a
   container. But how they go out? Simple option: Destroy only half
   container, then do the metamorphosis with an independent action, and
