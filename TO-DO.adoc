@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-16
+:revdate: 2018-02-17
 
 Older first:
 
@@ -22,7 +22,6 @@ Older first:
 
 == 2017-02-28, 2017-12-19
 
-- Make the tank delay through the building.
 - Make a hit invader randomly move up to the next layer, if it's free.
 
 == 2017-01-13
@@ -150,3 +149,14 @@ Improve the visibility of the projectile right above the tank.
   UDGa migration is finished.
 - Rename "start-breaking-the-wall" "start-breaking", or
   "try-break-wall".
+- Replace the flag variable `mothership-stopped` with deferring of
+  `?stop-mothership`. This change will save time during the movement
+  of the mothership; the changing of the status will take longer than
+  `on` and `off`, but it is needed only in `stop-mothership` and
+  `mothership-turns-back`. The code will be less clear, though.
+
+== 2018-02-17
+
+- Improve the effect of projectiles: make the damage cumulative. For
+  example, use a 0..100 stamina range and make any impact reduce it.
+
