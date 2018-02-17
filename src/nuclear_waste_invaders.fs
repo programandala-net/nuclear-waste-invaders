@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.218.1+201802162324" ;
+: version$ ( -- ca len ) s" 0.219.0+201802171401" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -50,10 +50,6 @@ true constant [breakable] immediate
   \ key combination?
   \
   \ XXX TMP -- for debugging
-
-false constant [udg] immediate
-  \ Reference graphics with their UDG codes (old method)
-  \ instead of their addresses (new method)?
 
 false constant [debugging] immediate
   \ Compile debugging code?
@@ -144,9 +140,7 @@ need type-center-field need gigatype-title need mode-32iso
 need columns need rows need row need fade-display
 need last-column need blackout
 
-[udg] [if]   need udg-block need udg! need set-udg
-      [else] need ,udg-block need /udg+
-      [then] need /udg
+need ,udg-block need /udg+ need /udg
 
 need window need wltype need wcr need wcls need wcolor
 
@@ -945,59 +939,12 @@ defer set-gun ( n -- )
   \ ===========================================================
   cr .( Graphics) ?depth debug-point \ {{{1
 
-[udg] [if]
+: emits-udga ( ca n -- ) 0 ?do dup emit-udga loop drop ;
 
-               235 cconstant last-udg \ last UDG code used
- last-udg 1+ /udg * constant /udg-set \ UDG set size in bytes
-
-create udg-set /udg-set allot  udg-set set-udg
-  \ Reserve space for the UDG set.
-
-cvariable >udg  >udg coff \ next free UDG
-
-cvariable latest-sprite-width
-cvariable latest-sprite-height
-cvariable latest-sprite-udg
-
-: ?udg ( c -- ) last-udg > abort" Too many UDGs" ;
-  \ Abort if UDG _c_ is too high.
-  \ XXX TMP -- during the development
-
-: free-udg ( n -- c )
-  >udg c@ dup latest-sprite-udg c!
-  tuck +  dup >udg c!  1- ?udg ;
-  \ Free _n_ consecutive UDGs and return the first one _c_.
-
-: set-latest-sprite-size ( width height -- )
-  latest-sprite-height c!  latest-sprite-width c! ;
-  \ Update the size of the latest sprited defined.
-
-: emits-udg ( c n -- ) 0 ?do dup emit-udg loop drop ;
-
-' emit-udg alias .1x1sprite ( c -- )
-
-' emits-udg alias .1x1sprites ( c n -- )
-
-: .2x1-udg-sprite ( c -- ) dup emit-udg 1+ emit-udg ;
-
-: (udg-sprite ( width height -- width height c )
-  2dup set-latest-sprite-size 2dup * free-udg ;
-
-: udg-sprite ( width height "ccc" -- c )
-  (udg-sprite dup >r udg-block r> ;
-
-[else]
-
-' emit-udga alias .1x1sprite ( ca -- )
-
-: .1x1sprites ( ca n -- ) 0 ?do dup emit-udga loop drop ;
-
-: .2x1-udg-sprite ( ca -- ) dup emit-udga /udg+ emit-udga ;
+: emit-2udga ( ca -- ) dup emit-udga /udg+ emit-udga ;
 
 : udg-sprite ( width height "ccc" -- ca )
   here -rot ,udg-block ;
-
-[then]
 
 2 cconstant udg/invader
 2 cconstant udg/mothership
@@ -1005,52 +952,18 @@ cvariable latest-sprite-udg
 4 cconstant undocked-invader-sprite-frames
 3 cconstant   docked-invader-sprite-frames
 
-[udg] [if]
-
-0 0 0 0 0 0 0 0 1 free-udg dup cconstant bl-udg udg!
-  \ An empty UDG to be used as space.
-
-[else]
-
 rom-font bl /udg * + constant bl-udg
   \ Address of the ROM font's space, to be used directly as
   \ an UDG.
 
-[then]
+: sprite-id: ( "name" -- ) 0 constant ;
 
-[udg] [if]   : sprite-id: ( "name" -- ) 0 cconstant ;
-             ' c!> alias sprite-id
-      [else] : sprite-id: ( "name" -- ) 0 constant ;
-             ' !> alias sprite-id
-      [then]
-
-[udg] [if]
-
-: sprite>udgs ( b -- n ) >udg c@ swap - ;
-  \ Convert the first UDG _b_ of the lastest sprite defined to
-  \ the number _n_ of UDGs used by the sprite.
-
-[else]
+' !> alias sprite-id
 
 : sprite>udgs ( ca -- n ) here swap - /udg / ;
   \ Convert the address _ca_ of the first UDG of the lastest
   \ sprite defined to the number _n_ of UDGs used by the
   \ sprite.
-
-[then]
-
-: !sprite ( x ca|a -- )
-  [udg] [if]   state @ if postpone c! else c! then
-        [else] state @ if postpone  ! else  ! then
-        [then] ; immediate
-
-: @sprite ( ca|a -- x )
-  [udg] [if]   state @ if postpone c@ else c@ then
-        [else] state @ if postpone  @ else  @ then
-        [then] ; immediate
-
-: xfield: ( n1 "name" -- n2 )
-  [udg] [if] cfield: [else] field: [then] ;
 
   \ -----------------------------------------------------------
   \ Invader species 0
@@ -1835,19 +1748,9 @@ udg/invader 1 udg-sprite
   \ -----------------------------------------------------------
   \ Mothership
 
-[udg] [if]
-
-0 cconstant mothership
-  \ First UDG of the first sprite frame of the current sprite
-  \ of the mothership.
-
-[else]
-
 0  constant mothership
   \ Address of the first UDG sprite frame of the current sprite
   \ of the mothership.
-
-[then]
 
 cvariable mothership-frame
   \ Current frame of the current sprite of the mothership.
@@ -2573,8 +2476,7 @@ XXXXXXXX sprite-id broken-bottom-right-brick
 
 tank-frames 1- cconstant tank-max-frame
 
-0 [udg] [if]   cconstant tank-sprite
-        [else]  constant tank-sprite [then]
+0 constant tank-sprite
   \ The current sprite of the tank.
 
 cvariable tank-frame \ counter (0..3)
@@ -2878,15 +2780,15 @@ status-bar-rows columns * cconstant /status-bar
 3 cconstant #species
 
 0
-  xfield: ~<flying-sprite          \ UDG
+   field: ~<flying-sprite          \ UDG address
   cfield: ~<flying-sprite-frames   \ count
-  xfield: ~flying>-sprite          \ UDG
+   field: ~flying>-sprite          \ UDG address
   cfield: ~flying>-sprite-frames   \ count
-  xfield: ~<breaking-sprite        \ UDG
+   field: ~<breaking-sprite        \ UDG address
   cfield: ~<breaking-sprite-frames \ count
-  xfield: ~breaking>-sprite        \ UDG
+   field: ~breaking>-sprite        \ UDG address
   cfield: ~breaking>-sprite-frames \ count
-  xfield: ~docked-sprite           \ UDG
+   field: ~docked-sprite           \ UDG address
   cfield: ~docked-sprite-frames    \ count
   cfield: ~species-endurance
 cconstant /species
@@ -2900,15 +2802,15 @@ create species #species /species * allot
 : set-species ( c1 c2 c3 c4 c5 -- )
   species#>~ >r
   r@ ~species-endurance c!
-  r@ ~flying>-sprite !sprite
+  r@ ~flying>-sprite !
   undocked-invader-sprite-frames r@ ~flying>-sprite-frames c!
-  r@ ~<flying-sprite !sprite
+  r@ ~<flying-sprite !
   undocked-invader-sprite-frames r@ ~<flying-sprite-frames c!
-  r@ ~breaking>-sprite !sprite
+  r@ ~breaking>-sprite !
   undocked-invader-sprite-frames r@ ~breaking>-sprite-frames c!
-  r@ ~<breaking-sprite !sprite
+  r@ ~<breaking-sprite !
   undocked-invader-sprite-frames r@ ~<breaking-sprite-frames c!
-  r@ ~docked-sprite !sprite
+  r@ ~docked-sprite !
   docked-invader-sprite-frames r> ~docked-sprite-frames c! ;
   \ Init the data of invaders species _c5_:
   \   c1 = docked sprite
@@ -2965,7 +2867,7 @@ max-invaders 1- cconstant last-invader#
 
   cfield: ~y              \ row
   cfield: ~x              \ column
-  xfield: ~sprite         \ UDG
+   field: ~sprite         \ UDG address
   cfield: ~frames         \ count
   cfield: ~frame          \ counter
   cfield: ~initial-x      \ column
@@ -3041,7 +2943,7 @@ cconstant invader-max-y
 3 cconstant max-stamina
 
 : set-invader-sprite ( c n -- )
-  invader~ ~frames c! invader~ ~sprite !sprite
+  invader~ ~frames c! invader~ ~sprite !
   invader~ ~frame coff ;
   \ Set character _c_ as the first character of the first
   \ sprite of the current invader, and _n_ as the number of
@@ -3051,7 +2953,7 @@ cconstant invader-max-y
   \ Is the current invader flying to the left?
 
 : set-<flying-invader-sprite ( -- )
-  invader~ ~species @ dup ~<flying-sprite @sprite swap
+  invader~ ~species @ dup ~<flying-sprite @ swap
                           ~<flying-sprite-frames c@
   set-invader-sprite ;
   \ Set the flying-to-the-left sprite of the current invader.
@@ -3063,7 +2965,7 @@ cconstant invader-max-y
   \ identical, there's no need to initiate `~frame`.
 
 : set-flying>-invader-sprite ( -- )
-  invader~ ~species @ dup ~flying>-sprite @sprite swap
+  invader~ ~species @ dup ~flying>-sprite @ swap
                           ~flying>-sprite-frames c@
   set-invader-sprite ;
   \ Set the flying-to-the-right sprite of the current invader.
@@ -3082,7 +2984,7 @@ cconstant invader-max-y
   \ XXX TODO -- Combine with `set-invader-direction`.
 
 : set-docked-invader-sprite ( -- )
-  invader~ ~species @ dup ~docked-sprite @sprite swap
+  invader~ ~species @ dup ~docked-sprite @ swap
                           ~docked-sprite-frames c@
   set-invader-sprite ;
   \ Make the current invader use the docked invader sprite.
@@ -3216,14 +3118,14 @@ building-top-y 11 + cconstant building-bottom-y
 
 : floor ( row -- )
   building-left-x swap at-xy
-  brick-attr attr! brick building-width .1x1sprites ;
+  brick-attr attr! brick building-width emits-udga ;
   \ Draw a floor of the building at row _row_.
 
 : ground-floor ( row -- )
   building-left-x 1+ swap at-xy
-  door-attr attr!  left-door .1x1sprite
-  brick-attr attr! brick building-width 4 - .1x1sprites
-  door-attr attr!  right-door .1x1sprite ;
+  door-attr attr!  left-door emit-udga
+  brick-attr attr! brick building-width 4 - emits-udga
+  door-attr attr!  right-door emit-udga ;
   \ Draw the ground floor of the building at row _row_.
 
 : building-top ( -- ) building-top-y floor ;
@@ -3231,15 +3133,15 @@ building-top-y 11 + cconstant building-bottom-y
 
 : containers-bottom ( n -- )
   container-attr attr!
-  0 ?do container-bottom .2x1-udg-sprite loop ;
+  0 ?do container-bottom emit-2udga loop ;
   \ Draw a row of _n_ bottom parts of containers.
 
 : containers-top ( n -- )
   container-attr attr!
-  0 ?do container-top .2x1-udg-sprite loop ;
+  0 ?do container-top emit-2udga loop ;
   \ Draw a row of _n_ top parts of containers.
 
-: .brick ( -- ) brick-attr attr! brick .1x1sprite ;
+: .brick ( -- ) brick-attr attr! brick emit-udga ;
   \ Draw a brick.
 
 create containers-half
@@ -3330,7 +3232,7 @@ variable used-projectiles
 0
   cfield: ~projectile-y         \ row
   cfield: ~projectile-x         \ column
-  xfield: ~projectile-sprite    \ UDG (*)
+   field: ~projectile-sprite    \ UDG (*)
   cfield: ~projectile-frames    \ count (*)
   cfield: ~projectile-attr      \ attribute (*)
   cfield: ~projectile-altitude  \ row (*)
@@ -3554,24 +3456,20 @@ columns udg/tank - 1- cconstant tank-max-x
   \ the current coordinates.
 
 : ?emit-outside ( col1 c -- col2 )
-  over outside? if   .1x1sprite 1+        exit
+  over outside? if   emit-udga 1+        exit
                 then drop dup next-col 1+ ;
   \ If column _col1_ is outside the building, display character
   \ _c_ at the current cursor position.  Increment _col1_ and
   \ return it as _col2_.
 
-: left-tank-udg   ( -- c|ca )
-  tank-frame c@ [udg] [if]   udg/tank *
-                      [else] [ udg/tank /udg* ] cliteral *
-                      [then] tank-sprite + ;
+: left-tank-udg   ( -- ca )
+  tank-frame c@ [ udg/tank /udg* ] cliteral * tank-sprite + ;
 
-: middle-tank-udg ( -- c|ca )
-  left-tank-udg [udg] [if]   1+
-                      [else] [ /udg ] cliteral + [then] ;
+: middle-tank-udg ( -- ca )
+  left-tank-udg [ /udg ] cliteral + ;
 
-: right-tank-udg  ( -- c|ca )
-  left-tank-udg [udg] [if]   2+
-                      [else] [ /udg 2* ] cliteral + [then] ;
+: right-tank-udg  ( -- ca )
+  left-tank-udg [ /udg 2* ] cliteral + ;
 
 : tank-frame+ ( n1 -- n2 ) 1+ dup tank-frames <> and ;
   \ Increase tank frame _n1_ resulting frame _n2_.
@@ -3703,9 +3601,9 @@ constant tank-movements ( -- a )
   keyset~ ~keyset-fire c@ kk#>string ;
 
 : .keyset-legend ( -- )
-  10 at-x left-arrow  .2x1-udg-sprite
-  15 at-x fire-button .2x1-udg-sprite
-  20 at-x right-arrow .2x1-udg-sprite ;
+  10 at-x left-arrow  emit-2udga
+  15 at-x fire-button emit-2udga
+  20 at-x right-arrow emit-2udga ;
   \ Display keyset legend at the current row.
 
 : .keyset-keys ( -- )
@@ -3819,15 +3717,14 @@ cvariable #invaders
 
 : invader-udg ( -- c )
   invader~ ~frame c@ dup invader-frame+ invader~ ~frame c!
-  [udg] [if]   [ udg/invader ] x*
-        [else] [ udg/invader /udg * ] cliteral *
-        [then] invader~ ~sprite @sprite + ;
+  [ udg/invader /udg * ] cliteral *
+  invader~ ~sprite @ + ;
 
   \ First UDG _c_ of the current frame of the current invader's
   \ sprite, calculated from its sprite and its frame.
 
 : .invader ( -- )
-  invader~ ~attr c@ attr! invader-udg .2x1-udg-sprite ;
+  invader~ ~attr c@ attr! invader-udg emit-2udga ;
   \ Display the current invader.  at the cursor coordinates, in
   \ its proper attribute.
 
@@ -3840,8 +3737,8 @@ cvariable #invaders
 
 : break-bricks> ( col1 row1 col2 row2 col3 row3 -- )
   broken-wall-attr attr!
-  at-xy broken-top-left-brick .1x1sprite
-  at-xy broken-bottom-left-brick .1x1sprite
+  at-xy broken-top-left-brick emit-udga
+  at-xy broken-bottom-left-brick emit-udga
   sky-attr attr! at-xy space ;
   \ Display the broken bricks at the given coordinates, which
   \ are at the right of the current invader: above the invader,
@@ -3850,8 +3747,8 @@ cvariable #invaders
 
 : <break-bricks ( col1 row1 col2 row2 col3 row3 -- )
   broken-wall-attr attr!
-  at-xy broken-top-right-brick .1x1sprite
-  at-xy broken-bottom-right-brick .1x1sprite
+  at-xy broken-top-right-brick emit-udga
+  at-xy broken-bottom-right-brick emit-udga
   sky-attr attr! at-xy space ;
   \ Display the broken bricks at the given coordinates, which
   \ are at the left of the current invader: above the invader,
@@ -3874,9 +3771,9 @@ cvariable #invaders
 : break-container> ( -- )
   break-container
   invader~ ~x c@ [ udg/invader udg/container 1- + ] cliteral +
-  invader~ ~y c@ at-xy broken-top-right-container .1x1sprite
+  invader~ ~y c@ at-xy broken-top-right-container emit-udga
   invader~ ~x [ udg/invader ] c@x+ invader~ ~y c@1+ at-xy
-  broken-bottom-left-container .1x1sprite ;
+  broken-bottom-left-container emit-udga ;
   \ Break container that is at the right of the invader.
   \
   \ XXX TODO -- Calculate alternatives to `c@2+` and `c@1+` at
@@ -3886,9 +3783,9 @@ cvariable #invaders
 : <break-container ( -- )
   break-container
   invader~ ~x [ udg/container ] c@x- invader~ ~y c@ at-xy
-  broken-top-left-container .1x1sprite
+  broken-top-left-container emit-udga
   invader~ ~x c@1- invader~ ~y c@1+ at-xy
-  broken-bottom-right-container .1x1sprite ;
+  broken-bottom-right-container emit-udga ;
   \ Break container that is at the left of the invader.
 
 : healthy? ( -- f ) invader~ ~stamina c@ max-stamina = ;
@@ -3993,7 +3890,7 @@ defer ?dock ( -- )
   \ Hit the container that is at the left of the invader.
 
 : <hit-wall ( -- )
-  invader~ ~species @ dup ~<breaking-sprite @sprite swap
+  invader~ ~species @ dup ~<breaking-sprite @ swap
                           ~<breaking-sprite-frames c@
   set-invader-sprite
   ['] <breaking-invader-action invader~ ~action ! ;
@@ -4030,7 +3927,7 @@ defer ?dock ( -- )
   \ Hit the container that is at the right of the invader.
 
 : hit-wall> ( -- )
-  invader~ ~species @ dup ~breaking>-sprite @sprite swap
+  invader~ ~species @ dup ~breaking>-sprite @ swap
                           ~breaking>-sprite-frames c@
   set-invader-sprite
   ['] breaking>-invader-action invader~ ~action ! ;
@@ -4180,7 +4077,7 @@ last-column              cconstant visible-mothership-max-x
                        0 cconstant whole-mothership-min-x
 columns udg/mothership -  constant whole-mothership-max-x
 
-variable mothership-stopped  mothership-stopped off
+variable mothership-stopped
   \ Flag: did the mothership stopped in the current flight?
 
 : ~~mothership-info ( -- )
@@ -4219,10 +4116,8 @@ mothership-range columns + cconstant mothership-range-max-x
 : place-mothership ( -- ) mothership-x0 mothership-x ! ;
   \ Set the initial column of the motherhip, out of the screen.
 
-: set-mothership-sprite ( c|ca n -- )
-  c!> mothership-frames
-  [udg] [if] c!> mothership [else] !> mothership [then]
-  mothership-frame coff ;
+: set-mothership-sprite ( ca n -- )
+  c!> mothership-frames !> mothership mothership-frame coff ;
   \ Set character _c_ as the first character of the first
   \ sprite of the mothership, and _n_ as the number of frames.
 
@@ -4298,11 +4193,9 @@ defer set-exploding-mothership ( -- )
   \ _n2_.  If _n1_ is the maximum frame allowed, _n2_ is zero,
   \ which is the first one.
 
-: mothership-udg ( -- c|ca )
+: mothership-udg ( -- ca )
   mothership-frame c@ dup mothership-frame+ mothership-frame c!
-  [udg] [if]   [ udg/mothership ] x*
-        [else] [ udg/mothership /udg * ] cliteral *
-        [then] mothership + ;
+  [ udg/mothership /udg * ] cliteral * mothership + ;
   \ UDG _c_ of the mothership.
 
 : advance-mothership ( -- )
@@ -4316,7 +4209,7 @@ defer set-exploding-mothership ( -- )
   \ Is the mothership in the range of its flying limit?
 
 : (.mothership ( -- )
-  mothership-attr attr! mothership-udg .2x1-udg-sprite ;
+  mothership-attr attr! mothership-udg emit-2udga ;
   \ Display the mothership, which is fully visible, at the
   \ cursor coordinates in its default attribute.
 
@@ -4327,9 +4220,7 @@ defer set-exploding-mothership ( -- )
 : (.visible-right-mothership ( -- )
   mothership-attr attr!
   mothership-udg
-  [udg] [if]   [ udg/mothership 1- ]
-        [else] [ udg/mothership 1- /udg* ]
-        [then] cliteral + .1x1sprite ;
+  [ udg/mothership 1- /udg* ] cliteral + emit-udga ;
   \ Display the mothership, which is partially visible (only
   \ its right side is visible) at the cursor coordinates.
 
@@ -4340,7 +4231,7 @@ defer set-exploding-mothership ( -- )
   \ its right side is visible) at its proper coordinates.
 
 : (.visible-left-mothership ( -- )
-  mothership-attr attr! mothership-udg .1x1sprite ;
+  mothership-attr attr! mothership-udg emit-udga ;
   \ Display the mothership, which is partially visible (only
   \ its left side is visible) at the cursor coordinates.
 
@@ -4455,7 +4346,7 @@ cvariable beam-invader#
 
 : .new-invader ( -- )
   invader~ ~initial-x c@ invader~ ~y c@ at-xy
-  invader~ ~sprite @sprite .2x1-udg-sprite ;
+  invader~ ~sprite @ emit-2udga ;
   \ Display invader _n_ at its initial position, with the
   \ current attribute.
 
@@ -4810,12 +4701,12 @@ cvariable gun#
 
 0
    field: ~gun-projectile-stack     \ address
-  xfield: ~gun-projectile-sprite    \ UDG
+   field: ~gun-projectile-sprite    \ UDG address
   cfield: ~gun-projectile-frames    \ count
   cfield: ~gun-projectile-attr      \ attribute
   cfield: ~gun-projectile-altitude  \ row
   cfield: ~gun-ammo-x               \ column on status bar
-  xfield: ~gun-tank-sprite          \ UDG
+   field: ~gun-tank-sprite          \ UDG address
   cfield: ~gun-trigger-interval     \ ticks
   cfield: ~gun-projectile-max-delay \ bitmask
    field: ~gun-projectile-action    \ xt
@@ -4843,10 +4734,8 @@ missile-gun# gun#>~ constant missile-gun~
 :noname ( n -- )
   dup gun# c!
       gun#>~ dup !> gun~
-             dup ~gun-tank-sprite @sprite
-                 [udg] [if]   c!> tank-sprite
-                       [else]  !> tank-sprite [then]
-                 ~gun-ammo-x      c@ c!> ammo-x
+             dup ~gun-tank-sprite @ !> tank-sprite
+                 ~gun-ammo-x c@ c!> ammo-x
   gun-stack
   ; ' set-gun defer!
   \ Set _n_ as the current gun.
@@ -4865,9 +4754,9 @@ missile-gun# gun#>~ constant missile-gun~
 missiles-stack missile-gun~ ~gun-projectile-stack !
    balls-stack    ball-gun~ ~gun-projectile-stack !
 
- bullet-sprite  bullet-gun~ ~gun-projectile-sprite !sprite
-missile-sprite missile-gun~ ~gun-projectile-sprite !sprite
-   ball-sprite    ball-gun~ ~gun-projectile-sprite !sprite
+ bullet-sprite  bullet-gun~ ~gun-projectile-sprite !
+missile-sprite missile-gun~ ~gun-projectile-sprite !
+   ball-sprite    ball-gun~ ~gun-projectile-sprite !
 
 bullet-frames   bullet-gun~ ~gun-projectile-frames c!
 missile-frames missile-gun~ ~gun-projectile-frames c!
@@ -4885,9 +4774,9 @@ building-top-y 1+  ball-gun~ ~gun-projectile-altitude c!
 missiles-x missile-gun~ ~gun-ammo-x c!
    balls-x    ball-gun~ ~gun-ammo-x c!
 
- bullet-gun-tank-sprite  bullet-gun~ ~gun-tank-sprite !sprite
-missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite !sprite
-   ball-gun-tank-sprite    ball-gun~ ~gun-tank-sprite !sprite
+ bullet-gun-tank-sprite  bullet-gun~ ~gun-tank-sprite !
+missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite !
+   ball-gun-tank-sprite    ball-gun~ ~gun-tank-sprite !
 
 12  bullet-gun~ ~gun-trigger-interval c!
 16 missile-gun~ ~gun-trigger-interval c!
@@ -4937,20 +4826,19 @@ defer projectile ( -- c )
   \ projectile.
 
 : random-projectile ( -- c )
-  projectile~ ~projectile-sprite @sprite
+  projectile~ ~projectile-sprite @
   projectile~ ~projectile-frames c@ random + ;
   \ Return the UDG _c_ of a random frame of the projectile.
 
 [then]
 
 : projectile ( -- c )
-  projectile~ ~projectile-sprite @sprite
-  projectile~ ~projectile-frames c@ random
-  [udg] [ 0= ] [if] /udg* [then] + ;
+  projectile~ ~projectile-sprite @
+  projectile~ ~projectile-frames c@ random /udg* + ;
   \ Return the UDG _c_ of a random frame of the projectile.
 
 : .projectile ( -- ) projectile~ ~projectile-attr c@ attr!
-                     at-projectile projectile .1x1sprite ;
+                     at-projectile projectile emit-udga ;
   \ Display the projectile.
 
 ' whip-sound alias fire-sound ( -- )
@@ -5010,7 +4898,7 @@ cvariable projectile-frame
 
 : set-exploding-projectile ( -- )
   projectile-explosion-sprite
-  projectile~ ~projectile-sprite !sprite
+  projectile~ ~projectile-sprite !
   projectile-explosion-frames
   projectile~ ~projectile-frames c!
   .projectile
@@ -5081,7 +4969,7 @@ cvariable projectile-frame
   \ the building, and therefore can repaier the brechs.
 
 : get-projectile-sprite&action ( -- c n xt )
-  gun~ ~gun-projectile-sprite @sprite
+  gun~ ~gun-projectile-sprite @
   gun~ ~gun-projectile-frames c@
   ['] move-projectile ;
   \ Return sprite _c_, number of frames _n_ and action _xt_ of
@@ -5110,7 +4998,7 @@ cvariable projectile-frame
                    else get-projectile-sprite&action
                    then projectile~ ~projectile-action !
                         projectile~ ~projectile-frames c!
-                        projectile~ ~projectile-sprite !sprite
+                        projectile~ ~projectile-sprite !
   gun~ ~gun-projectile-attr c@
   projectile~ ~projectile-attr c!
   gun~ ~gun-projectile-max-delay c@
@@ -5395,13 +5283,13 @@ localized-string about-next-location$ ( -- ca len )
   cr .( Status bar, part 2 ) ?depth debug-point \ {{{1
 
 : .bullets-icon ( -- ) bullets-icon-x status-bar-y at-xy
-                       bullet-sprite .1x1sprite ;
+                       bullet-sprite emit-udga ;
 
 : .missiles-icon ( -- ) missiles-icon-x status-bar-y at-xy
-                        missile-sprite .1x1sprite ;
+                        missile-sprite emit-udga ;
 
 : .balls-icon ( -- ) balls-icon-x status-bar-y at-xy
-                     ball-sprite .1x1sprite ;
+                     ball-sprite emit-udga ;
 
 ' .bullets-icon   bullet-gun~ ~gun-icon-displayer !
 ' .missiles-icon missile-gun~ ~gun-icon-displayer !
@@ -5487,13 +5375,6 @@ localized-string about-next-location$ ( -- ca len )
 : half ( -- ) half-max-invaders c!> max-invaders ;
   \ Reduce the actual invaders to the left half.
 
-[udg] [if]
-
-: .udgs ( -- ) cr last-udg 1+ 0 do i emit-udg loop ;
-  \ Display all game UDGs.
-
-[then]
-
 : mp ( -- ) manage-projectiles ;
 : fp? ( -- 0f ) flying-projectiles? ;
 : mop ( -- ) move-projectile ;
@@ -5555,7 +5436,7 @@ localized-string about-next-location$ ( -- ca len )
 
 : .i ( n -- )
   >r
-  ." sprite              " r@ invader#>~ ~sprite @sprite . cr
+  ." sprite              " r@ invader#>~ ~sprite @ . cr
   ." frame               " r@ invader#>~ ~frame c@ . cr
   ." frames              " r@ invader#>~ ~frames c@ . cr
   ." stamina             " r@ invader#>~ ~stamina c@ . cr
@@ -5569,23 +5450,23 @@ localized-string about-next-location$ ( -- ca len )
   ." species             " r@ invader#>~ ~species dup u. cr @
   ." SPECIES DATA:" cr
   rdrop >r
-  ." flying>-sprite      " r@ ~flying>-sprite @sprite . cr
-  ." docked-sprite       " r@ ~docked-sprite @sprite . cr
+  ." flying>-sprite      " r@ ~flying>-sprite @ . cr
+  ." docked-sprite       " r@ ~docked-sprite @ . cr
   rdrop ;
 
 : bc ( -- )
   cls
   \ top:
-  space broken-top-right-container .1x1sprite
-  container-top .2x1-udg-sprite
-  broken-top-left-container .1x1sprite space cr
+  space broken-top-right-container emit-udga
+  container-top emit-2udga
+  broken-top-left-container emit-udga space cr
   \ bottom:
-  container-bottom .2x1-udg-sprite 8 emit 8 emit
-  broken-bottom-left-container .1x1sprite
+  container-bottom emit-2udga 8 emit 8 emit
+  broken-bottom-left-container emit-udga
   xy swap 1+ swap at-xy
-  container-bottom .2x1-udg-sprite
-  container-bottom .2x1-udg-sprite 8 emit
-  broken-bottom-right-container .1x1sprite cr ;
+  container-bottom emit-2udga
+  container-bottom emit-2udga 8 emit
+  broken-bottom-right-container emit-udga cr ;
   \ Display the graphics of the broken containers.
 
 : sky ( -- )
@@ -5612,13 +5493,13 @@ need timer
 
 : bench-species ( n -- )
   dup ticks swap 0 ?do
-        invader~ ~species @ ~<flying-sprite @sprite
+        invader~ ~species @ ~<flying-sprite @
         invader~ ~species @ ~<flying-sprite-frames c@
         drop drop
         loop cr timer ."  duplicating the fetch"
       ticks swap 0 ?do
         invader~ ~species @ dup
-        ~<flying-sprite @sprite swap
+        ~<flying-sprite @ swap
         ~<flying-sprite-frames c@
         drop drop
         loop cr timer ."  duplicating the value" ;
@@ -5642,27 +5523,28 @@ need timer
 
 0 [if]
 
+  \ 2017-07-27: Benchmark.
+  \ 2018-02-17: Update word name.
+
 need bench{ need }bench.
 
 : sprite-string-bench ( n -- )
   dup page ." type-udg :"
   bench{ 0 ?do 18 0 at-xy right-arrow$ type-udg
             loop }bench.
-  0 1 at-xy ." .2x1-udg-sprite :"
-  bench{ 0 ?do 18 1 at-xy right-arrow .2x1-udg-sprite
+  0 1 at-xy ." emit-2udga :"
+  bench{ 0 ?do 18 1 at-xy right-arrow emit-2udga
            loop }bench. ;
 
-  \ 2017-07-27:
-  \
-  \ |===================================
+  \ |==============================
   \ |       | Frames
-  \ |       | ==========================
-  \ | Times | type-udg | .2x1-udg-sprite
+  \ |       | =====================
+  \ | Times | type-udg | emit-2udga
   \
-  \ |  1000 |      112 |              94
-  \ | 10000 |     1122 |             937
-  \ | 65535 |     7353 |            6142
-  \ |===================================
+  \ |  1000 |      112 |         94
+  \ | 10000 |     1122 |        937
+  \ | 65535 |     7353 |       6142
+  \ |==============================
 
 [then]
 
