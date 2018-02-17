@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.219.0+201802171401" ;
+: version$ ( -- ca len ) s" 0.220.0+201802171501" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -943,8 +943,13 @@ defer set-gun ( n -- )
 
 : emit-2udga ( ca -- ) dup emit-udga /udg+ emit-udga ;
 
-: udg-sprite ( width height "ccc" -- ca )
-  here -rot ,udg-block ;
+: ,udg-block: ( width height "name" "ccc" -- )
+  here [ 3 cell + ] cliteral + constant ,udg-block ;
+  \ Compile a UDG block _ccc_ of size _width height_ named
+  \ _name_. When _name_ is later executed, the address of the
+  \ block is returned. Note: `here` is adjusted in order
+  \ to skip the space used by the constant: A constant uses 3
+  \ bytes for the code field, plus one cell for the value.
 
 2 cconstant udg/invader
 2 cconstant udg/mothership
@@ -956,10 +961,6 @@ rom-font bl /udg * + constant bl-udg
   \ Address of the ROM font's space, to be used directly as
   \ an UDG.
 
-: sprite-id: ( "name" -- ) 0 constant ;
-
-' !> alias sprite-id
-
 : sprite>udgs ( ca -- n ) here swap - /udg / ;
   \ Convert the address _ca_ of the first UDG of the lastest
   \ sprite defined to the number _n_ of UDGs used by the
@@ -970,9 +971,7 @@ rom-font bl /udg * + constant bl-udg
 
   \ invader species 0, left flying, frame 0:
 
-sprite-id: left-flying-species-0-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: left-flying-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -981,11 +980,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. sprite-id left-flying-species-0-sprite
+..XX........XX..
 
   \ invader species 0, left flying, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -994,11 +993,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-...XX.......XX.. drop
+...XX.......XX..
 
   \ invader species 0, left flying, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1007,11 +1006,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-....XX......XX.. drop
+....XX......XX..
 
   \ invader species 0, left flying, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1020,13 +1019,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-...XX.......XX.. drop
+...XX.......XX..
 
   \ invader species 0, right flying, frame 0:
 
-sprite-id: right-flying-species-0-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: right-flying-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1035,11 +1032,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. sprite-id right-flying-species-0-sprite
+..XX........XX..
 
   \ invader species 0, right flying, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1048,11 +1045,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-..XX.......XX... drop
+..XX.......XX...
 
   \ invader species 0, right flying, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1061,11 +1058,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-..XX......XX.... drop
+..XX......XX....
 
   \ invader species 0, right flying, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1074,13 +1071,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 ....XXX..XXX....
 ...XX..XX..XX...
-..XX.......XX... drop
+..XX.......XX...
 
   \ invader species 0, docked, frame 0:
 
-sprite-id: docked-species-0-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: docked-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1089,11 +1084,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. sprite-id docked-species-0-sprite
+..XX........XX..
 
   \ invader species 0, docked, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1102,11 +1097,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. drop
+..XX........XX..
 
   \ invader species 0, docked, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1115,13 +1110,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. drop
+..XX........XX..
 
   \ invader species 0, left breaking, frame 0:
 
-sprite-id: left-breaking-species-0-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: left-breaking-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1130,11 +1123,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. sprite-id left-breaking-species-0-sprite
+..XX........XX..
 
   \ invader species 0, left breaking, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .....XXXX.......
 ..XXXXXXXXXX....
@@ -1143,11 +1136,11 @@ udg/invader 1 udg-sprite
 .XXXXXXXXXXXX...
 ...XXX..XXX.....
 ..XX..XX..XX....
-..XX.......XX... drop
+..XX.......XX...
 
   \ invader species 0, left breaking, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ....XXXX........
 .XXXXXXXXXX.....
@@ -1156,11 +1149,11 @@ X..XX..XXXXX....
 XXXXXXXXXXXX....
 ..XXX..XXX......
 .XX..XX..XX.....
-..XX......XX.... drop
+..XX......XX....
 
   \ invader species 0, left breaking, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .....XXXX.......
 ..XXXXXXXXXX....
@@ -1169,13 +1162,11 @@ udg/invader 1 udg-sprite
 .XXXXXXXXXXXX...
 ...XXX..XXX.....
 ..XX..XX..XX....
-..XX.......XX... drop
+..XX.......XX...
 
   \ invader species 0, right breaking, frame 0:
 
-sprite-id: right-breaking-species-0-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: right-breaking-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1184,11 +1175,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXXX..
 .....XX..XX.....
 ....XX.XX.XX....
-..XX........XX.. sprite-id right-breaking-species-0-sprite
+..XX........XX..
 
   \ invader species 0, right breaking, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XXXX.....
 ....XXXXXXXXXX..
@@ -1197,11 +1188,11 @@ udg/invader 1 udg-sprite
 ...XXXXXXXXXXXX.
 .....XXX..XXX...
 ....XX..XX..XX..
-...XX.......XX.. drop
+...XX.......XX..
 
   \ invader species 0, right breaking, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ........XXXX....
 .....XXXXXXXXXX.
@@ -1210,11 +1201,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXXXXXX
 ......XXX..XXX..
 .....XX..XX..XX.
-....XX......XX.. drop
+....XX......XX..
 
   \ invader species 0, right breaking, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XXXX.....
 ....XXXXXXXXXX..
@@ -1223,16 +1214,14 @@ udg/invader 1 udg-sprite
 ...XXXXXXXXXXXX.
 .....XXX..XXX...
 ....XX..XX..XX..
-...XX.......XX.. drop
+...XX.......XX..
 
   \ -----------------------------------------------------------
   \ Invader species 1
 
   \ invader species 1, left flying, frame 0:
 
-sprite-id: left-flying-species-1-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: left-flying-species-1-sprite
 
 ......X...X.....
 .....X...X......
@@ -1241,11 +1230,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-....X.....X..... sprite-id left-flying-species-1-sprite
+....X.....X.....
 
   \ invader species 1, left flying, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......X...X.....
 .....X...X......
@@ -1254,11 +1243,11 @@ XXXX.XXX.XXXXXX.
 ..XXXXXXXXXXX...
 ...XXXXXXXXX....
 ....X.....X.....
-.....X.....X.... drop
+.....X.....X....
 
   \ invader species 1, left flying, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......X...X.....
 ..X..X...X..X...
@@ -1267,11 +1256,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXX...
 ...XXXXXXXXX....
 ....X.....X.....
-....X.....X..... drop
+....X.....X.....
 
   \ invader species 1, left flying, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......X...X.....
 .....X...X......
@@ -1280,13 +1269,11 @@ XXXX.XXX.XXXXXX.
 ..XXXXXXXXXXX...
 ...XXXXXXXXX....
 ....X.....X.....
-.....X.....X.... drop
+.....X.....X....
 
   \ invader species 1, right flying, frame 0:
 
-sprite-id: right-flying-species-1-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: right-flying-species-1-sprite
 
 .....X...X......
 ......X...X.....
@@ -1295,11 +1282,11 @@ udg/invader 1 udg-sprite
 ...XXXXXXXXXXX..
 ...XXXXXXXXXXX..
 ...X.X.....X.X..
-.....X.....X.... sprite-id right-flying-species-1-sprite
+.....X.....X....
 
   \ invader species 1, right flying, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .....X...X......
 ......X...X.....
@@ -1308,11 +1295,11 @@ udg/invader 1 udg-sprite
 ...XXXXXXXXXXX..
 ....XXXXXXXXX...
 .....X.....X....
-....X.....X..... drop
+....X.....X.....
 
   \ invader species 1, right flying, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .....X...X......
 ...X..X...X..X..
@@ -1321,11 +1308,11 @@ udg/invader 1 udg-sprite
 ...XXXXXXXXXXX..
 ....XXXXXXXXX...
 .....X.....X....
-.....X.....X.... drop
+.....X.....X....
 
   \ invader species 1, right flying, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .....X...X......
 ......X...X.....
@@ -1334,13 +1321,11 @@ udg/invader 1 udg-sprite
 ...XXXXXXXXXXX..
 ....XXXXXXXXX...
 .....X.....X....
-....X.....X..... drop
+....X.....X.....
 
   \ invader species 1, docked, frame 0:
 
-sprite-id: docked-species-1-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: docked-species-1-sprite
 
 ....X.....X.....
 .....X...X......
@@ -1349,11 +1334,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-.....XX.XX...... sprite-id docked-species-1-sprite
+.....XX.XX......
 
   \ invader species 1, docked, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ....X.....X.....
 .....X...X......
@@ -1362,11 +1347,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-.....XX.XX...... drop
+.....XX.XX......
 
   \ invader species 1, docked, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ....X.....X.....
 .....X...X......
@@ -1375,13 +1360,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-.....XX.XX...... drop
+.....XX.XX......
 
   \ invader species 1, left breaking, frame 0:
 
-sprite-id: left-breaking-species-1-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: left-breaking-species-1-sprite
 
 .....X...X......
 .....X...X......
@@ -1390,11 +1373,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXXXXX...
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
-....X.....X..... sprite-id left-breaking-species-1-sprite
+....X.....X.....
 
   \ invader species 1, left breaking, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .....X...X......
 ....X...X.......
@@ -1403,11 +1386,11 @@ udg/invader 1 udg-sprite
 .XXXXXXXXXXX....
 .XXXXXXXXXX.....
 ..XX.....X......
-....X.....X..... drop
+....X.....X.....
 
   \ invader species 1, left breaking, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ....X...X.......
 ...X...X..X.....
@@ -1416,11 +1399,11 @@ udg/invader 1 udg-sprite
 XXXXXXXXXXX.....
 XXXXXXXXXX......
 .XX.....X.......
-..X.....X....... drop
+..X.....X.......
 
   \ invader species 1, left breaking, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .....X...X......
 ....X...X.......
@@ -1429,13 +1412,11 @@ udg/invader 1 udg-sprite
 .XXXXXXXXXXX....
 .XXXXXXXXXX.....
 ..XX.....X......
-....X.....X..... drop
+....X.....X.....
 
   \ invader species 1, right breaking, frame 0:
 
-sprite-id: right-breaking-species-1-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: right-breaking-species-1-sprite
 
 ......X...X.....
 ......X...X.....
@@ -1444,11 +1425,11 @@ udg/invader 1 udg-sprite
 ...XXXXXXXXXXX..
 ...XXXXXXXXXXX..
 ...X.X.....X.X..
-.....X.....X.... sprite-id right-breaking-species-1-sprite
+.....X.....X....
 
   \ invader species 1, right breaking, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......X...X.....
 .......X...X....
@@ -1457,11 +1438,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXXXXX.
 .....XXXXXXXXXX.
 ......X.....XX..
-.....X.....X.... drop
+.....X.....X....
 
   \ invader species 1, right breaking, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......X...X....
 .....X..X...X...
@@ -1470,11 +1451,11 @@ udg/invader 1 udg-sprite
 .....XXXXXXXXXXX
 ......XXXXXXXXXX
 .......X.....XX.
-.......X.....X.. drop
+.......X.....X..
 
   \ invader species 1, right breaking, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ......X...X.....
 .......X...X....
@@ -1483,16 +1464,14 @@ udg/invader 1 udg-sprite
 ....XXXXXXXXXXX.
 .....XXXXXXXXXX.
 ......X.....XX..
-.....X.....X.... drop
+.....X.....X....
 
   \ -----------------------------------------------------------
   \ Invader species 2
 
   \ invader species 2, left flying, frame 0:
 
-sprite-id: left-flying-species-2-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: left-flying-species-2-sprite
 
 .......XX.......
 ......XXXX......
@@ -1501,11 +1480,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... sprite-id left-flying-species-2-sprite
+....X.X..X.X....
 
   \ invader species 2, left flying, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1514,11 +1493,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 ......X.XX.X....
-.....X.X..X.X... drop
+.....X.X..X.X...
 
   \ invader species 2, left flying, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1527,11 +1506,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 .......X.XX.X...
-......X.X..X.X.. drop
+......X.X..X.X..
 
   \ invader species 2, left flying, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1540,13 +1519,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 ......X.XX.X....
-.....X.X..X.X... drop
+.....X.X..X.X...
 
   \ invader species 2, right flying, frame 0:
 
-sprite-id: right-flying-species-2-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: right-flying-species-2-sprite
 
 .......XX.......
 ......XXXX......
@@ -1555,11 +1532,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... sprite-id right-flying-species-2-sprite
+....X.X..X.X....
 
   \ invader species 2, right flying, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1568,11 +1545,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 ....X.XX.X......
-...X.X..X.X..... drop
+...X.X..X.X.....
 
   \ invader species 2, right flying, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1581,11 +1558,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 ...X.XX.X.......
-..X.X..X.X...... drop
+..X.X..X.X......
 
   \ invader species 2, right flying, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1594,13 +1571,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 ....X.XX.X......
-...X.X..X.X..... drop
+...X.X..X.X.....
 
   \ invader species 2, docked, frame 0:
 
-sprite-id: docked-species-2-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: docked-species-2-sprite
 
 .......XX.......
 ......XXXX......
@@ -1609,11 +1584,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... sprite-id docked-species-2-sprite
+....X.X..X.X....
 
   \ invader species 2, docked, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1622,11 +1597,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... drop
+....X.X..X.X....
 
   \ invader species 2, docked, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1635,13 +1610,11 @@ udg/invader 1 udg-sprite
 ....XXXXXXXX....
 ......X..X......
 .....X.XX.X.....
-....X.X..X.X.... drop
+....X.X..X.X....
 
   \ invader species 2, left breaking, frame 0:
 
-sprite-id: left-breaking-species-2-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: left-breaking-species-2-sprite
 
 .....XX.........
 ....XXXX........
@@ -1650,11 +1623,11 @@ udg/invader 1 udg-sprite
 ..XXXXXXXX......
 ....X..X........
 ...X.XX.X.......
-..X.X..X.X...... sprite-id left-breaking-species-2-sprite
+..X.X..X.X......
 
   \ invader species 2, left breaking, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ....XX..........
 ...XXXX.........
@@ -1663,11 +1636,11 @@ udg/invader 1 udg-sprite
 .XXXXXXXX.......
 ...X..X.........
 ...X.XX.X.......
-..X.X..X.X...... drop
+..X.X..X.X......
 
   \ invader species 2, left breaking, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ...XX...........
 ..XXXX..........
@@ -1676,11 +1649,11 @@ XX.XX.XX........
 XXXXXXXX........
 ..X..X..........
 ...X.XX.X.......
-..X.X..X.X...... drop
+..X.X..X.X......
 
   \ invader species 2, left breaking, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ....XX..........
 ...XXXX.........
@@ -1689,13 +1662,11 @@ udg/invader 1 udg-sprite
 .XXXXXXXX.......
 ...X..X.........
 ...X.XX.X.......
-..X.X..X.X...... drop
+..X.X..X.X......
 
   \ invader species 2, right breaking, frame 0:
 
-sprite-id: right-breaking-species-2-sprite
-
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block: right-breaking-species-2-sprite
 
 .........XX.....
 ........XXXX....
@@ -1704,11 +1675,11 @@ udg/invader 1 udg-sprite
 ......XXXXXXXX..
 ........X..X....
 .......X.XX.X...
-......X.X..X.X.. sprite-id right-breaking-species-2-sprite
+......X.X..X.X..
 
   \ invader species 2, right breaking, frame 1:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ..........XX....
 .........XXXX...
@@ -1717,11 +1688,11 @@ udg/invader 1 udg-sprite
 .......XXXXXXXX.
 .........X..X...
 .......X.XX.X...
-......X.X..X.X.. drop
+......X.X..X.X..
 
   \ invader species 2, right breaking, frame 2:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ...........XX...
 ..........XXXX..
@@ -1730,11 +1701,11 @@ udg/invader 1 udg-sprite
 ........XXXXXXXX
 ..........X..X..
 .......X.XX.X...
-......X.X..X.X.. drop
+......X.X..X.X..
 
   \ invader species 2, right breaking, frame 3:
 
-udg/invader 1 udg-sprite
+udg/invader 1 ,udg-block
 
 ..........XX....
 .........XXXX...
@@ -1743,7 +1714,7 @@ udg/invader 1 udg-sprite
 .......XXXXXXXX.
 .........X..X...
 .......X.XX.X...
-......X.X..X.X.. drop
+......X.X..X.X..
 
   \ -----------------------------------------------------------
   \ Mothership
@@ -1763,9 +1734,7 @@ cvariable mothership-frame
 
   \ mothership, frame 0:
 
-sprite-id: flying-mothership-sprite
-
-udg/mothership 1 udg-sprite
+udg/mothership 1 ,udg-block: flying-mothership-sprite
 
 ................
 .....XXXXXX.....
@@ -1774,11 +1743,11 @@ udg/mothership 1 udg-sprite
 .XX..XX..XX..XX.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X... sprite-id flying-mothership-sprite
+...X........X...
 
   \ mothership, frame 1:
 
-udg/mothership 1 udg-sprite
+udg/mothership 1 ,udg-block
 
 ................
 .....XXXXXX.....
@@ -1787,11 +1756,11 @@ udg/mothership 1 udg-sprite
 .X..XX..XX..XX..
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X... drop
+...X........X...
 
   \ mothership, frame 2:
 
-udg/mothership 1 udg-sprite
+udg/mothership 1 ,udg-block
 
 ................
 .....XXXXXX.....
@@ -1800,11 +1769,11 @@ udg/mothership 1 udg-sprite
 ...XX..XX..XX...
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X... drop
+...X........X...
 
   \ mothership, frame 3:
 
-udg/mothership 1 udg-sprite
+udg/mothership 1 ,udg-block
 
 ................
 .....XXXXXX.....
@@ -1813,7 +1782,7 @@ udg/mothership 1 udg-sprite
 ..XX..XX..XX..X.
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
-...X........X... drop
+...X........X...
 
 flying-mothership-sprite
 sprite>udgs udg/mothership / cconstant flying-mothership-frames
@@ -1821,9 +1790,7 @@ sprite>udgs udg/mothership / cconstant flying-mothership-frames
   \ ............................................
   \ Beaming mothership
 
-sprite-id: beaming-mothership-sprite
-
-udg/mothership 1 udg-sprite
+udg/mothership 1 ,udg-block: beaming-mothership-sprite
 
 ................
 .....XXXXXX.....
@@ -1832,9 +1799,9 @@ udg/mothership 1 udg-sprite
 .XX..XX..XX..XX.
 XXXXXXXXXXXXXXXX
 .X.X.X.XX.X.X.X.
-X.X.X.X..X.X.X.X sprite-id beaming-mothership-sprite
+X.X.X.X..X.X.X.X
 
-udg/mothership 1 udg-sprite
+udg/mothership 1 ,udg-block
 
 ................
 .....XXXXXX.....
@@ -1843,7 +1810,7 @@ udg/mothership 1 udg-sprite
 .XX..XX..XX..XX.
 XXXXXXXXXXXXXXXX
 X.X.X.X..X.X.X.X
-.X.X.X.XX.X.X.X. drop
+.X.X.X.XX.X.X.X.
 
 beaming-mothership-sprite sprite>udgs udg/mothership /
 cconstant beaming-mothership-frames
@@ -1853,9 +1820,7 @@ cconstant beaming-mothership-frames
 
 2 cconstant udg/explosion
 
-sprite-id: explosion-sprite
-
-udg/explosion 1 udg-sprite
+udg/explosion 1 ,udg-block: explosion-sprite
 
 ..............X.
 ..X......XX..X..
@@ -1864,9 +1829,9 @@ udg/explosion 1 udg-sprite
 ...XXXX.XX.XX..X
 .X..XX..XXXX....
 X....XXXXX...X..
-..X...XX...X..X. sprite-id explosion-sprite
+..X...XX...X..X.
 
-udg/explosion 1 udg-sprite
+udg/explosion 1 ,udg-block
 
 ................
 ...X...X...X....
@@ -1875,9 +1840,9 @@ udg/explosion 1 udg-sprite
 ...XX.XXX.XXX...
 ..X.X.XXXX.X..X.
 .X...XX.XX..X...
-.X...XX...X..X.X drop
+.X...XX...X..X.X
 
-udg/explosion 1 udg-sprite
+udg/explosion 1 ,udg-block
 
 .X...X..........
 X...X....X...X..
@@ -1886,9 +1851,9 @@ X...X....X...X..
 X...X.XXX.X.XX..
 ....X.XX.X.XX..X
 ...X.XX.XXX.XX..
-X...XX.X..X..... drop
+X...XX.X..X.....
 
-udg/explosion 1 udg-sprite
+udg/explosion 1 ,udg-block
 
 X......X........
 ....X....X......
@@ -1897,9 +1862,9 @@ X..X.X...X.XX..X
 ....X.X.X.X.XX..
 ..X...X..X.XX...
 ...X.XX.X.X.XX..
-.X..X..........X drop
+.X..X..........X
 
-udg/explosion 1 udg-sprite
+udg/explosion 1 ,udg-block
 
 ..X.............
 ....X....X..X...
@@ -1908,9 +1873,9 @@ X..X.X.X..X..X..
 ....X.....X.X...
 .X....X..X.X..X.
 ...X.X....X.....
-....X....X...X.. drop
+....X....X...X..
 
-udg/explosion 1 udg-sprite
+udg/explosion 1 ,udg-block
 
 X............X..
 ....X....X......
@@ -1919,9 +1884,9 @@ X............X..
 ..........X.....
 .X....X.......X.
 ..........X.....
-..X.......X....X drop
+..X.......X....X
 
-udg/explosion 1 udg-sprite
+udg/explosion 1 ,udg-block
 
 .X.........X....
 .....X.....X..X.
@@ -1930,9 +1895,9 @@ udg/explosion 1 udg-sprite
 X...............
 ...........X....
 X.....X........X
-..X........X.... drop
+..X........X....
 
-udg/explosion 1 udg-sprite
+udg/explosion 1 ,udg-block
 
 ....X.......X..X
 ................
@@ -1941,9 +1906,9 @@ udg/explosion 1 udg-sprite
 ................
 ...........X....
 .............X..
-......X......... drop
+......X.........
 
-udg/explosion 1 udg-sprite
+udg/explosion 1 ,udg-block
 
 ................
 ................
@@ -1952,7 +1917,7 @@ udg/explosion 1 udg-sprite
 ................
 ................
 ................
-................ drop
+................
 
 explosion-sprite
 sprite>udgs udg/explosion / cconstant explosion-frames
@@ -1963,9 +1928,7 @@ sprite>udgs udg/explosion / cconstant explosion-frames
   \ ............................
   \ Bullet
 
-sprite-id: bullet-sprite
-
-1 1 udg-sprite
+1 1 ,udg-block: bullet-sprite
 
 ..X.....
 .....X..
@@ -1974,9 +1937,9 @@ sprite-id: bullet-sprite
 ..X.....
 .....X..
 ..X.....
-.....X.. sprite-id bullet-sprite
+.....X..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 .....X..
 ..X.....
@@ -1985,9 +1948,9 @@ sprite-id: bullet-sprite
 .....X..
 ..X.....
 .....X..
-..X..... drop
+..X.....
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ..X.....
 ..X..X..
@@ -1996,9 +1959,9 @@ sprite-id: bullet-sprite
 ..X..X..
 .....X..
 ..X.....
-..X..X.. drop
+..X..X..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 .....X..
 ..X..X..
@@ -2007,9 +1970,9 @@ sprite-id: bullet-sprite
 ..X..X..
 ..X.....
 .....X..
-..X..X.. drop
+..X..X..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ..X.....
 ........
@@ -2018,9 +1981,9 @@ sprite-id: bullet-sprite
 .....X..
 ..X.....
 ........
-..X..X.. drop
+..X..X..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 .....X..
 ........
@@ -2029,9 +1992,9 @@ sprite-id: bullet-sprite
 ..X.....
 .....X..
 ........
-..X..X.. drop
+..X..X..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ..X..X..
 .....X..
@@ -2040,9 +2003,9 @@ sprite-id: bullet-sprite
 ..X..X..
 .....X..
 ..X.....
-........ drop
+........
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ..X..X..
 ..X.....
@@ -2051,9 +2014,9 @@ sprite-id: bullet-sprite
 ..X..X..
 ..X.....
 .....X..
-........ drop
+........
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ..X.....
 ..X..X..
@@ -2062,9 +2025,9 @@ sprite-id: bullet-sprite
 ..X.....
 .....X..
 ..X.....
-..X..X.. drop
+..X..X..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 .....X..
 ..X..X..
@@ -2073,16 +2036,14 @@ sprite-id: bullet-sprite
 .....X..
 ..X.....
 .....X..
-..X..X.. drop
+..X..X..
 
 bullet-sprite sprite>udgs cconstant bullet-frames
 
   \ ............................
   \ Missile
 
-sprite-id: missile-sprite
-
-1 1 udg-sprite
+1 1 ,udg-block: missile-sprite
 
 ...XX...
 ...XX...
@@ -2091,9 +2052,9 @@ sprite-id: missile-sprite
 ..XXXX..
 ..XXXX..
 ...X.X..
-..X.X... sprite-id missile-sprite
+..X.X...
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ...XX...
 ...XX...
@@ -2102,16 +2063,14 @@ sprite-id: missile-sprite
 ..XXXX..
 ..XXXX..
 ..X.X...
-...X.X.. drop
+...X.X..
 
 missile-sprite sprite>udgs cconstant missile-frames
 
   \ ............................
   \ Ball
 
-sprite-id: ball-sprite
-
-1 1 udg-sprite
+1 1 ,udg-block: ball-sprite
 
 ..XXXX..
 .XXXXXX.
@@ -2120,9 +2079,9 @@ XXXXXX.X
 XXXXXXXX
 XXXXXXXX
 .XXXXXX.
-..XXXX.. sprite-id ball-sprite
+..XXXX..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ..XXXX..
 .XXXXXX.
@@ -2131,9 +2090,9 @@ XXXXXXXX
 XXXXXX.X
 XXXXX.XX
 .XXXXXX.
-..XXXX.. drop
+..XXXX..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ..XXXX..
 .XXXXXX.
@@ -2142,9 +2101,9 @@ XXXXXXXX
 XXXXXXXX
 XXX..XXX
 .XXXXXX.
-..XXXX.. drop
+..XXXX..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ..XXXX..
 .XXXXXX.
@@ -2153,9 +2112,9 @@ X.XXXXXX
 XX.XXXXX
 XXXXXXXX
 .XXXXXX.
-..XXXX.. drop
+..XXXX..
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ..XXXX..
 .XX.XXX.
@@ -2164,13 +2123,11 @@ XXXXXXXX
 XXXXXXXX
 XXXXXXXX
 .XXXXXX.
-..XXXX.. drop
+..XXXX..
 
 ball-sprite sprite>udgs cconstant ball-frames
 
-sprite-id: right-wall-ball-sprite
-
-1 1 udg-sprite
+1 1 ,udg-block: right-wall-ball-sprite
 
 XXXX.....
 XXXXX....
@@ -2179,9 +2136,9 @@ XXXX.X...
 XXXXXX...
 XXXXXX...
 XXXXX....
-XXXX..... sprite-id right-wall-ball-sprite
+XXXX.....
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 XXXX.....
 XXXXX....
@@ -2190,9 +2147,9 @@ XXXXXX...
 XXXX.X...
 XXX.XX...
 XXXXX....
-XXXX..... drop
+XXXX.....
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 XXXX.....
 XXXXX....
@@ -2201,9 +2158,9 @@ XXXXXX...
 XXXXXX...
 X..XXX...
 XXXXX....
-XXXX..... drop
+XXXX.....
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 XXXX.....
 XXXXX....
@@ -2212,9 +2169,9 @@ XXXXXX...
 .XXXXX...
 XXXXXX...
 XXXXX....
-XXXX..... drop
+XXXX.....
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 XXXX.....
 X.XXX....
@@ -2223,14 +2180,12 @@ XXXXXX...
 XXXXXX...
 XXXXXX...
 XXXXX....
-XXXX..... drop
+XXXX.....
 
 right-wall-ball-sprite
 sprite>udgs cconstant right-wall-ball-frames
 
-sprite-id: left-wall-ball-sprite
-
-1 1 udg-sprite
+1 1 ,udg-block: left-wall-ball-sprite
 
 ....XXXX
 ...XXXXX
@@ -2239,9 +2194,9 @@ sprite-id: left-wall-ball-sprite
 ..XXXXXX
 ..XXXXXX
 ...XXXXX
-....XXXX sprite-id left-wall-ball-sprite
+....XXXX
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ....XXXX
 ...XXXXX
@@ -2250,9 +2205,9 @@ sprite-id: left-wall-ball-sprite
 ..XXXXXX
 ..XXXXX.
 ...XXXXX
-....XXXX drop
+....XXXX
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ....XXXX
 ...XXXXX
@@ -2261,9 +2216,9 @@ sprite-id: left-wall-ball-sprite
 ..XXXXXX
 ..XXX..X
 ...XXXXX
-....XXXX drop
+....XXXX
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ....XXXX
 ...XXXXX
@@ -2272,9 +2227,9 @@ sprite-id: left-wall-ball-sprite
 ..XX.XXX
 ..XXXXXX
 ...XXXXX
-....XXXX drop
+....XXXX
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ....XXXX
 ...XX.XX
@@ -2283,7 +2238,7 @@ sprite-id: left-wall-ball-sprite
 ..XXXXXX
 ..XXXXXX
 ...XXXXX
-....XXXX drop
+....XXXX
 
 left-wall-ball-sprite
 sprite>udgs cconstant left-wall-ball-frames
@@ -2293,9 +2248,7 @@ sprite>udgs cconstant left-wall-ball-frames
 
   \ XXX TMP --
 
-sprite-id: projectile-explosion-sprite
-
-1 1 udg-sprite
+1 1 ,udg-block: projectile-explosion-sprite
 
 ........
 ........
@@ -2304,9 +2257,9 @@ sprite-id: projectile-explosion-sprite
 ..X.X...
 ...X.X..
 ........
-........ sprite-id projectile-explosion-sprite
+........
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ........
 ..X.X...
@@ -2315,9 +2268,9 @@ sprite-id: projectile-explosion-sprite
 .X.X.X..
 ..X...X.
 .X...X..
-........ drop
+........
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 .X...X..
 ....X...
@@ -2326,9 +2279,9 @@ X.X...X.
 ...X.X..
 ..X...X.
 X....X..
-..X...X. drop
+..X...X.
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ........
 .X..X...
@@ -2337,9 +2290,9 @@ X..X....
 ..X...X.
 .X..X...
 ..X..X..
-....X... drop
+....X...
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ........
 ....X...
@@ -2348,9 +2301,9 @@ X..X....
 ..X..X..
 ...X..X.
 ..X..X..
-........ drop
+........
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ........
 ........
@@ -2359,9 +2312,9 @@ X..X....
 ..X..X..
 ...XX...
 ........
-........ drop
+........
 
-1 1 udg-sprite
+1 1 ,udg-block
 
 ........
 ........
@@ -2370,7 +2323,7 @@ X..X....
 ........
 ........
 ........
-........ drop
+........
 
 projectile-explosion-sprite
 sprite>udgs cconstant projectile-explosion-frames
@@ -2378,9 +2331,7 @@ sprite>udgs cconstant projectile-explosion-frames
   \ -----------------------------------------------------------
   \ Building
 
-sprite-id: brick
-
-1 1 udg-sprite
+1 1 ,udg-block: brick
 
 XXXXX.XX
 XXXXX.XX
@@ -2389,11 +2340,9 @@ XXXXX.XX
 XX.XXXXX
 XX.XXXXX
 XX.XXXXX
-........ sprite-id brick
+........
 
-sprite-id: left-door
-
-1 1 udg-sprite
+1 1 ,udg-block: left-door
 
 XXXXXXXX
 .XXXXXXX
@@ -2402,11 +2351,9 @@ XXXXXXXX
 ..XXXXXX
 ..XXXXXX
 ..XXXXXX
-..XXXXXX sprite-id left-door
+..XXXXXX
 
-sprite-id: right-door
-
-1 1 udg-sprite
+1 1 ,udg-block: right-door
 
 XXXXXXXX
 XXXXXXX.
@@ -2415,11 +2362,9 @@ XXXXXX..
 XXXXXX..
 XXXXXX..
 XXXXXX..
-XXXXXX.. sprite-id right-door
+XXXXXX..
 
-sprite-id: broken-top-left-brick
-
-1 1 udg-sprite
+1 1 ,udg-block: broken-top-left-brick
 
 XXXXXXXX
 .XXXXXXX
@@ -2428,11 +2373,9 @@ XXXXXXXX
 ......XX
 .....XXX
 ......X.
-........ sprite-id broken-top-left-brick
+........
 
-sprite-id: broken-bottom-left-brick
-
-1 1 udg-sprite
+1 1 ,udg-block: broken-bottom-left-brick
 
 ........
 ........
@@ -2441,11 +2384,9 @@ sprite-id: broken-bottom-left-brick
 ...XX.XX
 .XXXXXXX
 XXXXXXXX
-XXXXXXXX sprite-id broken-bottom-left-brick
+XXXXXXXX
 
-sprite-id: broken-top-right-brick
-
-1 1 udg-sprite
+1 1 ,udg-block: broken-top-right-brick
 
 XXXXXXXX
 XXXXXXXX
@@ -2454,11 +2395,9 @@ XXXXXX..
 XXX..X..
 X.......
 ........
-........ sprite-id broken-top-right-brick
+........
 
-sprite-id: broken-bottom-right-brick
-
-1 1 udg-sprite
+1 1 ,udg-block: broken-bottom-right-brick
 
 ........
 X.......
@@ -2467,7 +2406,7 @@ XXX..X..
 XXXXXX..
 XXXXX...
 XXXXXX.X
-XXXXXXXX sprite-id broken-bottom-right-brick
+XXXXXXXX
 
   \ -----------------------------------------------------------
   \ Tank
@@ -2483,9 +2422,7 @@ cvariable tank-frame \ counter (0..3)
 
 3 cconstant udg/tank
 
-sprite-id: bullet-gun-tank-sprite
-
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block: bullet-gun-tank-sprite
 ..........X..X..........
 ...XXXXXX.X..X.XXXXXXX..
 ..XXXXXXXXXXXXXXXXXXXXX.
@@ -2493,9 +2430,9 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX..XX..XX..XX..XX.XX.
 ...X.XXX.XXX.XXX.XXX.X..
-....X.X.X.X.X.X.X.X.X... sprite-id bullet-gun-tank-sprite
+....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block
 ..........X..X..........
 ...XXXXXX.X..X.XXXXXXX..
 ..XXXXXXXXXXXXXXXXXXXXX.
@@ -2503,9 +2440,9 @@ udg/tank 1 udg-sprite
 .XXX.X.X.X.X.X.X.X.X.XXX
 ..XX.XX..XX..XX..XX..XX.
 ...X.XXX.XXX.XXX.XXX.X..
-...X.X.X.X.X.X.X.X.X.X.. drop
+...X.X.X.X.X.X.X.X.X.X..
 
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block
 ..........X..X..........
 ...XXXXXX.X..X.XXXXXXX..
 ..XXXXXXXXXXXXXXXXXXXXX.
@@ -2513,9 +2450,9 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX.XXX.XXX.XXX.XXX.XX.
 ...X.XX..XX..XX..XX..X..
-....X.X.X.X.X.X.X.X.X... drop
+....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block
 ..........X..X..........
 ...XXXXXX.X..X.XXXXXXX..
 ..XXXXXXXXXXXXXXXXXXXXX.
@@ -2523,11 +2460,9 @@ udg/tank 1 udg-sprite
 .XXX.X.X.X.X.X.X.X.X.XXX
 ..XX.XXX.XXX.XXX.XXX.XX.
 ...X..XX..XX..XX..XX.X..
-...X.X.X.X.X.X.X.X.X.X.. drop
+...X.X.X.X.X.X.X.X.X.X..
 
-sprite-id: missile-gun-tank-sprite
-
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block: missile-gun-tank-sprite
 ..........XXXX..........
 ...XXXXXX.XXXX.XXXXXXX..
 ..XXXXXXX.XXXX.XXXXXXXX.
@@ -2535,9 +2470,9 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX..XX..XX..XX..XX.XX.
 ...X.XXX.XXX.XXX.XXX.X..
-....X.X.X.X.X.X.X.X.X... sprite-id missile-gun-tank-sprite
+....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block
 ..........XXXX..........
 ...XXXXXX.XXXX.XXXXXXX..
 ..XXXXXXX.XXXX.XXXXXXXX.
@@ -2545,9 +2480,9 @@ udg/tank 1 udg-sprite
 .XXX.X.X.X.X.X.X.X.X.XXX
 ..XX.XX..XX..XX..XX..XX.
 ...X.XXX.XXX.XXX.XXX.X..
-...X.X.X.X.X.X.X.X.X.X.. drop
+...X.X.X.X.X.X.X.X.X.X..
 
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block
 ..........XXXX..........
 ...XXXXXX.XXXX.XXXXXXX..
 ..XXXXXXX.XXXX.XXXXXXXX.
@@ -2555,9 +2490,9 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX.XXX.XXX.XXX.XXX.XX.
 ...X.XX..XX..XX..XX..X..
-....X.X.X.X.X.X.X.X.X... drop
+....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block
 ..........XXXX..........
 ...XXXXXX.XXXX.XXXXXXX..
 ..XXXXXXX.XXXX.XXXXXXXX.
@@ -2565,11 +2500,9 @@ udg/tank 1 udg-sprite
 .XXX.X.X.X.X.X.X.X.X.XXX
 ..XX.XXX.XXX.XXX.XXX.XX.
 ...X..XX..XX..XX..XX.X..
-...X.X.X.X.X.X.X.X.X.X.. drop
+...X.X.X.X.X.X.X.X.X.X..
 
-sprite-id: ball-gun-tank-sprite
-
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block: ball-gun-tank-sprite
 ........XXXXXXXX........
 ...XXXX..XXXXXX..XXXXX..
 ..XXXXXX..XXXX..XXXXXXX.
@@ -2577,9 +2510,9 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX..XX..XX..XX..XX.XX.
 ...X.XXX.XXX.XXX.XXX.X..
-....X.X.X.X.X.X.X.X.X... sprite-id ball-gun-tank-sprite
+....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block
 ........XXXXXXXX........
 ...XXXX..XXXXXX..XXXXX..
 ..XXXXXX..XXXX..XXXXXXX.
@@ -2587,9 +2520,9 @@ udg/tank 1 udg-sprite
 .XXX.X.X.X.X.X.X.X.X.XXX
 ..XX.XX..XX..XX..XX..XX.
 ...X.XXX.XXX.XXX.XXX.X..
-...X.X.X.X.X.X.X.X.X.X.. drop
+...X.X.X.X.X.X.X.X.X.X..
 
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block
 ........XXXXXXXX........
 ...XXXX..XXXXXX..XXXXX..
 ..XXXXXX..XXXX..XXXXXXX.
@@ -2597,9 +2530,9 @@ udg/tank 1 udg-sprite
 .XX.X.X.X.X.X.X.X.X.X.XX
 ..XX.XXX.XXX.XXX.XXX.XX.
 ...X.XX..XX..XX..XX..X..
-....X.X.X.X.X.X.X.X.X... drop
+....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 udg-sprite
+udg/tank 1 ,udg-block
 ........XXXXXXXX........
 ...XXXX..XXXXXX..XXXXX..
 ..XXXXXX..XXXX..XXXXXXX.
@@ -2607,16 +2540,14 @@ udg/tank 1 udg-sprite
 .XXX.X.X.X.X.X.X.X.X.XXX
 ..XX.XXX.XXX.XXX.XXX.XX.
 ...X..XX..XX..XX..XX.X..
-...X.X.X.X.X.X.X.X.X.X.. drop
+...X.X.X.X.X.X.X.X.X.X..
 
   \ -----------------------------------------------------------
   \ Containers
 
 2 cconstant udg/container
 
-sprite-id: container-top
-
-udg/container 1 udg-sprite
+udg/container 1 ,udg-block: container-top
 
 ......XXXXX.....
 ...XXX.....XXX..
@@ -2625,11 +2556,9 @@ udg/container 1 udg-sprite
 ..X....XXX....X.
 ..X...XXXXX...X.
 ..X....XXX....X.
-..X.....X.....X. sprite-id container-top
+..X.....X.....X.
 
-sprite-id: broken-top-left-container
-
-udg/container 2/ 1 udg-sprite
+udg/container 2/ 1 ,udg-block: broken-top-left-container
 
 ........
 ...XXX..
@@ -2638,11 +2567,9 @@ udg/container 2/ 1 udg-sprite
 ..X...X.
 ..X....X
 ..X....X
-..X....X sprite-id broken-top-left-container
+..X....X
 
-sprite-id: broken-top-right-container
-
-udg/container 2/ 1 udg-sprite
+udg/container 2/ 1 ,udg-block: broken-top-right-container
 
 ........
 ...XXX..
@@ -2651,11 +2578,9 @@ udg/container 2/ 1 udg-sprite
 .X....X.
 .X....X.
 .X....X.
-X.....X. sprite-id broken-top-right-container
+X.....X.
 
-sprite-id: container-bottom
-
-udg/container 1 udg-sprite
+udg/container 1 ,udg-block: container-bottom
 
 ..X..X.X.X.X..X.
 ..X.XXXX.XXXX.X.
@@ -2664,11 +2589,9 @@ udg/container 1 udg-sprite
 ..X...........X.
 ...XXX.....XXX..
 ......XXXXX.....
-................ sprite-id container-bottom
+................
 
-sprite-id: broken-bottom-left-container
-
-udg/container 2/ 1 udg-sprite
+udg/container 2/ 1 ,udg-block: broken-bottom-left-container
 
 .......X
 .....XXX
@@ -2677,11 +2600,9 @@ udg/container 2/ 1 udg-sprite
 ..X.....
 ...XXX..
 ......XX
-........ sprite-id broken-bottom-left-container
+........
 
-sprite-id: broken-bottom-right-container
-
-udg/container 2/ 1 udg-sprite
+udg/container 2/ 1 ,udg-block: broken-bottom-right-container
 
 XX......
 .XXX....
@@ -2690,14 +2611,12 @@ XX......
 ......X.
 ...XXX..
 XXX.....
-........ sprite-id broken-bottom-right-container
+........
 
   \ -----------------------------------------------------------
   \ Icons
 
-sprite-id: right-arrow
-
-2 1 udg-sprite
+2 1 ,udg-block: right-arrow
 
 ................
 ............X...
@@ -2706,11 +2625,9 @@ sprite-id: right-arrow
 ....XXXXXXXXXXXX
 ....XXXXXXXXXXX.
 ............XX..
-............X... sprite-id right-arrow
+............X...
 
-sprite-id: left-arrow
-
-2 1 udg-sprite
+2 1 ,udg-block: left-arrow
 
 ................
 ...X............
@@ -2719,11 +2636,9 @@ sprite-id: left-arrow
 XXXXXXXXXXXX....
 .XXXXXXXXXXX....
 ..XX............
-...X............ sprite-id left-arrow
+...X............
 
-sprite-id: fire-button
-
-2 1 udg-sprite
+2 1 ,udg-block: fire-button
 
 ....XXXXXXXX....
 ..XX........XX..
@@ -2732,7 +2647,7 @@ sprite-id: fire-button
 ..X..........X..
 ..X..........X..
 ..X..........X..
-XXXXXXXXXXXXXXXX sprite-id fire-button
+XXXXXXXXXXXXXXXX
 
   \ ===========================================================
   cr .( Type) ?depth debug-point \ {{{1
@@ -3455,12 +3370,12 @@ columns udg/tank - 1- cconstant tank-max-x
   \ This word is needed because `emit-udg` does not update
   \ the current coordinates.
 
-: ?emit-outside ( col1 c -- col2 )
+: ?emit-outside ( col1 ca -- col2 )
   over outside? if   emit-udga 1+        exit
                 then drop dup next-col 1+ ;
-  \ If column _col1_ is outside the building, display character
-  \ _c_ at the current cursor position.  Increment _col1_ and
-  \ return it as _col2_.
+  \ If column _col1_ is outside the building, display the UDG
+  \ stored at _ca_ at the current cursor position.  Increment
+  \ _col1_ and return it as _col2_.
 
 : left-tank-udg   ( -- ca )
   tank-frame c@ [ udg/tank /udg* ] cliteral * tank-sprite + ;
