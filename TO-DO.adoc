@@ -94,10 +94,6 @@ Older first:
 - Improve repairing of the breaches with an effect done by an
   independent action.
 
-== 2018-02-02
-
-- Fix: no explosion sound when stamina becomes 1?
-
 == 2018-02-06
 
 - Improve projectile explosions with sequential frames.
@@ -151,4 +147,3 @@ Older first:
   `wall-ball-frames`, because they are identical; add a compile-time
   check.
 - Rename `udg/tank` `tank-width`, and so all similar cases.
-- Remove `ammo-x`, use the data field directly.

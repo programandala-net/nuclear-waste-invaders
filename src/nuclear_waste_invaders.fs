@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.225.1+201802191813" ;
+: version$ ( -- ca len ) s" 0.225.2+201802191904" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4512,15 +4512,15 @@ constant visible-mothership-movements ( -- a )
   invader-bang invader-destroy-bonus update-score ;
   \ The current invader has been impacted. Set it accordingly.
 
-' lightning1-sound alias retreat-sound
+' lightning1-sound alias wound-sound
   \ XXX TMP --
   \ XXX TODO -- look for a proper sound
 
-: retreat ( -- )
-  retreat-sound turn-back invader-hit-bonus update-score ;
+: retreat ( -- ) turn-back invader-hit-bonus update-score ;
   \ The current invader retreats.
 
-: wounded ( -- ) invader~ ~invader-stamina c@1-
+: wounded ( -- ) wound-sound
+                 invader~ ~invader-stamina c@1-
                  min-stamina max invader-stamina! ;
   \ Reduce the invader's stamina after being shoot.
 
