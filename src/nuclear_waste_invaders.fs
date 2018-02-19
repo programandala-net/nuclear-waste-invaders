@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.225.0+201802191315" ;
+: version$ ( -- ca len ) s" 0.225.1+201802191813" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -900,6 +900,7 @@ kk-3# keyset~ ~keyset-ball-gun c!
 ' xdepth alias projectiles-left ( -- n )
 
 0 cconstant ammo-x
+  \ Column of the current gun's ammo figure at the status bar.
 
 : (.ammo ( n -- )
   projectiles-left 0 <# [ ammo-digits ] [#] #>
@@ -3222,27 +3223,6 @@ defer gun-stack ( -- )
   \ Recharge the projectiles stack _a_ with _n_ projectiles
   \ from the used projectiles stack.
 
-: -recharge ( a n -- ) over xstack xclear recharge ;
-  \ Select, clear and recharge the projectiles stack _a_ with
-  \ _n_ projectiles from the used projectiles stack.
-
-: -recharge-bullet-gun ( -- )
-  bullets-stack #bullets -recharge ;
-  \ Empty and recharge the bullet gun.
-
-: -recharge-missile-gun ( -- )
-  missiles-stack #missiles -recharge ;
-  \ Empty and recharge the missile gun.
-
-: -recharge-ball-gun ( -- )
-  balls-stack #balls -recharge ;
-  \ Empty and recharge the ball gun.
-
-: recharge-guns ( -- ) -recharge-bullet-gun
-                       -recharge-missile-gun
-                       -recharge-ball-gun ;
-  \ Empty and recharge all guns.
-
 : recharge1-bullet-gun ( -- )
   #bullets xdepth = ?exit bullets-stack recharge1 ;
   \ Recharge the bullet gun with one projectile, if possible.
@@ -3314,10 +3294,6 @@ here /hit-projectiles allot
                              -projectiles
                              -hit-projectiles
                              -unused-projectiles ;
-
-: new-projectiles ( -- ) prepare-projectiles
-                         recharge-guns
-                         used-projectiles off ;
 
   \ ===========================================================
   cr .( Tank) ?depth debug-point \ {{{1
@@ -4635,7 +4611,10 @@ defer ball-gun? ( -- f )
 #guns 1- cconstant max-gun#
 
 cvariable gun#
-  \ Identifier of the current gun:
+  \ Identifier of the current gun.
+
+: get-gun ( -- n ) gun# c@ ;
+  \ Identifier _n_ of the current gun:
   \ 0 = bullet gun
   \ 1 = missile gun
   \ 2 = ball gun
@@ -4670,6 +4649,7 @@ create guns /guns allot
  bullet-gun# gun#>~ constant bullet-gun~
 missile-gun# gun#>~ constant missile-gun~
    ball-gun# gun#>~ constant ball-gun~
+  \ Data addresses of the guns.
 
 :noname ( -- ) gun~ ~gun-projectile-stack @ xstack
                ; ' gun-stack defer!
@@ -5046,10 +5026,10 @@ missile-gun~ ~gun-projectile-action !
   \ Change the current gun for _n_, updating the status bar and
   \ the tank.
 
-: next-gun ( -- ) gun# c@1+ dup #guns < and change-gun ;
+: next-gun ( -- ) get-gun 1+ dup #guns < and change-gun ;
 
 : previous-gun ( -- )
-  gun# c@1- dup 0< if drop max-gun# then change-gun ;
+  get-gun 1- dup 0< if drop max-gun# then change-gun ;
 
 10 cconstant arming-interval \ ticks
 
@@ -5284,7 +5264,7 @@ localized-string about-next-location$ ( -- ca len )
   status-attr color-status-bar highlight-gun ;
 
 : (status-bar ( -- )
-  gun# c@ .bullets-icon  .bullets  space
+  get-gun .bullets-icon  .bullets  space
           .missiles-icon .missiles space
           .balls-icon    .balls
   set-gun .score .record-separator .record ;
@@ -5325,8 +5305,26 @@ localized-string about-next-location$ ( -- ca len )
 
 : another-attack? ( -- f ) any-breach? catastrophe? 0= and ;
 
+: -recharge ( n1 n2 -- )
+  set-gun gun~ ~gun-projectile-stack @ dup xstack xclear
+                                       swap recharge ;
+  \ Make the gun _n2_ the current one, then empty and recharge
+  \ it with _n1_ projectiles from the used projectiles stack.
+
+: (recharge-guns ( -- )
+  #bullets  bullet-gun#  -recharge unhighlight-gun
+  #missiles missile-gun# -recharge unhighlight-gun
+  #balls    ball-gun#    -recharge unhighlight-gun ;
+  \ Empty and recharge all guns.
+
+: recharge-guns ( -- )
+  get-gun unhighlight-gun (recharge-guns
+  set-gun   highlight-gun ;
+  \ Empty and recharge all guns, preserving the current gun.
+
 : prepare-attack ( -- )
-  repair-tank new-projectiles status-bar
+  repair-tank prepare-projectiles status-bar recharge-guns
+  used-projectiles off
   [debugging] [if] debug-bar [then] ;
 
 : prepare-battle ( -- ) settle new-tank ;

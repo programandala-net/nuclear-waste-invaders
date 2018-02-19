@@ -151,5 +151,4 @@ Older first:
   `wall-ball-frames`, because they are identical; add a compile-time
   check.
 - Rename `udg/tank` `tank-width`, and so all similar cases.
-- Fix: When the ammo of the current gun is initiated, the updating is
-  displayed on the status bar, before the status bar is displayed.
+- Remove `ammo-x`, use the data field directly.
