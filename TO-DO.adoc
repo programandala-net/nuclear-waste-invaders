@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-17
+:revdate: 2018-02-19
 
 Older first:
 
@@ -90,8 +90,6 @@ Older first:
 
 == 2018-01-26
 
-- When a ball hits an invader, color the invader blue and halt it for
-  a while.
 - Improve the sprites of the wall balls.
 - Improve repairing of the breaches with an effect done by an
   independent action.
@@ -142,3 +140,16 @@ Older first:
   container, then do the metamorphosis with an independent action, and
   finally try to exit through the same breach. Other invaders should
   dodge the mothership during the ascending.
+
+== 2018-02-18
+
+- Design sprites for the balled invaders.
+
+== 2018-02-19
+
+- Replace `<wall-ball-frames` and `wall>-ball-frames` with
+  `wall-ball-frames`, because they are identical; add a compile-time
+  check.
+- Rename `udg/tank` `tank-width`, and so all similar cases.
+- Fix: When the ammo of the current gun is initiated, the updating is
+  displayed on the status bar, before the status bar is displayed.

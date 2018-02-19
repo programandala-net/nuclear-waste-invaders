@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.224.1+201802172258" ;
+: version$ ( -- ca len ) s" 0.225.0+201802191315" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -152,7 +152,7 @@ need black need blue  need red  need magenta need green
 need cyan need yellow need white
 
 need papery need brighty need xy>attr need xy>attra
-need bright-mask need inversely
+need bright-mask need inversely need unbright-mask
 
   \ --------------------------------------------
   cr .(   -Keyboard) ?depth \ {{{2
@@ -629,15 +629,16 @@ localized-string press-any-key$ ( -- ca len )
 
                          black cconstant sky-attr
 
-                         green cconstant healthy-invader-attr
-                        yellow cconstant wounded-invader-attr
-                           red cconstant dying-invader-attr
-
                          white cconstant tank-attr
 
                    red brighty cconstant bullet-attr
                  white brighty cconstant missile-attr
                   blue brighty cconstant ball-attr
+
+                         green cconstant healthy-invader-attr
+                        yellow cconstant wounded-invader-attr
+                           red cconstant dying-invader-attr
+   ball-attr unbright-mask and cconstant balled-invader-attr
 
                   white papery cconstant unfocus-attr
   white papery brighty white + cconstant hide-report-attr
@@ -2126,7 +2127,7 @@ XXXXXXXX
 
 ball-sprite sprite>udgs cconstant ball-frames
 
-1 1 ,udg-block: right-wall-ball-sprite
+1 1 ,udg-block: wall>-ball-sprite
 
 XXXX.....
 XXXXX....
@@ -2181,10 +2182,9 @@ XXXXXX...
 XXXXX....
 XXXX.....
 
-right-wall-ball-sprite
-sprite>udgs cconstant right-wall-ball-frames
+wall>-ball-sprite sprite>udgs cconstant wall>-ball-frames
 
-1 1 ,udg-block: left-wall-ball-sprite
+1 1 ,udg-block: <wall-ball-sprite
 
 ....XXXX
 ...XXXXX
@@ -2239,8 +2239,7 @@ sprite>udgs cconstant right-wall-ball-frames
 ...XXXXX
 ....XXXX
 
-left-wall-ball-sprite
-sprite>udgs cconstant left-wall-ball-frames
+<wall-ball-sprite sprite>udgs cconstant <wall-ball-frames
 
   \ ............................
   \ Explosion
@@ -2839,11 +2838,10 @@ cconstant invader-max-y
   \ supposed to be a valid row of an invader layer, otherwise
   \ the result will be wrong.
 
-: invader-retreat-bonus ( -- n )
-  invader~ ~invader-layer c@ 1+ ;
+: invader-hit-bonus ( -- n ) invader~ ~invader-layer c@ 1+ ;
   \ Bonus points for making the invader retreat.
 
-: invader-destroy-bonus ( -- n ) invader-retreat-bonus 8* ;
+: invader-destroy-bonus ( -- n ) invader-hit-bonus 8* ;
   \ Bonus points for destroying the invader.
 
 : attacking? ( -- f ) invader~ ~invader-initial-x-inc @
@@ -2955,15 +2953,18 @@ max-stamina cconstant mothership-stamina
 create stamina-attributes ( -- ca )   dying-invader-attr c,
                                     wounded-invader-attr c,
                                     healthy-invader-attr c,
-  \ Table to index the stamina (1..3) to its proper attribute.
+  \ Table to index the stamina (1..3) to its attribute.
 
 : stamina>attr ( n -- c )
   [ stamina-attributes 1- ] literal + c@ ;
   \ Convert stamina _n_ to its corresponding attribute _c_.
 
+: invader-attr! ( n -- )
+  stamina>attr invader~ ~invader-attr c! ;
+  \ Set the attribute of the current invader after stamina _n_.
+
 : invader-stamina! ( n -- )
-  dup invader~ ~invader-stamina c!
-      stamina>attr invader~ ~invader-attr c! ;
+  dup invader~ ~invader-stamina c! invader-attr! ;
   \ Make _n_ the stamina of the current invader and change its
   \ attribute accordingly.
 
@@ -3271,17 +3272,17 @@ projectile-y0 columns * constant /hit-projectiles
 here /hit-projectiles allot
      dup columns - constant hit-projectiles>
                    constant hit-projectiles
-  \ Byte array to mark the projectiles that have been hit by
-  \ another projectile. The array is indexed by rows and
-  \ columns, as a logical copy of the attributes area. The size
-  \ of the array is calculated to contain only the rows used by
-  \ projectiles, except `projectile-y0`, the initial one, where
-  \ projectiles can not be hit yet. `hit-projectiles>` returns
-  \ the address of one row above the actual data, simulating
-  \ the row used by the status bar is part of the array, in
-  \ order to save a run-time calculation when the array items
-  \ are accessed. `hit-projectiles` returns the address of the
-  \ actual data.
+  \ Byte array which is used to mark the projectiles that have
+  \ been hit by another projectile. The array is indexed by
+  \ rows and columns, as a logical copy of the attributes area.
+  \ The size of the array is calculated to contain only the
+  \ rows used by projectiles, except `projectile-y0`, the
+  \ initial one, where projectiles can not be hit yet.
+  \ `hit-projectiles>` returns the address of one row above the
+  \ actual data, simulating the row used by the status bar is
+  \ part of the array, in order to save a run-time calculation
+  \ when the array items are accessed. `hit-projectiles`
+  \ returns the address of the actual data.
 
 : -hit-projectiles ( -- )
   hit-projectiles /hit-projectiles erase ;
@@ -3674,33 +3675,18 @@ cvariable #invaders
   \ _col3 row3_; below it, _col2 row2_; and an empty space in
   \ front of it, _col1 row1_.
 
-0 [if] \ XXX REMARK -- Not used.
-
-: c@udg/invader+ ( -- )
-  udg/invader case
-    1 of postpone c@1+ endof
-    2 of postpone c@2+ endof
-    postpone c@ postpone udg/invader postpone +
-  endcase ; immediate
-
-[then]
-
 : break-container ( -- ) container-attr attr! catastrophe on ;
 
 : break-container> ( -- )
   break-container
   invader~ ~invader-x c@
   [ udg/invader udg/container 1- + ] cliteral +
-  invader~ ~invader-y c@
-  at-xy broken-top-right-container emit-udga
+  invader~ ~invader-y c@ at-xy
+  broken-top-right-container emit-udga
   invader~ ~invader-x [ udg/invader ] c@x+
   invader~ ~invader-y c@1+ at-xy
   broken-bottom-left-container emit-udga ;
-  \ Break container that is at the right of the invader.
-  \
-  \ XXX TODO -- Calculate alternatives to `c@2+` and `c@1+` at
-  \ compile-time, depending on the size of the invaders, just
-  \ in case.
+  \ Break the container that is at the right of the invader.
 
 : <break-container ( -- )
   break-container
@@ -3709,7 +3695,7 @@ cvariable #invaders
   broken-top-left-container emit-udga
   invader~ ~invader-x c@1- invader~ ~invader-y c@1+ at-xy
   broken-bottom-right-container emit-udga ;
-  \ Break container that is at the left of the invader.
+  \ Break the container that is at the left of the invader.
 
 : healthy? ( -- f )
   invader~ ~invader-stamina c@ max-stamina = ;
@@ -3928,7 +3914,8 @@ defer ?dock ( -- )
   [ max-stamina max-endurance + 8 * ] cliteral
   invader~ ~invader-stamina   c@ -
   invader~ ~invader-endurance c@ - random ;
-  \ Is the current invader too weak to break the wall?
+  \ Is the current invader too weak to break the wall or to
+  \ unball itself?
 
 : ?<break-wall ( -- ) weak? ?exit <break-wall ;
   \ Break the wall at the left of the current invader, if it's
@@ -4367,7 +4354,6 @@ defer move-visible-mothership ( -- )
       ' ?<move-visible-mothership ,
 here  ' noop ,
       ' ?move-visible-mothership> ,
-
 constant visible-mothership-movements ( -- a )
   \ Execution table.
 
@@ -4555,7 +4541,7 @@ constant visible-mothership-movements ( -- a )
   \ XXX TODO -- look for a proper sound
 
 : retreat ( -- )
-  retreat-sound turn-back invader-retreat-bonus update-score ;
+  retreat-sound turn-back invader-hit-bonus update-score ;
   \ The current invader retreats.
 
 : wounded ( -- ) invader~ ~invader-stamina c@1-
@@ -4575,12 +4561,38 @@ constant visible-mothership-movements ( -- a )
   invader~ ~invader-action @ ['] exploding-invader-action = ;
   \ Is the current invader exploding?
 
+: unball-invader ( -- )
+  invader~ ~invader-stamina c@ invader-attr!
+  set-flying-invader-sprite impel-invader ;
+  \ Unball the current invader.
+
+: balled-invader-action ( -- )
+  at-invader .invader weak? ?exit unball-invader ;
+  \ Action of the invader when it's balled: Display it and, if
+  \ it's strong enough already, unball it.
+
+' shoot-sound alias bubble-sound ( -- )
+  \ Make the sound of a balled invader.
+  \ XXX TMP --
+  \ XXX TODO -- look for a better sound
+
+: ball-invader ( -- )
+  set-docked-invader-sprite
+  balled-invader-attr invader~ ~invader-attr c!
+  at-invader .invader
+  ['] balled-invader-action invader~ ~invader-action !
+  bubble-sound invader-hit-bonus update-score ;
+  \ Ball the current invader, which has been impacted by a
+  \ ball.
+
+defer ball-gun? ( -- f )
+  \ Is the current gun the ball gun?
+
 : (invader-impacted ( -- )
   invader-exploding? ?exit
   mortal? if set-exploding-invader exit then
   wounded attacking? 0exit retreat ;
   \ The current invader has been impacted by the projectile.
-  \ It explodes or retreats.
 
 : invader-impacted ( -- )
   invader~ impacted-invader set-invader (invader-impacted
@@ -4678,6 +4690,9 @@ missile-gun# gun#>~ constant missile-gun~
 : recharging ( -- ) gun-below-building?  0exit
                     kk-recharge pressed? 0exit
                     recharge-gun .ammo ;
+
+:noname ( -- f ) gun~ ball-gun~ = ; ' ball-gun? defer!
+  \ Is the current gun the ball gun?
 
   \ --------------------------------------------
   \ Set guns' data
@@ -4839,7 +4854,7 @@ cvariable projectile-frame
   ['] exploding-projectile-action
   projectile~ ~projectile-action !  projectile-bang ;
 
-: move-projectile ( -- )
+: bullet-and-missile-action ( -- )
   hit-projectile?
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit
@@ -4848,17 +4863,15 @@ cvariable projectile-frame
   projectile-xy is-there-a-projectile?
   if projectile-xy hit-projectile destroy-projectile exit then
   impact? if impact exit then .projectile ;
-  \ Default action of the projectiles.
-  \
-  \ XXX TODO -- Move `hit-something?` here to simplify the
-  \ logic.
+  \ Action of bullets and missiles.
 
-' move-projectile bullet-gun~ ~gun-projectile-action !
+' bullet-and-missile-action
+bullet-gun~ ~gun-projectile-action !
   \ Set the action of bullets.
 
-' move-projectile missile-gun~ ~gun-projectile-action !
+' bullet-and-missile-action
+missile-gun~ ~gun-projectile-action !
   \ Set the action of missiles.
-
 
 : repair-breach ( col row -- ) 2dup 1+ at-xy .brick
                                2dup    at-xy .brick
@@ -4878,11 +4891,21 @@ cvariable projectile-frame
 : is-there-breach? ( col row -- f ) xy>attr sky-attr= ;
   \ Is there a breach at coordinates _col row_?
 
+: (invader-balled ( -- )
+  invader-exploding? ?exit ball-invader ;
+  \ The current invader has been impacted by the ball.
+
+: invader-balled ( -- )
+  invader~ impacted-invader set-invader (invader-balled
+  !> invader~ ;
+  \ An invader has been impacted by the ball.
+  \ Make it the current one and manage it.
+
 : right-of-projectile-xy ( -- col row )
   projectile~ ~projectile-x c@ 1+
   projectile~ ~projectile-y c@ ;
 
-: move-left-wall-ball-projectile ( -- )
+: <wall-ball-action ( -- )
   hit-projectile?
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
@@ -4891,15 +4914,16 @@ cvariable projectile-frame
      destroy-projectile exit then
   projectile-lost? if destroy-projectile exit then
   projectile~ ~projectile-y c1-!
-  impact? if impact exit then .projectile ;
+  impact? if invader-balled destroy-projectile exit then
+  .projectile ;
   \ Action of the balls that are flying on the left wall of the
-  \ building, and therefore can repaier the brechs.
+  \ building, and therefore can repair the breaches.
 
 : left-of-projectile-xy ( -- col row )
   projectile~ ~projectile-x c@ 1-
   projectile~ ~projectile-y c@ ;
 
-: move-right-wall-ball-projectile ( -- )
+: wall>-ball-action ( -- )
   hit-projectile?
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
@@ -4908,41 +4932,50 @@ cvariable projectile-frame
      destroy-projectile exit then
   projectile-lost? if destroy-projectile exit then
   projectile~ ~projectile-y c1-!
-  impact? if impact exit then .projectile ;
+  impact? if invader-balled destroy-projectile exit then
+  .projectile ;
   \ Action of the balls that are flying on the right wall of
-  \ the building, and therefore can repaier the brechs.
+  \ the building, and therefore can repair the breaches.
 
-: get-projectile-sprite&action ( -- c n xt )
-  gun~ ~gun-projectile-sprite @
-  gun~ ~gun-projectile-frames c@
-  ['] move-projectile ;
-  \ Return sprite _c_, number of frames _n_ and action _xt_ of
-  \ the new current projectile.
+: ball-action ( -- )
+  projectile-delay ?exit
+  -projectile projectile-lost? if destroy-projectile exit then
+  projectile~ ~projectile-y c1-!
+  impact? if invader-balled destroy-projectile exit then
+  .projectile ;
+  \ Action of the balls.
 
-: get-ball-sprite&action ( -- c n xt )
+' ball-action ball-gun~ ~gun-projectile-action !
+  \ Set the action of balls.
+
+: ball-sprite&action ( -- ca n xt )
   gun-x case
-    building-left-x 1- of
-      left-wall-ball-sprite left-wall-ball-frames
-      ['] move-left-wall-ball-projectile
+    building-left-x 1- of \ on the left wall?
+      <wall-ball-sprite <wall-ball-frames ['] <wall-ball-action
     endof
-    building-right-x 1+ of
-      right-wall-ball-sprite right-wall-ball-frames
-      ['] move-right-wall-ball-projectile
+    building-right-x 1+ of \ on the right wall?
+      wall>-ball-sprite wall>-ball-frames ['] wall>-ball-action
     endof
-    default-of get-projectile-sprite&action endof
+    default-of \ any other position
+      gun~ ~gun-projectile-sprite @
+      gun~ ~gun-projectile-frames c@
+      ['] ball-action
+    endof
   endcase ;
-  \ Return sprite _c_, number of frames _n_ and action _xt_ of
+  \ Return sprite _ca_, number of frames _n_ and action _xt_ of
   \ the new current projectile, which is a ball.
 
 : get-projectile ( -- )
   x> !> projectile~
   gun-x projectile~ ~projectile-x c!
   projectile-y0 projectile~ ~projectile-y c!
-  gun~ ball-gun~ = if   get-ball-sprite&action
-                   else get-projectile-sprite&action
-                   then projectile~ ~projectile-action !
-                        projectile~ ~projectile-frames c!
-                        projectile~ ~projectile-sprite !
+  ball-gun? if   ball-sprite&action
+            else gun~ ~gun-projectile-sprite @
+                 gun~ ~gun-projectile-frames c@
+                 ['] bullet-and-missile-action
+            then projectile~ ~projectile-action !
+                 projectile~ ~projectile-frames c!
+                 projectile~ ~projectile-sprite !
   gun~ ~gun-projectile-attr c@
   projectile~ ~projectile-attr c!
   gun~ ~gun-projectile-max-delay c@
@@ -4951,10 +4984,11 @@ cvariable projectile-frame
   projectile~ ~projectile-altitude c!
   gun~ ~gun-projectile-power c@
   projectile~ ~projectile-power c! ;
-  \ Get a new projectile and set its data according to the
-  \ current value of `gun~`.  For the sake of run-time speed,
-  \ some fields are copied from the structure pointed by
-  \ `gun~`.
+  \ Get a new projectile from the stack of unused projectiles
+  \ and set its data according to the current value of `gun~`.
+  \ For the sake of run-time speed, some fields are copied from
+  \ the structure pointed by `gun~` to the structure pointed by
+  \ `projectile~`.
 
 : launch-projectile ( -- )
   .projectile projectile~ start-flying fire-sound ;
@@ -5322,7 +5356,8 @@ localized-string about-next-location$ ( -- ca len )
 
 : mp ( -- ) manage-projectiles ;
 : fp? ( -- 0f ) flying-projectiles? ;
-: mop ( -- ) move-projectile ;
+: pa ( -- ) bullet-and-missile-action ;
+: ba ( -- ) ball-action ;
 : np ( -- ) next-flying-projectile ;
 
 : .fp ( -- )
