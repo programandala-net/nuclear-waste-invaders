@@ -43,7 +43,6 @@ Older first:
 
 == 2017-12-18, 2018-02-17
 
-- Improve scoring: reduce the score with each lost projectile.
 - Move the localization tools to Solo Forth.
 
 == 2017-12-19

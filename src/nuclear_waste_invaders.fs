@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.225.2+201802191904" ;
+: version$ ( -- ca len ) s" 0.226.0+201802201150" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -929,7 +929,7 @@ defer set-gun ( n -- )
 : .balls ( -- ) ball-gun# set-gun (.ammo ;
   \ Display the number of balls left.
 
-: .score ( -- ) score @ score-x status-bar-y (.score ;
+: .score ( -- ) score @ 0 max score-x status-bar-y (.score ;
   \ Display the score.
 
 : .record ( -- ) record @ record-x status-bar-y (.score ;
@@ -4773,7 +4773,7 @@ defer projectile ( -- c )
 : -projectile ( -- ) projectile-xy xy>attr
                      projectile~ ~projectile-attr c@ <> ?exit
                      at-projectile .sky ;
-  \ Delete the projectile.
+  \ Delete the current projectile.
   \
   \ XXX REMARK -- Checking the attribute  prevents the
   \ projectile from erasing part of an invader in some cases,
@@ -4782,7 +4782,12 @@ defer projectile ( -- c )
 : projectile-lost? ( -- f )
   projectile~ ~projectile-y c@
   projectile~ ~projectile-altitude c@ < ;
-  \ Is the projectile lost?
+  \ Is the current projectile lost?
+
+: projectile-lost ( -- )
+  destroy-projectile
+  projectile~ ~projectile-power c@ negate update-score ;
+  \ The current projectile has been lost.
 
 : projectile-delay ( -- n )
   projectile~ ~projectile-delay c@1+
@@ -4838,7 +4843,7 @@ cvariable projectile-frame
   hit-projectile?
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit
-  -projectile projectile-lost? if destroy-projectile exit then
+  -projectile projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   projectile-xy is-there-a-projectile?
   if projectile-xy hit-projectile destroy-projectile exit then
@@ -4892,7 +4897,7 @@ missile-gun~ ~gun-projectile-action !
   right-of-projectile-xy is-there-breach?
   if right-of-projectile-xy repair-breach
      destroy-projectile exit then
-  projectile-lost? if destroy-projectile exit then
+  projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   impact? if invader-balled destroy-projectile exit then
   .projectile ;
@@ -4910,7 +4915,7 @@ missile-gun~ ~gun-projectile-action !
   left-of-projectile-xy is-there-breach?
   if left-of-projectile-xy repair-breach
      destroy-projectile exit then
-  projectile-lost? if destroy-projectile exit then
+  projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   impact? if invader-balled destroy-projectile exit then
   .projectile ;
@@ -4919,7 +4924,7 @@ missile-gun~ ~gun-projectile-action !
 
 : ball-action ( -- )
   projectile-delay ?exit
-  -projectile projectile-lost? if destroy-projectile exit then
+  -projectile projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   impact? if invader-balled destroy-projectile exit then
   .projectile ;
