@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.226.0+201802201150" ;
+: version$ ( -- ca len ) s" 0.227.0+201802212017" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -955,8 +955,10 @@ defer set-gun ( n -- )
 2 cconstant udg/invader
 2 cconstant udg/mothership
 
-4 cconstant undocked-invader-frames
+4 cconstant breaking-invader-frames
+4 cconstant   flying-invader-frames
 3 cconstant   docked-invader-frames
+8 cconstant   balled-invader-frames
 
 rom-font bl /udg * + constant bl-udga
   \ Address of the ROM font's space, to be used directly as
@@ -964,13 +966,14 @@ rom-font bl /udg * + constant bl-udga
 
 : sprite>udgs ( ca -- n ) here swap - /udg / ;
   \ Convert the address _ca_ of the first UDG of the lastest
-  \ sprite defined to the number _n_ of UDGs used by the
-  \ sprite.
+  \ sprite defined to the number _n_ of UDGs used by all frames
+  \ of the sprite.
 
-  \ -----------------------------------------------------------
+  \ --------------------------------------------
   \ Invader species 0
 
-  \ invader species 0, left flying, frame 0:
+  \ ............................
+  \ Flying to the left
 
 udg/invader 1 ,udg-block: left-flying-species-0-sprite
 
@@ -983,8 +986,6 @@ udg/invader 1 ,udg-block: left-flying-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-  \ invader species 0, left flying, frame 1:
-
 udg/invader 1 ,udg-block
 
 ......XXXX......
@@ -995,8 +996,6 @@ udg/invader 1 ,udg-block
 ....XXX..XXX....
 ...XX..XX..XX...
 ...XX.......XX..
-
-  \ invader species 0, left flying, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1009,8 +1008,6 @@ udg/invader 1 ,udg-block
 ...XX..XX..XX...
 ....XX......XX..
 
-  \ invader species 0, left flying, frame 3:
-
 udg/invader 1 ,udg-block
 
 ......XXXX......
@@ -1021,8 +1018,6 @@ udg/invader 1 ,udg-block
 ....XXX..XXX....
 ...XX..XX..XX...
 ...XX.......XX..
-
-  \ invader species 0, right flying, frame 0:
 
 udg/invader 1 ,udg-block: right-flying-species-0-sprite
 
@@ -1035,8 +1030,6 @@ udg/invader 1 ,udg-block: right-flying-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-  \ invader species 0, right flying, frame 1:
-
 udg/invader 1 ,udg-block
 
 ......XXXX......
@@ -1047,8 +1040,6 @@ udg/invader 1 ,udg-block
 ....XXX..XXX....
 ...XX..XX..XX...
 ..XX.......XX...
-
-  \ invader species 0, right flying, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1061,8 +1052,6 @@ udg/invader 1 ,udg-block
 ...XX..XX..XX...
 ..XX......XX....
 
-  \ invader species 0, right flying, frame 3:
-
 udg/invader 1 ,udg-block
 
 ......XXXX......
@@ -1074,7 +1063,8 @@ udg/invader 1 ,udg-block
 ...XX..XX..XX...
 ..XX.......XX...
 
-  \ invader species 0, docked, frame 0:
+  \ ............................
+  \ Docked
 
 udg/invader 1 ,udg-block: docked-species-0-sprite
 
@@ -1087,8 +1077,6 @@ udg/invader 1 ,udg-block: docked-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-  \ invader species 0, docked, frame 1:
-
 udg/invader 1 ,udg-block
 
 ......XXXX......
@@ -1100,8 +1088,6 @@ udg/invader 1 ,udg-block
 ....XX.XX.XX....
 ..XX........XX..
 
-  \ invader species 0, docked, frame 2:
-
 udg/invader 1 ,udg-block
 
 ......XXXX......
@@ -1113,7 +1099,8 @@ udg/invader 1 ,udg-block
 ....XX.XX.XX....
 ..XX........XX..
 
-  \ invader species 0, left breaking, frame 0:
+  \ ............................
+  \ Breaking the wall to the left
 
 udg/invader 1 ,udg-block: left-breaking-species-0-sprite
 
@@ -1126,8 +1113,6 @@ udg/invader 1 ,udg-block: left-breaking-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-  \ invader species 0, left breaking, frame 1:
-
 udg/invader 1 ,udg-block
 
 .....XXXX.......
@@ -1138,8 +1123,6 @@ udg/invader 1 ,udg-block
 ...XXX..XXX.....
 ..XX..XX..XX....
 ..XX.......XX...
-
-  \ invader species 0, left breaking, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1152,8 +1135,6 @@ XXXXXXXXXXXX....
 .XX..XX..XX.....
 ..XX......XX....
 
-  \ invader species 0, left breaking, frame 3:
-
 udg/invader 1 ,udg-block
 
 .....XXXX.......
@@ -1165,7 +1146,8 @@ udg/invader 1 ,udg-block
 ..XX..XX..XX....
 ..XX.......XX...
 
-  \ invader species 0, right breaking, frame 0:
+  \ ............................
+  \ Breaking the wall to the right
 
 udg/invader 1 ,udg-block: right-breaking-species-0-sprite
 
@@ -1178,8 +1160,6 @@ udg/invader 1 ,udg-block: right-breaking-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-  \ invader species 0, right breaking, frame 1:
-
 udg/invader 1 ,udg-block
 
 .......XXXX.....
@@ -1190,8 +1170,6 @@ udg/invader 1 ,udg-block
 .....XXX..XXX...
 ....XX..XX..XX..
 ...XX.......XX..
-
-  \ invader species 0, right breaking, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1204,8 +1182,6 @@ udg/invader 1 ,udg-block
 .....XX..XX..XX.
 ....XX......XX..
 
-  \ invader species 0, right breaking, frame 3:
-
 udg/invader 1 ,udg-block
 
 .......XXXX.....
@@ -1217,10 +1193,102 @@ udg/invader 1 ,udg-block
 ....XX..XX..XX..
 ...XX.......XX..
 
+  \ ............................
+  \ Balled
+
+udg/invader 1 ,udg-block: balled-species-0-sprite
+
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXX..XX..XXX..
+..XXXXXXXXXXXX..
+.....XX..XX.....
+....XX.XX.XX....
+..XX........XX..
+
+udg/invader 1 ,udg-block
+
+.....XXXX.......
+..XXXXXXXXXX....
+.XXXXXXXXXXXX...
+.XXX..XXXXXXX...
+.XXXXXXXXXXXX...
+.....XX..XX.....
+....XX.XX.XXXX..
+..XX............
+
+udg/invader 1 ,udg-block
+
+....XXXX........
+.XXXXXXXXXX.....
+XXXXXXXXXXXX....
+XXX..XX..XXX....
+XXXXXXXXXXXX....
+.....XX..XX.XX..
+....XX.XX.XX....
+..XX............
+
+udg/invader 1 ,udg-block
+
+.....XXXX.......
+..XXXXXXXXXX....
+.XXXXXXXXXXXX...
+.XXXXXXX..XXX...
+.XXXXXXXXXXXX...
+.....XX..XX.....
+....XX.XX.XXXX..
+..XX............
+
+udg/invader 1 ,udg-block
+
+......XXXX......
+...XXXXXXXXXX...
+..XXXXXXXXXXXX..
+..XXX..XX..XXX..
+..XXXXXXXXXXXX..
+.....XX..XX.....
+....XX.XX.XX....
+..XX........XX..
+
+udg/invader 1 ,udg-block
+
+.......XXXX.....
+....XXXXXXXXXX..
+...XXXXXXXXXXXX.
+...XXX..XXXXXXX.
+...XXXXXXXXXXXX.
+.....XX..XX.....
+..XXXX.XX.XX....
+............XX..
+
+udg/invader 1 ,udg-block
+
+........XXXX....
+.....XXXXXXXXXX.
+....XXXXXXXXXXXX
+....XXX..XX..XXX
+....XXXXXXXXXXXX
+..XX.XX..XX.....
+....XX.XX.XX....
+............XX..
+
+udg/invader 1 ,udg-block
+
+.......XXXX.....
+....XXXXXXXXXX..
+...XXXXXXXXXXXX.
+...XXX..XXXXXXX.
+...XXXXXXXXXXXX.
+.....XX..XX.....
+..XXXX.XX.XX....
+............XX..
+
   \ -----------------------------------------------------------
   \ Invader species 1
 
-  \ invader species 1, left flying, frame 0:
+  \ ............................
+  \ Flying to the left
 
 udg/invader 1 ,udg-block: left-flying-species-1-sprite
 
@@ -1233,8 +1301,6 @@ udg/invader 1 ,udg-block: left-flying-species-1-sprite
 ..X.X.....X.X...
 ....X.....X.....
 
-  \ invader species 1, left flying, frame 1:
-
 udg/invader 1 ,udg-block
 
 ......X...X.....
@@ -1245,8 +1311,6 @@ XXXX.XXX.XXXXXX.
 ...XXXXXXXXX....
 ....X.....X.....
 .....X.....X....
-
-  \ invader species 1, left flying, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1259,8 +1323,6 @@ udg/invader 1 ,udg-block
 ....X.....X.....
 ....X.....X.....
 
-  \ invader species 1, left flying, frame 3:
-
 udg/invader 1 ,udg-block
 
 ......X...X.....
@@ -1272,7 +1334,8 @@ XXXX.XXX.XXXXXX.
 ....X.....X.....
 .....X.....X....
 
-  \ invader species 1, right flying, frame 0:
+  \ ............................
+  \ Flying to the right
 
 udg/invader 1 ,udg-block: right-flying-species-1-sprite
 
@@ -1285,8 +1348,6 @@ udg/invader 1 ,udg-block: right-flying-species-1-sprite
 ...X.X.....X.X..
 .....X.....X....
 
-  \ invader species 1, right flying, frame 1:
-
 udg/invader 1 ,udg-block
 
 .....X...X......
@@ -1297,8 +1358,6 @@ udg/invader 1 ,udg-block
 ....XXXXXXXXX...
 .....X.....X....
 ....X.....X.....
-
-  \ invader species 1, right flying, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1311,8 +1370,6 @@ udg/invader 1 ,udg-block
 .....X.....X....
 .....X.....X....
 
-  \ invader species 1, right flying, frame 3:
-
 udg/invader 1 ,udg-block
 
 .....X...X......
@@ -1324,7 +1381,8 @@ udg/invader 1 ,udg-block
 .....X.....X....
 ....X.....X.....
 
-  \ invader species 1, docked, frame 0:
+  \ ............................
+  \ Docked
 
 udg/invader 1 ,udg-block: docked-species-1-sprite
 
@@ -1337,8 +1395,6 @@ udg/invader 1 ,udg-block: docked-species-1-sprite
 ..X.X.....X.X...
 .....XX.XX......
 
-  \ invader species 1, docked, frame 1:
-
 udg/invader 1 ,udg-block
 
 ....X.....X.....
@@ -1349,8 +1405,6 @@ udg/invader 1 ,udg-block
 ..XXXXXXXXXXX...
 ..X.X.....X.X...
 .....XX.XX......
-
-  \ invader species 1, docked, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1363,7 +1417,8 @@ udg/invader 1 ,udg-block
 ..X.X.....X.X...
 .....XX.XX......
 
-  \ invader species 1, left breaking, frame 0:
+  \ ............................
+  \ Breaking the wall to the left
 
 udg/invader 1 ,udg-block: left-breaking-species-1-sprite
 
@@ -1376,8 +1431,6 @@ udg/invader 1 ,udg-block: left-breaking-species-1-sprite
 ..X.X.....X.X...
 ....X.....X.....
 
-  \ invader species 1, left breaking, frame 1:
-
 udg/invader 1 ,udg-block
 
 .....X...X......
@@ -1388,8 +1441,6 @@ udg/invader 1 ,udg-block
 .XXXXXXXXXX.....
 ..XX.....X......
 ....X.....X.....
-
-  \ invader species 1, left breaking, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1402,8 +1453,6 @@ XXXXXXXXXX......
 .XX.....X.......
 ..X.....X.......
 
-  \ invader species 1, left breaking, frame 3:
-
 udg/invader 1 ,udg-block
 
 .....X...X......
@@ -1415,7 +1464,8 @@ udg/invader 1 ,udg-block
 ..XX.....X......
 ....X.....X.....
 
-  \ invader species 1, right breaking, frame 0:
+  \ ............................
+  \ Breaking the wall to the right
 
 udg/invader 1 ,udg-block: right-breaking-species-1-sprite
 
@@ -1428,8 +1478,6 @@ udg/invader 1 ,udg-block: right-breaking-species-1-sprite
 ...X.X.....X.X..
 .....X.....X....
 
-  \ invader species 1, right breaking, frame 1:
-
 udg/invader 1 ,udg-block
 
 ......X...X.....
@@ -1440,8 +1488,6 @@ udg/invader 1 ,udg-block
 .....XXXXXXXXXX.
 ......X.....XX..
 .....X.....X....
-
-  \ invader species 1, right breaking, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1454,8 +1500,6 @@ udg/invader 1 ,udg-block
 .......X.....XX.
 .......X.....X..
 
-  \ invader species 1, right breaking, frame 3:
-
 udg/invader 1 ,udg-block
 
 ......X...X.....
@@ -1467,10 +1511,102 @@ udg/invader 1 ,udg-block
 ......X.....XX..
 .....X.....X....
 
+  \ ............................
+  \ Balled
+
+udg/invader 1 ,udg-block: balled-species-1-sprite
+
+....X.....X.....
+.....X...X......
+....XXXXXXX.....
+...XX.XXX.XX....
+..XXXXXXXXXXX...
+..XXXXXXXXXXX...
+..X.X.....X.X...
+....X.....X.....
+
+udg/invader 1 ,udg-block
+
+...X.....X......
+....X...X.......
+...XXXXXXX......
+..XX.XXXXXXXXX..
+.XXXXXXXXXXX....
+.XXXXXXXXXXX....
+..X.X.....X.....
+....X......X....
+
+udg/invader 1 ,udg-block
+
+..X.....X.......
+...X...X........
+..XXXXXXX.......
+.XX.XXX.XXXXX...
+XXXXXXXXXXX.....
+XXXXXXXXXXX.....
+..X.X.....X.....
+....X.....X.....
+
+udg/invader 1 ,udg-block
+
+...X.....X......
+....X...X.......
+...XXXXXXX......
+..XXXXXX.XXXXX..
+.XXXXXXXXXXX....
+.XXXXXXXXXXX....
+..X.X.....X.....
+....X....X......
+
+udg/invader 1 ,udg-block
+
+....X.....X.....
+.....X...X......
+....XXXXXXX.....
+...XX.XXX.XX....
+..XXXXXXXXXXX...
+..XXXXXXXXXXX...
+..X.X.....X.X...
+....X.....X.....
+
+udg/invader 1 ,udg-block
+
+.....X.....X....
+......X...X.....
+.....XXXXXXX....
+.XXXXX.XXXXXX...
+...XXXXXXXXXXX..
+...XXXXXXXXXXX..
+....X.....X.X...
+...X......X.....
+
+udg/invader 1 ,udg-block
+
+......X.....X...
+.......X...X....
+......XXXXXXX...
+..XXXXX.XXX.XX..
+....XXXXXXXXXXX.
+....XXXXXXXXXXX.
+....X.....X.X...
+....X.....X.....
+
+udg/invader 1 ,udg-block
+
+.....X.....X....
+......X...X.....
+.....XXXXXXX....
+.XXXXXXXXX.XX...
+...XXXXXXXXXXX..
+...XXXXXXXXXXX..
+....X.....X.X...
+.....X....X.....
+
   \ -----------------------------------------------------------
   \ Invader species 2
 
-  \ invader species 2, left flying, frame 0:
+  \ ............................
+  \ Flying to the left
 
 udg/invader 1 ,udg-block: left-flying-species-2-sprite
 
@@ -1483,8 +1619,6 @@ udg/invader 1 ,udg-block: left-flying-species-2-sprite
 .....X.XX.X.....
 ....X.X..X.X....
 
-  \ invader species 2, left flying, frame 1:
-
 udg/invader 1 ,udg-block
 
 .......XX.......
@@ -1495,8 +1629,6 @@ udg/invader 1 ,udg-block
 ......X..X......
 ......X.XX.X....
 .....X.X..X.X...
-
-  \ invader species 2, left flying, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1509,8 +1641,6 @@ udg/invader 1 ,udg-block
 .......X.XX.X...
 ......X.X..X.X..
 
-  \ invader species 2, left flying, frame 3:
-
 udg/invader 1 ,udg-block
 
 .......XX.......
@@ -1522,7 +1652,8 @@ udg/invader 1 ,udg-block
 ......X.XX.X....
 .....X.X..X.X...
 
-  \ invader species 2, right flying, frame 0:
+  \ ............................
+  \ Flying to the right
 
 udg/invader 1 ,udg-block: right-flying-species-2-sprite
 
@@ -1535,8 +1666,6 @@ udg/invader 1 ,udg-block: right-flying-species-2-sprite
 .....X.XX.X.....
 ....X.X..X.X....
 
-  \ invader species 2, right flying, frame 1:
-
 udg/invader 1 ,udg-block
 
 .......XX.......
@@ -1547,8 +1676,6 @@ udg/invader 1 ,udg-block
 ......X..X......
 ....X.XX.X......
 ...X.X..X.X.....
-
-  \ invader species 2, right flying, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1561,8 +1688,6 @@ udg/invader 1 ,udg-block
 ...X.XX.X.......
 ..X.X..X.X......
 
-  \ invader species 2, right flying, frame 3:
-
 udg/invader 1 ,udg-block
 
 .......XX.......
@@ -1574,7 +1699,8 @@ udg/invader 1 ,udg-block
 ....X.XX.X......
 ...X.X..X.X.....
 
-  \ invader species 2, docked, frame 0:
+  \ ............................
+  \ Docked
 
 udg/invader 1 ,udg-block: docked-species-2-sprite
 
@@ -1587,8 +1713,6 @@ udg/invader 1 ,udg-block: docked-species-2-sprite
 .....X.XX.X.....
 ....X.X..X.X....
 
-  \ invader species 2, docked, frame 1:
-
 udg/invader 1 ,udg-block
 
 .......XX.......
@@ -1600,8 +1724,6 @@ udg/invader 1 ,udg-block
 .....X.XX.X.....
 ....X.X..X.X....
 
-  \ invader species 2, docked, frame 2:
-
 udg/invader 1 ,udg-block
 
 .......XX.......
@@ -1613,7 +1735,8 @@ udg/invader 1 ,udg-block
 .....X.XX.X.....
 ....X.X..X.X....
 
-  \ invader species 2, left breaking, frame 0:
+  \ ............................
+  \ Breaking the wall to the left
 
 udg/invader 1 ,udg-block: left-breaking-species-2-sprite
 
@@ -1626,8 +1749,6 @@ udg/invader 1 ,udg-block: left-breaking-species-2-sprite
 ...X.XX.X.......
 ..X.X..X.X......
 
-  \ invader species 2, left breaking, frame 1:
-
 udg/invader 1 ,udg-block
 
 ....XX..........
@@ -1638,8 +1759,6 @@ udg/invader 1 ,udg-block
 ...X..X.........
 ...X.XX.X.......
 ..X.X..X.X......
-
-  \ invader species 2, left breaking, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1652,8 +1771,6 @@ XXXXXXXX........
 ...X.XX.X.......
 ..X.X..X.X......
 
-  \ invader species 2, left breaking, frame 3:
-
 udg/invader 1 ,udg-block
 
 ....XX..........
@@ -1665,7 +1782,8 @@ udg/invader 1 ,udg-block
 ...X.XX.X.......
 ..X.X..X.X......
 
-  \ invader species 2, right breaking, frame 0:
+  \ ............................
+  \ Breaking the wall to the right
 
 udg/invader 1 ,udg-block: right-breaking-species-2-sprite
 
@@ -1678,8 +1796,6 @@ udg/invader 1 ,udg-block: right-breaking-species-2-sprite
 .......X.XX.X...
 ......X.X..X.X..
 
-  \ invader species 2, right breaking, frame 1:
-
 udg/invader 1 ,udg-block
 
 ..........XX....
@@ -1690,8 +1806,6 @@ udg/invader 1 ,udg-block
 .........X..X...
 .......X.XX.X...
 ......X.X..X.X..
-
-  \ invader species 2, right breaking, frame 2:
 
 udg/invader 1 ,udg-block
 
@@ -1704,8 +1818,6 @@ udg/invader 1 ,udg-block
 .......X.XX.X...
 ......X.X..X.X..
 
-  \ invader species 2, right breaking, frame 3:
-
 udg/invader 1 ,udg-block
 
 ..........XX....
@@ -1717,7 +1829,98 @@ udg/invader 1 ,udg-block
 .......X.XX.X...
 ......X.X..X.X..
 
-  \ -----------------------------------------------------------
+  \ ............................
+  \ Balled
+
+udg/invader 1 ,udg-block: balled-species-2-sprite
+
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XX.XX.XX....
+....XXXXXXXX....
+......X..X......
+.....X.XX.X.....
+....X.X..X.X....
+
+udg/invader 1 ,udg-block
+
+......XX........
+.....XXXX.......
+....XXXXXX......
+...XX.XXXXX.....
+...XXXXXXXX.....
+......X..X......
+......X.XX.X....
+.....X.X..X.X...
+
+udg/invader 1 ,udg-block
+
+.....XX.........
+....XXXX........
+...XXXXXX.......
+..XX.XX.XX......
+..XXXXXXXX......
+......X..X......
+.......X.XX.X...
+......X.X..X.X..
+
+udg/invader 1 ,udg-block
+
+......XX........
+.....XXXX.......
+....XXXXXX......
+...XXXXX.XX.....
+...XXXXXXXX.....
+......X..X......
+......X.XX.X....
+.....X.X..X.X...
+
+udg/invader 1 ,udg-block
+
+.......XX.......
+......XXXX......
+.....XXXXXX.....
+....XX.XX.XX....
+....XXXXXXXX....
+......X..X......
+.....X.XX.X.....
+....X.X..X.X....
+
+udg/invader 1 ,udg-block
+
+........XX......
+.......XXXX.....
+......XXXXXX....
+.....XX.XXXXX...
+.....XXXXXXXX...
+......X..X......
+....X.XX.X......
+...X.X..X.X.....
+
+udg/invader 1 ,udg-block
+
+.........XX.....
+........XXXX....
+.......XXXXXX...
+......XX.XX.XX..
+......XXXXXXXX..
+......X..X......
+...X.XX.X.......
+..X.X..X.X......
+
+udg/invader 1 ,udg-block
+
+........XX......
+.......XXXX.....
+......XXXXXX....
+.....XXXXX.XX...
+.....XXXXXXXX...
+......X..X......
+......X.XX.X....
+.....X.X..X.X...
+
+  \ --------------------------------------------
   \ Mothership
 
 0  constant mothership
@@ -1733,8 +1936,6 @@ cvariable mothership-frame
   \ ............................................
   \ Flying mothership
 
-  \ mothership, frame 0:
-
 udg/mothership 1 ,udg-block: flying-mothership-sprite
 
 ................
@@ -1745,8 +1946,6 @@ udg/mothership 1 ,udg-block: flying-mothership-sprite
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
-
-  \ mothership, frame 1:
 
 udg/mothership 1 ,udg-block
 
@@ -1759,8 +1958,6 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
 
-  \ mothership, frame 2:
-
 udg/mothership 1 ,udg-block
 
 ................
@@ -1771,8 +1968,6 @@ udg/mothership 1 ,udg-block
 XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
-
-  \ mothership, frame 3:
 
 udg/mothership 1 ,udg-block
 
@@ -1816,7 +2011,7 @@ X.X.X.X..X.X.X.X
 beaming-mothership-sprite sprite>udgs udg/mothership /
 cconstant beaming-mothership-frames
 
-  \ -----------------------------------------------------------
+  \ --------------------------------------------
   \ Explosion
 
 2 cconstant udg/explosion
@@ -2327,7 +2522,7 @@ X..X....
 projectile-explosion-sprite
 sprite>udgs cconstant projectile-explosion-frames
 
-  \ -----------------------------------------------------------
+  \ --------------------------------------------
   \ Building
 
 1 1 ,udg-block: brick
@@ -2407,7 +2602,7 @@ XX.XX...
 XX.XXX.X
 ........
 
-  \ -----------------------------------------------------------
+  \ --------------------------------------------
   \ Tank
 
 4 cconstant tank-frames
@@ -2541,7 +2736,7 @@ udg/tank 1 ,udg-block
 ...X..XX..XX..XX..XX.X..
 ...X.X.X.X.X.X.X.X.X.X..
 
-  \ -----------------------------------------------------------
+  \ --------------------------------------------
   \ Containers
 
 2 cconstant udg/container
@@ -2612,7 +2807,7 @@ XX......
 XXX.....
 ........
 
-  \ -----------------------------------------------------------
+  \ --------------------------------------------
   \ Icons
 
 2 1 ,udg-block: right-arrow
@@ -2695,15 +2890,11 @@ status-bar-rows columns * cconstant /status-bar
 
 0
    field: ~species-<flying-sprite   \ UDG address
-  cfield: ~species-<flying-frames   \ count
    field: ~species-flying>-sprite   \ UDG address
-  cfield: ~species-flying>-frames   \ count
    field: ~species-<breaking-sprite \ UDG address
-  cfield: ~species-<breaking-frames \ count
    field: ~species-breaking>-sprite \ UDG address
-  cfield: ~species-breaking>-frames \ count
    field: ~species-docked-sprite    \ UDG address
-  cfield: ~species-docked-frames    \ count
+   field: ~species-balled-sprite    \ UDG address
   cfield: ~species-endurance
 cconstant /species
   \ Data structure of an invader species.
@@ -2713,55 +2904,55 @@ create species #species /species * allot
 
 : species#>~ ( n -- a ) /species * species + ;
 
-: set-species ( c1 c2 c3 c4 c5 -- )
+: set-species ( c0 c1 c2 c3 c4 c5 -- )
   species#>~ >r
   r@ ~species-endurance c!
   r@ ~species-flying>-sprite !
-  undocked-invader-frames r@ ~species-flying>-frames c!
   r@ ~species-<flying-sprite !
-  undocked-invader-frames r@ ~species-<flying-frames c!
   r@ ~species-breaking>-sprite !
-  undocked-invader-frames r@ ~species-breaking>-frames c!
   r@ ~species-<breaking-sprite !
-  undocked-invader-frames r@ ~species-<breaking-frames c!
   r@ ~species-docked-sprite !
-  docked-invader-frames r> ~species-docked-frames c! ;
+  r> ~species-balled-sprite ! ;
   \ Init the data of invaders species _c5_:
+  \   c0 = balled sprite
   \   c1 = docked sprite
   \   c2 = left flying sprite
   \   c3 = right flying sprite
   \   c4 = endurance
 
-1 cconstant invader-0-endurance
-2 cconstant invader-1-endurance
-4 cconstant invader-2-endurance
+1 cconstant species-0-endurance
+2 cconstant species-1-endurance
+4 cconstant species-2-endurance
 
-invader-0-endurance
-invader-1-endurance max
-invader-2-endurance max cconstant max-endurance
+species-0-endurance
+species-1-endurance max
+species-2-endurance max cconstant max-endurance
 
+balled-species-0-sprite
 docked-species-0-sprite
 left-breaking-species-0-sprite
 right-breaking-species-0-sprite
 left-flying-species-0-sprite
 right-flying-species-0-sprite
-invader-0-endurance
+species-0-endurance
 0 set-species
 
+balled-species-1-sprite
 docked-species-1-sprite
 left-breaking-species-1-sprite
 right-breaking-species-1-sprite
 left-flying-species-1-sprite
 right-flying-species-1-sprite
-invader-1-endurance
+species-1-endurance
 1 set-species
 
+balled-species-2-sprite
 docked-species-2-sprite
 left-breaking-species-2-sprite
 right-breaking-species-2-sprite
 left-flying-species-2-sprite
 right-flying-species-2-sprite
-invader-2-endurance
+species-2-endurance
 2 set-species
 
   \ --------------------------------------------
@@ -2867,9 +3058,8 @@ cconstant invader-max-y
   \ Is the current invader flying to the left?
 
 : set-<flying-invader-sprite ( -- )
-  invader~ ~invader-species @ dup
-  ~species-<flying-sprite @ swap
-  ~species-<flying-frames c@ set-invader-sprite ;
+  invader~ ~invader-species @ ~species-<flying-sprite @
+  flying-invader-frames set-invader-sprite ;
   \ Set the flying-to-the-left sprite of the current invader.
   \
   \ XXX TODO -- Use double-cell fields to copy both fields with
@@ -2879,9 +3069,8 @@ cconstant invader-max-y
   \ identical, there's no need to initiate `~frame`.
 
 : set-flying>-invader-sprite ( -- )
-  invader~ ~invader-species @ dup
-  ~species-flying>-sprite @ swap
-  ~species-flying>-frames c@ set-invader-sprite ;
+  invader~ ~invader-species @ ~species-flying>-sprite @
+  flying-invader-frames set-invader-sprite ;
   \ Set the flying-to-the-right sprite of the current invader.
   \
   \ XXX TODO -- Use double-cell fields to copy both fields with
@@ -2898,9 +3087,8 @@ cconstant invader-max-y
   \ XXX TODO -- Combine with `set-invader-direction`.
 
 : set-docked-invader-sprite ( -- )
-  invader~ ~invader-species @ dup
-  ~species-docked-sprite @ swap
-  ~species-docked-frames c@ set-invader-sprite ;
+  invader~ ~invader-species @ ~species-docked-sprite @
+  docked-invader-frames set-invader-sprite ;
   \ Make the current invader use the docked invader sprite.
 
 : init-invader ( c1 c2 c3 c4 c0 -- )
@@ -2919,7 +3107,7 @@ cconstant invader-max-y
   \ Init invader_c0_ with the given data:
   \   c1 = row
   \   c2 = column = initial column
-  \   c3 = initial column inc
+  \   c3 = initial column increment
   \   c4 = species
   \ The sprite and the frame are set after the species.
   \ All other fields are set to zero.
@@ -2974,9 +3162,8 @@ create stamina-attributes ( -- ca )   dying-invader-attr c,
       mothership-stamina invader-stamina!
       ['] docked-invader-action invader~ ~invader-action !
   loop ;
-  \ Create new docked invaders from _n2_ to _n1-1_.  The data
-  \ of those invaders must be set already to their default
-  \ values.
+  \ Create new docked invaders from _n2_ to _n1-1_.  Their data
+  \ must be set already to their default values.
 
 : create-left-squadron ( -- )
   init-left-invaders-data
@@ -3779,9 +3966,8 @@ defer ?dock ( -- )
   \ Hit the container that is at the left of the invader.
 
 : <hit-wall ( -- )
-  invader~ ~invader-species @ dup
-  ~species-<breaking-sprite @ swap
-  ~species-<breaking-frames c@ set-invader-sprite
+  invader~ ~invader-species @ ~species-<breaking-sprite @
+  breaking-invader-frames set-invader-sprite
   ['] <breaking-invader-action invader~ ~invader-action ! ;
   \ Hit the wall that is at the left of the current invader and
   \ start breaking it.
@@ -3816,9 +4002,8 @@ defer ?dock ( -- )
   \ Hit the container that is at the right of the invader.
 
 : hit-wall> ( -- )
-  invader~ ~invader-species @ dup
-  ~species-breaking>-sprite @ swap
-  ~species-breaking>-frames c@ set-invader-sprite
+  invader~ ~invader-species @ ~species-breaking>-sprite @
+  breaking-invader-frames set-invader-sprite
   ['] breaking>-invader-action invader~ ~invader-action ! ;
   \ Hit the wall that is at the right of the current invader
   \ and start breaking it.
@@ -4552,8 +4737,13 @@ constant visible-mothership-movements ( -- a )
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
+: set-balled-invader-sprite ( -- )
+  invader~ ~invader-species @ ~species-balled-sprite @
+  balled-invader-frames set-invader-sprite ;
+  \ Make the current invader use the balled invader sprite.
+
 : ball-invader ( -- )
-  set-docked-invader-sprite
+  set-balled-invader-sprite
   balled-invader-attr invader~ ~invader-attr c!
   at-invader .invader
   ['] balled-invader-action invader~ ~invader-action !

@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-19
+:revdate: 2018-02-21
 
 Older first:
 
@@ -146,3 +146,8 @@ Older first:
   `wall-ball-frames`, because they are identical; add a compile-time
   check.
 - Rename `udg/tank` `tank-width`, and so all similar cases.
+
+== 2018-02-21
+
+- Remove `set-species`, which is needed only during compilation. Set
+  the species data directly.
