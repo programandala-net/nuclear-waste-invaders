@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.227.0+201802212017" ;
+: version$ ( -- ca len ) s" 0.228.0+201802221809" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -975,7 +975,7 @@ rom-font bl /udg * + constant bl-udga
   \ ............................
   \ Flying to the left
 
-udg/invader 1 ,udg-block: left-flying-species-0-sprite
+udg/invader 1 ,udg-block: <flying-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1019,7 +1019,7 @@ udg/invader 1 ,udg-block
 ...XX..XX..XX...
 ...XX.......XX..
 
-udg/invader 1 ,udg-block: right-flying-species-0-sprite
+udg/invader 1 ,udg-block: flying>-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1102,7 +1102,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the left
 
-udg/invader 1 ,udg-block: left-breaking-species-0-sprite
+udg/invader 1 ,udg-block: <breaking-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1149,7 +1149,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the right
 
-udg/invader 1 ,udg-block: right-breaking-species-0-sprite
+udg/invader 1 ,udg-block: breaking>-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1290,7 +1290,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Flying to the left
 
-udg/invader 1 ,udg-block: left-flying-species-1-sprite
+udg/invader 1 ,udg-block: <flying-species-1-sprite
 
 ......X...X.....
 .....X...X......
@@ -1337,7 +1337,7 @@ XXXX.XXX.XXXXXX.
   \ ............................
   \ Flying to the right
 
-udg/invader 1 ,udg-block: right-flying-species-1-sprite
+udg/invader 1 ,udg-block: flying>-species-1-sprite
 
 .....X...X......
 ......X...X.....
@@ -1420,7 +1420,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the left
 
-udg/invader 1 ,udg-block: left-breaking-species-1-sprite
+udg/invader 1 ,udg-block: <breaking-species-1-sprite
 
 .....X...X......
 .....X...X......
@@ -1467,7 +1467,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the right
 
-udg/invader 1 ,udg-block: right-breaking-species-1-sprite
+udg/invader 1 ,udg-block: breaking>-species-1-sprite
 
 ......X...X.....
 ......X...X.....
@@ -1608,7 +1608,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Flying to the left
 
-udg/invader 1 ,udg-block: left-flying-species-2-sprite
+udg/invader 1 ,udg-block: <flying-species-2-sprite
 
 .......XX.......
 ......XXXX......
@@ -1655,7 +1655,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Flying to the right
 
-udg/invader 1 ,udg-block: right-flying-species-2-sprite
+udg/invader 1 ,udg-block: flying>-species-2-sprite
 
 .......XX.......
 ......XXXX......
@@ -1738,7 +1738,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the left
 
-udg/invader 1 ,udg-block: left-breaking-species-2-sprite
+udg/invader 1 ,udg-block: <breaking-species-2-sprite
 
 .....XX.........
 ....XXXX........
@@ -1785,7 +1785,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the right
 
-udg/invader 1 ,udg-block: right-breaking-species-2-sprite
+udg/invader 1 ,udg-block: breaking>-species-2-sprite
 
 .........XX.....
 ........XXXX....
@@ -2903,57 +2903,41 @@ create species #species /species * allot
   \ Invaders species data table.
 
 : species#>~ ( n -- a ) /species * species + ;
+  \ Convert species number _n_ to its data address _a_.
 
-: set-species ( c0 c1 c2 c3 c4 c5 -- )
-  species#>~ >r
-  r@ ~species-endurance c!
-  r@ ~species-flying>-sprite !
-  r@ ~species-<flying-sprite !
-  r@ ~species-breaking>-sprite !
-  r@ ~species-<breaking-sprite !
-  r@ ~species-docked-sprite !
-  r> ~species-balled-sprite ! ;
-  \ Init the data of invaders species _c5_:
-  \   c0 = balled sprite
-  \   c1 = docked sprite
-  \   c2 = left flying sprite
-  \   c3 = right flying sprite
-  \   c4 = endurance
+0 species#>~
 
-1 cconstant species-0-endurance
-2 cconstant species-1-endurance
-4 cconstant species-2-endurance
+   balled-species-0-sprite over ~species-balled-sprite    !
+   docked-species-0-sprite over ~species-docked-sprite    !
+<breaking-species-0-sprite over ~species-<breaking-sprite !
+breaking>-species-0-sprite over ~species-breaking>-sprite !
+  <flying-species-0-sprite over ~species-<flying-sprite   !
+  flying>-species-0-sprite over ~species-flying>-sprite   !
+                         1 swap ~species-endurance       c!
 
-species-0-endurance
-species-1-endurance max
-species-2-endurance max cconstant max-endurance
+1 species#>~
 
-balled-species-0-sprite
-docked-species-0-sprite
-left-breaking-species-0-sprite
-right-breaking-species-0-sprite
-left-flying-species-0-sprite
-right-flying-species-0-sprite
-species-0-endurance
-0 set-species
+   balled-species-1-sprite over ~species-balled-sprite    !
+   docked-species-1-sprite over ~species-docked-sprite    !
+<breaking-species-1-sprite over ~species-<breaking-sprite !
+breaking>-species-1-sprite over ~species-breaking>-sprite !
+  <flying-species-1-sprite over ~species-<flying-sprite   !
+  flying>-species-1-sprite over ~species-flying>-sprite   !
+                         2 swap ~species-endurance       c!
 
-balled-species-1-sprite
-docked-species-1-sprite
-left-breaking-species-1-sprite
-right-breaking-species-1-sprite
-left-flying-species-1-sprite
-right-flying-species-1-sprite
-species-1-endurance
-1 set-species
+2 species#>~
 
-balled-species-2-sprite
-docked-species-2-sprite
-left-breaking-species-2-sprite
-right-breaking-species-2-sprite
-left-flying-species-2-sprite
-right-flying-species-2-sprite
-species-2-endurance
-2 set-species
+   balled-species-2-sprite over ~species-balled-sprite    !
+   docked-species-2-sprite over ~species-docked-sprite    !
+<breaking-species-2-sprite over ~species-<breaking-sprite !
+breaking>-species-2-sprite over ~species-breaking>-sprite !
+  <flying-species-2-sprite over ~species-<flying-sprite   !
+  flying>-species-2-sprite over ~species-flying>-sprite   !
+                         4 swap ~species-endurance       c!
+
+0 species#>~ ~species-endurance c@
+1 species#>~ ~species-endurance c@ max
+2 species#>~ ~species-endurance c@ max cconstant max-endurance
 
   \ --------------------------------------------
 
