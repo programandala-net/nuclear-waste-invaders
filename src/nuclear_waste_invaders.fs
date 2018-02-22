@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.228.0+201802221809" ;
+: version$ ( -- ca len ) s" 0.229.0+201802221928" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -952,8 +952,8 @@ defer set-gun ( n -- )
   \ to skip the space used by the constant: A constant uses 3
   \ bytes for the code field, plus one cell for the value.
 
-2 cconstant udg/invader
-2 cconstant udg/mothership
+2 cconstant invader-width
+2 cconstant mothership-width
 
 4 cconstant breaking-invader-frames
 4 cconstant   flying-invader-frames
@@ -975,7 +975,7 @@ rom-font bl /udg * + constant bl-udga
   \ ............................
   \ Flying to the left
 
-udg/invader 1 ,udg-block: <flying-species-0-sprite
+invader-width 1 ,udg-block: <flying-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -986,7 +986,7 @@ udg/invader 1 ,udg-block: <flying-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -997,7 +997,7 @@ udg/invader 1 ,udg-block
 ...XX..XX..XX...
 ...XX.......XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1008,7 +1008,7 @@ udg/invader 1 ,udg-block
 ...XX..XX..XX...
 ....XX......XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1019,7 +1019,7 @@ udg/invader 1 ,udg-block
 ...XX..XX..XX...
 ...XX.......XX..
 
-udg/invader 1 ,udg-block: flying>-species-0-sprite
+invader-width 1 ,udg-block: flying>-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1030,7 +1030,7 @@ udg/invader 1 ,udg-block: flying>-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1041,7 +1041,7 @@ udg/invader 1 ,udg-block
 ...XX..XX..XX...
 ..XX.......XX...
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1052,7 +1052,7 @@ udg/invader 1 ,udg-block
 ...XX..XX..XX...
 ..XX......XX....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1066,7 +1066,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Docked
 
-udg/invader 1 ,udg-block: docked-species-0-sprite
+invader-width 1 ,udg-block: docked-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1077,7 +1077,7 @@ udg/invader 1 ,udg-block: docked-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1088,7 +1088,7 @@ udg/invader 1 ,udg-block
 ....XX.XX.XX....
 ..XX........XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1102,7 +1102,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the left
 
-udg/invader 1 ,udg-block: <breaking-species-0-sprite
+invader-width 1 ,udg-block: <breaking-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1113,7 +1113,7 @@ udg/invader 1 ,udg-block: <breaking-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....XXXX.......
 ..XXXXXXXXXX....
@@ -1124,7 +1124,7 @@ udg/invader 1 ,udg-block
 ..XX..XX..XX....
 ..XX.......XX...
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ....XXXX........
 .XXXXXXXXXX.....
@@ -1135,7 +1135,7 @@ XXXXXXXXXXXX....
 .XX..XX..XX.....
 ..XX......XX....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....XXXX.......
 ..XXXXXXXXXX....
@@ -1149,7 +1149,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the right
 
-udg/invader 1 ,udg-block: breaking>-species-0-sprite
+invader-width 1 ,udg-block: breaking>-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1160,7 +1160,7 @@ udg/invader 1 ,udg-block: breaking>-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XXXX.....
 ....XXXXXXXXXX..
@@ -1171,7 +1171,7 @@ udg/invader 1 ,udg-block
 ....XX..XX..XX..
 ...XX.......XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ........XXXX....
 .....XXXXXXXXXX.
@@ -1182,7 +1182,7 @@ udg/invader 1 ,udg-block
 .....XX..XX..XX.
 ....XX......XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XXXX.....
 ....XXXXXXXXXX..
@@ -1196,7 +1196,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Balled
 
-udg/invader 1 ,udg-block: balled-species-0-sprite
+invader-width 1 ,udg-block: balled-species-0-sprite
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1207,7 +1207,7 @@ udg/invader 1 ,udg-block: balled-species-0-sprite
 ....XX.XX.XX....
 ..XX........XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....XXXX.......
 ..XXXXXXXXXX....
@@ -1218,7 +1218,7 @@ udg/invader 1 ,udg-block
 ....XX.XX.XXXX..
 ..XX............
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ....XXXX........
 .XXXXXXXXXX.....
@@ -1229,7 +1229,7 @@ XXXXXXXXXXXX....
 ....XX.XX.XX....
 ..XX............
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....XXXX.......
 ..XXXXXXXXXX....
@@ -1240,7 +1240,7 @@ udg/invader 1 ,udg-block
 ....XX.XX.XXXX..
 ..XX............
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XXXX......
 ...XXXXXXXXXX...
@@ -1251,7 +1251,7 @@ udg/invader 1 ,udg-block
 ....XX.XX.XX....
 ..XX........XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XXXX.....
 ....XXXXXXXXXX..
@@ -1262,7 +1262,7 @@ udg/invader 1 ,udg-block
 ..XXXX.XX.XX....
 ............XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ........XXXX....
 .....XXXXXXXXXX.
@@ -1273,7 +1273,7 @@ udg/invader 1 ,udg-block
 ....XX.XX.XX....
 ............XX..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XXXX.....
 ....XXXXXXXXXX..
@@ -1290,7 +1290,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Flying to the left
 
-udg/invader 1 ,udg-block: <flying-species-1-sprite
+invader-width 1 ,udg-block: <flying-species-1-sprite
 
 ......X...X.....
 .....X...X......
@@ -1301,7 +1301,7 @@ udg/invader 1 ,udg-block: <flying-species-1-sprite
 ..X.X.....X.X...
 ....X.....X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......X...X.....
 .....X...X......
@@ -1312,7 +1312,7 @@ XXXX.XXX.XXXXXX.
 ....X.....X.....
 .....X.....X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......X...X.....
 ..X..X...X..X...
@@ -1323,7 +1323,7 @@ udg/invader 1 ,udg-block
 ....X.....X.....
 ....X.....X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......X...X.....
 .....X...X......
@@ -1337,7 +1337,7 @@ XXXX.XXX.XXXXXX.
   \ ............................
   \ Flying to the right
 
-udg/invader 1 ,udg-block: flying>-species-1-sprite
+invader-width 1 ,udg-block: flying>-species-1-sprite
 
 .....X...X......
 ......X...X.....
@@ -1348,7 +1348,7 @@ udg/invader 1 ,udg-block: flying>-species-1-sprite
 ...X.X.....X.X..
 .....X.....X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....X...X......
 ......X...X.....
@@ -1359,7 +1359,7 @@ udg/invader 1 ,udg-block
 .....X.....X....
 ....X.....X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....X...X......
 ...X..X...X..X..
@@ -1370,7 +1370,7 @@ udg/invader 1 ,udg-block
 .....X.....X....
 .....X.....X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....X...X......
 ......X...X.....
@@ -1384,7 +1384,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Docked
 
-udg/invader 1 ,udg-block: docked-species-1-sprite
+invader-width 1 ,udg-block: docked-species-1-sprite
 
 ....X.....X.....
 .....X...X......
@@ -1395,7 +1395,7 @@ udg/invader 1 ,udg-block: docked-species-1-sprite
 ..X.X.....X.X...
 .....XX.XX......
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ....X.....X.....
 .....X...X......
@@ -1406,7 +1406,7 @@ udg/invader 1 ,udg-block
 ..X.X.....X.X...
 .....XX.XX......
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ....X.....X.....
 .....X...X......
@@ -1420,7 +1420,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the left
 
-udg/invader 1 ,udg-block: <breaking-species-1-sprite
+invader-width 1 ,udg-block: <breaking-species-1-sprite
 
 .....X...X......
 .....X...X......
@@ -1431,7 +1431,7 @@ udg/invader 1 ,udg-block: <breaking-species-1-sprite
 ..X.X.....X.X...
 ....X.....X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....X...X......
 ....X...X.......
@@ -1442,7 +1442,7 @@ udg/invader 1 ,udg-block
 ..XX.....X......
 ....X.....X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ....X...X.......
 ...X...X..X.....
@@ -1453,7 +1453,7 @@ XXXXXXXXXX......
 .XX.....X.......
 ..X.....X.......
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....X...X......
 ....X...X.......
@@ -1467,7 +1467,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the right
 
-udg/invader 1 ,udg-block: breaking>-species-1-sprite
+invader-width 1 ,udg-block: breaking>-species-1-sprite
 
 ......X...X.....
 ......X...X.....
@@ -1478,7 +1478,7 @@ udg/invader 1 ,udg-block: breaking>-species-1-sprite
 ...X.X.....X.X..
 .....X.....X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......X...X.....
 .......X...X....
@@ -1489,7 +1489,7 @@ udg/invader 1 ,udg-block
 ......X.....XX..
 .....X.....X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......X...X....
 .....X..X...X...
@@ -1500,7 +1500,7 @@ udg/invader 1 ,udg-block
 .......X.....XX.
 .......X.....X..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......X...X.....
 .......X...X....
@@ -1514,7 +1514,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Balled
 
-udg/invader 1 ,udg-block: balled-species-1-sprite
+invader-width 1 ,udg-block: balled-species-1-sprite
 
 ....X.....X.....
 .....X...X......
@@ -1525,7 +1525,7 @@ udg/invader 1 ,udg-block: balled-species-1-sprite
 ..X.X.....X.X...
 ....X.....X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ...X.....X......
 ....X...X.......
@@ -1536,7 +1536,7 @@ udg/invader 1 ,udg-block
 ..X.X.....X.....
 ....X......X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ..X.....X.......
 ...X...X........
@@ -1547,7 +1547,7 @@ XXXXXXXXXXX.....
 ..X.X.....X.....
 ....X.....X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ...X.....X......
 ....X...X.......
@@ -1558,7 +1558,7 @@ udg/invader 1 ,udg-block
 ..X.X.....X.....
 ....X....X......
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ....X.....X.....
 .....X...X......
@@ -1569,7 +1569,7 @@ udg/invader 1 ,udg-block
 ..X.X.....X.X...
 ....X.....X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....X.....X....
 ......X...X.....
@@ -1580,7 +1580,7 @@ udg/invader 1 ,udg-block
 ....X.....X.X...
 ...X......X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......X.....X...
 .......X...X....
@@ -1591,7 +1591,7 @@ udg/invader 1 ,udg-block
 ....X.....X.X...
 ....X.....X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....X.....X....
 ......X...X.....
@@ -1608,7 +1608,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Flying to the left
 
-udg/invader 1 ,udg-block: <flying-species-2-sprite
+invader-width 1 ,udg-block: <flying-species-2-sprite
 
 .......XX.......
 ......XXXX......
@@ -1619,7 +1619,7 @@ udg/invader 1 ,udg-block: <flying-species-2-sprite
 .....X.XX.X.....
 ....X.X..X.X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1630,7 +1630,7 @@ udg/invader 1 ,udg-block
 ......X.XX.X....
 .....X.X..X.X...
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1641,7 +1641,7 @@ udg/invader 1 ,udg-block
 .......X.XX.X...
 ......X.X..X.X..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1655,7 +1655,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Flying to the right
 
-udg/invader 1 ,udg-block: flying>-species-2-sprite
+invader-width 1 ,udg-block: flying>-species-2-sprite
 
 .......XX.......
 ......XXXX......
@@ -1666,7 +1666,7 @@ udg/invader 1 ,udg-block: flying>-species-2-sprite
 .....X.XX.X.....
 ....X.X..X.X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1677,7 +1677,7 @@ udg/invader 1 ,udg-block
 ....X.XX.X......
 ...X.X..X.X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1688,7 +1688,7 @@ udg/invader 1 ,udg-block
 ...X.XX.X.......
 ..X.X..X.X......
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1702,7 +1702,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Docked
 
-udg/invader 1 ,udg-block: docked-species-2-sprite
+invader-width 1 ,udg-block: docked-species-2-sprite
 
 .......XX.......
 ......XXXX......
@@ -1713,7 +1713,7 @@ udg/invader 1 ,udg-block: docked-species-2-sprite
 .....X.XX.X.....
 ....X.X..X.X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1724,7 +1724,7 @@ udg/invader 1 ,udg-block
 .....X.XX.X.....
 ....X.X..X.X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1738,7 +1738,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the left
 
-udg/invader 1 ,udg-block: <breaking-species-2-sprite
+invader-width 1 ,udg-block: <breaking-species-2-sprite
 
 .....XX.........
 ....XXXX........
@@ -1749,7 +1749,7 @@ udg/invader 1 ,udg-block: <breaking-species-2-sprite
 ...X.XX.X.......
 ..X.X..X.X......
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ....XX..........
 ...XXXX.........
@@ -1760,7 +1760,7 @@ udg/invader 1 ,udg-block
 ...X.XX.X.......
 ..X.X..X.X......
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ...XX...........
 ..XXXX..........
@@ -1771,7 +1771,7 @@ XXXXXXXX........
 ...X.XX.X.......
 ..X.X..X.X......
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ....XX..........
 ...XXXX.........
@@ -1785,7 +1785,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Breaking the wall to the right
 
-udg/invader 1 ,udg-block: breaking>-species-2-sprite
+invader-width 1 ,udg-block: breaking>-species-2-sprite
 
 .........XX.....
 ........XXXX....
@@ -1796,7 +1796,7 @@ udg/invader 1 ,udg-block: breaking>-species-2-sprite
 .......X.XX.X...
 ......X.X..X.X..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ..........XX....
 .........XXXX...
@@ -1807,7 +1807,7 @@ udg/invader 1 ,udg-block
 .......X.XX.X...
 ......X.X..X.X..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ...........XX...
 ..........XXXX..
@@ -1818,7 +1818,7 @@ udg/invader 1 ,udg-block
 .......X.XX.X...
 ......X.X..X.X..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ..........XX....
 .........XXXX...
@@ -1832,7 +1832,7 @@ udg/invader 1 ,udg-block
   \ ............................
   \ Balled
 
-udg/invader 1 ,udg-block: balled-species-2-sprite
+invader-width 1 ,udg-block: balled-species-2-sprite
 
 .......XX.......
 ......XXXX......
@@ -1843,7 +1843,7 @@ udg/invader 1 ,udg-block: balled-species-2-sprite
 .....X.XX.X.....
 ....X.X..X.X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XX........
 .....XXXX.......
@@ -1854,7 +1854,7 @@ udg/invader 1 ,udg-block
 ......X.XX.X....
 .....X.X..X.X...
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .....XX.........
 ....XXXX........
@@ -1865,7 +1865,7 @@ udg/invader 1 ,udg-block
 .......X.XX.X...
 ......X.X..X.X..
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ......XX........
 .....XXXX.......
@@ -1876,7 +1876,7 @@ udg/invader 1 ,udg-block
 ......X.XX.X....
 .....X.X..X.X...
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .......XX.......
 ......XXXX......
@@ -1887,7 +1887,7 @@ udg/invader 1 ,udg-block
 .....X.XX.X.....
 ....X.X..X.X....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ........XX......
 .......XXXX.....
@@ -1898,7 +1898,7 @@ udg/invader 1 ,udg-block
 ....X.XX.X......
 ...X.X..X.X.....
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 .........XX.....
 ........XXXX....
@@ -1909,7 +1909,7 @@ udg/invader 1 ,udg-block
 ...X.XX.X.......
 ..X.X..X.X......
 
-udg/invader 1 ,udg-block
+invader-width 1 ,udg-block
 
 ........XX......
 .......XXXX.....
@@ -1936,7 +1936,7 @@ cvariable mothership-frame
   \ ............................................
   \ Flying mothership
 
-udg/mothership 1 ,udg-block: flying-mothership-sprite
+mothership-width 1 ,udg-block: flying-mothership-sprite
 
 ................
 .....XXXXXX.....
@@ -1947,7 +1947,7 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
 
-udg/mothership 1 ,udg-block
+mothership-width 1 ,udg-block
 
 ................
 .....XXXXXX.....
@@ -1958,7 +1958,7 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
 
-udg/mothership 1 ,udg-block
+mothership-width 1 ,udg-block
 
 ................
 .....XXXXXX.....
@@ -1969,7 +1969,7 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
 
-udg/mothership 1 ,udg-block
+mothership-width 1 ,udg-block
 
 ................
 .....XXXXXX.....
@@ -1980,13 +1980,13 @@ XXXXXXXXXXXXXXXX
 ..XXX..XX..XXX..
 ...X........X...
 
-flying-mothership-sprite
-sprite>udgs udg/mothership / cconstant flying-mothership-frames
+flying-mothership-sprite sprite>udgs mothership-width /
+cconstant flying-mothership-frames
 
   \ ............................................
   \ Beaming mothership
 
-udg/mothership 1 ,udg-block: beaming-mothership-sprite
+mothership-width 1 ,udg-block: beaming-mothership-sprite
 
 ................
 .....XXXXXX.....
@@ -1997,7 +1997,7 @@ XXXXXXXXXXXXXXXX
 .X.X.X.XX.X.X.X.
 X.X.X.X..X.X.X.X
 
-udg/mothership 1 ,udg-block
+mothership-width 1 ,udg-block
 
 ................
 .....XXXXXX.....
@@ -2008,15 +2008,15 @@ XXXXXXXXXXXXXXXX
 X.X.X.X..X.X.X.X
 .X.X.X.XX.X.X.X.
 
-beaming-mothership-sprite sprite>udgs udg/mothership /
+beaming-mothership-sprite sprite>udgs mothership-width /
 cconstant beaming-mothership-frames
 
   \ --------------------------------------------
   \ Explosion
 
-2 cconstant udg/explosion
+2 cconstant explosion-width
 
-udg/explosion 1 ,udg-block: explosion-sprite
+explosion-width 1 ,udg-block: explosion-sprite
 
 ..............X.
 ..X......XX..X..
@@ -2027,7 +2027,7 @@ udg/explosion 1 ,udg-block: explosion-sprite
 X....XXXXX...X..
 ..X...XX...X..X.
 
-udg/explosion 1 ,udg-block
+explosion-width 1 ,udg-block
 
 ................
 ...X...X...X....
@@ -2038,7 +2038,7 @@ udg/explosion 1 ,udg-block
 .X...XX.XX..X...
 .X...XX...X..X.X
 
-udg/explosion 1 ,udg-block
+explosion-width 1 ,udg-block
 
 .X...X..........
 X...X....X...X..
@@ -2049,7 +2049,7 @@ X...X.XXX.X.XX..
 ...X.XX.XXX.XX..
 X...XX.X..X.....
 
-udg/explosion 1 ,udg-block
+explosion-width 1 ,udg-block
 
 X......X........
 ....X....X......
@@ -2060,7 +2060,7 @@ X..X.X...X.XX..X
 ...X.XX.X.X.XX..
 .X..X..........X
 
-udg/explosion 1 ,udg-block
+explosion-width 1 ,udg-block
 
 ..X.............
 ....X....X..X...
@@ -2071,7 +2071,7 @@ X..X.X.X..X..X..
 ...X.X....X.....
 ....X....X...X..
 
-udg/explosion 1 ,udg-block
+explosion-width 1 ,udg-block
 
 X............X..
 ....X....X......
@@ -2082,7 +2082,7 @@ X............X..
 ..........X.....
 ..X.......X....X
 
-udg/explosion 1 ,udg-block
+explosion-width 1 ,udg-block
 
 .X.........X....
 .....X.....X..X.
@@ -2093,7 +2093,7 @@ X...............
 X.....X........X
 ..X........X....
 
-udg/explosion 1 ,udg-block
+explosion-width 1 ,udg-block
 
 ....X.......X..X
 ................
@@ -2104,7 +2104,7 @@ udg/explosion 1 ,udg-block
 .............X..
 ......X.........
 
-udg/explosion 1 ,udg-block
+explosion-width 1 ,udg-block
 
 ................
 ................
@@ -2116,7 +2116,7 @@ udg/explosion 1 ,udg-block
 ................
 
 explosion-sprite
-sprite>udgs udg/explosion / cconstant explosion-frames
+sprite>udgs explosion-width / cconstant explosion-frames
 
   \ --------------------------------------------
   \ Projectiles
@@ -2614,9 +2614,9 @@ tank-frames 1- cconstant tank-max-frame
 
 cvariable tank-frame \ counter (0..3)
 
-3 cconstant udg/tank
+3 cconstant tank-width
 
-udg/tank 1 ,udg-block: bullet-gun-tank-sprite
+tank-width 1 ,udg-block: bullet-gun-tank-sprite
 ..........X..X..........
 ...XXXXXX.X..X.XXXXXXX..
 ..XXXXXXXXXXXXXXXXXXXXX.
@@ -2626,7 +2626,7 @@ udg/tank 1 ,udg-block: bullet-gun-tank-sprite
 ...X.XXX.XXX.XXX.XXX.X..
 ....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 ,udg-block
+tank-width 1 ,udg-block
 ..........X..X..........
 ...XXXXXX.X..X.XXXXXXX..
 ..XXXXXXXXXXXXXXXXXXXXX.
@@ -2636,7 +2636,7 @@ udg/tank 1 ,udg-block
 ...X.XXX.XXX.XXX.XXX.X..
 ...X.X.X.X.X.X.X.X.X.X..
 
-udg/tank 1 ,udg-block
+tank-width 1 ,udg-block
 ..........X..X..........
 ...XXXXXX.X..X.XXXXXXX..
 ..XXXXXXXXXXXXXXXXXXXXX.
@@ -2646,7 +2646,7 @@ udg/tank 1 ,udg-block
 ...X.XX..XX..XX..XX..X..
 ....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 ,udg-block
+tank-width 1 ,udg-block
 ..........X..X..........
 ...XXXXXX.X..X.XXXXXXX..
 ..XXXXXXXXXXXXXXXXXXXXX.
@@ -2656,7 +2656,7 @@ udg/tank 1 ,udg-block
 ...X..XX..XX..XX..XX.X..
 ...X.X.X.X.X.X.X.X.X.X..
 
-udg/tank 1 ,udg-block: missile-gun-tank-sprite
+tank-width 1 ,udg-block: missile-gun-tank-sprite
 ..........XXXX..........
 ...XXXXXX.XXXX.XXXXXXX..
 ..XXXXXXX.XXXX.XXXXXXXX.
@@ -2666,7 +2666,7 @@ udg/tank 1 ,udg-block: missile-gun-tank-sprite
 ...X.XXX.XXX.XXX.XXX.X..
 ....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 ,udg-block
+tank-width 1 ,udg-block
 ..........XXXX..........
 ...XXXXXX.XXXX.XXXXXXX..
 ..XXXXXXX.XXXX.XXXXXXXX.
@@ -2676,7 +2676,7 @@ udg/tank 1 ,udg-block
 ...X.XXX.XXX.XXX.XXX.X..
 ...X.X.X.X.X.X.X.X.X.X..
 
-udg/tank 1 ,udg-block
+tank-width 1 ,udg-block
 ..........XXXX..........
 ...XXXXXX.XXXX.XXXXXXX..
 ..XXXXXXX.XXXX.XXXXXXXX.
@@ -2686,7 +2686,7 @@ udg/tank 1 ,udg-block
 ...X.XX..XX..XX..XX..X..
 ....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 ,udg-block
+tank-width 1 ,udg-block
 ..........XXXX..........
 ...XXXXXX.XXXX.XXXXXXX..
 ..XXXXXXX.XXXX.XXXXXXXX.
@@ -2696,7 +2696,7 @@ udg/tank 1 ,udg-block
 ...X..XX..XX..XX..XX.X..
 ...X.X.X.X.X.X.X.X.X.X..
 
-udg/tank 1 ,udg-block: ball-gun-tank-sprite
+tank-width 1 ,udg-block: ball-gun-tank-sprite
 ........XXXXXXXX........
 ...XXXX..XXXXXX..XXXXX..
 ..XXXXXX..XXXX..XXXXXXX.
@@ -2706,7 +2706,7 @@ udg/tank 1 ,udg-block: ball-gun-tank-sprite
 ...X.XXX.XXX.XXX.XXX.X..
 ....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 ,udg-block
+tank-width 1 ,udg-block
 ........XXXXXXXX........
 ...XXXX..XXXXXX..XXXXX..
 ..XXXXXX..XXXX..XXXXXXX.
@@ -2716,7 +2716,7 @@ udg/tank 1 ,udg-block
 ...X.XXX.XXX.XXX.XXX.X..
 ...X.X.X.X.X.X.X.X.X.X..
 
-udg/tank 1 ,udg-block
+tank-width 1 ,udg-block
 ........XXXXXXXX........
 ...XXXX..XXXXXX..XXXXX..
 ..XXXXXX..XXXX..XXXXXXX.
@@ -2726,7 +2726,7 @@ udg/tank 1 ,udg-block
 ...X.XX..XX..XX..XX..X..
 ....X.X.X.X.X.X.X.X.X...
 
-udg/tank 1 ,udg-block
+tank-width 1 ,udg-block
 ........XXXXXXXX........
 ...XXXX..XXXXXX..XXXXX..
 ..XXXXXX..XXXX..XXXXXXX.
@@ -2739,9 +2739,9 @@ udg/tank 1 ,udg-block
   \ --------------------------------------------
   \ Containers
 
-2 cconstant udg/container
+2 cconstant container-width
 
-udg/container 1 ,udg-block: container-top
+container-width 1 ,udg-block: container-top
 
 ......XXXXX.....
 ...XXX.....XXX..
@@ -2752,7 +2752,7 @@ udg/container 1 ,udg-block: container-top
 ..X....XXX....X.
 ..X.....X.....X.
 
-udg/container 2/ 1 ,udg-block: broken-top-left-container
+container-width 2/ 1 ,udg-block: broken-top-left-container
 
 ........
 ...XXX..
@@ -2763,7 +2763,7 @@ udg/container 2/ 1 ,udg-block: broken-top-left-container
 ..X....X
 ..X....X
 
-udg/container 2/ 1 ,udg-block: broken-top-right-container
+container-width 2/ 1 ,udg-block: broken-top-right-container
 
 ........
 ...XXX..
@@ -2774,7 +2774,7 @@ udg/container 2/ 1 ,udg-block: broken-top-right-container
 .X....X.
 X.....X.
 
-udg/container 1 ,udg-block: container-bottom
+container-width 1 ,udg-block: container-bottom
 
 ..X..X.X.X.X..X.
 ..X.XXXX.XXXX.X.
@@ -2785,7 +2785,7 @@ udg/container 1 ,udg-block: container-bottom
 ......XXXXX.....
 ................
 
-udg/container 2/ 1 ,udg-block: broken-bottom-left-container
+container-width 2/ 1 ,udg-block: broken-bottom-left-container
 
 .......X
 .....XXX
@@ -2796,7 +2796,7 @@ udg/container 2/ 1 ,udg-block: broken-bottom-left-container
 ......XX
 ........
 
-udg/container 2/ 1 ,udg-block: broken-bottom-right-container
+container-width 2/ 1 ,udg-block: broken-bottom-right-container
 
 XX......
 .XXX....
@@ -2941,8 +2941,8 @@ breaking>-species-2-sprite over ~species-breaking>-sprite !
 
   \ --------------------------------------------
 
-                    0 cconstant invaders-min-x
-columns udg/invader - cconstant invaders-max-x
+                      0 cconstant invaders-min-x
+columns invader-width - cconstant invaders-max-x
 
              10 cconstant max-invaders
 max-invaders 2/ cconstant half-max-invaders
@@ -3486,12 +3486,12 @@ cvariable tank-x \ column
 : repair-tank ( -- )
   0. tank-time 2! 0. arming-time 2! 0. trigger-time 2! ;
 
-columns udg/tank - 2/ cconstant parking-x
+columns tank-width - 2/ cconstant parking-x
 
 : park-tank ( -- ) parking-x tank-x c! tank-frame coff ;
 
-                    1 cconstant tank-min-x
-columns udg/tank - 1- cconstant tank-max-x
+                      1 cconstant tank-min-x
+columns tank-width - 1- cconstant tank-max-x
   \ Mininum and maximum columns of the tank.
 
 : gun-x ( -- col ) tank-x c@1+ ;
@@ -3528,7 +3528,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ _col1_ and return it as _col2_.
 
 : left-tank-udga ( -- ca )
-  tank-frame c@ [ udg/tank /udg* ] cliteral * tank-sprite + ;
+  tank-frame c@ [ tank-width /udg* ] cliteral * tank-sprite + ;
 
 : middle-tank-udga ( -- ca )
   left-tank-udga [ /udg ] cliteral + ;
@@ -3545,7 +3545,7 @@ columns udg/tank - 1- cconstant tank-max-x
   \ Decrease tank frame _n1_ resulting frame _n2_.
 
 : tank-arm-udga ( -- c )
-  tank-frame c@ tank-frame- udg/tank * tank-sprite + 1+ ;
+  tank-frame c@ tank-frame- tank-width * tank-sprite + 1+ ;
   \ Return UDG _c_ of the tank arm. This is identical to
   \ `middle-tank-udg`, except the frame has to be decreased
   \ in order to prevent the tank chains from moving.
@@ -3784,7 +3784,7 @@ cvariable #invaders
 : invader-udga ( -- ca )
   invader~ ~invader-frame c@
   dup invader-frame+ invader~ ~invader-frame c!
-  [ udg/invader /udg * ] cliteral *
+  [ invader-width /udg * ] cliteral *
   invader~ ~invader-sprite @ + ;
 
   \ First UDG _c_ of the current frame of the current invader's
@@ -3827,17 +3827,17 @@ cvariable #invaders
 : break-container> ( -- )
   break-container
   invader~ ~invader-x c@
-  [ udg/invader udg/container 1- + ] cliteral +
+  [ invader-width container-width 1- + ] cliteral +
   invader~ ~invader-y c@ at-xy
   broken-top-right-container emit-udga
-  invader~ ~invader-x [ udg/invader ] c@x+
+  invader~ ~invader-x [ invader-width ] c@x+
   invader~ ~invader-y c@1+ at-xy
   broken-bottom-left-container emit-udga ;
   \ Break the container that is at the right of the invader.
 
 : <break-container ( -- )
   break-container
-  invader~ ~invader-x [ udg/container ] c@x-
+  invader~ ~invader-x [ container-width ] c@x-
   invader~ ~invader-y c@ at-xy
   broken-top-left-container emit-udga
   invader~ ~invader-x c@1- invader~ ~invader-y c@1+ at-xy
@@ -3924,7 +3924,7 @@ defer breaking>-invader-action ( -- )
   \ Coordinates _col row_ at the right of the current invader.
 
 : right-of-invader ( -- col row )
-  invader~ ~invader-x [ udg/invader ] c@x+
+  invader~ ~invader-x [ invader-width ] c@x+
   invader~ ~invader-y c@ ;
   \ Coordinates _col row_ at the left of the current invader.
 
@@ -4072,7 +4072,7 @@ defer ?dock ( -- )
   \ left.
 
 : break-wall> ( -- )
-  invader~ ~invader-x [ udg/invader ] c@x+ x>bricks-xy
+  invader~ ~invader-x [ invader-width ] c@x+ x>bricks-xy
   break-bricks> one-more-breach impel-invader ;
   \ Break the wall at the right of the current invader.
 
@@ -4132,11 +4132,11 @@ defer stopped-mothership-action ( -- )
 
 variable mothership-x-inc
 
-udg/mothership 1- negate  constant visible-mothership-min-x
-last-column              cconstant visible-mothership-max-x
+mothership-width 1- negate  constant visible-mothership-min-x
+last-column                cconstant visible-mothership-max-x
 
-                       0 cconstant whole-mothership-min-x
-columns udg/mothership -  constant whole-mothership-max-x
+                         0 cconstant whole-mothership-min-x
+columns mothership-width -  constant whole-mothership-max-x
 
 variable mothership-stopped
   \ Flag: did the mothership stopped in the current flight?
@@ -4167,8 +4167,8 @@ mothership-range columns + cconstant mothership-range-max-x
 
 : mothership-x0 ( -- n )
   2 random if   mothership-range-min-x
-                udg/mothership negate
-           else whole-mothership-max-x udg/mothership +
+                mothership-width negate
+           else whole-mothership-max-x mothership-width +
                 mothership-range-max-x
            then random-between ;
   \ Return random initial horizontal location _n_ of the
@@ -4245,7 +4245,7 @@ defer set-exploding-mothership ( -- )
   \ the mothership.
 
 : -mothership ( -- )
-  sky-attr attr! at-mothership udg/mothership spaces ;
+  sky-attr attr! at-mothership mothership-width spaces ;
   \ Delete the whole mothership.
 
 : mothership-frame+ ( n1 -- n2 )
@@ -4256,7 +4256,7 @@ defer set-exploding-mothership ( -- )
 
 : mothership-udga ( -- ca )
   mothership-frame c@ dup mothership-frame+ mothership-frame c!
-  [ udg/mothership /udg * ] cliteral * mothership + ;
+  [ mothership-width /udg * ] cliteral * mothership + ;
   \ UDG _c_ of the mothership.
 
 : advance-mothership ( -- )
@@ -4281,7 +4281,7 @@ defer set-exploding-mothership ( -- )
 : (.visible-right-mothership ( -- )
   mothership-attr attr!
   mothership-udga
-  [ udg/mothership 1- /udg* ] cliteral + emit-udga ;
+  [ mothership-width 1- /udg* ] cliteral + emit-udga ;
   \ Display the mothership, which is partially visible (only
   \ its right side is visible) at the cursor coordinates.
 
@@ -4312,7 +4312,7 @@ defer set-exploding-mothership ( -- )
   \ visible.
 
 : right-of-mothership ( -- col row )
-  mothership-x @ [ udg/mothership ] x+ mothership-y ;
+  mothership-x @ [ mothership-width ] x+ mothership-y ;
   \ Return coordinates _col row_ of the position at the right
   \ of the mothership.
 
@@ -4479,7 +4479,7 @@ cvariable beam-invader#
       .visible-right-mothership .sky advance-mothership  endof
     visible-mothership-min-x                             of
       0 mothership-y at-xy .sky advance-mothership       endof
-    [ whole-mothership-max-x udg/mothership + ] cliteral of
+    [ whole-mothership-max-x mothership-width + ] cliteral of
       [ last-column ] cliteral mothership-y at-xy
       (.visible-left-mothership advance-mothership       endof
     advance-mothership .mothership .sky
@@ -4511,7 +4511,7 @@ constant visible-mothership-movements ( -- a )
 : above-building? ( -- f )
   mothership-x @
   building-left-x
-  building-right-x [ udg/mothership 1- ] cliteral -
+  building-right-x [ mothership-width 1- ] cliteral -
   between ;
   \ Is the mothership above the building?
 
@@ -5716,6 +5716,7 @@ need bench{ need }bench.
 
   \ 2018-01-24
   \ 2018-02-17: Update field names.
+  \ 2018-02-22: Update names of width constants.
 
 need ticks need timer
 
@@ -5723,12 +5724,12 @@ need ticks need timer
 
 : invader-front-xy ( -- col row )
   invader~ ~invader-x
-  [ udg/invader 2 = ]
+  [ invader-width 2 = ]
   [if]   c@2+ flying-to-the-left? 3* +
-  [else] [ udg/invader 1 = ]
+  [else] [ invader-width 1 = ]
          [if]   c@1+ flying-to-the-left? 2* +
-         [else] c@ udg/invader + flying-to-the-left?
-                [ udg/invader 1+ ] cliteral * +
+         [else] c@ invader-width + flying-to-the-left?
+                [ invader-width 1+ ] cliteral * +
          [then]
   [then]
   invader~ ~invader-y c@ ;
@@ -5742,12 +5743,12 @@ need ticks need timer
 
 : invader-front-x ( -- col )
   invader~ ~invader-x
-  [ udg/invader 2 = ]
+  [ invader-width 2 = ]
   [if]   c@2+ flying-to-the-left? 3* +
-  [else] [ udg/invader 1 = ]
+  [else] [ invader-width 1 = ]
          [if]   c@1+ flying-to-the-left? 2* +
-         [else] c@ udg/invader + flying-to-the-left?
-                [ udg/invader 1+ ] cliteral * +
+         [else] c@ invader-width + flying-to-the-left?
+                [ invader-width 1+ ] cliteral * +
          [then]
   [then] ;
   \ Return column _col_ at the front of the current invader.

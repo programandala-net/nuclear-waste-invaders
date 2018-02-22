@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-21
+:revdate: 2018-02-22
 
 Older first:
 
@@ -145,4 +145,8 @@ Older first:
 - Replace `<wall-ball-frames` and `wall>-ball-frames` with
   `wall-ball-frames`, because they are identical; add a compile-time
   check.
-- Rename `udg/tank` `tank-width`, and so all similar cases.
+
+== 2018-02-22
+
+- Move `reward` before the attack report. Use a modified version of
+  `update-score` that displays the increment by single units.
