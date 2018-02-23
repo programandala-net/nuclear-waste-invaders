@@ -138,3 +138,5 @@ Older first:
   it does not explode, keep it balled.
 - Change the language of titles and reports at run-time, using the
   key used in the main menu.
+- Improve: Recharge guns slowly at the start of the attack.
+- Improve `any-breach?`: include the eroded bricks.

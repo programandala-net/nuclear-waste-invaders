@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.234.0+201802232117" ;
+: version$ ( -- ca len ) s" 0.235.0+201802232217" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3189,6 +3189,10 @@ breaking>-species-2-sprite over ~species-breaking>-sprite !
                          4 swap ~species-endurance       c!
 
 0 species#>~ ~species-endurance c@
+1 species#>~ ~species-endurance c@ min
+2 species#>~ ~species-endurance c@ min cconstant min-endurance
+
+0 species#>~ ~species-endurance c@
 1 species#>~ ~species-endurance c@ max
 2 species#>~ ~species-endurance c@ max cconstant max-endurance
 
@@ -4348,10 +4352,17 @@ defer ?dock ( -- )
 : ?<erode-wall ( -- )
   <eroded-wall? if <break-wall exit then <erode-wall ;
 
-: weak? ( -- 0f )
-  [ max-stamina max-endurance + 4 * ] cliteral
-  invader~ ~invader-stamina   c@ -
-  invader~ ~invader-endurance c@ - random ;
+max-stamina max-endurance + 2*
+min-stamina +
+min-endurance +
+cconstant weakness
+  \ Weakness reference level used in random calculations, after
+  \ being reduced by the stamina and endurance of the current
+  \ invader.
+
+: weak? ( -- 0f ) weakness
+                  invader~ ~invader-stamina   c@ -
+                  invader~ ~invader-endurance c@ - random ;
   \ Is the current invader too weak to break the wall or to
   \ unball itself?
 
