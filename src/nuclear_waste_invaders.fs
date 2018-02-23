@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.229.0+201802221928" ;
+: version$ ( -- ca len ) s" 0.230.0+201802222015" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2378,7 +2378,7 @@ XXXXXX...
 XXXXX....
 XXXX.....
 
-wall>-ball-sprite sprite>udgs cconstant wall>-ball-frames
+wall>-ball-sprite sprite>udgs cconstant wall-ball-frames
 
 1 1 ,udg-block: <wall-ball-sprite
 
@@ -2435,7 +2435,11 @@ wall>-ball-sprite sprite>udgs cconstant wall>-ball-frames
 ...XXXXX
 ....XXXX
 
-<wall-ball-sprite sprite>udgs cconstant <wall-ball-frames
+<wall-ball-sprite sprite>udgs wall-ball-frames <>
+[if]
+  cr .( Error: right and left wall ball frames are different)
+  abort
+[then]
 
   \ ............................
   \ Explosion
@@ -5110,10 +5114,10 @@ missile-gun~ ~gun-projectile-action !
 : ball-sprite&action ( -- ca n xt )
   gun-x case
     building-left-x 1- of \ on the left wall?
-      <wall-ball-sprite <wall-ball-frames ['] <wall-ball-action
+      <wall-ball-sprite wall-ball-frames ['] <wall-ball-action
     endof
     building-right-x 1+ of \ on the right wall?
-      wall>-ball-sprite wall>-ball-frames ['] wall>-ball-action
+      wall>-ball-sprite wall-ball-frames ['] wall>-ball-action
     endof
     default-of \ any other position
       gun~ ~gun-projectile-sprite @

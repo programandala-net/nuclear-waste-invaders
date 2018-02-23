@@ -136,16 +136,6 @@ Older first:
   finally try to exit through the same breach. Other invaders should
   dodge the mothership during the ascending.
 
-== 2018-02-18
-
-- Design sprites for the balled invaders.
-
-== 2018-02-19
-
-- Replace `<wall-ball-frames` and `wall>-ball-frames` with
-  `wall-ball-frames`, because they are identical; add a compile-time
-  check.
-
 == 2018-02-22
 
 - Move `reward` before the attack report. Use a modified version of
