@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.231.0+201802231156" ;
+: version$ ( -- ca len ) s" 0.232.0+201802231520" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2611,6 +2611,249 @@ XX.XX...
 XX.XXX.X
 ........
 
+1 1 ,udg-block: <eroded-brick
+
+XXXXX.XX
+XXXXX.XX
+XXXXX.X.
+........
+XX.XXXX.
+XX.XXXXX
+XX.XXXXX
+........
+
+1 1 ,udg-block
+
+XXXXX.X.
+XXXXX.XX
+XXXXX.X.
+........
+XX.XXXX.
+XX.XXXXX
+XX.XXXX.
+........
+
+1 1 ,udg-block
+
+XXXXX.X.
+XXXXX..X
+XXXXX.X.
+........
+XX.XXXX.
+XX.XXX.X
+XX.XXXX.
+........
+
+1 1 ,udg-block
+
+XXXXX.X.
+XXXXX..X
+XXXXX.X.
+........
+XX.XX.X.
+XX.XXX.X
+XX.XX.X.
+........
+
+1 1 ,udg-block
+
+XXXXX.X.
+XXXX...X
+XXXXX.X.
+........
+XX.XX.X.
+XX.X.X.X
+XX.XX.X.
+........
+
+1 1 ,udg-block
+
+XXXXX.X.
+XXXX...X
+XXX.X.X.
+........
+XX..X.X.
+XX.X.X.X
+XX.XX.X.
+........
+
+1 1 ,udg-block
+
+XXX.X.X.
+XXXX...X
+XXX.X.X.
+........
+XX..X.X.
+XX.X.X.X
+XX..X.X.
+........
+
+1 1 ,udg-block
+
+XXX.X.X.
+XX.X...X
+XXX.X.X.
+........
+XX..X.X.
+XX.X.X.X
+XX..X.X.
+........
+
+1 1 ,udg-block
+
+XXX.X.X.
+XX.X...X
+X.X.X.X.
+........
+X...X.X.
+XX.X.X.X
+XX..X.X.
+........
+
+1 1 ,udg-block
+
+X.X.X.X.
+XX.X...X
+X.X.X.X.
+........
+X...X.X.
+XX.X.X.X
+X...X.X.
+........
+
+1 1 ,udg-block
+
+X.X.X.X.
+.X.X...X
+X.X.X.X.
+........
+X...X.X.
+.X.X.X.X
+X...X.X.
+........
+
+
+1 1 ,udg-block: eroded>-brick
+
+XXXXX.XX
+XXXXX.XX
+.XXXX.XX
+........
+.X.XXXXX
+XX.XXXXX
+XX.XXXXX
+........
+
+1 1 ,udg-block
+
+.XXXX.XX
+XXXXX.XX
+.XXXX.XX
+........
+.X.XXXXX
+XX.XXXXX
+.X.XXXXX
+........
+
+1 1 ,udg-block
+
+.XXXX.XX
+X.XXX.XX
+.XXXX.XX
+........
+.X.XXXXX
+X..XXXXX
+.X.XXXXX
+........
+
+1 1 ,udg-block
+
+.XXXX.XX
+X.XXX.XX
+.X.XX.XX
+........
+.X.XXXXX
+X..XXXXX
+.X.XXXXX
+........
+
+1 1 ,udg-block
+
+.X.XX.XX
+X.XXX.XX
+.X.XX.XX
+........
+.X.XXXXX
+X..XXXXX
+.X.XXXXX
+........
+
+1 1 ,udg-block
+
+.X.XX.XX
+X.X.X.XX
+.X.XX.XX
+........
+.X.XXXXX
+X...XXXX
+.X.XXXXX
+........
+
+1 1 ,udg-block
+
+.X.XX.XX
+X.X.X.XX
+.X.X..XX
+........
+.X.X.XXX
+X...XXXX
+.X.XXXXX
+........
+
+1 1 ,udg-block
+
+.X.X..XX
+X.X.X.XX
+.X.X..XX
+........
+.X.X.XXX
+X...XXXX
+.X.X.XXX
+........
+
+1 1 ,udg-block
+
+.X.X..XX
+X.X.X.XX
+.X.X..XX
+........
+.X.X..XX
+X...XXXX
+.X.X..XX
+........
+
+1 1 ,udg-block
+
+.X.X..XX
+X.X.X..X
+.X.X..XX
+........
+.X.X..XX
+X...XX.X
+.X.X..XX
+........
+
+1 1 ,udg-block
+
+.X.X..X.
+X.X.X..X
+.X.X..X.
+........
+.X.X..X.
+X...XX.X
+.X.X..X.
+........
+
   \ --------------------------------------------
   \ Tank
 
@@ -3192,8 +3435,25 @@ cvariable battle-breaches
   \ Total number of breaches in the wall, during the current
   \ battle, even if they have been repaired.
 
-: no-breach ( -- ) breaches coff battle-breaches coff ;
-  \ Reset the number of breaches.
+ 1 cconstant min-erosion
+10 cconstant max-erosion
+  \ Range of the wall brick erosion levels.
+
+create <bricks-erosion invader-layers allot
+  \ Byte array containing the erosion levels of the left wall
+  \ bricks.
+
+create bricks>-erosion invader-layers allot
+  \ Byte array containing the erosion levels of the right wall
+  \ bricks.
+
+: no-erosion ( -- ) <bricks-erosion invader-layers erase
+                    bricks>-erosion invader-layers erase ;
+  \ Reset the erosion levels.
+
+: no-breach ( -- )
+  no-erosion breaches coff battle-breaches coff ;
+  \ Reset the erosion levels and the number of breaches.
 
 building-top-y 11 + cconstant building-bottom-y
 
@@ -3240,8 +3500,12 @@ building-top-y 11 + cconstant building-bottom-y
   0 ?do container-top emit-2udga loop ;
   \ Draw a row of _n_ top parts of containers.
 
-: .brick ( -- ) brick-attr attr! brick emit-udga ;
-  \ Draw a brick.
+: .a-brick ( ca -- ) brick-attr attr! emit-udga ;
+  \ Display brick identified by UDGA _ca_ at the current
+  \ coordinates.
+
+: .brick ( -- ) brick .a-brick ;
+  \ Display an ordinary brick at the current coordinates.
 
 create containers-half
   ' containers-top ' containers-bottom
@@ -4061,10 +4325,27 @@ defer ?dock ( -- )
 
 : one-more-breach ( -- ) breaches c1+! battle-breaches c1+! ;
 
+: invader-left-x ( -- col ) invader~ ~invader-x c@1- ;
+
 : <break-wall ( -- )
-  invader~ ~invader-x c@1- x>bricks-xy
+  invader-left-x x>bricks-xy
   <break-bricks one-more-breach impel-invader ;
   \ Break the wall at the left of the current invader.
+
+: <brick-erosion ( -- ca )
+  invader~ ~invader-layer c@ <bricks-erosion + ;
+  \ Return address _ca_ containing the erosion level of the
+  \ brick at the left of the current invader.
+
+: <erode-wall ( -- )
+  <brick-erosion c1+!
+  <brick-erosion c@ /udg* [ <eroded-brick /udg - ] literal +
+  invader-left-x invader~ ~invader-y c@ at-xy .a-brick ;
+
+: <eroded-wall? ( -- ) <brick-erosion c@ max-erosion = ;
+
+: ?<erode-wall ( -- )
+  <eroded-wall? if <break-wall exit then <erode-wall ;
 
 : weak? ( -- 0f )
   [ max-stamina max-endurance + 8 * ] cliteral
@@ -4073,7 +4354,7 @@ defer ?dock ( -- )
   \ Is the current invader too weak to break the wall or to
   \ unball itself?
 
-: ?<break-wall ( -- ) weak? ?exit <break-wall ;
+: ?<break-wall ( -- ) weak? ?exit ?<erode-wall ;
   \ Break the wall at the left of the current invader, if it's
   \ strong enough to do so.
 
@@ -4082,12 +4363,30 @@ defer ?dock ( -- )
   \ Action of the invaders that are breaking the wall to the
   \ left.
 
+: invader-right-x ( -- col )
+  invader~ ~invader-x [ invader-width ] c@x+ ;
+
 : break-wall> ( -- )
-  invader~ ~invader-x [ invader-width ] c@x+ x>bricks-xy
+  invader-right-x x>bricks-xy
   break-bricks> one-more-breach impel-invader ;
   \ Break the wall at the right of the current invader.
 
-: ?break-wall> ( -- ) weak? ?exit break-wall> ;
+: brick>-erosion ( -- ca )
+  invader~ ~invader-layer c@ bricks>-erosion + ;
+  \ Return address _ca_ containing the erosion level of the
+  \ brick at the left of the current invader.
+
+: erode-wall> ( -- )
+  brick>-erosion c1+!
+  brick>-erosion c@ /udg* [ eroded>-brick /udg - ] literal +
+  invader-right-x invader~ ~invader-y c@ at-xy .a-brick ;
+
+: eroded-wall>? ( -- ) brick>-erosion c@ max-erosion = ;
+
+: ?erode-wall> ( -- )
+  eroded-wall>? if break-wall> exit then erode-wall> ;
+
+: ?break-wall> ( -- ) weak? ?exit ?erode-wall> ;
   \ Break the wall at the left of the current invader, if it's
   \ strong enough to do so.
 
