@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.230.0+201802222015" ;
+: version$ ( -- ca len ) s" 0.231.0+201802231156" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -652,8 +652,8 @@ localized-string press-any-key$ ( -- ca len )
                         yellow cconstant container-attr
                 yellow brighty cconstant radiation-attr
 
-: init-colors ( -- ) [ white black papery + ] cliteral attr!
-                     overprint-off inverse-off black border ;
+: init-colors ( -- )
+  text-attr attr! overprint-off inverse-off black border ;
 
   \ ===========================================================
   cr .( Global variables) ?depth debug-point \ {{{1
@@ -894,7 +894,7 @@ kk-3# keyset~ ~keyset-ball-gun c!
   \ Compile `#` _n_ times.
 
 : (.score ( n col row -- )
-  at-xy 0 <# [ score-digits ] [#] #> text-attr attr! type ;
+  at-xy 0 <# [ score-digits ] [#] #> status-attr attr! type ;
   \ Display score _n_ at coordinates _col row_.
 
 ' xdepth alias projectiles-left ( -- n )
@@ -936,6 +936,11 @@ defer set-gun ( n -- )
   \ Display the record.
 
 : update-score ( n -- ) score +! .score ;
+  \ Add _n_ to the score and update on at the status bar.
+
+: +update-score ( +n -- ) 0 ?do score 1+! .score loop ;
+  \ If _n_ is not zero, add _n_ to the score, updating every
+  \ individual increment on at the status bar.
 
   \ ===========================================================
   cr .( Graphics) ?depth debug-point \ {{{1
@@ -3277,13 +3282,16 @@ create containers-half
 variable used-projectiles
   \ Counter.
 
-: battle-bonus ( -- n ) location c@1+ 500 *
-                        battle-breaches c@ 100 * -
+: battle-bonus ( -- n ) location c@1+ 100 *
+                        battle-breaches c@ 25 * -
                         used-projectiles @ -
                         0 max ;
   \ Calculate bonus _n_ after winning a battle.
 
-: reward ( -- ) battle-bonus update-score ;
+: reward ( -- )
+  status-attr dup inversely c!> status-attr
+                  battle-bonus +update-score
+              c!> status-attr ;
   \ Add the won battle bonus to the score.
 
 : travel ( -- ) next-location size-building ;
@@ -3756,8 +3764,7 @@ defer quit-game ( -- )
     endcase
   again ;
 
-: mobilize ( -- )
-  mode-32iso init-colors text-attr attr! menu-screen menu ;
+: mobilize ( -- ) mode-32iso init-colors menu-screen menu ;
 
   \ ===========================================================
   cr .( Invasion) ?depth debug-point \ {{{1
@@ -5401,15 +5408,19 @@ localized-string about-next-location$ ( -- ca len )
 : unfocus ( -- ) attributes /attributes unfocus-attr fill ;
   \ Unfocus the screen to contrast the report window.
 
-: end-report ( -- ) reveal-report-attr dup wcolor 2000 ms attr!
-                    press-any-key$ wltype new-key drop ;
+: reveal-report ( -- ) reveal-report-attr wcolor ;
 
-: open-report ( -- ) unfocus
-                     paper-report-window current-window !
-                     hide-report-attr attr! wcls
-                     report-window current-window ! whome ;
+: assent-report ( -- ) 2000 ms
+                       reveal-report-attr attr!
+                       press-any-key$ wltype new-key drop ;
 
-: (attack-report ( -- ) open-report about-attack end-report ;
+: prepare-report ( -- ) unfocus
+                        paper-report-window current-window !
+                        hide-report-attr attr! wcls
+                        report-window current-window ! whome ;
+
+: (attack-report ( -- )
+  prepare-report about-attack reveal-report assent-report ;
 
 : attack-report ( -- )
   preserve-screen (attack-report restore-screen ;
@@ -5418,7 +5429,9 @@ localized-string about-next-location$ ( -- ca len )
                       about-battle$        paragraph
                       about-next-location$ paragraph ;
 
-: battle-report ( -- ) open-report about-battle end-report ;
+: battle-report ( -- ) prepare-report
+                       about-battle reveal-report reward
+                       assent-report ;
 
   \ ===========================================================
   cr .( Status bar, part 2 ) ?depth debug-point \ {{{1
@@ -5518,7 +5531,7 @@ localized-string about-next-location$ ( -- ca len )
   while attack-report repeat ;
 
 : campaign ( -- ) begin battle catastrophe? 0=
-                  while battle-report reward travel repeat ;
+                  while battle-report travel repeat ;
 
 : prepare-war ( -- )
   catastrophe off first-location score off cls ;

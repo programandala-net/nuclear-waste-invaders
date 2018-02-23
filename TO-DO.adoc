@@ -135,8 +135,3 @@ Older first:
   container, then do the metamorphosis with an independent action, and
   finally try to exit through the same breach. Other invaders should
   dodge the mothership during the ascending.
-
-== 2018-02-22
-
-- Move `reward` before the attack report. Use a modified version of
-  `update-score` that displays the increment by single units.
