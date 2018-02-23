@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.233.0+201802231723" ;
+: version$ ( -- ca len ) s" 0.233.1+201802231907" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -5391,7 +5391,8 @@ missile-gun~ ~gun-projectile-action !
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   right-of-projectile-xy is-there-breach?
-  if right-of-projectile-xy repair-breach
+  if right-of-projectile-xy tuck repair-breach
+                                 y>layer <bricks-erosion + coff
      destroy-projectile exit then
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
@@ -5409,7 +5410,8 @@ missile-gun~ ~gun-projectile-action !
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   left-of-projectile-xy is-there-breach?
-  if left-of-projectile-xy repair-breach
+  if left-of-projectile-xy tuck repair-breach
+                                y>layer bricks>-erosion + coff
      destroy-projectile exit then
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
