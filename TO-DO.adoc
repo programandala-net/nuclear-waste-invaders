@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-22
+:revdate: 2018-02-23
 
 Older first:
 
@@ -136,3 +136,6 @@ Older first:
   to unball in `balled-invader-action`.
 - Improve: When a balled invader is hit by a missile or bullet and
   it does not explode, keep it balled.
+- Change the language of titles and reports at run-time, using the
+  key used in the main menu.
+- Fix: make balls reset the brick erosion level.

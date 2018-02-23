@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.232.0+201802231520" ;
+: version$ ( -- ca len ) s" 0.233.0+201802231723" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -627,30 +627,31 @@ localized-string press-any-key$ ( -- ca len )
   \ attributes used by the invaders, the walls and the
   \ containers must not be bright.
 
-                         black cconstant sky-attr
+                       black cconstant sky-attr
 
-                         white cconstant tank-attr
+                       white cconstant tank-attr
 
-                   red brighty cconstant bullet-attr
-                 white brighty cconstant missile-attr
-                  blue brighty cconstant ball-attr
+                 red brighty cconstant bullet-attr
+               white brighty cconstant missile-attr
+                blue brighty cconstant ball-attr
 
-                         green cconstant healthy-invader-attr
-                        yellow cconstant wounded-invader-attr
-                           red cconstant dying-invader-attr
-   ball-attr unbright-mask and cconstant balled-invader-attr
+                       green cconstant healthy-invader-attr
+                      yellow cconstant wounded-invader-attr
+                         red cconstant dying-invader-attr
+ ball-attr unbright-mask and cconstant balled-invader-attr
+                        cyan cconstant half-balled-invader-attr
 
-                  white papery cconstant unfocus-attr
-  white papery brighty white + cconstant hide-report-attr
-          white papery brighty cconstant reveal-report-attr
-                         white cconstant text-attr
-                         white cconstant status-attr
-         status-attr inversely cconstant ammo-attr
+                white papery cconstant unfocus-attr
+white papery brighty white + cconstant hide-report-attr
+        white papery brighty cconstant reveal-report-attr
+                       white cconstant text-attr
+                       white cconstant status-attr
+       status-attr inversely cconstant ammo-attr
 
-                           red cconstant brick-attr
-                           red cconstant broken-wall-attr
-                        yellow cconstant container-attr
-                yellow brighty cconstant radiation-attr
+                         red cconstant brick-attr
+                         red cconstant broken-wall-attr
+                      yellow cconstant container-attr
+              yellow brighty cconstant radiation-attr
 
 : init-colors ( -- )
   text-attr attr! overprint-off inverse-off black border ;
@@ -4142,7 +4143,7 @@ here  ' noop ,
       ' attacking>-invader-action ,
       ' retreating>-invader-action ,
       constant flying-invader-actions ( a )
-      \ Execution table.
+      \ Execution table of invader actions.
 
 : set-invader-move-action ( -1..1 -- )
   2* attacking? + flying-invader-actions array>
@@ -4348,7 +4349,7 @@ defer ?dock ( -- )
   <eroded-wall? if <break-wall exit then <erode-wall ;
 
 : weak? ( -- 0f )
-  [ max-stamina max-endurance + 8 * ] cliteral
+  [ max-stamina max-endurance + 4 * ] cliteral
   invader~ ~invader-stamina   c@ -
   invader~ ~invader-endurance c@ - random ;
   \ Is the current invader too weak to break the wall or to
@@ -5016,9 +5017,20 @@ constant visible-mothership-movements ( -- a )
   invader~ ~invader-action @ ['] exploding-invader-action = ;
   \ Is the current invader exploding?
 
-: unball-invader ( -- )
+: unball-invader-partially ( -- )
+  half-balled-invader-attr invader~ ~invader-attr c! ;
+
+: unball-invader-fully ( -- )
   invader~ ~invader-stamina c@ invader-attr!
   set-flying-invader-sprite impel-invader ;
+
+: fully-balled-invader? ( -- f )
+  invader~ ~invader-attr c@ balled-invader-attr = ;
+  \ Is the current invader fully balled?
+
+: unball-invader ( -- )
+  fully-balled-invader? if   unball-invader-partially exit
+                        then unball-invader-fully ;
   \ Unball the current invader.
 
 : balled-invader-action ( -- )
