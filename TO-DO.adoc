@@ -138,4 +138,3 @@ Older first:
   it does not explode, keep it balled.
 - Change the language of titles and reports at run-time, using the
   key used in the main menu.
-- Reset the brick erosion in `repair-breach`.

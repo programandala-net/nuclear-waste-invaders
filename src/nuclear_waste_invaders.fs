@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.233.1+201802231907" ;
+: version$ ( -- ca len ) s" 0.234.0+201802232117" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -5354,10 +5354,13 @@ bullet-gun~ ~gun-projectile-action !
 missile-gun~ ~gun-projectile-action !
   \ Set the action of missiles.
 
-: repair-breach ( col row -- ) 2dup 1+ at-xy .brick
-                               2dup    at-xy .brick
-                                    1- at-xy .brick
-                               breaches c1-! ;
+: repair-breach ( ca col row -- ) tuck 2dup 1+ at-xy .brick
+                                       2dup    at-xy .brick
+                                            1- at-xy .brick
+                                  y>layer + coff
+                                  breaches c1-! ;
+  \ Repair the breach located at _col row_, and whose erosion
+  \ level is in byte array _ca_.
 
 : sky-attr=
   \ Compilation: ( -- )
@@ -5391,8 +5394,7 @@ missile-gun~ ~gun-projectile-action !
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   right-of-projectile-xy is-there-breach?
-  if right-of-projectile-xy tuck repair-breach
-                                 y>layer <bricks-erosion + coff
+  if <bricks-erosion right-of-projectile-xy repair-breach
      destroy-projectile exit then
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
@@ -5410,8 +5412,7 @@ missile-gun~ ~gun-projectile-action !
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   left-of-projectile-xy is-there-breach?
-  if left-of-projectile-xy tuck repair-breach
-                                y>layer bricks>-erosion + coff
+  if bricks>-erosion left-of-projectile-xy repair-breach
      destroy-projectile exit then
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
