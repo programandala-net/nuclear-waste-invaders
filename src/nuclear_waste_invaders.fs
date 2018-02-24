@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.235.0+201802232217" ;
+: version$ ( -- ca len ) s" 0.236.0+201802241056" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -5723,7 +5723,12 @@ localized-string about-next-location$ ( -- ca len )
 
 : paragraph ( ca len -- ) wltype wcr wcr ;
 
-: any-breach? ( -- f ) breaches c@ 0<> ;
+: erosion ( -- n )
+  invader-layers 0 do i bricks>-erosion + c@
+                      i <bricks-erosion + c@ + loop ;
+  \ Return the erosion level of the building.
+
+: damaged-building? ( -- f ) breaches c@ 0<> erosion 0<> and ;
 
 : about-attack ( -- )
   well-done$                                     paragraph
@@ -5824,7 +5829,8 @@ localized-string about-next-location$ ( -- ca len )
   attack-wave begin fight end-of-attack? until
   lose-projectiles ;
 
-: another-attack? ( -- f ) any-breach? catastrophe? 0= and ;
+: another-attack? ( -- f )
+  damaged-building? catastrophe? 0= and ;
 
 : -recharge ( n1 n2 -- )
   set-gun gun~ ~gun-projectile-stack @ dup xstack xclear
