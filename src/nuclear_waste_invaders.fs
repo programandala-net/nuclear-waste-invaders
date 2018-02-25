@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.236.0+201802241056" ;
+: version$ ( -- ca len ) s" 0.236.1+201802251356" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3440,17 +3440,17 @@ cvariable battle-breaches
   \ Total number of breaches in the wall, during the current
   \ battle, even if they have been repaired.
 
- 1 cconstant min-erosion
+  \ 1 cconstant min-erosion \ XXX OLD -- not used
 10 cconstant max-erosion
   \ Range of the wall brick erosion levels.
 
 create <bricks-erosion invader-layers allot
-  \ Byte array containing the erosion levels of the left wall
-  \ bricks.
+  \ Byte array containing the erosion levels of the right wall
+  \ bricks, i.e. the bricks at the left of the invaders.
 
 create bricks>-erosion invader-layers allot
-  \ Byte array containing the erosion levels of the right wall
-  \ bricks.
+  \ Byte array containing the erosion levels of the left wall
+  \ bricks, i.e. the bricks at the right of the invaders.
 
 : no-erosion ( -- ) <bricks-erosion invader-layers erase
                     bricks>-erosion invader-layers erase ;
@@ -5405,7 +5405,7 @@ missile-gun~ ~gun-projectile-action !
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   right-of-projectile-xy is-there-breach?
-  if <bricks-erosion right-of-projectile-xy repair-breach
+  if bricks>-erosion right-of-projectile-xy repair-breach
      destroy-projectile exit then
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
@@ -5423,7 +5423,7 @@ missile-gun~ ~gun-projectile-action !
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   left-of-projectile-xy is-there-breach?
-  if bricks>-erosion left-of-projectile-xy repair-breach
+  if <bricks-erosion left-of-projectile-xy repair-breach
      destroy-projectile exit then
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
@@ -5984,6 +5984,25 @@ localized-string about-next-location$ ( -- ca len )
   \ discover attributes that shoud be sky-colored but have been
   \ contaminated by the movement of the sprites, because of
   \ wrong calculations in the code.
+
+: .erosion-tables ( -- )
+      \ <------------------------------->
+  cr ." invader layer | left | right "
+  invader-layers 0 ?do
+    i cr .                   ."  | "
+    i <bricks-erosion + c@ . ."  | "
+    i bricks>-erosion + c@ .
+  loop cr ;
+
+: .erosion ( -- )
+  invader-layers 0 ?do
+    building-left-x 3 - i layer>y at-xy
+    i bricks>-erosion + c@ .
+    building-right-x 3 + i layer>y at-xy
+    i <bricks-erosion + c@ .
+  loop ;
+  \ Display the brick erosion levels beside the corresponding
+  \ bricks.
 
   \ ===========================================================
   cr .( Development benchmarks) ?depth debug-point \ {{{1
