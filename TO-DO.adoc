@@ -140,3 +140,7 @@ Older first:
   key used in the main menu.
 - Improve: Recharge guns slowly at the start of the attack.
 - Make balls repair the erosion, step by step.
+
+== 2018-02-24
+
+- Fix `repair-breach`: balls don't reset the erosion level?
