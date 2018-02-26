@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.236.1+201802251356" ;
+: version$ ( -- ca len ) s" 0.237.0+201802261719" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -649,7 +649,6 @@ white papery brighty white + cconstant hide-report-attr
        status-attr inversely cconstant ammo-attr
 
                          red cconstant brick-attr
-                         red cconstant broken-wall-attr
                       yellow cconstant container-attr
               yellow brighty cconstant radiation-attr
 
@@ -2329,7 +2328,7 @@ XXXXXXXX
 
 ball-sprite sprite>udgs cconstant ball-frames
 
-1 1 ,udg-block: wall>-ball-sprite
+1 1 ,udg-block: right-wall-ball-sprite
 
 XXXX.....
 XXXXX....
@@ -2384,9 +2383,9 @@ XXXXXX...
 XXXXX....
 XXXX.....
 
-wall>-ball-sprite sprite>udgs cconstant wall-ball-frames
+right-wall-ball-sprite sprite>udgs cconstant wall-ball-frames
 
-1 1 ,udg-block: <wall-ball-sprite
+1 1 ,udg-block: left-wall-ball-sprite
 
 ....XXXX
 ...XXXXX
@@ -2441,7 +2440,7 @@ wall>-ball-sprite sprite>udgs cconstant wall-ball-frames
 ...XXXXX
 ....XXXX
 
-<wall-ball-sprite sprite>udgs wall-ball-frames <>
+left-wall-ball-sprite sprite>udgs wall-ball-frames <>
 [if]
   cr .( Error: right and left wall ball frames are different)
   abort
@@ -2535,17 +2534,6 @@ sprite>udgs cconstant projectile-explosion-frames
   \ --------------------------------------------
   \ Building
 
-1 1 ,udg-block: brick
-
-XXXXX.XX
-XXXXX.XX
-XXXXX.XX
-........
-XX.XXXXX
-XX.XXXXX
-XX.XXXXX
-........
-
 1 1 ,udg-block: left-door
 
 XXXXX.XX
@@ -2568,51 +2556,18 @@ XX.XXX..
 XX.XXXX.
 XX.XXXXX
 
-1 1 ,udg-block: broken-top-left-brick
+1 1 ,udg-block: right-brick-udga
 
 XXXXX.XX
-.XXXX.XX
-.X.XX.XX
+XXXXX.XX
+XXXXX.XX
 ........
-......XX
-.....XXX
-......X.
-........
-
-1 1 ,udg-block: broken-bottom-left-brick
-
-........
-.......X
-.....XXX
-........
-....X.XX
-.X.XXXXX
+XX.XXXXX
+XX.XXXXX
 XX.XXXXX
 ........
 
-1 1 ,udg-block: broken-top-right-brick
-
-XXXXX.XX
-XXXXX.XX
-XXXXX...
-........
-XXX..X..
-X.......
-........
-........
-
-1 1 ,udg-block: broken-bottom-right-brick
-
-........
-X.......
-X.X.....
-........
-XX.XXX..
-XX.XX...
-XX.XXX.X
-........
-
-1 1 ,udg-block: <eroded-brick
+1 1 ,udg-block
 
 XXXXX.XX
 XXXXX.XX
@@ -2733,8 +2688,21 @@ X...X.X.
 X...X.X.
 ........
 
+here right-brick-udga - /udg / 1- cconstant max-erosion
+  \ Maximum value of the bricks erosion levels.
 
-1 1 ,udg-block: eroded>-brick
+1 1 ,udg-block: left-brick-udga
+
+XXXXX.XX
+XXXXX.XX
+XXXXX.XX
+........
+XX.XXXXX
+XX.XXXXX
+XX.XXXXX
+........
+
+1 1 ,udg-block
 
 XXXXX.XX
 XXXXX.XX
@@ -2854,6 +2822,17 @@ X.X.X..X
 X...XX.X
 .X.X..X.
 ........
+
+here left-brick-udga - /udg / 1- max-erosion <>
+[if]
+  cr .( Error: right and left bricks don't match)
+  abort
+[then]
+
+' left-brick-udga alias brick-udga
+  \ The first left brick and the first right brick are
+  \ identical, the non-eroded brick. This alias is a
+  \ convenience for the sake of clarity.
 
   \ --------------------------------------------
   \ Tank
@@ -3271,6 +3250,16 @@ cconstant invader-max-y
   \ supposed to be a valid row of an invader layer, otherwise
   \ the result will be wrong.
 
+: y>layer? ( row -- n f )
+  dup invader-min-y invader-max-y between
+  if   invader-max-y - rows/layer /mod abs swap 0= exit
+  then false ;
+  \ If _row_ is a valid row of an invader layer, _f_ is true
+  \ and _n_ is the corresponding layer. Otherwise _n_ is
+  \ undefined and _f_ is false.  The pair of invaders that fly
+  \ nearest the ground are layer 0.  The pair above them are
+  \ layer 1, and so on.
+
 : invader-hit-bonus ( -- n ) invader~ ~invader-layer c@ 1+ ;
   \ Bonus points for making the invader retreat.
 
@@ -3440,20 +3429,16 @@ cvariable battle-breaches
   \ Total number of breaches in the wall, during the current
   \ battle, even if they have been repaired.
 
-  \ 1 cconstant min-erosion \ XXX OLD -- not used
-10 cconstant max-erosion
-  \ Range of the wall brick erosion levels.
-
-create <bricks-erosion invader-layers allot
+create right-bricks-erosion invader-layers allot
   \ Byte array containing the erosion levels of the right wall
-  \ bricks, i.e. the bricks at the left of the invaders.
+  \ bricks.
 
-create bricks>-erosion invader-layers allot
+create left-bricks-erosion invader-layers allot
   \ Byte array containing the erosion levels of the left wall
-  \ bricks, i.e. the bricks at the right of the invaders.
+  \ bricks.
 
-: no-erosion ( -- ) <bricks-erosion invader-layers erase
-                    bricks>-erosion invader-layers erase ;
+: no-erosion ( -- ) right-bricks-erosion invader-layers erase
+                     left-bricks-erosion invader-layers erase ;
   \ Reset the erosion levels.
 
 : no-breach ( -- )
@@ -3466,29 +3451,23 @@ building-top-y 11 + cconstant building-bottom-y
 0 cconstant building-left-x
 0 cconstant building-right-x
 
-  \ 0 cconstant containers-left-x
-  \ 0 cconstant containers-right-x
-  \ XXX OLD -- Not used.
-
 : size-building ( -- )
   [ columns 2/ 1- ] cliteral  \ half of the screen
   location c@1+               \ half width of all containers
   dup 2* 2+ c!> building-width
-  \ 2dup 1- - c!> containers-left-x \ XXX OLD
   2dup    - c!> building-left-x
-  \ 2dup    + c!> containers-right-x \ XXX OLD
        1+ + c!> building-right-x ;
   \ Set the size of the building after the current location.
 
 : floor ( row -- )
   building-left-x swap at-xy
-  brick-attr attr! brick building-width emits-udga ;
+  brick-attr attr! brick-udga building-width emits-udga ;
   \ Draw a floor of the building at row _row_.
 
 : ground-floor ( row -- )
   building-left-x 1+ swap at-xy brick-attr attr!
   left-door emit-udga
-  brick building-width 4 - emits-udga
+  brick-udga building-width 4 - emits-udga
   right-door emit-udga ;
   \ Draw the ground floor of the building at row _row_.
 
@@ -3506,10 +3485,10 @@ building-top-y 11 + cconstant building-bottom-y
   \ Draw a row of _n_ top parts of containers.
 
 : .a-brick ( ca -- ) brick-attr attr! emit-udga ;
-  \ Display brick identified by UDGA _ca_ at the current
+  \ Display brick identified by UDGa _ca_ at the current
   \ coordinates.
 
-: .brick ( -- ) brick .a-brick ;
+: .brick ( -- ) brick-udga .a-brick ;
   \ Display an ordinary brick at the current coordinates.
 
 create containers-half
@@ -3861,20 +3840,6 @@ columns tank-width - 1- cconstant tank-max-x
 : .tank ( -- ) (.tank drop ;
   \ Display the tank at its current position.
 
-0 [if]
-
-  \ XXX OLD -- The balls gun is wider than the central UDG of
-  \ the tank. Therefore the whole tank must be displayed.
-
-: .tank-arm ( -- )
-  tank-attr attr!
-  tank-x c@ 1+ dup tank-y at-xy
-                   tank-arm-udga ?emit-outside drop ;
-  \ If the middle part of the tank is visible (i.e. outside the
-  \ building), display it.
-
-[then]
-
 : new-tank ( -- )
   repair-tank bullet-gun# set-gun park-tank .tank ;
 
@@ -4074,33 +4039,6 @@ cvariable #invaders
   invader~ ~invader-attr c@ attr! invader-udga emit-2udga ;
   \ Display the current invader.  at the cursor coordinates, in
   \ its proper attribute.
-
-: x>bricks-xy ( col1 -- col1 row1 col2 row2 col3 row3 )
-  invader~ ~invader-y c@ 2dup 1+ 2dup 2- ;
-  \ Convert the column _col1_ of the broken wall to the
-  \ coordinates of the broken brick above the invader, _col3
-  \ row3_, below it, _col3 row3_, and in front of it, _col1
-  \ row1_.
-
-: break-bricks> ( col1 row1 col2 row2 col3 row3 -- )
-  broken-wall-attr attr!
-  at-xy broken-top-left-brick emit-udga
-  at-xy broken-bottom-left-brick emit-udga
-  sky-attr attr! at-xy space ;
-  \ Display the broken bricks at the given coordinates, which
-  \ are at the right of the current invader: above the invader,
-  \ _col3 row3_; below the invader, _col2 row2_; and an empty
-  \ space in front of it, _col1 row1_.
-
-: <break-bricks ( col1 row1 col2 row2 col3 row3 -- )
-  broken-wall-attr attr!
-  at-xy broken-top-right-brick emit-udga
-  at-xy broken-bottom-right-brick emit-udga
-  sky-attr attr! at-xy space ;
-  \ Display the broken bricks at the given coordinates, which
-  \ are at the left of the current invader: above the invader,
-  \ _col3 row3_; below it, _col2 row2_; and an empty space in
-  \ front of it, _col1 row1_.
 
 : break-container ( -- ) container-attr attr! catastrophe on ;
 
@@ -4332,25 +4270,21 @@ defer ?dock ( -- )
 
 : invader-left-x ( -- col ) invader~ ~invader-x c@1- ;
 
-: <break-wall ( -- )
-  invader-left-x x>bricks-xy
-  <break-bricks one-more-breach impel-invader ;
-  \ Break the wall at the left of the current invader.
-
 : <brick-erosion ( -- ca )
-  invader~ ~invader-layer c@ <bricks-erosion + ;
+  invader~ ~invader-layer c@ right-bricks-erosion + ;
   \ Return address _ca_ containing the erosion level of the
   \ brick at the left of the current invader.
 
+: erosion>right-brick ( n -- ca ) /udg* right-brick-udga + ;
+  \ Convert erosion level _n_ to its corresponding right brick
+  \ UDG address _ca_.
+  \
+  \ XXX TODO -- Unfactor?
+
 : <erode-wall ( -- )
   <brick-erosion c1+!
-  <brick-erosion c@ /udg* [ <eroded-brick /udg - ] literal +
+  <brick-erosion c@ erosion>right-brick
   invader-left-x invader~ ~invader-y c@ at-xy .a-brick ;
-
-: <eroded-wall? ( -- ) <brick-erosion c@ max-erosion = ;
-
-: ?<erode-wall ( -- )
-  <eroded-wall? if <break-wall exit then <erode-wall ;
 
 max-stamina max-endurance + 2*
 min-stamina +
@@ -4366,44 +4300,60 @@ cconstant weakness
   \ Is the current invader too weak to break the wall or to
   \ unball itself?
 
-: ?<break-wall ( -- ) weak? ?exit ?<erode-wall ;
+: ?<erode-wall ( -- ) weak? ?exit <erode-wall ;
   \ Break the wall at the left of the current invader, if it's
   \ strong enough to do so.
 
-:noname ( -- ) ?<break-wall at-invader .invader
-               ; ' <breaking-invader-action defer!
+: <eroded-wall? ( -- f )
+  invader~ ~invader-layer c@ right-bricks-erosion + c@
+  max-erosion = ;
+  \ Is the wall at the left of the current invader eroded?
+
+: <break-wall ( -- ) left-of-invader at-xy .sky ;
+  \ Break the wall at the left of the current invader.
+
+:noname ( -- )
+  <eroded-wall? if <break-wall impel-invader exit then
+  ?<erode-wall at-invader .invader
+  ; ' <breaking-invader-action defer!
   \ Action of the invaders that are breaking the wall to the
   \ left.
 
 : invader-right-x ( -- col )
   invader~ ~invader-x [ invader-width ] c@x+ ;
 
-: break-wall> ( -- )
-  invader-right-x x>bricks-xy
-  break-bricks> one-more-breach impel-invader ;
-  \ Break the wall at the right of the current invader.
-
 : brick>-erosion ( -- ca )
-  invader~ ~invader-layer c@ bricks>-erosion + ;
+  invader~ ~invader-layer c@ left-bricks-erosion + ;
   \ Return address _ca_ containing the erosion level of the
   \ brick at the left of the current invader.
 
+: erosion>left-brick ( n -- ca ) /udg* left-brick-udga + ;
+  \ Convert erosion level _n_ to its corresponding left brick
+  \ UDG address _ca_.
+  \
+  \ XXX TODO -- Unfactor?
+
 : erode-wall> ( -- )
   brick>-erosion c1+!
-  brick>-erosion c@ /udg* [ eroded>-brick /udg - ] literal +
+  brick>-erosion c@ erosion>left-brick
   invader-right-x invader~ ~invader-y c@ at-xy .a-brick ;
 
-: eroded-wall>? ( -- ) brick>-erosion c@ max-erosion = ;
-
-: ?erode-wall> ( -- )
-  eroded-wall>? if break-wall> exit then erode-wall> ;
-
-: ?break-wall> ( -- ) weak? ?exit ?erode-wall> ;
+: ?erode-wall> ( -- ) weak? ?exit erode-wall> ;
   \ Break the wall at the left of the current invader, if it's
   \ strong enough to do so.
 
-:noname ( -- ) ?break-wall> at-invader .invader
-               ; ' breaking>-invader-action defer!
+: eroded-wall>? ( -- f )
+  invader~ ~invader-layer c@ left-bricks-erosion + c@
+  max-erosion = ;
+  \ Is the wall at the right of the current invader eroded?
+
+: break-wall> ( -- ) right-of-invader at-xy .sky ;
+  \ Break the wall at the right of the current invader.
+
+:noname ( -- )
+  eroded-wall>? if break-wall> impel-invader exit then
+  ?erode-wall> at-invader .invader
+  ; ' breaking>-invader-action defer!
   \ Action of the invaders that are breaking the wall to the
   \ right.
 
@@ -5365,13 +5315,10 @@ bullet-gun~ ~gun-projectile-action !
 missile-gun~ ~gun-projectile-action !
   \ Set the action of missiles.
 
-: repair-breach ( ca col row -- ) tuck 2dup 1+ at-xy .brick
-                                       2dup    at-xy .brick
-                                            1- at-xy .brick
-                                  y>layer + coff
-                                  breaches c1-! ;
-  \ Repair the breach located at _col row_, and whose erosion
-  \ level is in byte array _ca_.
+: repair-brick ( ca1 ca2 col row -- )
+  at-xy over c@1- /udg* + .a-brick c1-! ;
+  \ Repair the brick at _col row_, whose erosion level is
+  \ in _ca1_, and whose default UDGa is _ca2_.
 
 : sky-attr=
   \ Compilation: ( -- )
@@ -5382,9 +5329,6 @@ missile-gun~ ~gun-projectile-action !
   \ `sky-attr`.  This is used to save a bit execution time when
   \ `sky-attr` is zero, and also in case the value changes in
   \ future versions.
-
-: is-there-breach? ( col row -- f ) xy>attr sky-attr= ;
-  \ Is there a breach at coordinates _col row_?
 
 : (invader-balled ( -- )
   invader-exploding? ?exit ball-invader ;
@@ -5399,38 +5343,60 @@ missile-gun~ ~gun-projectile-action !
 : right-of-projectile-xy ( -- col row )
   projectile~ ~projectile-x c@ 1+
   projectile~ ~projectile-y c@ ;
+  \ XXX TODO -- Unfactor?
 
-: <wall-ball-action ( -- )
+: repair-left-brick ( ca -- )
+  left-brick-udga right-of-projectile-xy repair-brick ;
+  \ Repair a brick of the left wall, at the right of the
+  \ current projectile. The erosion level of the brick is at
+  \ _ca_.
+
+: left-wall-ball-action ( -- )
   hit-projectile?
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
-  right-of-projectile-xy is-there-breach?
-  if bricks>-erosion right-of-projectile-xy repair-breach
-     destroy-projectile exit then
+  projectile~ ~projectile-y c@ y>layer?
+  if left-bricks-erosion + dup c@
+     if repair-left-brick destroy-projectile exit then
+     drop \ useless erosion address
+  then drop \ invalid layer
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   impact? if invader-balled destroy-projectile exit then
   .projectile ;
   \ Action of the balls that are flying on the left wall of the
-  \ building, and therefore can repair the breaches.
+  \ building, and therefore can repair the erosion.
+  \
+  \ XXX TODO -- Factor.
 
 : left-of-projectile-xy ( -- col row )
   projectile~ ~projectile-x c@ 1-
   projectile~ ~projectile-y c@ ;
+  \ XXX TODO -- Unfactor?
 
-: wall>-ball-action ( -- )
+: repair-right-brick ( ca -- )
+  right-brick-udga left-of-projectile-xy repair-brick ;
+  \ Repair a brick of the right wall, at the left of the
+  \ current projectile. The erosion level of the brick is at
+  \ _ca_.
+
+: right-wall-ball-action ( -- )
   hit-projectile?
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
-  left-of-projectile-xy is-there-breach?
-  if <bricks-erosion left-of-projectile-xy repair-breach
-     destroy-projectile exit then
+  projectile~ ~projectile-y c@ y>layer?
+  if right-bricks-erosion + dup c@
+     if repair-right-brick destroy-projectile exit then
+     drop \ useless erosion address
+  then drop \ invalid layer
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   impact? if invader-balled destroy-projectile exit then
   .projectile ;
   \ Action of the balls that are flying on the right wall of
-  \ the building, and therefore can repair the breaches.
+  \ the building, and therefore can repair the erosion.
+  \
+  \ XXX TODO -- Factor.
 
 : ball-action ( -- )
   projectile-delay ?exit
@@ -5438,7 +5404,7 @@ missile-gun~ ~gun-projectile-action !
   projectile~ ~projectile-y c1-!
   impact? if invader-balled destroy-projectile exit then
   .projectile ;
-  \ Action of the balls.
+  \ Action of the balls that don't fly on a wall.
 
 ' ball-action ball-gun~ ~gun-projectile-action !
   \ Set the action of balls.
@@ -5446,10 +5412,12 @@ missile-gun~ ~gun-projectile-action !
 : ball-sprite&action ( -- ca n xt )
   gun-x case
     building-left-x 1- of \ on the left wall?
-      <wall-ball-sprite wall-ball-frames ['] <wall-ball-action
+      left-wall-ball-sprite wall-ball-frames
+      ['] left-wall-ball-action
     endof
     building-right-x 1+ of \ on the right wall?
-      wall>-ball-sprite wall-ball-frames ['] wall>-ball-action
+      right-wall-ball-sprite wall-ball-frames
+      ['] right-wall-ball-action
     endof
     default-of \ any other position
       gun~ ~gun-projectile-sprite @
@@ -5724,8 +5692,8 @@ localized-string about-next-location$ ( -- ca len )
 : paragraph ( ca len -- ) wltype wcr wcr ;
 
 : erosion ( -- n )
-  invader-layers 0 do i bricks>-erosion + c@
-                      i <bricks-erosion + c@ + loop ;
+  invader-layers 0 do i left-bricks-erosion  + c@
+                      i right-bricks-erosion + c@ + loop ;
   \ Return the erosion level of the building.
 
 : damaged-building? ( -- f ) breaches c@ 0<> erosion 0<> and ;
@@ -5989,17 +5957,17 @@ localized-string about-next-location$ ( -- ca len )
       \ <------------------------------->
   cr ." invader layer | left | right "
   invader-layers 0 ?do
-    i cr .                   ."  | "
-    i <bricks-erosion + c@ . ."  | "
-    i bricks>-erosion + c@ .
+    i cr .                        ."  | "
+    i right-bricks-erosion + c@ . ."  | "
+    i left-bricks-erosion  + c@ .
   loop cr ;
 
 : .erosion ( -- )
   invader-layers 0 ?do
-    building-left-x 3 - i layer>y at-xy
-    i bricks>-erosion + c@ .
+    building-left-x  3 - i layer>y at-xy
+    i left-bricks-erosion  + c@ .
     building-right-x 3 + i layer>y at-xy
-    i <bricks-erosion + c@ .
+    i right-bricks-erosion + c@ .
   loop ;
   \ Display the brick erosion levels beside the corresponding
   \ bricks.

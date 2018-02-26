@@ -139,4 +139,7 @@ Older first:
 - Change the language of titles and reports at run-time, using the
   key used in the main menu.
 - Improve: Recharge guns slowly at the start of the attack.
-- Make balls repair the erosion, step by step.
+
+== 2018-02-25
+
+- Remove invader layers. Use only the rows.
