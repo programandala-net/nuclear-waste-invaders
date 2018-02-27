@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.237.0+201802261719" ;
+: version$ ( -- ca len ) s" 0.237.1+201802271129" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3429,16 +3429,16 @@ cvariable battle-breaches
   \ Total number of breaches in the wall, during the current
   \ battle, even if they have been repaired.
 
-create right-bricks-erosion invader-layers allot
+create right-wall-erosions invader-layers allot
   \ Byte array containing the erosion levels of the right wall
   \ bricks.
 
-create left-bricks-erosion invader-layers allot
+create left-wall-erosions invader-layers allot
   \ Byte array containing the erosion levels of the left wall
   \ bricks.
 
-: no-erosion ( -- ) right-bricks-erosion invader-layers erase
-                     left-bricks-erosion invader-layers erase ;
+: no-erosion ( -- ) right-wall-erosions invader-layers erase
+                     left-wall-erosions invader-layers erase ;
   \ Reset the erosion levels.
 
 : no-breach ( -- )
@@ -4271,7 +4271,7 @@ defer ?dock ( -- )
 : invader-left-x ( -- col ) invader~ ~invader-x c@1- ;
 
 : <brick-erosion ( -- ca )
-  invader~ ~invader-layer c@ right-bricks-erosion + ;
+  invader~ ~invader-layer c@ right-wall-erosions + ;
   \ Return address _ca_ containing the erosion level of the
   \ brick at the left of the current invader.
 
@@ -4305,7 +4305,7 @@ cconstant weakness
   \ strong enough to do so.
 
 : <eroded-wall? ( -- f )
-  invader~ ~invader-layer c@ right-bricks-erosion + c@
+  invader~ ~invader-layer c@ right-wall-erosions + c@
   max-erosion = ;
   \ Is the wall at the left of the current invader eroded?
 
@@ -4323,7 +4323,7 @@ cconstant weakness
   invader~ ~invader-x [ invader-width ] c@x+ ;
 
 : brick>-erosion ( -- ca )
-  invader~ ~invader-layer c@ left-bricks-erosion + ;
+  invader~ ~invader-layer c@ left-wall-erosions + ;
   \ Return address _ca_ containing the erosion level of the
   \ brick at the left of the current invader.
 
@@ -4343,7 +4343,7 @@ cconstant weakness
   \ strong enough to do so.
 
 : eroded-wall>? ( -- f )
-  invader~ ~invader-layer c@ left-bricks-erosion + c@
+  invader~ ~invader-layer c@ left-wall-erosions + c@
   max-erosion = ;
   \ Is the wall at the right of the current invader eroded?
 
@@ -5356,10 +5356,10 @@ missile-gun~ ~gun-projectile-action !
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   projectile~ ~projectile-y c@ y>layer?
-  if left-bricks-erosion + dup c@
+  if left-wall-erosions + dup c@
      if repair-left-brick destroy-projectile exit then
-     drop \ useless erosion address
-  then drop \ invalid layer
+     drop \ discard the useless erosion address
+  else drop then \ discard the invalid layer
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   impact? if invader-balled destroy-projectile exit then
@@ -5385,10 +5385,10 @@ missile-gun~ ~gun-projectile-action !
   if -hit-projectile set-exploding-projectile exit then
   projectile-delay ?exit -projectile
   projectile~ ~projectile-y c@ y>layer?
-  if right-bricks-erosion + dup c@
+  if right-wall-erosions + dup c@
      if repair-right-brick destroy-projectile exit then
-     drop \ useless erosion address
-  then drop \ invalid layer
+     drop \ discard the useless erosion address
+  else drop then \ discard the invalid layer
   projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   impact? if invader-balled destroy-projectile exit then
@@ -5692,8 +5692,8 @@ localized-string about-next-location$ ( -- ca len )
 : paragraph ( ca len -- ) wltype wcr wcr ;
 
 : erosion ( -- n )
-  invader-layers 0 do i left-bricks-erosion  + c@
-                      i right-bricks-erosion + c@ + loop ;
+  invader-layers 0 do i left-wall-erosions  + c@
+                      i right-wall-erosions + c@ + loop ;
   \ Return the erosion level of the building.
 
 : damaged-building? ( -- f ) breaches c@ 0<> erosion 0<> and ;
@@ -5958,16 +5958,16 @@ localized-string about-next-location$ ( -- ca len )
   cr ." invader layer | left | right "
   invader-layers 0 ?do
     i cr .                        ."  | "
-    i right-bricks-erosion + c@ . ."  | "
-    i left-bricks-erosion  + c@ .
+    i right-wall-erosions + c@ . ."  | "
+    i left-wall-erosions  + c@ .
   loop cr ;
 
 : .erosion ( -- )
   invader-layers 0 ?do
     building-left-x  3 - i layer>y at-xy
-    i left-bricks-erosion  + c@ .
+    i left-wall-erosions  + c@ .
     building-right-x 3 + i layer>y at-xy
-    i right-bricks-erosion + c@ .
+    i right-wall-erosions + c@ .
   loop ;
   \ Display the brick erosion levels beside the corresponding
   \ bricks.
