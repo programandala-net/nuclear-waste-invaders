@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-25
+:revdate: 2018-02-27
 
 Older first:
 
@@ -143,3 +143,10 @@ Older first:
 == 2018-02-25
 
 - Remove invader layers. Use only the rows.
+
+== 2018-02-27
+
+- Make only green and yellow invaders erode the wall, and use their
+  color for the eroded brick.
+- Make red invaders retreat as soon as possible, e.g. when they are
+  flying towards the building because of a dodged projectile.

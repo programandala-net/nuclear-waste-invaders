@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.237.1+201802271129" ;
+: version$ ( -- ca len ) s" 0.238.0+201802271709" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -122,6 +122,7 @@ need join need 3* need polarity need <=> need -1..1
 
 need roll need cfield: need field: need +field-opt-0124
 need array> need !> need c!> need 2!> need 0dup need 2field:
+need nup
 
 need sconstants
 
@@ -649,6 +650,8 @@ white papery brighty white + cconstant hide-report-attr
        status-attr inversely cconstant ammo-attr
 
                          red cconstant brick-attr
+ ball-attr unbright-mask and
+         papery brick-attr + cconstant repaired-brick-attr
                       yellow cconstant container-attr
               yellow brighty cconstant radiation-attr
 
@@ -4154,9 +4157,8 @@ defer ?dock ( -- )
   \ Is the current invader at the dock, i.e. at its start
   \ position?
 
-: is-there-a-wall? ( x y -- f ) xy>attr brick-attr = ;
-
-: is-there-a-container? ( x y -- f ) xy>attr container-attr = ;
+: is-there-a-container? ( col row -- f )
+  xy>attr container-attr = ;
 
 : <move-invader ( -- )
   invader~ ~invader-x c1-! at-invader .invader .sky ;
@@ -4174,11 +4176,14 @@ defer ?dock ( -- )
   \ Hit the wall that is at the left of the current invader and
   \ start breaking it.
 
+: wall-at-the-left? ( col row -- f )
+  nup xy>attr sky-attr <> swap building-right-x = and ;
+
 :noname ( -- )
   left-of-invader cond
     2dup is-there-a-projectile? if 2drop docked?   ?exit
                                          turn-back> exit else
-    2dup is-there-a-wall?       if 2drop <hit-wall  exit else
+    2dup wall-at-the-left?      if 2drop <hit-wall  exit else
     is-there-a-container?       if <hit-container        else
     <move-invader
   thens
@@ -4210,11 +4215,14 @@ defer ?dock ( -- )
   \ Hit the wall that is at the right of the current invader
   \ and start breaking it.
 
+: wall-at-the-right? ( col row -- f )
+  nup xy>attr sky-attr <> swap building-left-x = and ;
+
 :noname ( -- )
   right-of-invader cond
     2dup is-there-a-projectile? if 2drop docked?  ?exit
                                        <turn-back  exit else
-    2dup is-there-a-wall?       if 2drop hit-wall> exit else
+    2dup wall-at-the-right?     if 2drop hit-wall> exit else
     is-there-a-container?       if hit-container>       else
     move-invader>
   thens
@@ -5316,9 +5324,13 @@ missile-gun~ ~gun-projectile-action !
   \ Set the action of missiles.
 
 : repair-brick ( ca1 ca2 col row -- )
-  at-xy over c@1- /udg* + .a-brick c1-! ;
-  \ Repair the brick at _col row_, whose erosion level is
-  \ in _ca1_, and whose default UDGa is _ca2_.
+  at-xy over c@1-
+  dup if repaired-brick-attr else brick-attr then attr!
+  /udg* + emit-udga c1-! ;
+  \ Repair the brick at _col row_, whose erosion level is in
+  \ _ca1_, and whose default UDGa is _ca2_.  If the new erosion
+  \ level is zero, i.e. the brick has been repaired, use the
+  \ default brick color; otherwise use the repairing color.
 
 : sky-attr=
   \ Compilation: ( -- )
