@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.238.0+201802271709" ;
+: version$ ( -- ca len ) s" 0.239.0+201802271805" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -2837,6 +2837,50 @@ here left-brick-udga - /udg / 1- max-erosion <>
   \ identical, the non-eroded brick. This alias is a
   \ convenience for the sake of clarity.
 
+1 1 ,udg-block: top-left-brick-udga
+
+.XXXX.XX
+XXXXX.XX
+XXXXX.XX
+........
+XX.XXXXX
+XX.XXXXX
+XX.XXXXX
+........
+
+1 1 ,udg-block: top-right-brick-udga
+
+XXXXX.X.
+XXXXX.XX
+XXXXX.XX
+........
+XX.XXXXX
+XX.XXXXX
+XX.XXXXX
+........
+
+1 1 ,udg-block: bottom-left-brick-udga
+
+XXXXX.XX
+XXXXX.XX
+XXXXX.XX
+........
+XX.XXXXX
+XX.XXXXX
+.X.XXXXX
+........
+
+1 1 ,udg-block: bottom-right-brick-udga
+
+XXXXX.XX
+XXXXX.XX
+XXXXX.XX
+........
+XX.XXXXX
+XX.XXXXX
+XX.XXXX.
+........
+
   \ --------------------------------------------
   \ Tank
 
@@ -3448,7 +3492,9 @@ create left-wall-erosions invader-layers allot
   no-erosion breaches coff battle-breaches coff ;
   \ Reset the erosion levels and the number of breaches.
 
-building-top-y 11 + cconstant building-bottom-y
+11 cconstant building-height
+
+building-top-y building-height + cconstant building-bottom-y
 
 0 cconstant building-width
 0 cconstant building-left-x
@@ -3462,20 +3508,28 @@ building-top-y 11 + cconstant building-bottom-y
        1+ + c!> building-right-x ;
   \ Set the size of the building after the current location.
 
-: floor ( row -- )
-  building-left-x swap at-xy
-  brick-attr attr! brick-udga building-width emits-udga ;
-  \ Draw a floor of the building at row _row_.
+: floor ( -- )
+  building-left-x building-bottom-y at-xy
+  brick-attr attr!
+  bottom-left-brick-udga emit-udga
+  brick-udga building-width 2- emits-udga
+  bottom-right-brick-udga emit-udga ;
+  \ Draw a floor of the building at _row_.
 
-: ground-floor ( row -- )
-  building-left-x 1+ swap at-xy brick-attr attr!
+: building-base ( -- )
+  building-left-x 1+ tank-y at-xy brick-attr attr!
   left-door emit-udga
   brick-udga building-width 4 - emits-udga
   right-door emit-udga ;
-  \ Draw the ground floor of the building at row _row_.
+  \ Draw the ground floor of the building at _row_.
 
-: building-top ( -- ) building-top-y floor ;
-  \ Draw the top of the building.
+: roof ( -- )
+  building-left-x building-top-y at-xy
+  brick-attr attr!
+  top-left-brick-udga emit-udga
+  brick-udga building-width 2- emits-udga
+  top-right-brick-udga emit-udga ;
+  \ Draw the roof of the building.
 
 : containers-bottom ( n -- )
   container-attr attr!
@@ -3501,19 +3555,18 @@ create containers-half
     \ change their order, depending on the building position
   , ,
 
-: yard ( row -- )                        0 over at-xy .brick
-                  [ last-column ] cliteral swap at-xy .brick ;
+: yard ( row -- )           0 tank-y at-xy .brick
+                  last-column tank-y at-xy .brick ;
   \ Draw the yard limits.
 
 : building ( -- )
-  building-top
+  roof
   location c@1+  building-left-x
   building-bottom-y [ building-top-y 1+ ] cliteral
   do   2dup i at-xy .brick
                     i 1 and containers-half array> perform
                     .brick
-  loop 2drop tank-y dup building-bottom-y ?do i floor loop
-                        dup ground-floor yard
+  loop 2drop floor building-base yard
   no-breach ;
   \ Draw the building and the nuclear containers.
   \
@@ -5562,7 +5615,7 @@ missile-gun~ ~gun-projectile-action !
 1 gigatype-style c!
 
 : .location ( ca len row -- ) 0 swap at-xy gigatype-title ;
-  \ Display location name part _ca len_, centered at row _row_.
+  \ Display location name part _ca len_, centered at _row_.
 
 : (location-title ( n -- )
   dup >town$     6 .location
