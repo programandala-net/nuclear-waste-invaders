@@ -143,3 +143,7 @@ Older first:
   color for the eroded brick.
 - Make red invaders retreat as soon as possible, e.g. when they are
   flying towards the building because of a dodged projectile.
+
+== 2018-03-01
+
+- Add debugging `cont` to jump into `fight`.

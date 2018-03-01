@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.240.0+201802281529" ;
+: version$ ( -- ca len ) s" 0.241.0+201803012004" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3607,7 +3607,7 @@ variable used-projectiles
   \ ===========================================================
   cr .( Projectiles) ?depth debug-point \ {{{1
 
-25 cconstant #bullets
+16 cconstant #bullets
   \ Number of bullets the tank can hold.
   \ XXX TMP -- provisional value, for testing
 
@@ -4348,9 +4348,7 @@ defer ?dock ( -- )
   <brick-erosion c@ erosion>right-brick
   invader-left-x invader~ ~invader-y c@ at-xy .a-brick ;
 
-max-stamina max-endurance + 2*
-min-stamina +
-min-endurance +
+max-stamina max-endurance + min-stamina + min-endurance +
 cconstant weakness
   \ Weakness reference level used in random calculations, after
   \ being reduced by the stamina and endurance of the current
@@ -4516,7 +4514,7 @@ mothership-range columns + cconstant mothership-range-max-x
   \ Set character _c_ as the first character of the first
   \ sprite of the mothership, and _n_ as the number of frames.
 
-defer set-exploding-mothership ( -- )
+defer explode-mothership ( -- )
   \ The mothership has been impacted. Set it accordingly.
 
 : beamy ( c1 -- c2 ) papery white + brighty ;
@@ -4549,7 +4547,7 @@ defer set-exploding-mothership ( -- )
   if   set-mothership-stamina damage-sound
        mothership-turns-back
        mothership-retreat-bonus update-score
-  else set-exploding-mothership then ;
+  else explode-mothership then ;
 
 : init-mothership ( -- )
   1 motherships c!
@@ -4958,7 +4956,7 @@ constant visible-mothership-movements ( -- a )
   schedule
   ['] exploding-mothership-action mothership-action!
   mothership-bang mothership-destroy-bonus update-score
-  ; ' set-exploding-mothership defer!
+  ; ' explode-mothership defer!
   \ The mothership has been impacted. Set it accordingly.
 
 ' shoot-sound alias invader-bang ( -- )
@@ -5006,7 +5004,7 @@ constant visible-mothership-movements ( -- a )
   invader-explosion? ?exit destroy-invader ;
   \ Action of the invader when it's exploding.
 
-: set-exploding-invader ( -- )
+: explode-invader ( -- )
   explosion-sprite explosion-frames set-invader-sprite
   at-invader .invader
   invader~ ~invader-explosion-time invader-explosion-interval
@@ -5031,7 +5029,7 @@ constant visible-mothership-movements ( -- a )
                    invader~ ~invader-layer       c@ +
                    invader~ ~invader-endurance   c@ +
                    projectile~ ~projectile-power c@ -
-                   0 max random 0= ;
+                   0 max 2* random 0= ;
   \ Is it a mortal impact?  The random calculation depends on
   \ the stamina, the altitude, the species' endurance and the
   \ type of projectile.
@@ -5085,7 +5083,7 @@ defer ball-gun? ( -- f )
 
 : (invader-impacted ( -- )
   invader-exploding? ?exit
-  mortal? if set-exploding-invader exit then
+  mortal? if explode-invader exit then
   wounded attacking? 0exit retreat ;
   \ The current invader has been impacted by the projectile.
 
@@ -5224,9 +5222,9 @@ missiles-x missile-gun~ ~gun-ammo-x c!
 missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite !
    ball-gun-tank-sprite    ball-gun~ ~gun-tank-sprite !
 
-12  bullet-gun~ ~gun-trigger-interval c!
-16 missile-gun~ ~gun-trigger-interval c!
-24    ball-gun~ ~gun-trigger-interval c!
+16  bullet-gun~ ~gun-trigger-interval c!
+24 missile-gun~ ~gun-trigger-interval c!
+32    ball-gun~ ~gun-trigger-interval c!
 
 %00001  bullet-gun~ ~gun-projectile-max-delay c!
 %00011 missile-gun~ ~gun-projectile-max-delay c!
@@ -5347,7 +5345,7 @@ cvariable projectile-frame
   \ XXX TMP --
   \ XXX TODO -- look for a better sound
 
-: set-exploding-projectile ( -- )
+: explode-projectile ( -- )
   projectile-explosion-sprite
   projectile~ ~projectile-sprite !
   projectile-explosion-frames
@@ -5360,7 +5358,7 @@ cvariable projectile-frame
 
 : bullet-and-missile-action ( -- )
   hit-projectile?
-  if -hit-projectile set-exploding-projectile exit then
+  if -hit-projectile explode-projectile exit then
   projectile-delay ?exit
   -projectile projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
@@ -5419,7 +5417,7 @@ missile-gun~ ~gun-projectile-action !
 
 : left-wall-ball-action ( -- )
   hit-projectile?
-  if -hit-projectile set-exploding-projectile exit then
+  if -hit-projectile explode-projectile exit then
   projectile-delay ?exit -projectile
   projectile~ ~projectile-y c@ y>layer?
   if left-wall-erosions + dup c@
@@ -5448,7 +5446,7 @@ missile-gun~ ~gun-projectile-action !
 
 : right-wall-ball-action ( -- )
   hit-projectile?
-  if -hit-projectile set-exploding-projectile exit then
+  if -hit-projectile explode-projectile exit then
   projectile-delay ?exit -projectile
   projectile~ ~projectile-y c@ y>layer?
   if right-wall-erosions + dup c@
