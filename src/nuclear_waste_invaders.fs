@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.239.0+201802271805" ;
+: version$ ( -- ca len ) s" 0.240.0+201802281529" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -412,8 +412,8 @@ variable landscape> bank-start landscape> !
   \ `landscape>` with the length of the loaded file.
 
 : load-landscape ( n -- )
-  landscapes-bank bank  dup landscape-attrs>  (load-landscape
-                            landscape-bitmap> (load-landscape
+  landscapes-bank bank dup landscape-attrs>  (load-landscape
+                           landscape-bitmap> (load-landscape
   default-bank ;
   \ Load landscape _n_ (0 index) from tape and store it into
   \ the memory bank used for landscape graphics.  Each
@@ -3699,9 +3699,11 @@ defer gun-stack ( -- )
   flying-projectile# c@ -flying-projectile
   used-projectiles-stack xstack projectile~ >x gun-stack ;
 
+cvariable recharge-delay recharge-delay coff \ milliseconds
+
 : recharge1 ( a -- )
   used-projectiles-stack xstack x>
-                    swap xstack >x .ammo ;
+                    swap xstack >x .ammo recharge-delay c@ ms ;
   \ Recharge the projectiles stack _a_, which is the current
   \ one, with one projectile from the used projectiles stack,
   \ and update the ammo in the status bar.
@@ -3896,8 +3898,7 @@ columns tank-width - 1- cconstant tank-max-x
 : .tank ( -- ) (.tank drop ;
   \ Display the tank at its current position.
 
-: new-tank ( -- )
-  repair-tank bullet-gun# set-gun park-tank .tank ;
+: new-tank ( -- ) repair-tank bullet-gun# set-gun ;
 
 : <tank ( -- ) tank-x c1-! (.tank -tank-extreme drop ;
   \ Move the tank to the left.
@@ -5819,12 +5820,11 @@ localized-string about-next-location$ ( -- ca len )
 
 : hide-status-bar ( -- ) sky-attr color-status-bar ;
 
-: reveal-status-bar ( -- )
-  status-attr color-status-bar highlight-gun ;
+: reveal-status-bar ( -- ) status-attr color-status-bar ;
 
 : (status-bar ( -- )
-  get-gun .bullets-icon  .bullets  space
-          .missiles-icon .missiles space
+  get-gun .bullets-icon  .bullets
+          .missiles-icon .missiles
           .balls-icon    .balls
   set-gun .score .record-separator .record ;
 
@@ -5872,22 +5872,25 @@ localized-string about-next-location$ ( -- ca len )
   \ it with _n1_ projectiles from the used projectiles stack.
 
 : (recharge-guns ( -- )
-  #bullets  bullet-gun#  -recharge unhighlight-gun
+  #balls    ball-gun#    -recharge unhighlight-gun
   #missiles missile-gun# -recharge unhighlight-gun
-  #balls    ball-gun#    -recharge unhighlight-gun ;
+  #bullets  bullet-gun#  -recharge unhighlight-gun ;
   \ Empty and recharge all guns.
 
 : recharge-guns ( -- )
+  50 recharge-delay c!
   get-gun unhighlight-gun (recharge-guns
-  set-gun   highlight-gun ;
+  set-gun   highlight-gun
+  recharge-delay coff ;
   \ Empty and recharge all guns, preserving the current gun.
 
 : prepare-attack ( -- )
-  repair-tank prepare-projectiles status-bar recharge-guns
+  repair-tank prepare-projectiles
+  recharge-guns highlight-gun park-tank .tank
   used-projectiles off
   [debugging] [if] debug-bar [then] ;
 
-: prepare-battle ( -- ) settle new-tank ;
+: prepare-battle ( -- ) settle status-bar ;
 
 : battle ( -- )
   prepare-battle

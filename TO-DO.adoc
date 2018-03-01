@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-02-27
+:revdate: 2018-02-28
 
 Older first:
 
@@ -83,10 +83,6 @@ Older first:
 - Add sound effect to arm toggling.
 - Reduce the range of the mothership.
 
-== 2018-01-24
-
-- Reduce the fields that hold frame counts in the species structure.
-
 == 2018-01-26
 
 - Improve the sprites of the wall balls.
@@ -136,7 +132,6 @@ Older first:
   it does not explode, keep it balled.
 - Change the language of titles and reports at run-time, using the
   key used in the main menu.
-- Improve: Recharge guns slowly at the start of the attack.
 
 == 2018-02-25
 
