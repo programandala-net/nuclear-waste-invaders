@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.241.0+201803012004" ;
+: version$ ( -- ca len ) s" 0.241.1+201803012235" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3738,27 +3738,21 @@ tank-y 1- cconstant projectile-y0
 
 projectile-y0 columns * constant /hit-projectiles
 
-here /hit-projectiles allot
-     dup columns - constant hit-projectiles>
-                   constant hit-projectiles
+create hit-projectiles /hit-projectiles allot
   \ Byte array which is used to mark the projectiles that have
   \ been hit by another projectile. The array is indexed by
   \ rows and columns, as a logical copy of the attributes area.
   \ The size of the array is calculated to contain only the
-  \ rows used by projectiles, except `projectile-y0`, the
-  \ initial one, where projectiles can not be hit yet.
-  \ `hit-projectiles>` returns the address of one row above the
-  \ actual data, simulating the row used by the status bar is
-  \ part of the array, in order to save a run-time calculation
-  \ when the array items are accessed. `hit-projectiles`
-  \ returns the address of the actual data.
+  \ rows used by projectiles, i.e. from below the status bar
+  \ (row 0) to one row above `projectile-y0`, the initial one,
+  \ where projectiles can not be hit yet.
 
 : -hit-projectiles ( -- )
   hit-projectiles /hit-projectiles erase ;
   \ Erase the array of hit projectiles.
 
 : xy>hit-projectile ( col row -- ca )
-  columns * + hit-projectiles> + ;
+  columns * + [ hit-projectiles columns - ] literal + ;
   \ Convert projectile coordinates _col row_ into their
   \ corresponding address _ca_ in array `hit-projectiles`.
 
@@ -3768,14 +3762,12 @@ here /hit-projectiles allot
 
 : hit-projectile? ( -- 0f )
   projectile-xy xy>hit-projectile c@ ;
-  \ Has the current projectile been hit by other projectile?
+  \ Was the current projectile hit by other projectile?
 
-: hit-projectile ( -- )
-  projectile-xy xy>hit-projectile con ;
-  \ Mark the current projectile as hit by other projectile.
+: hit-projectile ( -- ) projectile-xy xy>hit-projectile con ;
+  \ Mark the current projectile hit by other projectile.
 
-: -hit-projectile ( -- )
-  projectile-xy xy>hit-projectile coff ;
+: -hit-projectile ( -- ) projectile-xy xy>hit-projectile coff ;
   \ Mark the current projectile as not hit by other projectile.
 
 : prepare-projectiles ( -- ) #flying-projectiles coff
@@ -5346,24 +5338,23 @@ cvariable projectile-frame
   \ XXX TODO -- look for a better sound
 
 : explode-projectile ( -- )
-  projectile-explosion-sprite
-  projectile~ ~projectile-sprite !
-  projectile-explosion-frames
-  projectile~ ~projectile-frames c!
+  -hit-projectile
+  projectile-explosion-sprite projectile~ ~projectile-sprite !
+  projectile-explosion-frames projectile~ ~projectile-frames c!
   .projectile
   projectile-explosion-time projectile-explosion-interval
   schedule
   ['] exploding-projectile-action
-  projectile~ ~projectile-action !  projectile-bang ;
+  projectile~ ~projectile-action ! projectile-bang ;
+  \ Make the current projectile explode
 
 : bullet-and-missile-action ( -- )
-  hit-projectile?
-  if -hit-projectile explode-projectile exit then
+  hit-projectile? if explode-projectile exit then
   projectile-delay ?exit
   -projectile projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   projectile-xy is-there-a-projectile?
-  if projectile-xy hit-projectile destroy-projectile exit then
+  if hit-projectile destroy-projectile exit then
   impact? if impact exit then .projectile ;
   \ Action of bullets and missiles.
 
@@ -5416,8 +5407,7 @@ missile-gun~ ~gun-projectile-action !
   \ _ca_.
 
 : left-wall-ball-action ( -- )
-  hit-projectile?
-  if -hit-projectile explode-projectile exit then
+  hit-projectile? if explode-projectile exit then
   projectile-delay ?exit -projectile
   projectile~ ~projectile-y c@ y>layer?
   if left-wall-erosions + dup c@
@@ -5445,8 +5435,7 @@ missile-gun~ ~gun-projectile-action !
   \ _ca_.
 
 : right-wall-ball-action ( -- )
-  hit-projectile?
-  if -hit-projectile explode-projectile exit then
+  hit-projectile? if explode-projectile exit then
   projectile-delay ?exit -projectile
   projectile~ ~projectile-y c@ y>layer?
   if right-wall-erosions + dup c@
