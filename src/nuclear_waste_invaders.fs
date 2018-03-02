@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.242.0+201803021843" ;
+: version$ ( -- ca len ) s" 0.243.0+201803021914" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4345,15 +4345,16 @@ defer ?dock ( -- )
   \
   \ XXX TODO -- Unfactor?
 
-: .eroded-brick ( ca col row -- )
+: erode-brick ( ca col row -- )
+  dup 2/ negate update-score
   2dup xy>attr attr! at-xy emit-udga ;
   \ Display eroded brick UDGa _ca_ at _col row_ using the
-  \ attribute of that position.
+  \ attribute of that position. Update the score using _row_.
 
 : <erode-wall ( -- )
   <brick-erosion c1+!
   <brick-erosion c@ erosion>right-brick
-  invader-left-x invader~ ~invader-y c@ .eroded-brick ;
+  invader-left-x invader~ ~invader-y c@ erode-brick ;
 
 max-stamina max-endurance + min-stamina + min-endurance +
 cconstant weakness
@@ -4403,7 +4404,7 @@ cconstant weakness
 : erode-wall> ( -- )
   brick>-erosion c1+!
   brick>-erosion c@ erosion>left-brick
-  invader-right-x invader~ ~invader-y c@ .eroded-brick ;
+  invader-right-x invader~ ~invader-y c@ erode-brick ;
 
 : ?erode-wall> ( -- ) weak? ?exit erode-wall> ;
   \ Break the wall at the left of the current invader, if it's

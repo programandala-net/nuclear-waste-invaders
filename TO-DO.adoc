@@ -151,6 +151,5 @@ Older first:
 
 == 2018-03-02
 
-- Decrement the score in `<erode-wall` and `erode-wall>`.
-- Rewrite `.eroded-brick` with an attributeless version of
-  `emit-udga`, say `dump-udga`, for speed.
+- Rewrite `erode-brick` with an attributeless version of `emit-udga`,
+  say `dump-udga`, for speed.
