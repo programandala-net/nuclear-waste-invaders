@@ -115,9 +115,6 @@ Older first:
 - Improve the effect of projectiles: make the damage cumulative. For
   example, use a 0..100 stamina range and make any impact reduce it.
   Now impacts have no effect on next impacts.
-- Add the current gun to `(new-mothership-x-inc`, combined with
-  `missiles-left`? I.e., if the current gun is other than the missile
-  gun, reduce the weight of the ammo in the calculation.
 - Make invaders become motherships inside the building, after eating a
   container. But how they go out? Simple option: Destroy only half
   container, then do the metamorphosis with an independent action, and

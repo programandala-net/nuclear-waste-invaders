@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.244.0+201803022248" ;
+: version$ ( -- ca len ) s" 0.245.0+201803022332" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -4870,9 +4870,13 @@ constant visible-mothership-movements ( -- a )
   \ Return the number _n_ of missiles left. The current gun is
   \ preserved.
 
+defer missile-gun? ( -- f )
+  \ Is the current gun the missile gun?
+
 : (new-mothership-x-inc ( -- -1|0|1 )
   left-side-invaders right-side-invaders      <=>
-  missiles-left if   mothership-x @ tank-x c@ <=> +
+  missiles-left if   mothership-x @ tank-x c@ <=>
+                     2 missile-gun? and *         +
                 then                        -1..1 + polarity ;
   \ Return the new direction of the mothership, which is
   \ stopped above the building.
@@ -5198,6 +5202,9 @@ missile-gun# gun#>~ constant missile-gun~
 : recharging ( -- ) gun-below-building?  0exit
                     kk-recharge pressed? 0exit
                     recharge-gun .ammo ;
+
+:noname ( -- f ) gun~ missile-gun~ = ; ' missile-gun? defer!
+  \ Is the current gun the missile gun?
 
 :noname ( -- f ) gun~ ball-gun~ = ; ' ball-gun? defer!
   \ Is the current gun the ball gun?
@@ -5775,7 +5782,7 @@ localized-string about-next-location$ ( -- ca len )
 
 : reveal-report ( -- ) reveal-report-attr wcolor ;
 
-: assent-report ( -- ) 2000 ms
+: assent-report ( -- ) 500 ms
                        reveal-report-attr attr!
                        press-any-key$ wltype new-key drop ;
 
