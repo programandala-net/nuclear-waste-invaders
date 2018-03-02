@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.243.0+201803021914" ;
+: version$ ( -- ca len ) s" 0.244.0+201803022248" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -5298,14 +5298,8 @@ defer projectile ( -- c )
 
 ' whip-sound alias fire-sound ( -- )
 
-: -projectile ( -- ) projectile-xy xy>attr
-                     projectile~ ~projectile-attr c@ <> ?exit
-                     at-projectile .sky ;
+: -projectile ( -- ) at-projectile .sky ;
   \ Delete the current projectile.
-  \
-  \ XXX FIXME -- Checking the attribute here prevents the
-  \ projectile from erasing part of an invader in some cases,
-  \ but the solution should be in the movement.
 
 : projectile-lost? ( -- f )
   projectile~ ~projectile-y c@
