@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201801232122
+  \ Last modified: 201803011706
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -337,7 +337,7 @@ set-current previous
   \
   \ Play a 14-byte sound definition stored at _ca_.
   \
-  \ See: `sound,`, `sound`, `!sound`.
+  \ See: `sound,`, `sound`, `!sound`, `edit-sound`.
   \
   \ }doc
 
@@ -368,7 +368,7 @@ set-current previous
   \ Create a word _name_ that will play the 14-byte sound
   \ defined by _b[0]..b[13]_.
   \
-  \ See: `sound,`, `play`.
+  \ See: `sound,`, `play`, `edit-sound`.
   \
   \ }doc
 
@@ -747,5 +747,7 @@ decimal
   \
   \ 2018-01-23: Update source style.  Rename all sounds defined
   \ with `sound`: add suffix "-sound".
+  \
+  \ 2018-03-01: Improve documentation.
 
   \ vim: filetype=soloforth

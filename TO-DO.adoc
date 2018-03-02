@@ -147,15 +147,10 @@ Older first:
 == 2018-03-01
 
 - Add debugging `cont` to jump into `fight`.
-- Fix: When a projectile hits a slower one, it seems there's a
-  confusion between the current projectile and previous one, which was
-  hit.
 - Fix `-projectile`: remove the old check.
 
 == 2018-03-02
 
 - Make invaders do not overwrite the attribute of a brick that is
   being repaired.
-- Fix: balls hit by another projectile don't explode. This bug was
-  introduced in version 0.225.0.
 - Decrement the score in `<erode-wall` and `erode-wall>`.

@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.241.1+201803012235" ;
+: version$ ( -- ca len ) s" 0.241.1+201803021738" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -284,8 +284,8 @@ variable mothership-x
   \ ===========================================================
   cr .( Optimization) ?depth \ {{{1
 
-  \ Some words used to optimize during compilation, just in
-  \ case the size some important constants are changed in the
+  \ Some words used to optimize the code during compilation,
+  \ just in case some important constants are changed in the
   \ future, e.g. the size of the invaders or the containers.
 
 : c@x+ ( n -- )
@@ -3685,7 +3685,7 @@ create flying-projectiles /flying-projectiles allot
   \ Store projectile _a_ into the array of flying projectiles
   \ and update the count of currently flying projectiles.
 
-: -flying-projectile ( n -- )
+: stop-flying ( n -- )
   flying-projectiles /flying-projectiles rot 1+ cells /string
   over cell- swap cmove
   #flying-projectiles c1-! ;
@@ -3696,8 +3696,11 @@ defer gun-stack ( -- )
   \ Activate the projectile stack of the current gun.
 
 : destroy-projectile ( -- )
-  flying-projectile# c@ -flying-projectile
+  flying-projectile# c@ stop-flying
   used-projectiles-stack xstack projectile~ >x gun-stack ;
+  \ Destroy the current projectile, which has been deleted from
+  \ the display, removing it from the array of flying
+  \ projectiles and moving it to the stack of used projectiles.
 
 cvariable recharge-delay recharge-delay coff \ milliseconds
 
@@ -3740,12 +3743,19 @@ projectile-y0 columns * constant /hit-projectiles
 
 create hit-projectiles /hit-projectiles allot
   \ Byte array which is used to mark the projectiles that have
-  \ been hit by another projectile. The array is indexed by
-  \ rows and columns, as a logical copy of the attributes area.
-  \ The size of the array is calculated to contain only the
-  \ rows used by projectiles, i.e. from below the status bar
-  \ (row 0) to one row above `projectile-y0`, the initial one,
-  \ where projectiles can not be hit yet.
+  \ been hit by another projectile. This is needed to let the
+  \ current projectile mark a slower one hit. When the hit
+  \ happens the only info available about the slower projectile
+  \ is its coordinates, and searching the projectile data for a
+  \ match would be too slow. That's why a data field of the
+  \ projectile structure can not be used to set a flag.  When
+  \ the hit projectile becomes the current one later, its
+  \ action first checks if it has been hit, using this array,
+  \ which is indexed by rows and columns, as a logical copy of
+  \ the attributes area of the display.  The array contains
+  \ only the rows used by projectiles, i.e. from below the
+  \ status bar (row 0) to one row above `projectile-y0`, the
+  \ initial one, where projectiles can not be hit yet.
 
 : -hit-projectiles ( -- )
   hit-projectiles /hit-projectiles erase ;
@@ -3760,7 +3770,7 @@ create hit-projectiles /hit-projectiles allot
   projectile~ ~projectile-x c@ projectile~ ~projectile-y c@ ;
   \ Coordinates of the current projectile.
 
-: hit-projectile? ( -- 0f )
+: hit-by-projectile? ( -- 0f )
   projectile-xy xy>hit-projectile c@ ;
   \ Was the current projectile hit by other projectile?
 
@@ -5110,7 +5120,10 @@ defer ball-gun? ( -- f )
   \ the value changes in future versions.
 
 : impact? ( -- f|0f ) projectile-xy xy>attr sky-attr<> ;
-  \ Did the projectile impacted?
+  \ Did the current projectile impacted?  Hitting another
+  \ projectile was already checked by the projectile action.
+  \ Therefore only impacts to an invader or the mothership are
+  \ detected here.
 
   \ ===========================================================
   cr .( Guns) ?depth debug-point \ {{{1
@@ -5284,7 +5297,7 @@ defer projectile ( -- c )
                      at-projectile .sky ;
   \ Delete the current projectile.
   \
-  \ XXX REMARK -- Checking the attribute  prevents the
+  \ XXX FIXME -- Checking the attribute here prevents the
   \ projectile from erasing part of an invader in some cases,
   \ but the solution should be in the movement.
 
@@ -5348,22 +5361,29 @@ cvariable projectile-frame
   projectile~ ~projectile-action ! projectile-bang ;
   \ Make the current projectile explode
 
-: bullet-and-missile-action ( -- )
-  hit-projectile? if explode-projectile exit then
+: bullet-action ( -- )
   projectile-delay ?exit
   -projectile projectile-lost? if projectile-lost exit then
   projectile~ ~projectile-y c1-!
   projectile-xy is-there-a-projectile?
   if hit-projectile destroy-projectile exit then
   impact? if impact exit then .projectile ;
-  \ Action of bullets and missiles.
+  \ Action of bullets. Since bullets are the fastest
+  \ projectiles, they can not be hit by other projectiles.
+  \ Therefore the initial check is missing. That is the only
+  \ difference with `missile-action`.
 
-' bullet-and-missile-action
-bullet-gun~ ~gun-projectile-action !
+' bullet-action bullet-gun~ ~gun-projectile-action !
   \ Set the action of bullets.
 
-' bullet-and-missile-action
-missile-gun~ ~gun-projectile-action !
+: missile-action ( -- )
+  hit-by-projectile? if explode-projectile exit then
+  bullet-action ;
+  \ Action of missiles. The only difference with bullets is
+  \ missiles check if they were hit by a bullet, which is
+  \ faster.
+
+' missile-action missile-gun~ ~gun-projectile-action !
   \ Set the action of missiles.
 
 : repair-brick ( ca1 ca2 col row -- )
@@ -5406,22 +5426,24 @@ missile-gun~ ~gun-projectile-action !
   \ current projectile. The erosion level of the brick is at
   \ _ca_.
 
+: (ball-action ( -- )
+  projectile-lost? if projectile-lost exit then
+  projectile~ ~projectile-y c1-!
+  impact? if invader-balled destroy-projectile exit then
+  .projectile ;
+  \ Code common to all ball actions.
+
 : left-wall-ball-action ( -- )
-  hit-projectile? if explode-projectile exit then
+  hit-by-projectile? if explode-projectile exit then
   projectile-delay ?exit -projectile
   projectile~ ~projectile-y c@ y>layer?
   if left-wall-erosions + dup c@
      if repair-left-brick destroy-projectile exit then
      drop \ discard the useless erosion address
   else drop then \ discard the invalid layer
-  projectile-lost? if projectile-lost exit then
-  projectile~ ~projectile-y c1-!
-  impact? if invader-balled destroy-projectile exit then
-  .projectile ;
+  (ball-action ;
   \ Action of the balls that are flying on the left wall of the
   \ building, and therefore can repair the erosion.
-  \
-  \ XXX TODO -- Factor.
 
 : left-of-projectile-xy ( -- col row )
   projectile~ ~projectile-x c@ 1-
@@ -5435,28 +5457,20 @@ missile-gun~ ~gun-projectile-action !
   \ _ca_.
 
 : right-wall-ball-action ( -- )
-  hit-projectile? if explode-projectile exit then
+  hit-by-projectile? if explode-projectile exit then
   projectile-delay ?exit -projectile
   projectile~ ~projectile-y c@ y>layer?
   if right-wall-erosions + dup c@
      if repair-right-brick destroy-projectile exit then
      drop \ discard the useless erosion address
   else drop then \ discard the invalid layer
-  projectile-lost? if projectile-lost exit then
-  projectile~ ~projectile-y c1-!
-  impact? if invader-balled destroy-projectile exit then
-  .projectile ;
+  (ball-action ;
   \ Action of the balls that are flying on the right wall of
   \ the building, and therefore can repair the erosion.
-  \
-  \ XXX TODO -- Factor.
 
 : ball-action ( -- )
-  projectile-delay ?exit
-  -projectile projectile-lost? if projectile-lost exit then
-  projectile~ ~projectile-y c1-!
-  impact? if invader-balled destroy-projectile exit then
-  .projectile ;
+  hit-by-projectile? if explode-projectile exit then
+  projectile-delay ?exit -projectile (ball-action ;
   \ Action of the balls that don't fly on a wall.
 
 ' ball-action ball-gun~ ~gun-projectile-action !
@@ -5488,7 +5502,7 @@ missile-gun~ ~gun-projectile-action !
   ball-gun? if   ball-sprite&action
             else gun~ ~gun-projectile-sprite @
                  gun~ ~gun-projectile-frames c@
-                 ['] bullet-and-missile-action
+                 gun~ ~gun-projectile-action @
             then projectile~ ~projectile-action !
                  projectile~ ~projectile-frames c!
                  projectile~ ~projectile-sprite !
@@ -5904,8 +5918,9 @@ localized-string about-next-location$ ( -- ca len )
 
 : mp ( -- ) manage-projectiles ;
 : fp? ( -- 0f ) flying-projectiles? ;
-: pa ( -- ) bullet-and-missile-action ;
-: ba ( -- ) ball-action ;
+: bua ( -- ) bullet-action ;
+: mia ( -- ) missile-action ;
+: baa ( -- ) ball-action ;
 : np ( -- ) next-flying-projectile ;
 
 : .fp ( -- )
@@ -6026,6 +6041,14 @@ localized-string about-next-location$ ( -- ca len )
   loop ;
   \ Display the brick erosion levels beside the corresponding
   \ bricks.
+
+: .hit ( -- )
+  0 1 at-xy
+  hit-projectiles /hit-projectiles bounds ?do
+    i c@ if 'X' emit else space then
+  loop home ;
+  \ Reveal the positions where a projectile has been hit by
+  \ another projectile, but the hit has not been resolved yet.
 
   \ ===========================================================
   cr .( Development benchmarks) ?depth debug-point \ {{{1
