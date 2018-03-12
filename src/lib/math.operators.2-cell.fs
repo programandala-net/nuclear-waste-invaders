@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201803072221
+  \ Last modified: 201803130047
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -454,11 +454,10 @@ unneeding d2* ?( code d2* ( xd1 -- xd2 )
 
 unneeding d2/ ?( code d2/ ( xd1 -- xd2 )
 
-  E1 c, D1 c, CB c, 2C c, CB c, 1C c, CB c, 1D c,
+  E1 c, D1 c, CB c, 2C c, CB c, 1D c,
     \ pop hl
     \ pop de
     \ sra h
-    \ rr h
     \ rr l
   CB c, 1A c, CB c, 1B c, D5 c, E5 c, jpnext, end-code ?)
     \ rr d
@@ -495,7 +494,7 @@ unneeding m+ ?( need assembler
 
 code m+ ( d1|ud1 n -- d2|ud2 )
   exx, b pop, d pop, h pop,
-  b addp, h push, c? rif d inc, rthen d push,
+  b addp, h push, c? rif d incp, rthen d push,
   exx, jpnext, end-code ?)
 
     \ exx,    \ save the Forth IP
@@ -503,7 +502,7 @@ code m+ ( d1|ud1 n -- d2|ud2 )
     \ d pop,  \ d1 hi cell
     \ h pop,  \ d1 lo cell
     \ b addp, h push,
-    \ c? rif  d inc, rthen  d push,
+    \ c? rif d incp, rthen d push,
     \ exx,    \ restore the Forth IP
     \ jpnext, end-code
 
@@ -528,16 +527,35 @@ code m+ ( d1|ud1 n -- d2|ud2 )
 
 unneeding m*/ ?(
 
-: m*/ ( d1 n1 +n2 -- d2 )
-  >r s>d >r abs -rot s>d r> xor r> swap >r >r dabs
-  rot tuck um* 2swap um* swap
-  >r 0 d+ r> -rot i um/mod -rot r> um/mod -rot r>
-  if   if 1 0 d+ then dnegate
-  else drop then ; ?)
+
+  \ ............................................
+  \ XXX OLD:
+  \
+  \ : m*/ ( d1 n1 +n2 -- d2 )
+  \   >r s>d >r abs -rot s>d r> xor r> swap >r >r dabs
+  \   rot tuck um* 2swap um* swap
+  \   >r 0 d+ r> -rot i um/mod -rot r> um/mod -rot r>
+  \   if   if 1 0 d+ then dnegate
+  \   else drop then ; ?)
 
   \ Credit:
   \
   \ Code of `m*/` from Gforth 0.7.3.
+
+  \ XXX REMARK -- 2018-03-13. This version of `m*/` does not
+  \ pass the Forth-2012 Test Suite in Solo Forth, but it does
+  \ in Gforth.
+  \
+  \ ............................................
+
+: m*/ ( d1 n1 +n2 -- d2 )
+  abs >r 2dup xor swap abs >r -rot
+  dabs swap r@ um* rot r> um* rot 0 d+
+  r@ um/mod -rot r> um/mod nip swap rot 0< if dnegate then ;
+
+  \ Credit:
+  \
+  \ Code of `m*/` from DX-Forth 4.15 for CP/M.
 
   \ doc{
   \
@@ -644,5 +662,8 @@ need 2nip need cell-bits
   \ 2018-03-05: Update `[unneeded]` to `unneeding`.
   \
   \ 2018-03-07: Add words' pronunciaton.
+  \
+  \ 2018-03-12: Fix `d2/`. Fix `m*/`: replace the Gforth's code
+  \ with the DZX-Forth's code. Fix `m+`.
 
   \ vim: filetype=soloforth
