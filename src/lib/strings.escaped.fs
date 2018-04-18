@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201803091344
+  \ Last modified: 201804142326
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -50,7 +50,7 @@ dup >order set-current case-sensitive @ case-sensitive on
   \ ----
 
   \ Most of the escaped characters are translated to one
-  \ character, so they are defined as double constants.
+  \ character, so they are defined as double-cell constants.
   \
   \ Conversion rules:
 
@@ -76,7 +76,7 @@ dup >order set-current case-sensitive @ case-sensitive on
 
   \ See: `parse-esc-string`, `set-esc-order`,
   \ `esc-standard-chars-wordlist`, `esc-block-chars-wordlist`,
-  \ `esc-udg-chars-ẁordlist`.
+  \ `esc-udg-chars-wordlist`.
   \
   \ }doc
 
@@ -370,7 +370,7 @@ need ?esc-order need #esc-order need esc-context
   \
   \ See: `esc-get-order`, `>esc-order`,
   \ `esc-standard-chars-wordlist`, `esc-block-chars-wordlist`,
-  \ `esc-udg-chars-ẁordlist`.
+  \ `esc-udg-chars-wordlist`.
   \
   \ }doc
 
@@ -415,7 +415,7 @@ need get-esc-order need set-esc-order
   \ See: `set-esc-order`, `get-esc-order`,
   \ `esc-standard-chars-wordlist`,
   \ `esc-block-chars-wordlist`,
-  \ `esc-udg-chars-ẁordlist`.
+  \ `esc-udg-chars-wordlist`.
   \
   \ }doc
 
@@ -529,5 +529,12 @@ need parse-char need char>string
   \ 2018-03-05: Update `[unneeded]` to `unneeding`.
   \
   \ 2018-03-09: Add words' pronunciaton.
+  \
+  \ 2018-04-11: Update notation "double constant" to
+  \ "double-cell constant".
+  \
+  \ 2018-04-12: Fix link in documentation.
+  \
+  \ 2018-04-14: Fix typos in documentation.
 
   \ vim: filetype=soloforth

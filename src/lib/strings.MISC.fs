@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201803052149
+  \ Last modified: 201804012049
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -23,9 +23,10 @@
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( str< str> trim +place hunt )
+( str< str> str<> trim +place hunt )
 
 unneeding str<
+
 ?\ : str< ( ca1 len1 ca2 len2 -- f ) compare 0< ;
 
   \ doc{
@@ -35,11 +36,12 @@ unneeding str<
   \ Is string _ca1 len1_ lexicographically smaller than string
   \ _ca2 len2_?
   \
-  \ See: `str=`, `str>`, `compare`.
+  \ See: `str>`, `str=`, `str<>`, `compare`.
   \
   \ }doc
 
 unneeding str>
+
 ?\ : str> ( ca1 len1 ca2 len2 -- f ) compare 0> ;
 
   \ doc{
@@ -49,11 +51,27 @@ unneeding str>
   \ Is string _ca1 len1_ lexicographically larger than string
   \ _ca2 len2_?
   \
-  \ See: `str<`, `str=`, `compare`.
+  \ See: `str<`, `str=`, `str<>`, `compare`.
+  \
+  \ }doc
+
+unneeding str<>
+
+?\ : str<> ( ca1 len1 ca2 len2 -- f ) str= 0= ;
+
+  \ doc{
+  \
+  \ str<> ( ca1 len1 ca2 len2 -- f ) "s-t-r-not-equals"
+  \
+  \ Is string _ca1 len1_ lexicographically not equal to string
+  \ _ca2 len2_?
+  \
+  \ See: `str=`, `str<`, `str>`, `compare`.
   \
   \ }doc
 
 unneeding trim
+
 ?\ : trim ( ca1 len1 -- ca2 len2 ) -leading -trailing ;
 
   \ doc{
@@ -68,6 +86,7 @@ unneeding trim
   \ }doc
 
 unneeding +place ?( need c+!
+
 : +place ( ca1 len1 ca2 -- )
   2dup 2>r count + smove 2r> c+! ; ?)
 
@@ -83,6 +102,7 @@ unneeding +place ?( need c+!
   \ }doc
 
 unneeding hunt ?(
+
 : hunt ( ca1 len1 ca2 len2 -- ca3 len3 )
   search 0= if chars + 0 then ; ?)
 
@@ -109,8 +129,7 @@ unneeding hunt ?(
 
 ( ud>str u>str d>str n>str )
 
-unneeding ud>str
-?\ : ud>str ( ud -- ca len ) <# #s #> ;
+unneeding ud>str ?\ : ud>str ( ud -- ca len ) <# #s #> ;
 
   \ Credit:
   \
@@ -127,6 +146,7 @@ unneeding ud>str
   \ }doc
 
 unneeding u>str
+
 ?\ need ud>str : u>str ( u -- ca len ) s>d ud>str ;
 
   \ doc{
@@ -139,8 +159,9 @@ unneeding u>str
   \
   \ }doc
 
-unneeding d>str ?(
-: d>str ( d -- ca len ) tuck dabs <# #s rot sign #> ; ?)
+unneeding d>str
+
+?\ : d>str ( d -- ca len ) tuck dabs <# #s rot sign #> ;
 
   \ Credit:
   \
@@ -157,6 +178,7 @@ unneeding d>str ?(
   \ }doc
 
 unneeding n>str
+
 ?\ need d>str : n>str ( n -- ca len ) s>d d>str ;
 
   \ doc{
@@ -172,6 +194,7 @@ unneeding n>str
 ( char>string chars>string >bstring c>bstring 2>bstring )
 
 unneeding char>string ?(
+
 : char>string ( c -- ca len )
   1 allocate-stringer tuck c! 1 ; ?)
 
@@ -191,18 +214,20 @@ unneeding char>string ?(
   \ }doc
 
 unneeding chars>string ?(
-: chars>string ( c1..cn n -- ca len )
-  dup if   dup allocate-stringer swap 2dup 2>r ( c1..cn ca n )
+
+: chars>string ( c#1..c#n n -- ca len )
+  dup if   dup allocate-stringer swap 2dup 2>r
+           \ ( c#1..c#n ca n )
            bounds ?do i c! loop 2r>
       else pad swap then ; ?)
 
   \ doc{
   \
-  \ chars>string ( c1..cn n -- ca len ) "chars-to-string"
+  \ chars>string ( c#1..c#n n -- ca len ) "chars-to-string"
   \
   \ Convert _n_ chars to a string _ca len_ in the `stringer`.
   \
-  \ c1..cn :: chars to make the string with (_c1_ is the last one)
+  \ c#1..c#n :: chars to make the string with (_c1_ is the last one)
   \ n :: number of chars
   \
   \ See: `ruler`, `s+`.
@@ -210,6 +235,7 @@ unneeding chars>string ?(
   \ }doc
 
 unneeding >bstring
+
 ?\ : >bstring ( u -- ca len ) pad ! pad cell ;
 
   \ doc{
@@ -224,6 +250,7 @@ unneeding >bstring
   \ }doc
 
 unneeding c>bstring
+
 ?\ : c>bstring ( c -- ca len ) pad c! pad 1 ;
 
   \ doc{
@@ -238,6 +265,7 @@ unneeding c>bstring
   \ }doc
 
 unneeding 2>bstring ?(
+
 : 2>bstring ( xd -- ca len )
   pad 2! pad [ 2 cells ] literal ; ?)
 
@@ -412,6 +440,7 @@ code uppers ( ca len -- )
   \ }doc
 
 unneeding uppers1
+
 ?\ need uppers : uppers1 ( ca len -- ) drop 1 uppers ;
 
   \ doc{
@@ -480,6 +509,7 @@ unneeding #spaces ?( need under+
   \ }doc
 
 unneeding #chars ?( need under+
+
 : #chars ( ca len c -- +n )
   0 2swap 0 ?do
     ( c count ca ) count over = under+ loop 2drop abs ; ?)
@@ -727,7 +757,7 @@ unneeding s' ?\ : s' ''' parse-string ; immediate
   \
   \ }doc
 
-( counted>stringer resize-stringer )
+( counted>stringer resize-stringer string-char? )
 
 unneeding counted>stringer ?(
 
@@ -742,6 +772,21 @@ unneeding counted>stringer ?(
   \ string and return it as _ca2_.
   \
   \ See: `>stringer`, `allocate-stringer`.
+  \
+  \ }doc
+
+unneeding string-char? ?( need char-in-string?
+
+: string-char? ( ca len c -- f ) -rot char-in-string? ; ?)
+
+  \ doc{
+  \
+  \ string-char? ( ca len c -- f ) "string-char-question"
+  \
+  \ Is char _c_ in string _ca len_?
+  \
+  \ See: `char-in-string?`, `char-position?`, `contains`,
+  \ `compare`, `#chars`.
   \
   \ }doc
 
@@ -778,24 +823,25 @@ code string/ ( ca1 len1 len2 -- ca2 len2 )
   \
   \ }doc
 
-unneeding char-in-string? ?( need -rot
+unneeding char-in-string? ?(
 
-: char-in-string? ( ca len c -- f )
-  -rot bounds ?do  dup i c@ = if drop true unloop exit then
-              loop drop false ; ?)
+: char-in-string? ( c ca len -- f )
+  bounds ?do  dup i c@ = if drop true unloop exit then
+         loop drop false ; ?)
 
   \ doc{
   \
-  \ char-in-string? ( ca len c -- f ) "char-in-string-question"
+  \ char-in-string? ( c ca len -- f ) "char-in-string-question"
   \
-  \ Is char _c_ in string _ca len_?
+  \ Is char _c_ in string _ca len_? ``char-in-string?`` is a
+  \ factor of `string-char?`: Its only difference is the order
+  \ of the input parameters.
   \
-  \ See: `char-position?`, `contains`, `compare`,
-  \ `#chars`.
+  \ See: `char-position?`, `contains`, `compare`, `#chars`.
   \
   \ }doc
 
-unneeding char-position? ?( need -rot
+unneeding char-position? ?(
 
 : char-position? ( ca len c -- +n true | false )
   -rot 0 ?do  2dup i + c@ = if 2drop i true unloop exit then
@@ -1044,5 +1090,12 @@ unneeding unescape ?(
   \ words that need it.
   \
   \ 2018-03-05: Update `[unneeded]` to `unneeding`.
+  \
+  \ 2018-03-28: Remove needing of `-rot`, which is in the
+  \ kernel. Change the order of parameters of `char-in-string?`
+  \ and factor `string-char?` from it. Update layout of
+  \ `unneeding` lines. Update notation of stack comments.
+  \
+  \ 2018-04-01: Add `str<>`.
 
   \ vim: filetype=soloforth

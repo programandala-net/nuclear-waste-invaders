@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201803052149
+  \ Last modified: 201804152328
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -169,7 +169,7 @@ unneeding ?repeat ?( need cs-dup need 0until
   \       ...
   \     flag ?repeat  \ Go back to ``begin`` if flag is non-zero
   \       ...
-  \     flag 0repeat  \ Go back to ``begin` if flag is zero
+  \     flag 0repeat  \ Go back to ``begin`` if flag is zero
   \       ...
   \     flag until    \ Go back to ``begin`` if flag is false
   \     ...
@@ -209,11 +209,11 @@ unneeding 0repeat ?( need cs-dup
   \ : test ( -- )
   \     begin
   \       ...
-  \     flag 0repeat  \ Go back to `begin` if flag is zero
+  \     flag 0repeat  \ Go back to ``begin`` if flag is zero
   \       ...
-  \     flag ?repeat  \ Go back to `begin` if flag is non-zero
+  \     flag ?repeat  \ Go back to ``begin`` if flag is non-zero
   \       ...
-  \     flag until    \ Go back to `begin` if flag is false
+  \     flag until    \ Go back to ``begin`` if flag is false
   \     ...
   \   ;
   \ ----
@@ -318,7 +318,7 @@ unneeding ?? ?(
   \
   \ }doc
 
-( retry ?retry ?leave )
+( retry ?retry ?leave 0leave )
 
   \ Description:
   \
@@ -390,7 +390,31 @@ code ?leave ( f -- ) ( R: loop-sys -- | loop-sys )
   \ immediately following the innermost syntactically enclosing
   \ `loop` or `+loop`.
   \
-  \ See: `leave`, `unloop`, `do`, `?do`.
+  \ See: `0leave`, `leave`, `unloop`, `do`, `?do`.
+  \
+  \ }doc
+
+unneeding 0leave ?(
+
+code 0leave ( f -- ) ( R: loop-sys -- | loop-sys )
+  E1 c, 78 04 + c, B0 05 + c, CA c, ' leave , jpnext,
+  \ pop hl
+  \ ld a,h
+  \ or l
+  \ jp z,leave_
+  \ _jp_next
+  end-code ?)
+
+  \ doc{
+  \
+  \ 0leave ( f -- ) ( R: loop-sys -- | loop-sys ) "question-leave"
+  \
+  \ If _f_ is zero, discard the loop-control parameters for
+  \ the current nesting level and continue execution
+  \ immediately following the innermost syntactically enclosing
+  \ `loop` or `+loop`.
+  \
+  \ See: `?leave`, `leave`, `unloop`, `do`, `?do`.
   \
   \ }doc
 
@@ -423,7 +447,7 @@ unneeding cond ?( need cs-mark need thens
   \   Run-time:    ( -- )
 
   \
-  \ Compilation: Mark the start of a ``cond`` .. `thens`
+  \ Compilation: Mark the start of a ``cond`` ... `thens`
   \ structure.  Leave _cs-mark_ on the control-flow stack, to
   \ be checked by `thens`.
   \
@@ -464,7 +488,7 @@ unneeding cond ?( need cs-mark need thens
 unneeding thens ?( need cs-test
 
 : thens
-  \ Compilation: ( C: cs-mark orig#1 .. orig#n -- )
+  \ Compilation: ( C: cs-mark orig#1 ... orig#n -- )
   \ Run-time:    ( -- )
   begin cs-test while postpone then repeat drop
   ; immediate compile-only ?)
@@ -472,22 +496,22 @@ unneeding thens ?( need cs-test
   \ doc{
   \
   \ thens
-  \   Compilation: ( C: cs-mark orig#1 .. orig#n -- )
+  \   Compilation: ( C: cs-mark orig#1 ... orig#n -- )
   \   Run-time:    ( -- )
 
   \
-  \ Compilation: Resolve all forward references _orig#1 ..
-  \ orign#n_ with `then` until _0_ is found.
+  \ Compilation: Resolve all forward references
+  \ _orig#1 ... orig#n_ with `then` until `cs-mark` is found.
   \
   \ Run-time: Continue execution.
   \
   \ ``thens`` is an `immediate` and `compile-only` word.
   \
   \ ``thens`` is a factor of `endcase` and other control
-  \ structures, but it's also the end of the `cond` ..
+  \ structures, but it's also the end of the `cond` ...
   \ ``thens`` structure. See `cond` for an usage example.
   \
-  \ See: `cs-mark`, `cs-test`, `andif`, `orif`.
+  \ See: `cs-test`, `andif`, `orif`.
   \
   \ }doc
 
@@ -659,5 +683,12 @@ unneeding orif ?(
   \ `0repeat`.
   \
   \ 2018-03-05: Update `[unneeded]` to `unneeding`.
+  \
+  \ 2018-03-28: Add `0leave`.
+  \
+  \ 2018-04-14: Fix markup in documentation.
+  \
+  \ 2018-04-15: Fix markup in documentation.  Update notation
+  \ ".." to "...". Fix and Improve documentation.
 
   \ vim: filetype=soloforth

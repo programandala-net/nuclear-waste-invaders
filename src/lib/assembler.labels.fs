@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201802051654
+  \ Last modified: 201804152059
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -48,7 +48,7 @@ assembler-wordlist dup >order set-current need ?rel
   \ al-id ( -- b ) "a-l-i-d"
   \
   \ _b_ is the identifier of absolute references created by
-  \ `al#`.  ``rl-ad`` is used as a bitmask added to the label
+  \ `al#`.  ``al-id`` is used as a bitmask added to the label
   \ number stored in `l-refs`.
   \
   \ See: `rl-id`.
@@ -192,8 +192,8 @@ variable labels  variable l-refs
   \               all bits are 0
   \            used reference:
   \               label number:        bits 0..5
-  \               relative reference?: bit 6 = 1 (mask `rl-id`)
-  \               absolute reference?: bit 7 = 1 (mask `al-id`)
+  \               relative reference?: bit 6 = 1 (mask ``rl-id``)
+  \               absolute reference?: bit 7 = 1 (mask ``al-id``)
   \ +1 = cell: label address
   \ ....
 
@@ -507,5 +507,9 @@ previous
   \
   \ 2018-02-05: Improve documentation: add pronunciation to
   \ words that need it.
+  \
+  \ 2018-04-14: Fix documentation of `al-id`.
+  \
+  \ 2018-04-15: Fix markup in documentation.
 
   \ vim: filetype=soloforth

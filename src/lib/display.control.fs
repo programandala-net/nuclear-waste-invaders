@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201803082249
+  \ Last modified: 201803281508
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -23,10 +23,9 @@
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( printer tabulate )
+( printer tabulate newline )
 
-unneeding printer
-?\ : printer ( -- ) 3 channel printing on ;
+unneeding printer ?\ : printer ( -- ) 3 channel printing on ;
 
   \ doc{
   \
@@ -38,26 +37,22 @@ unneeding printer
   \
   \ }doc
 
-unneeding tabulate ?(
+unneeding tabulate ?( need column
 
-need column
+create /tabulate 8 c,
 
-variable /tabulate  8 /tabulate !
   \ doc{
   \
-  \ /tabulate ( -- a ) "slash-tabulate"
+  \ /tabulate ( -- ca ) "slash-tabulate"
   \
-  \ A variable. _a_ is the address of a cell containing the
-  \ number of spaces that `tabulate` counts for. Its default
-  \ value is 8.
+  \ _ca_ is the address of a byte containing the number of
+  \ spaces that `tabulate` counts for.  Its default value is 8.
   \
   \ See `tabulate`.
   \
   \ }doc
 
-: tabulate ( -- ) column 1+ /tabulate @ tuck mod - spaces ;
-
-?)
+: tabulate ( -- ) column 1+ /tabulate c@ tuck mod - spaces ; ?)
 
   \ doc{
   \
@@ -76,7 +71,47 @@ variable /tabulate  8 /tabulate !
   \
   \ }doc
 
-( 'cr' 'tab' 'bs' crs tab tabs backspace backspaces )
+unneeding newline ?( need 'cr'
+
+create newline> 1 c, 'cr' c, 0 c,
+
+  \ doc{
+  \
+  \ newline> ( -- ca ) "new-line-to"
+  \
+  \ _ca_ is the address of a counted string containing the
+  \ character(s) (maximum 2) used to mark the start of a new
+  \ line of text in file operations.
+  \
+  \ The string can be configured by the application. By default
+  \ it contains only  the character `'cr'`.
+  \
+  \ The string is returned by `newline`.
+  \
+  \ See: `'lf'`.
+  \
+  \ }doc
+
+: newline ( -- ca len ) newline> count ; ?)
+
+  \ doc{
+  \
+  \ newline ( -- ca len )
+  \
+  \ _ca len_ is a character string containing the character(s)
+  \ used to mark the start of a new line of text in file
+  \ operations.
+  \
+  \ The string is stored at `newline>` as a counted string,
+  \ which can be configured by the application.
+  \
+  \ Origin: Gforth.
+  \
+  \ See: `'cr'`, `'lf'`.
+  \
+  \ }doc
+
+( 'cr' 'lf' 'tab' 'bs' crs tab tabs backspace backspaces eol? )
 
 unneeding 'tab' ?\ 6 cconstant 'tab'  exit
 
@@ -113,12 +148,29 @@ unneeding 'cr' ?\ 13 cconstant 'cr'  exit
   \ A character constant that returns the caracter code used as
   \ carriage return (13).
   \
-  \ See: `cr`, `crs`.
+  \ See: `cr`, `crs`, `newline`, `'lf'`.
   \
   \ }doc
 
-unneeding tab
-?\ need 'tab'  : tab ( -- ) 'tab' emit ;
+unneeding 'lf' ?\ 10 cconstant 'lf'  exit
+
+  \ doc{
+  \
+  \ 'lf' ( -- c ) "tick-l-f"
+  \
+  \ A character constant that returns the caracter code used as
+  \ line feed (10).
+  \
+  \ NOTE: In the ZX Spectrum's character set, control character
+  \ code 10 is not called "line feed" but "cursor down", which
+  \ is analogous. ``lf`` is provided for making `read-line` and
+  \ other words clearer.
+  \
+  \ See: `cr`, `newline`.
+  \
+  \ }doc
+
+unneeding tab ?\ need 'tab'  : tab ( -- ) 'tab' emit ;
 
   \ doc{
   \
@@ -133,6 +185,7 @@ unneeding tab
   \ }doc
 
 unneeding backspace
+
 ?\ need 'bs'  : backspace ( -- ) 'bs'  emit ;
 
   \ doc{
@@ -145,8 +198,7 @@ unneeding backspace
   \
   \ }doc
 
-unneeding crs
-?\ need 'cr'  : crs   ( n -- ) 'cr'  emits ;
+unneeding crs ?\ need 'cr'  : crs   ( n -- ) 'cr'  emits ;
 
   \ doc{
   \
@@ -158,8 +210,7 @@ unneeding crs
   \
   \ }doc
 
-unneeding tabs
-?\ need 'tab'  : tabs ( n -- ) 'tab' emits ;
+unneeding tabs ?\ need 'tab'  : tabs ( n -- ) 'tab' emits ;
 
   \ doc{
   \
@@ -172,6 +223,7 @@ unneeding tabs
   \ }doc
 
 unneeding backspaces
+
 ?\ need 'bs'  : backspaces    ( n -- ) 'bs'  emits ;
 
   \ doc{
@@ -181,6 +233,19 @@ unneeding backspaces
   \ Emit _n_ number of backspace characters (character code 8).
   \
   \ See: `backspace`, `'bs'`.
+  \
+  \ }doc
+
+unneeding eol? ?( need newline need char-in-string?
+
+: eol? ( c -- f ) newline char-in-string? ; ?)
+
+  \ doc{
+  \
+  \ eol? ( c -- f ) "e-o-l-question"
+  \
+  \ If _c_ is one of the characters of `newline`
+  \ return _true_; otherwise return _false_.
   \
   \ }doc
 
@@ -220,5 +285,13 @@ unneeding backspaces
   \ 2018-03-05: Update `[unneeded]` to `unneeding`.
   \
   \ 2018-03-08: Add words' pronunciaton.
+  \
+  \ 2018-03-26: Add `eol?`, `newline>`, `/newline`, `newline`.
+  \
+  \ 2018-03-27: Make `/tabulate` a byte variable. Fix `eol?`.
+  \
+  \ 2018-03-28: Add `'lf'`. Improve documentation. Remove
+  \ `/newline`, making `newline>` the address of a counted
+  \ string. Make `eol?` check `newline`.
 
   \ vim: filetype=soloforth
