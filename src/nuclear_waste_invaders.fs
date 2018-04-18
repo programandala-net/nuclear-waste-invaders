@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.245.0+201803022332" ;
+: version$ ( -- ca len ) s" 0.246.0+201804181809" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3704,27 +3704,27 @@ defer gun-stack ( -- )
 
 cvariable recharge-delay recharge-delay coff \ milliseconds
 
-: recharge1 ( a -- )
+: recharge-1 ( a -- )
   used-projectiles-stack xstack x>
                     swap xstack >x .ammo recharge-delay c@ ms ;
   \ Recharge the projectiles stack _a_, which is the current
   \ one, with one projectile from the used projectiles stack,
   \ and update the ammo in the status bar.
 
-: recharge ( a n -- ) 0 ?do dup recharge1 loop drop ;
+: recharge ( a n -- ) 0 ?do dup recharge-1 loop drop ;
   \ Recharge the projectiles stack _a_ with _n_ projectiles
   \ from the used projectiles stack.
 
-: recharge1-bullet-gun ( -- )
-  #bullets xdepth = ?exit bullets-stack recharge1 ;
+: recharge-1-bullet-gun ( -- )
+  #bullets xdepth = ?exit bullets-stack recharge-1 ;
   \ Recharge the bullet gun with one projectile, if possible.
 
-: recharge1-missile-gun ( -- )
-  #missiles xdepth = ?exit missiles-stack recharge1 ;
+: recharge-1-missile-gun ( -- )
+  #missiles xdepth = ?exit missiles-stack recharge-1 ;
   \ Recharge the missile gun with one projectile, if possible.
 
-: recharge1-ball-gun ( -- )
-  #balls xdepth = ?exit balls-stack recharge1 ;
+: recharge-1-ball-gun ( -- )
+  #balls xdepth = ?exit balls-stack recharge-1 ;
   \ Recharge the ball gun with one projectile, if possible.
 
 : -projectiles ( -- ) projectiles /projectiles erase ;
@@ -5252,9 +5252,9 @@ missile-gun-tank-sprite missile-gun~ ~gun-tank-sprite !
 4 missile-gun~ ~gun-projectile-power c!
 1    ball-gun~ ~gun-projectile-power c!
 
-' recharge1-bullet-gun   bullet-gun~ ~gun-recharger !
-' recharge1-missile-gun missile-gun~ ~gun-recharger !
-' recharge1-ball-gun       ball-gun~ ~gun-recharger !
+' recharge-1-bullet-gun   bullet-gun~ ~gun-recharger !
+' recharge-1-missile-gun missile-gun~ ~gun-recharger !
+' recharge-1-ball-gun       ball-gun~ ~gun-recharger !
 
   \ ===========================================================
   cr .( Shoot) ?depth debug-point \ {{{1
@@ -5535,9 +5535,6 @@ cvariable projectile-frame
   trigger-time gun~ ~gun-trigger-interval c@ schedule ;
   \ Fire the gun of the tank.
 
-: flying-projectiles? ( -- 0f ) #flying-projectiles c@ ;
-  \ Is there any projectile flying?
-
 : next-flying-projectile ( -- )
   flying-projectile# c@1+ dup #flying-projectiles c@ < and
   dup flying-projectile# c!
@@ -5546,7 +5543,7 @@ cvariable projectile-frame
   \ one.
 
 : manage-projectiles ( -- )
-  flying-projectiles? 0exit
+  #flying-projectiles c@ 0exit
   projectile~ ~projectile-action perform
   next-flying-projectile ;
   \ Manage a flying projectile, if any.
@@ -5860,7 +5857,7 @@ localized-string about-next-location$ ( -- ca len )
 : end-of-attack? ( -- f ) extermination? catastrophe? or ;
 
 : lose-projectiles ( -- )
-  begin driving arming flying-projectiles?
+  begin driving arming #flying-projectiles c@
   while manage-projectiles repeat ;
   \ Lose all flying projectiles.
   \ Note `driving` and `arming` are included only to prevent
@@ -5926,7 +5923,7 @@ localized-string about-next-location$ ( -- ca len )
   \ Reduce the actual invaders to the left half.
 
 : mp ( -- ) manage-projectiles ;
-: fp? ( -- 0f ) flying-projectiles? ;
+: fp ( -- n ) #flying-projectiles c@ ;
 : bua ( -- ) bullet-action ;
 : mia ( -- ) missile-action ;
 : baa ( -- ) ball-action ;
