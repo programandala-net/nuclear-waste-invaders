@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2018-03-02
+:revdate: 2018-04-30
 
 Older first:
 
@@ -151,3 +151,14 @@ Older first:
   say `dump-udga`, for speed.
 - Fix: the system crashes when a newly recharged ball is shoot. This
   bug was introduced with the recharging system, in version 0.186.0.
+
+== 2018-04-18, 2018-04-30
+
+Fix: More than two flying balls crash the system. It seems the origin
+is the implementation of recharging:
+
+In versions 0.186.0 and 0.186.1 the system crashes when balls are
+recharged; in version 0.187.0, which limited the number of
+projectiles, the system crashes when three balls are flying.  Same
+problem with missiles. Bullets don't cause trouble because they are
+too fast to be recharged beyond their limit.
