@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201804261301
+  \ Last modified: 201806041058
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -32,7 +32,38 @@
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( delimited located needed-word )
+( delimited located )
+
+: ((in-block-header? ( ca len -- f )
+  \ 0 3 at-xy 64 spaces 0 3 at-xy \ XXX INFORMER
+  begin 2dup parse-name
+        \ 2dup type \ XXX INFORMER
+        2dup s" )" str= if 2drop 2drop 2drop false exit then
+                   str= if 2drop             true  exit then
+  again ;
+
+: (in-block-header? ( ca len u -- f )
+  block>source parse-name s" (" str= if   ((in-block-header?
+                                     else 2drop false then ;
+
+  \ (in-block-header? ( ca len u -- f )
+  \
+  \ Is name _ca len_ in the header of block _u_? The current
+  \ source is not preserved.
+  \
+  \ ``(in-block-header?`` is a factor of `in-block-header?`.
+
+: in-block-header? ( ca len u -- f )
+  nest-source (in-block-header? unnest-source ; -->
+
+  \ in-block-header? ( ca len u -- f )
+  \
+  \ Is name _ca len_ in the header of block _u_? The current
+  \ source is preserved with `nest-source` and `unnest-source`.
+  \
+  \ See: `(in-block-header?`.
+
+( ... )
 
 : contains ( ca1 len1 ca2 len2 -- f ) search nip nip ;
   \ Does string _ca1 len1_ contain string _ca2 len2_?
@@ -41,6 +72,8 @@
   \ it can not be loaded by the applications from this block
   \ (because `unneeding` is not defined at this point).
   \ That's why `contains` is not included in the block header.
+  \
+  \ XXX TODO -- Not needed with multiline block headers.
 
 variable default-first-locatable  variable first-locatable
 variable last-locatable  blocks/disk 1- last-locatable !
@@ -87,6 +120,7 @@ variable last-locatable  blocks/disk 1- last-locatable !
 : delimited ( ca1 len1 -- ca2 len2 )
   dup 2+ dup allocate-stringer swap ( ca1 len1 ca2 len2 )
   2dup blank  2dup 2>r drop char+ smove 2r> ;
+  \ XXX TODO -- Not needed with multiline block headers.
 
   \ doc{
   \
@@ -112,36 +146,118 @@ defer unlocated ( block -- )
 
   \ defer .info ( -- ) ' noop ' .info defer!
 
-: (located) ( ca len -- block | false )
+-->
+
+( ... )
+
+: 1-line-(located ( ca len -- block | false )
 
   \ ----------------------------
-  \ : (located) 2dup type space
-  \ : (located) cr 2dup type space .s
-  \ : (located) cr 2dup type get-current dup u. 0= if quit then
-  \ : (located) cr 2dup type space .s depth 2 > if key drop then
-  \ : (located) cr 2dup type space rp@ rp0 @ - -2 / . np@ u. cr .s
-  \ : (located) cr 2dup type space rp@ rp0 @ - -2 / . .s
-  \ : (located) cr 2dup type space rp@ rp0 @ - -2 / . .s .info
-  \ : (located) cr ." (located)<" 2dup type ." >"
-  \ : (located) cr ."  base: #" base @ dup decimal . base !
-  \ : (located) cr ."  rdepth: " rp@ rp0 @ - -2 / .
-  \ : (located) cr ."  unused-stringer: " unused-stringer .
+  \ 2dup type space
+  \ cr 2dup type space .s
+  \ cr 2dup type get-current dup u. 0= if quit then
+  \ cr 2dup type space .s depth 2 > if key drop then
+  \ cr 2dup type space rp@ rp0 @ - -2 / . np@ u. cr .s
+  \ cr 2dup type space rp@ rp0 @ - -2 / . .s
+  \ cr 2dup type space rp@ rp0 @ - -2 / . .s .info
+  \ cr ." (located<" 2dup type ." >"
+  \ cr ."  base: #" base @ dup decimal . base !
+  \ cr ."  rdepth: " rp@ rp0 @ - -2 / .
+  \ cr ."  unused-stringer: " unused-stringer .
   \ ----------------------------
-    \ XXX INFORMER -- alternative options for debugging
+    \ XXX INFORMER -- options for debugging
 
   ?dup 0= #-32 ?throw
-  delimited last-locatable @ 1+  first-locatable @
+  delimited
+  last-locatable @ 1+  first-locatable @
   default-first-locatable @  first-locatable !
-  ?do 0 i line>string 2over contains \ i home . \ XXX INFORMER
+
+  ?do 0 i line>string 2over contains
       if 2drop i unloop exit then break-key? #-28 ?throw
       i unlocated loop 2drop 0 ;
+
   \ Note:
   \ Error #-32 is "invalid name argument".
   \ Error #-28 is "user interrupt".
 
   \ doc{
   \
-  \ (located) ( ca len -- block | 0 ) "paren-located"
+  \ 1-line-(located ( ca len -- block | 0 ) "one-line-paren-located"
+  \
+  \ Locate the first block whose single-line header contains
+  \ the string _ca len_ (surrounded by spaces), and return its
+  \ number. If not found, return zero.  The search is
+  \ case-sensitive.
+  \
+  \ Only the blocks delimited by `first-locatable` and
+  \ `last-locatable` are searched.
+  \
+  \ `1-line-(located` is an alternative, deprecated action of
+  \ `(located`.
+  \
+  \ }doc
+
+-->
+
+( ... )
+
+: multiline-(located ( ca len -- block | false )
+
+  \ ----------------------------
+  \ 2dup type space
+  \ cr 2dup type space .s
+  \ cr 2dup type get-current dup u. 0= if quit then
+  \ cr 2dup type space .s depth 2 > if key drop then
+  \ cr 2dup type space rp@ rp0 @ - -2 / . np@ u. cr .s
+  \ cr 2dup type space rp@ rp0 @ - -2 / . .s
+  \ cr 2dup type space rp@ rp0 @ - -2 / . .s .info
+  \ cr ." (located<" 2dup type ." >"
+  \ cr ."  base: #" base @ dup decimal . base !
+  \ cr ."  rdepth: " rp@ rp0 @ - -2 / .
+  \ cr ."  unused-stringer: " unused-stringer .
+  \ ----------------------------
+    \ XXX INFORMER -- options for debugging
+
+  \ home 2dup ." needed: " type space
+  \ cr ." latest: " latest .name space
+    \ XXX INFORMER
+
+  ?dup 0= #-32 ?throw
+  nest-source last-locatable @ 1+  first-locatable @
+              default-first-locatable @  first-locatable !
+  ?do
+      \ 0 2 at-xy i . \ XXX INFORMER
+      \ depth .  \ XXX INFORMER
+      \ rp@ rp0 @ - [ cell negate ] literal / .  \ XXX INFORMER
+      2dup i (in-block-header?
+      if   2drop i unloop unnest-source exit
+      then break-key? #-28 ?throw
+      i unlocated loop 2drop 0 unnest-source ;
+  \ Note:
+  \ Error #-32 is "invalid name argument".
+  \ Error #-28 is "user interrupt".
+
+  \ doc{
+  \
+  \ multiline-(located ( ca len -- block | 0 ) "multiline-paren-located"
+  \
+  \ Locate the first block whose multiline-header header
+  \ contains the string _ca len_ (surrounded by spaces), and
+  \ return its number. If not found, return zero.  The search
+  \ is case-sensitive.
+  \
+  \ Only the blocks delimited by `first-locatable` and
+  \ `last-locatable` are searched.
+  \
+  \ `multiline-(located` is the default action of `(located`.
+  \
+  \ }doc
+
+defer (located ' 1-line-(located ' (located defer!  -->
+
+  \ doc{
+  \
+  \ (located ( ca len -- block | 0 ) "paren-located"
   \
   \ Locate the first block whose header contains the string _ca
   \ len_ (surrounded by spaces), and return its number. If not
@@ -150,14 +266,20 @@ defer unlocated ( block -- )
   \ Only the blocks delimited by `first-locatable` and
   \ `last-locatable` are searched.
   \
-  \ This is the default action of `located`, which is
+  \ ``(located`` is a deferred word. Its default value is
+  \ `multiline-(located`, which is under development; its
+  \ alternative old value is `1-line-(located`.
+  \
+  \ ``(located`` is the default action of `located`, which is
   \ changed by `use-fly-index`.
   \
   \ See: `default-first-locatable`.
   \
   \ }doc
 
-defer located ( ca len -- block | false ) -->
+( located ?located reneeded reneed needed-word unneeding )
+
+defer located ( ca len -- block | false )
 
   \ doc{
   \
@@ -171,26 +293,42 @@ defer located ( ca len -- block | false ) -->
   \ `last-locatable` are searched`.
   \
   \ This is a deferred word whose default action is
-  \ `(located)`.
+  \ `(located`.
   \
   \ See: `need-from`.
   \
   \ }doc
 
-( ?located reneeded reneed needed-word unneeding )
-
 2variable needed-word  0. needed-word 2!
+
+  \ doc{
+  \
+  \ needed-word ( -- a )
+  \
+  \ A double-cell variable containing the address and length of
+  \ the string containing the word currently needed by `need`
+  \ and friends.
+  \
+  \ }doc
 
 : ?located ( n -- ) \ cr ." ?located " dup .
                       \ XXX INFORMER
   ?exit needed-word 2@ parsed-name 2! #-268 throw ;
 
+  \ XXX FIXME -- When multiline block headers are active,
+  \ command `need zxzx` (i.e. any unexistent word) makes the
+  \ system freeze after this `throw`, while `need zxzx ` (note
+  \ the trailing space) does not. This problem has to do with
+  \ un/nesting the sources.
+
   \ doc{
   \
   \ ?located ( n -- ) "question-located"
   \
-  \ If _n_ is zero, throw an exception #-268 ("needed, but
-  \ not located"). Otherwise do nothing.
+  \ If _n_ is zero, store `needed-word` into `parsed-name` (in
+  \ order to make `needed-word` displayed) and `throw` an
+  \ exception #-268 ("needed, but not located").  Otherwise do
+  \ nothing.
   \
   \ }doc
 
@@ -378,7 +516,7 @@ defer need ( "name" -- )
   \ Note: This initialization is done also by
   \ `use-default-need`, which is an optional word.
 
-' (located)        ' located    defer!
+' (located        ' located    defer!
 ' drop             ' unlocated  defer!
   \ Set the default action of `located` and `unlocated`:
   \ Search the blocks.
@@ -413,7 +551,7 @@ unneeding use-default-need ?(
 
 unneeding use-default-located ?(
 
-: use-default-located ( -- ) ['] (located) ['] located defer!
+: use-default-located ( -- ) ['] (located ['] located defer!
                              ['] drop ['] unlocated defer! ; ?)
 
   \ doc{
@@ -428,7 +566,7 @@ unneeding use-default-located ?(
   \
   \ }doc
 
-unneeding use-default-located ?(
+unneeding use-no-index ?(
 
 need use-default-need need  use-default-located
 
@@ -714,5 +852,15 @@ unneeding need-here ?(
   \
   \ 2018-04-26: Make `?located` consume its argument (its stack
   \ comment was wrong, anyway). Improve documentation.
+  \
+  \ 2018-06-02: Draft an alternative `(located)` in order to
+  \ support multiline block headers. Fix needing of
+  \ `use-no-index`.  Document `needed-word`.
+  \
+  \ 2018-06-03: Make `(located)` deferred, for testing. Fix,
+  \ rewrite and factor `in-block-header?`.
+  \
+  \ 2018-06-04: Update: remove trailing closing paren from
+  \ word names.
 
   \ vim: filetype=soloforth
