@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041104
+  \ Last modifed: 201806041324
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -33,7 +33,7 @@ variable ~~?  ~~? on
   \
   \ ~~? ( -- a ) "tilde-tilde-question"
   \
-  \ A variable. _a_ is the address of a cell containing a flag.
+  \ A `variable`. _a_ is the address of a cell containing a flag.
   \ When the flag is true, the debugging code compiled by `~~`
   \ is executed, else ignored.  Its default value is true.
   \
@@ -328,6 +328,6 @@ defer ~~app-info ( -- ) ' noop ' ~~app-info defer!
   \ 2018-04-14: Fix documentation.
   \
   \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ word names. Link `variable` in documentation.
 
   \ vim: filetype=soloforth

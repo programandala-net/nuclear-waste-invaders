@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041106
+  \ Last modifed: 201806041324
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -145,7 +145,7 @@ variable case-sensitive-esc-chars  case-sensitive-esc-chars on
   \
   \ case-sensitive-esc-chars ( -- a )
   \
-  \ A variable. _a_ is the address of a cell containing a flag
+  \ A `variable`. _a_ is the address of a cell containing a flag
   \ that turns case-sensitive mode on and off only during the
   \ parsing of escaped strings, e.g.  `s\"` and `.\"`.  The
   \ contents of this variable are temporarily stored into
@@ -305,7 +305,7 @@ variable #esc-order  #esc-order off
   \
   \ #esc-order ( -- a ) "hash-esc-order"
   \
-  \ A variable. _a_ is the address of a cell containing the
+  \ A `variable`. _a_ is the address of a cell containing the
   \ number of word lists in the escaped strings search order.
   \
   \ See: `esc-context`, `esc-max-order`, `esc-get-order`,
@@ -319,7 +319,7 @@ create esc-context here max-esc-order cells dup allot erase ?)
   \
   \ esc-context ( -- a )
   \
-  \ A variable that holds the escaped strings search order: _a_
+  \ A `variable` that holds the escaped strings search order: _a_
   \ is the address of an array of cells, whose maximum length
   \ is hold in the `max-esc-order` constant, and whose current
   \ length is hold in the `#esc-order` variable.  _a_ holds the
@@ -538,6 +538,6 @@ need parse-char need char>string
   \ 2018-04-14: Fix typos in documentation.
   \
   \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ word names. Link `variable` in documentation.
 
   \ vim: filetype=soloforth

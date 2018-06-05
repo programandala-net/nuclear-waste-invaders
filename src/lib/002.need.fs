@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041058
+  \ Last modified: 201806041323
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -84,7 +84,7 @@ variable last-locatable  blocks/disk 1- last-locatable !
   \
   \ first-locatable ( -- a )
   \
-  \ A variable. _a_ is the address of a cell containing  the
+  \ A `variable`. _a_ is the address of a cell containing  the
   \ number of the first block to be searched by `located` and
   \ its descendants.
   \
@@ -96,7 +96,7 @@ variable last-locatable  blocks/disk 1- last-locatable !
   \
   \ default-first-locatable ( -- a )
   \
-  \ A variable. _a_ is the address of a cell containing the
+  \ A `variable`. _a_ is the address of a cell containing the
   \ default number of the first block to be searched by
   \ `located` and its descendants.
   \
@@ -108,7 +108,7 @@ variable last-locatable  blocks/disk 1- last-locatable !
   \
   \ last-locatable ( -- a )
   \
-  \ A variable. _a_ is the address of a cell containing the
+  \ A `variable`. _a_ is the address of a cell containing the
   \ number of the last block to be searched by `located` and
   \ its descendants. Its default value is the last block of the
   \ disk.
@@ -279,7 +279,7 @@ defer (located ' 1-line-(located ' (located defer!  -->
 
 ( located ?located reneeded reneed needed-word unneeding )
 
-defer located ( ca len -- block | false )
+defer located ( ca len -- block | 0 )
 
   \ doc{
   \
@@ -861,6 +861,7 @@ unneeding need-here ?(
   \ rewrite and factor `in-block-header?`.
   \
   \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ word names. Fix typo in documentation. Link `variable` in
+  \ documentation.
 
   \ vim: filetype=soloforth
