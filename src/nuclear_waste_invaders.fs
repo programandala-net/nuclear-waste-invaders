@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.246.0+201804181809" ;
+: version$ ( -- ca len ) s" 0.246.0+201804301609" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -905,12 +905,12 @@ kk-3# keyset~ ~keyset-ball-gun c!
 0 cconstant ammo-x
   \ Column of the current gun's ammo figure at the status bar.
 
-: (.ammo ( n -- )
+: (.ammo ( -- )
   projectiles-left 0 <# [ ammo-digits ] [#] #>
   ammo-x status-bar-y at-xy type ;
   \ Display the current ammo left, with the current attribute.
 
-: .ammo ( n -- ) ammo-attr attr! (.ammo ;
+: .ammo ( -- ) ammo-attr attr! (.ammo ;
   \ Display the current ammo left.
 
 0 cconstant  bullet-gun#
@@ -918,7 +918,7 @@ kk-3# keyset~ ~keyset-ball-gun c!
 2 cconstant    ball-gun#
 
 defer set-gun ( n -- )
-  \ Set the current arm:
+  \ Set gun number _n_ as the current one:
   \ 0=bullet gun
   \ 1=missile gun
   \ 2=ball gun
@@ -3623,13 +3623,16 @@ variable used-projectiles
   \ Total number of projectiles the tank can hold.
 
 #bullets allot-xstack constant bullets-stack
-  \ Create an extra stack to store the unused bullets.
+  \ Create an extra stack to store the unused bullets
+  \ which are left in the tank.
 
 #missiles allot-xstack constant missiles-stack
-  \ Create an extra stack to store the unused missiles.
+  \ Create an extra stack to store the unused missiles
+  \ which are left in the tank.
 
 #balls allot-xstack constant balls-stack
-  \ Create an extra stack to store the unused balls.
+  \ Create an extra stack to store the unused balls
+  \ which are left in the tank.
 
 #projectiles allot-xstack constant used-projectiles-stack
   \ Create an extra stack to store the used projectiles,
@@ -3683,7 +3686,8 @@ create flying-projectiles /flying-projectiles allot
   #flying-projectiles c@ flying-projectiles array> !
   #flying-projectiles c1+! used-projectiles 1+! ;
   \ Store projectile _a_ into the array of flying projectiles
-  \ and update the count of currently flying projectiles.
+  \ and update the counts of used and currently flying
+  \ projectiles.
 
 : stop-flying ( n -- )
   flying-projectiles /flying-projectiles rot 1+ cells /string
@@ -3717,15 +3721,18 @@ cvariable recharge-delay recharge-delay coff \ milliseconds
 
 : recharge-1-bullet-gun ( -- )
   #bullets xdepth = ?exit bullets-stack recharge-1 ;
-  \ Recharge the bullet gun with one projectile, if possible.
+  \ Recharge the bullet gun, which is the current one,  with
+  \ one projectile, if possible.
 
 : recharge-1-missile-gun ( -- )
   #missiles xdepth = ?exit missiles-stack recharge-1 ;
-  \ Recharge the missile gun with one projectile, if possible.
+  \ Recharge the missile gun, which is the current one,  with
+  \ one projectile, if possible.
 
 : recharge-1-ball-gun ( -- )
   #balls xdepth = ?exit balls-stack recharge-1 ;
-  \ Recharge the ball gun with one projectile, if possible.
+  \ Recharge the ball gun, which is the current one,  with one
+  \ projectile, if possible.
 
 : -projectiles ( -- ) projectiles /projectiles erase ;
   \ Erase the projectiles data table.
@@ -3744,7 +3751,7 @@ projectile-y0 columns * constant /hit-projectiles
 create hit-projectiles /hit-projectiles allot
   \ Byte array which is used to mark the projectiles that have
   \ been hit by another projectile. This is needed to let the
-  \ current projectile mark a slower one hit. When the hit
+  \ current projectile mark a slower one as hit. When the hit
   \ happens the only info available about the slower projectile
   \ is its coordinates, and searching the projectile data for a
   \ match would be too slow. That's why a data field of the
@@ -5194,7 +5201,10 @@ missile-gun# gun#>~ constant missile-gun~
                  ~gun-ammo-x c@ c!> ammo-x
   gun-stack
   ; ' set-gun defer!
-  \ Set _n_ as the current gun.
+  \ Set gun number _n_ as the current one:
+  \ 0=bullet gun
+  \ 1=missile gun
+  \ 2=ball gun
 
 : recharge-gun ( -- ) gun~ ~gun-recharger perform ;
   \ Recharge the current gun.
@@ -5546,10 +5556,13 @@ cvariable projectile-frame
   #flying-projectiles c@ 0exit
   projectile~ ~projectile-action perform
   next-flying-projectile ;
-  \ Manage a flying projectile, if any.
+  \ If there is any flying projectile, manage it and set the
+  \ next flying projectile as the current one.
 
 : max-flying-projectiles? ( -- f )
   #flying-projectiles c@ max-flying-projectiles = ;
+  \ Is the current number of flying projectiles the maximum
+  \ number allowed?
 
 : shooting ( -- )
   kk-fire pressed?        0exit
@@ -5557,7 +5570,7 @@ cvariable projectile-frame
   projectiles-left        0exit
   max-flying-projectiles? ?exit
   gun-below-building?     ?exit fire ;
-  \ Manage the gun.
+  \ Manage the current gun.
 
 : tank-previous-frame ( -- )
   tank-frame c@ tank-frame- tank-frame c! ;
@@ -5577,7 +5590,7 @@ cvariable projectile-frame
 : change-gun ( n -- ) unhighlight-gun
                       set-gun tank-previous-frame .tank
                       highlight-gun ;
-  \ Change the current gun for _n_, updating the status bar and
+  \ Make _n_ the current gun, updating the status bar and
   \ the tank.
 
 : next-gun ( -- ) get-gun 1+ dup #guns < and change-gun ;
