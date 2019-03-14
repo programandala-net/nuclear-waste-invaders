@@ -47,10 +47,10 @@ build the program yourself:
 . Start a ZX Spectrum 128 emulator with the Plus D interface.
 . Enter 128 BASIC.
 . Insert the Solo Forth's <disk_0_boot.mgt> disk image into disk drive
-  1.
+  1 of your emulator.
 . Type the BASIC command `run` to load G+DOS and Solo Forth from disk drive 1.
 . Insert the <disk_2_nuclear_waste_invaders.mgt> disk image into disk
-  drive 1.
+  drive 1 of your emulator.
 . Open the <graphics_and_font.tap> tape image as the input tape of
   your emulator.
 . Type Forth command `1 load` to load block 1 from the current drive. This will
@@ -82,7 +82,7 @@ http://programandala.net/en.program.solo_forth.html[Solo Forth]
 GitHub,role="external"]).
 
 Página en la red:
-http://programandala.net/en.program.nuclear_waste_invaders.html.
+http://programandala.net/es.programa.nuclear_waste_invaders.html.
 
 === Cómo compilar y arrancar
 
@@ -97,11 +97,11 @@ construir el programa tú mismo:
 . Arranca un emulador de ZX Spectrum 128 con la interfaz Plus D.
 . Entra en 128 BASIC.
 . Inserta la imagen de disquete <disk_0_boot.mgt> de Solo Forth en la
-  disquetera 1.
+  disquetera 1 de tu emulador.
 . Da el comando de BASIC `run` para cargar G+DOS y Solo Forth desde la
   disquetera 1.
 . Inserta la imagen de disquete <disk_2_nuclear_waste_invaders.mgt> en
-  la disquetera 1.
+  la disquetera 1 de tu emulador.
 . Abre la imagen de cinta de casete <graphics_and_font.tap> como cinta
   de entrada de tu emulador.
 . Escribe el comando de Forth `1 load` para cargar el bloque 1 de la
@@ -115,3 +115,51 @@ construir el programa tú mismo:
 . Escribe `run` para empezar el juego.
 
 // end::es[]
+
+== Esperanto
+
+// tag::eo[]
+
+=== Projekto
+
+_Nuclear Waste Invaders_ (Atomrubaĵaj Invadantoj) esta programata
+reinterpreto, por la komputilo ZX Spectrum 128, el
+http://www.zonadepruebas.com/viewtopic.php?t=4231[ Nuclear Invaders
+(Dancresp, 2013),role="external"] de komputilo Jupiter ACE.
+
+Ĝi estas verkata en
+http://standard-forth.org[Forth,role="external"] per
+http://programandala.net/en.program.solo_forth.html[Solo Forth]
+(http://github.com/programandala-net/solo-forth[Solo Forth en
+GitHub,role="external"]).
+
+Retpaĝo:
+http://programandala.net/eo.programo.nuclear_waste_invaders.html.
+
+=== Kiel kompili kaj funkciigi
+
+. Certiĝu ke la necesaj programoj, listigitaj supre de la dosiero
+  <Makefile>, estas instalitaj en via sistemo.
+. Tajpu `make` en la dosierujo de la projekto por krei la diskedeskan
+  dosieron <disk_2_nuclear_waste_invaders.mgt> kaj la kasedeskan
+  dosieron <graphics.tap>.
+. Enmetu la diskedeskan dosieron <disk_0_boot.mgt> de Solo Forth en la
+  diskedujon 1 de via emulilo.
+. Skribu la BASIC-ordonon `run` por funkciigi G+DOS kaj Solo Forth el
+  la diskedujo 1.
+. Enmetu la diskedeskan dosieron <disk_2_nuclear_waste_invaders.mgt>
+  en la diskedujon 1 de via emulilo.
+. Malfermu la kasedeskan dosieron <graphics_and_font.tap> kiel
+  enir-kasedon de via emulilo.
+. Skribu ordonon de Forth `1 load` por preni blokon 1 el la nuna
+  diskedujo. Ĉi tio komencos la kompiladon, dum kiu mesaĝoj estos
+  montrataj sur la ekrano.
+. Elektu la plej grandan rapidon de via emulilo kaj atendu. Kiam la
+  kompilado finiĝos, la ekrano estos forviŝita kaj mesaĝo estos
+  printita.
+. Por konservi la kompilitan ludon, kreu kopion de la tuta sistemo en
+  SZX-formata dosiero, uzante vian emulilon.
+. Skribu `run` por komenci la ludon.
+
+// end::eo[]
+
