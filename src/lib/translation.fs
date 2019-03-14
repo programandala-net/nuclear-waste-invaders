@@ -85,37 +85,6 @@ unneeding localized-string ?( need langs need lang
   \ _c[langs]..c[1]_ are ordered by ISO language code, being
   \ TOS the first one.
 
-( localized-string-test )
-
-  \ XXX FIXME -- 2019-03-14: Strings with characters >127 are
-  \ ignored. But everything seems OK in Solo Forth's `scan` and
-  \ `parse`.
-
-need localized-string need cenum need c!>
-
-0 cenum en         \ English
-  cenum eo         \ Esperanto
-  cenum es         \ Spanish
-  c!> langs  \ number of languages
-
-en c!> lang  \ current language
-
-cr .s \ XXX INFORMER
-here ," Invasores de Residuos Nucleares"
-cr .s \ XXX INFORMER
-
-here ," Atomrubaĵaj Invadantoj"
-
-  \ here s" Atomrubaĵaj Invadantoj" s,
-  \ XXX TMP -- no difference
-  
-cr .s \ XXX INFORMER
-here ," Nuclear Waste Invaders"
-cr .s \ XXX INFORMER
-localized-string game-title$ ( -- ca len )
-  \ Return game title _ca len_ in the current language.
-cr .s .( PRESS KEY) key drop \ XXX INFORMER
-
   \ ===========================================================
   \ Change log
 

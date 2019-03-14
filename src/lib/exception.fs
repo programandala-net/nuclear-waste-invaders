@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041134
+  \ Last modified: 201807221318
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -169,7 +169,7 @@ unneeding warning?( ?( need string-parameter
   \ ----
   \ -n1 =    -90 ...    -1 \ Standard error codes
   \         -300 ...  -256 \ Solo Forth error codes
-  \        -1024 ... -1000 \ G+DOS error codes
+  \        -1024 ... -1000 \ DOS error codes
   \ +n2 =      1 ...   146
   \ ----
 
@@ -201,7 +201,7 @@ s" Standard error codes" located errors-block !
   \
   \ errors-block ( -- a )
   \
-  \ A variable. _a_ is the address of a cell containing the
+  \ A `variable`. _a_ is the address of a cell containing the
   \ block that holds the error messages.
   \
   \ The variable is initialized during compilation with the
@@ -214,21 +214,26 @@ s" Standard error codes" located errors-block !
 
 : .throw-message ( n -- )
   errors-block @ if   cr error>line errors-block @ .line space
-                 else .throw# then ;
-
-' .throw-message ' .throw defer!
+                 else .throw# then ;  latestxt ' .throw defer!
 
   \ doc{
   \
   \ .throw-message ( n -- ) "dot-throw-message"
   \
-  \ Extended action of the deferred word `.throw`: Display the
-  \ text of the `throw` exception code _n_.  The variable
-  \ `errors-block` contains the number of the first block where
-  \ messages are hold. If `errors-block` contains zero, only
-  \ the error number is displayed.
+  \ Alternative action of the deferred word `.throw`: Display
+  \ the description of the `throw` exception code _n_.  The
+  \ variable `errors-block` contains the number of the first
+  \ block where messages are hold. If `errors-block` contains
+  \ zero, only the error number is displayed.
   \
-  \ See: `error>line`.
+  \ For convenience, loading ``.throw-message`` makes it the
+  \ action of `.throw`.
+  \
+  \ NOTE: The error descriptions are not stored in memory, but
+  \ read from the library every time. Therefore the library
+  \ must be accessible.
+  \
+  \ See: `.throw#`, `error>line`.
   \
   \ }doc
 
@@ -328,8 +333,13 @@ s" Standard error codes" located errors-block !
   \
   \ 2018-04-15: Update notation ".." to "...".
   \
-  \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ 2018-06-04: Update: remove trailing closing paren from word
+  \ names.  Link `variable` in documentation.
+  \
+  \ 2018-07-21: Fix typo in documentation of `error>ordinal`.
+  \ Improve documentation of `.throw-message`.
+  \
+  \ 2018-07-22: Improve documentation of `.throw-message`.
 
   \ vim: filetype=soloforth
 
