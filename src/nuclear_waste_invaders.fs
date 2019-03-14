@@ -10,7 +10,7 @@
 \ A game for ZX Spectrum 128, written in Forth with Solo Forth
 \ (http://programandala.net/en.program.solo_forth.html).
 
-\ Copyright (C) 2016,2017,2018 Marcos Cruz (programandala.net)
+\ Copyright (C) 2016,2017,2018,2019 Marcos Cruz (programandala.net)
 
 \ =============================================================
 \ License
@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.246.0+201809260049" ;
+: version$ ( -- ca len ) s" 0.247.0+201903141733" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -96,6 +96,13 @@ need 2const need cenum need c!>
   cr .(   -Strings) ?depth \ {{{2
 
 need upper need s+ need char>string need s\"
+
+  \ --------------------------------------------
+  cr .(   -Localization) ?depth \ {{{2
+
+need localized-character
+need localized-string
+need localized-word
 
   \ --------------------------------------------
   cr .(   -Control structures) ?depth \ {{{2
@@ -442,56 +449,40 @@ game-font mode-32iso-font !
   \ ===========================================================
   cr .( Localization) ?depth debug-point \ {{{1
 
-  \ XXX TODO -- Move to Solo Forth.
+0 cenum en \ English
+  cenum eo \ Esperanto
+  cenum es \ Spanish
+c!> langs  \ number of languages
 
-0 cenum en         \ English
-  cenum eo         \ Esperanto
-  cenum es         \ Spanish
-  cconstant langs  \ number of languages
-
-en cconstant lang  \ current language
-
-need n,
-
-: localized, ( x[langs]..x[1] -- ) langs n, ;
-
-: localized-word ( xt[langs]..xt[1] "name" -- )
-  create localized,
-  does> ( -- ) ( pfa ) lang +perform ;
-  \ Create a word _name_ that will execute an execution token
-  \ from _xt[langs]..xt[1]_, depending on the current language.
-  \ _xt[langs]..xt[1]_, are the execution tokens of the
-  \ localized versions.  _xt[langs]..xt[1]_, are ordered by ISO
-  \ language code, being TOS the first one.
-
-: localized-string ( ca[langs]..ca[1] "name" -- )
-  create localized,
-  \ does> ( -- ca len ) ( pfa ) lang cells + @ count ;
-  does> ( -- ca len ) ( pfa ) lang swap array> @ count ;
-  \ Create a word _name_ that will return a counted string
-  \ from _ca[langs]..ca[1]_, depending on the current language.
-  \ _ca[langs]..ca[1]_, are the addresses where the localized
-  \ strings have been compiled.  _ca[langs]..ca[1]_, are
-  \ ordered by ISO language code, being TOS the first one.
-  \
-  \ XXX TODO -- Benchmark `cells +` vs `swap array>`.
-
-: localized-character ( c[langs]..c[1] "name" -- c )
-  create langs 0 ?do c, loop
-  does> ( -- c ) ( pfa ) lang + c@ ;
-  \ Create a word _name_ that will return a character
-  \ from _c[langs]..c[1]_, depending on the current language.
-  \ _c[langs]..c[1]_ are ordered by ISO language code, being
-  \ TOS the first one.
+en c!> lang  \ current language
 
   \ ===========================================================
   cr .( Texts) ?depth debug-point \ {{{1
 
+  \ XXX FIXME -- 2019-03-14: Suddenly, strings with characters
+  \ above 127 are ignored. But everything seems OK in Solo
+  \ Forth's `scan` and `parse`. And this very same code works
+  \ fine in Solo Forth.
+
+cr .s \ XXX INFORMER
 here ," Invasores de Residuos Nucleares"
+cr .s \ XXX INFORMER
+
 here ," Atomrubaĵaj Invadantoj"
+
+  \ here s" Atomrubaĵaj Invadantoj" s,
+  \ XXX TMP -- no difference
+  \ here ," Atomrubaâaj Invadantoj"
+  \ XXX TMP -- no difference
+
+cr .s \ XXX INFORMER
 here ," Nuclear Waste Invaders"
+cr .s \ XXX INFORMER
+
 localized-string game-title$ ( -- ca len )
   \ Return game title _ca len_ in the current language.
+
+  \ cr .s .( PRESS KEY) key drop \ XXX INFORMER
 
 here ," [N]o en español"
 here ," [N]e en Esperanto"
