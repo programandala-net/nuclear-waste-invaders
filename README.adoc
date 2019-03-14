@@ -1,6 +1,7 @@
 = Nuclear Waste Invaders
-:revdate: 2017-12-06
+:revdate: 2019-03-14
 :linkattrs:
+:toc:
 
 // This file is part of Nuclear Waste Invaders
 // http://programandala.net/en.program.nuclear_waste_invaders.html
@@ -13,21 +14,30 @@
 // license in all redistributed copies and derived works.  There is no
 // warranty.
 
+== English
+
+// tag::en[]
+
+=== Project
+
 _Nuclear Waste Invaders_ is a ZX Spectrum 128 remake, under
 development, of
 http://www.zonadepruebas.com/viewtopic.php?t=4231[Jupiter ACE's
 Nuclear Invaders (by Dancresp, 2013),role="external"].
 
-This version is written in
+It is written in
 http://standard-forth.org[Forth,role="external"] with
 http://programandala.net/en.program.solo_forth.html[Solo Forth]
 (http://github.com/programandala-net/solo-forth[Solo Forth in
 GitHub,role="external"]).
 
-Project home page:
+Web page:
 http://programandala.net/en.program.nuclear_waste_invaders.html.
 
-== How to compile and run
+=== How to compile and run
+
+If you cannot wait until the first public version is resealed, you can
+build the program yourself:
 
 . Make sure the required programs, listed in the header of the
   <Makefile> file, are installed on your system.
@@ -38,12 +48,12 @@ http://programandala.net/en.program.nuclear_waste_invaders.html.
 . Enter 128 BASIC.
 . Insert the Solo Forth's <disk_0_boot.mgt> disk image into disk drive
   1.
-. Type `run` to load G+DOS and Solo Forth from disk drive 1.
+. Type the BASIC command `run` to load G+DOS and Solo Forth from disk drive 1.
 . Insert the <disk_2_nuclear_waste_invaders.mgt> disk image into disk
   drive 1.
 . Open the <graphics_and_font.tap> tape image as the input tape of
   your emulator.
-. Type `1 load` to load block 1 from the current drive. This will
+. Type Forth command `1 load` to load block 1 from the current drive. This will
   start the compilation. Messages will be shown during the process.
 . Set your emulator to its maximum speed and wait. When the
   compilation is finished, the screen is cleared and a message is
@@ -51,3 +61,57 @@ http://programandala.net/en.program.nuclear_waste_invaders.html.
 . In order to save the compiled game, create a SZX snapshot with your
   emulator.
 . Type `run` to start the game.
+
+// end::en[]
+
+== Español
+
+// tag::es[]
+
+=== Proyecto
+
+_Nuclear Waste Invaders_ (Invasores de residuos nucleares) es una
+reinterpretación en desarrollo para ZX Spectrum 128, del
+http://www.zonadepruebas.com/viewtopic.php?t=4231[ Nuclear Invaders
+(Dancresp, 2013),role="external"] de Jupiter Ace.
+
+Está escrito en
+http://standard-forth.org[Forth,role="external"] con
+http://programandala.net/en.program.solo_forth.html[Solo Forth]
+(http://github.com/programandala-net/solo-forth[Solo Forth en
+GitHub,role="external"]).
+
+Página en la red:
+http://programandala.net/en.program.nuclear_waste_invaders.html.
+
+=== Cómo compilar y arrancar
+
+Si no puedes esperar a la salida de la primera versión pública, puedes
+construir el programa tú mismo:
+
+. Asegúrate de que los programas necesarios, que están listados en la
+  cabecera del fichero <Makefile>, están instalados en tu sistema.
+. Da la orden `make` en el directorio del proyecto para construir la
+  imagen de disquete <disk_2_nuclear_waste_invaders.mgt> y la imagen
+  de cinta de casete <graphics.tap>.
+. Arranca un emulador de ZX Spectrum 128 con la interfaz Plus D.
+. Entra en 128 BASIC.
+. Inserta la imagen de disquete <disk_0_boot.mgt> de Solo Forth en la
+  disquetera 1.
+. Da el comando de BASIC `run` para cargar G+DOS y Solo Forth desde la
+  disquetera 1.
+. Inserta la imagen de disquete <disk_2_nuclear_waste_invaders.mgt> en
+  la disquetera 1.
+. Abre la imagen de cinta de casete <graphics_and_font.tap> como cinta
+  de entrada de tu emulador.
+. Escribe el comando de Forth `1 load` para cargar el bloque 1 de la
+  disquetera actual. Esto iniciará la compilación. Durante el proceso
+  se mostrarán mensajes en la pantalla.
+. Pon la velocidad de tu emulador al máximo y espera. Cuando la
+  compilación haya terminado, se borrará la pantalla y se mostrará un
+  mensaje.
+. Para guardar el juego compilado, crea una imagen del sistema en
+  formato SZX usando tu emulador.
+. Escribe `run` para empezar el juego.
+
+// end::es[]
