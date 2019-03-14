@@ -162,3 +162,8 @@ recharged; in version 0.187.0, which limited the number of
 projectiles, the system crashes when three balls are flying.  Same
 problem with missiles. Bullets don't cause trouble because they are
 too fast to be recharged beyond their limit.
+
+- Commit of 0.185.0: 1fcc31bf
+- Commit of 0.186.0: ebbd07cb
+- Commit of 0.186.1: 8d765a61
+- Commit of 0.187.0: d055dd8c

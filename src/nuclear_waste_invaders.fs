@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.246.0+201804301609" ;
+: version$ ( -- ca len ) s" 0.246.0+201809260049" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -3514,7 +3514,7 @@ building-top-y building-height + cconstant building-bottom-y
   bottom-left-brick-udga emit-udga
   brick-udga building-width 2- emits-udga
   bottom-right-brick-udga emit-udga ;
-  \ Draw a floor of the building at _row_.
+  \ Draw the floor of the building.
 
 : building-base ( -- )
   building-left-x 1+ tank-y at-xy brick-attr attr!
@@ -3622,19 +3622,22 @@ variable used-projectiles
 #bullets #missiles + #balls + cconstant #projectiles
   \ Total number of projectiles the tank can hold.
 
-#bullets allot-xstack constant bullets-stack
+  \ XXX TMP -- 2+ added to stack sizes, for debugging,
+  \ but it makes no difference.
+
+#bullets 2+ allot-xstack constant bullets-stack
   \ Create an extra stack to store the unused bullets
   \ which are left in the tank.
 
-#missiles allot-xstack constant missiles-stack
+#missiles 2+ allot-xstack constant missiles-stack
   \ Create an extra stack to store the unused missiles
   \ which are left in the tank.
 
-#balls allot-xstack constant balls-stack
+#balls 2+ allot-xstack constant balls-stack
   \ Create an extra stack to store the unused balls
   \ which are left in the tank.
 
-#projectiles allot-xstack constant used-projectiles-stack
+#projectiles 2+ allot-xstack constant used-projectiles-stack
   \ Create an extra stack to store the used projectiles,
   \ any type.
 
@@ -3674,6 +3677,16 @@ cvariable flying-projectile#
   \ array of flying projectiles.
 
 16 cconstant max-flying-projectiles
+  \ XXX TMP -- for debugging
+  \ Crash when 3 balls are flying at the fourth one is shoot?
+  \ -  2 : no crash
+  \ -  3 : crash
+  \ -  4 : crash
+  \ -  6 : crash
+  \ -  8 : crash
+  \ - 16 : crash
+  \ - 32 : crash
+
   \ Maximum number of projectiles that can be flying at the
   \ same time.
 
@@ -3684,7 +3697,10 @@ create flying-projectiles /flying-projectiles allot
 
 : start-flying ( a -- )
   #flying-projectiles c@ flying-projectiles array> !
-  #flying-projectiles c1+! used-projectiles 1+! ;
+  #flying-projectiles c1+! used-projectiles 1+!
+  
+  [debugging] [if] debug-bar [then] ;
+  ;
   \ Store projectile _a_ into the array of flying projectiles
   \ and update the counts of used and currently flying
   \ projectiles.
@@ -3744,9 +3760,10 @@ cvariable recharge-delay recharge-delay coff \ milliseconds
   \ addresses of all projectiles.
 
 tank-y 1- cconstant projectile-y0
-  \ Initial row of the projectiles.
+  \ Initial, bottom row of the projectiles.
 
 projectile-y0 columns * constant /hit-projectiles
+  \ Size of the `hit-projectiles` byte array.
 
 create hit-projectiles /hit-projectiles allot
   \ Byte array which is used to mark the projectiles that have
@@ -3766,7 +3783,7 @@ create hit-projectiles /hit-projectiles allot
 
 : -hit-projectiles ( -- )
   hit-projectiles /hit-projectiles erase ;
-  \ Erase the array of hit projectiles.
+  \ Erase the `hit-projectiles` byte array.
 
 : xy>hit-projectile ( col row -- ca )
   columns * + [ hit-projectiles columns - ] literal + ;
@@ -3785,7 +3802,7 @@ create hit-projectiles /hit-projectiles allot
   \ Mark the current projectile hit by other projectile.
 
 : -hit-projectile ( -- ) projectile-xy xy>hit-projectile coff ;
-  \ Mark the current projectile as not hit by other projectile.
+  \ Mark the current projectile not hit by other projectile.
 
 : prepare-projectiles ( -- ) #flying-projectiles coff
                              flying-projectile# coff
@@ -5568,7 +5585,12 @@ cvariable projectile-frame
   kk-fire pressed?        0exit
   trigger-time already?   0exit
   projectiles-left        0exit
-  max-flying-projectiles? ?exit
+
+  \ max-flying-projectiles? ?exit
+  max-flying-projectiles?
+  if 2 border 999 ms key 0 border exit then
+  \ XXX TMP -- for debugging
+
   gun-below-building?     ?exit fire ;
   \ Manage the current gun.
 
