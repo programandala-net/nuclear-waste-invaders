@@ -1,6 +1,6 @@
 = Nuclear Waste Invaders To-Do
 :author: Marcos Cruz (programandala.net)
-:revdate: 2019-03-14
+:revdate: 2019-03-15
 
 Older first:
 
@@ -167,18 +167,3 @@ too fast to be recharged beyond their limit.
 - Commit of 0.186.0: ebbd07cb
 - Commit of 0.186.1: 8d765a61
 - Commit of 0.187.0: d055dd8c
-
-== 2019-03-14
-
-Suddenly `localized-string` fails with error `#-4` (empty stack)
-because strings containing Esperanto or Spanish characters (any
-character above 127) are not compiled by `,"`. This didn't happen
-before.
-
-At first it seems the problem should be in Solo Forth's `scan` or
-`parse`, but these are OK.
-
-Then `localized-string` and all related words have been moved to the
-library of Solo Forth, and the very same code works find there.
-
-No clue yet.
