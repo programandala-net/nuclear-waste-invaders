@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.247.0+201903141733" ;
+: version$ ( -- ca len ) s" 0.247.1+201903151453" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -82,7 +82,7 @@ here 512 dup allot !> /stringer !> stringer empty-stringer
   \ --------------------------------------------
   cr .(   -Development tools) \ {{{2
 
-need [if] need ~~
+need [if] need ~~ need list
 need warn.message need order need see need rdepth need where
 need evaluate need ?depth need see-colon-body>
 
@@ -3691,7 +3691,6 @@ create flying-projectiles /flying-projectiles allot
   #flying-projectiles c1+! used-projectiles 1+!
   
   [debugging] [if] debug-bar [then] ;
-  ;
   \ Store projectile _a_ into the array of flying projectiles
   \ and update the counts of used and currently flying
   \ projectiles.
@@ -3960,7 +3959,7 @@ constant tank-movements ( -- a )
 : game-version ( -- ) version$ 1 center-type ;
 
 : .copyright ( -- )
-  1 22 at-xy ." (C) 2016..2018 Marcos Cruz"
+  1 22 at-xy ." (C) 2016..2019 Marcos Cruz"
   5 23 at-xy ." (programandala.net)" ;
   \ Display the copyright notice.
 
