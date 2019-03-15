@@ -36,7 +36,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.249.0+201903151728" ;
+: version$ ( -- ca len ) s" 0.250.0+201903151850" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -450,9 +450,12 @@ game-font mode-32iso-font !
   \ ===========================================================
   cr .( Localization) ?depth debug-point \ {{{1
 
+  \ Languages defined in ISO-code order:
+
 0 cenum en \ English
   cenum eo \ Esperanto
   cenum es \ Spanish
+  cenum ie \ Interlingue
 c!> langs  \ number of languages
 
 en c!> lang  \ current language
@@ -460,12 +463,14 @@ en c!> lang  \ current language
   \ ===========================================================
   cr .( Texts) ?depth debug-point \ {{{1
 
-np@ far," Invasores de Residuos Nucleares"
-np@ far," Atomrubaĵaj Invadantoj"
+np@ far," Invasores de jetalia nucleari"
+np@ far," Invasores de residuos nucleares"
+np@ far," Atomrubaĵaj invadantoj"
 np@ far," Nuclear Waste Invaders"
 far>localized-string game-title$ ( -- ca len )
   \ Return game title _ca len_ in the current language.
 
+np@ far," [N]e in Interlingue"
 np@ far," [N]o en español"
 np@ far," [N]e en Esperanto"
 np@ far," [N]ot in English"
@@ -475,12 +480,14 @@ far>localized-string not-in-this-language$ ( -- ca len )
 'n' cconstant language-key
   \ Key to change the current language.
 
+np@ far," [C]omensar"
 np@ far," [E]mpezar"
 np@ far," [E]ki"
 np@ far," [S]tart"
 far>localized-string start$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
+'c' \ [c]omensar
 'e' \ [e]mpezar
 'e' \ [e]ki
 's' \ [s]tart
@@ -505,7 +512,7 @@ far>sconstants >town$ ( n -- ca len ) drop
   np@ far," " \ XXX TODO
   np@ far," " \ XXX TODO
   np@ far," Cuenca"
-  np@ far," Pays de la Loire" \ XXX TODO -- confir
+  np@ far," Pays de la Loire" \ XXX TODO -- confirm
   np@ far," Isle of Man"
   np@ far," Faroe Islands"
   np@ far," Svalbard"
@@ -536,6 +543,19 @@ far>sconstants >eo.region$ ( n -- ca len ) drop
 far>sconstants >es.region$ ( n -- ca len ) drop
   \ Return Spanish name _ca len_ of region _n_.
 
+0
+  np@ far," Nimba"
+  np@ far," " \ XXX TODO
+  np@ far," " \ XXX TODO
+  np@ far," Cuenca"
+  np@ far," Pais del Loire"
+  np@ far," Insul of Man"
+  np@ far," Insules Faroe"
+  np@ far," Svalbard"
+far>sconstants >ie.region$ ( n -- ca len ) drop
+  \ Return Interlingue name _ca len_ of region _n_.
+
+' >ie.region$
 ' >es.region$
 ' >eo.region$
 ' >en.region$
@@ -577,6 +597,19 @@ far>sconstants >eo.country$ ( n -- ca len ) drop
 far>sconstants >es.country$ ( n -- ca len ) drop
   \ Return Spanish name _ca len_ of country _n_.
 
+0
+  np@ far," Liberia"
+  np@ far," Mauritania"
+  np@ far," Maroco" \ XXX TODO -- confirm
+  np@ far," Hispania"
+  np@ far," Francia"
+  np@ far," Grand Britania"
+  np@ far," Dania"
+  np@ far," Norvegia"
+far>sconstants >ie.country$ ( n -- ca len ) drop
+  \ Return English name _ca len_ of country _n_.
+
+' >ie.country$
 ' >es.country$
 ' >eo.country$
 ' >en.country$
@@ -589,6 +622,7 @@ localized-word >(country)$ ( n -- ca len )
   \ Return name _ca len_ (in parens) of country _n_ in the
   \ current language.
 
+np@ far," Presse un clave."
 np@ far," Pulsa una tecla."
 np@ far," Premu klavon."
 np@ far," Press any key."
@@ -5692,26 +5726,32 @@ cvariable projectile-frame
 7 3 18 18 window constant paper-report-window
 8 4 16 16 window constant report-window
 
+np@ s" Bon fat!" fars, \ es
 np@ s" ¡Bien hecho!" fars, \ es
 np@ s" Bone farita!" fars, \ eo
 np@ s" Well done!" fars, \ en
 far>localized-string well-done$ ( -- ca len )
 
+np@ s" Li ataca ha esset repulset, " fars, \ es
 np@ s" El ataque ha sido rechazado, " fars, \ es
 np@ s" La atako estis repuŝita, " fars, \ eo
 np@ s" The attack has been repelled, " fars, \ en
 far>localized-string about-repelled-attack$ ( -- ca len )
 
+np@ s" ma li mures es damageat." fars, \ es
 np@ s" pero los muros están dañados." fars, \ es
 np@ s" sed la muroj estas damaĝitaj." fars, \ eo
 np@ s" but the walls are damaged." fars, \ en
 far>localized-string about-damaged-walls$ ( -- ca len )
 
+np@ s" On expecta un nov ataca iminent." fars, \ es
 np@ s" Se prevé un nuevo ataque inminente." fars, \ es
 np@ s" Nova tuja atako antaŭvideblas." fars, \ eo
 np@ s" A new imminent attack is expected." fars, \ en
 far>localized-string about-new-attack$ ( -- ca len )
 
+np@ s" Li invasores hat esset destructet "
+    s" e li edificie es in bon statu. " s+ fars, \ es
 np@ s" Los invasores han sido aniquilados "
     s" y el edificio está en buen estado. " s+ fars, \ es
 np@ s" La invadantoj estis destruitaj "
@@ -5720,7 +5760,9 @@ np@ s" The invaders have been destroyed "
     s" and the building is in good condition. " s+ fars, \ en
 far>localized-string about-battle$ ( -- ca len )
 
-np@ s" Ahora se dirigen al sur, "
+np@ s" Nu ili vola a sude, "
+    s" a su sequent objective." s+ fars, \ es
+np@ s" Ahora vuelan al sur, "
     s" hacia su próximo objetivo." s+ fars, \ es
     \ XXX TODO -- Improve.
 np@ s" Nun ili flugas suden "
