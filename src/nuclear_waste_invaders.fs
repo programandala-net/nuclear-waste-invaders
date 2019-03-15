@@ -36,7 +36,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.250.0+201903151850" ;
+: version$ ( -- ca len ) s" 0.251.0+201903152258" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -158,7 +158,7 @@ need xy>attr
 need inverse-off need overprint-off need attr! need attr@
 
 need black need blue  need red  need magenta need green
-need cyan need yellow need white
+need cyan need yellow need white need set-bright
 
 need papery need brighty need xy>attr need xy>attra
 need bright-mask need inversely need unbright-mask
@@ -452,13 +452,13 @@ game-font mode-32iso-font !
 
   \ Languages defined in ISO-code order:
 
-0 cenum en \ English
-  cenum eo \ Esperanto
-  cenum es \ Spanish
-  cenum ie \ Interlingue
-c!> langs  \ number of languages
+0 cenum english     \ en
+  cenum esperanto   \ eo
+  cenum spanish     \ es
+  cenum interlingue \ ie
+c!> langs           \ number of languages
 
-en c!> lang  \ current language
+english c!> lang  \ current language
 
   \ ===========================================================
   cr .( Texts) ?depth debug-point \ {{{1
@@ -469,16 +469,6 @@ np@ far," Atomrubaĵaj invadantoj"
 np@ far," Nuclear Waste Invaders"
 far>localized-string game-title$ ( -- ca len )
   \ Return game title _ca len_ in the current language.
-
-np@ far," [N]e in Interlingue"
-np@ far," [N]o en español"
-np@ far," [N]e en Esperanto"
-np@ far," [N]ot in English"
-far>localized-string not-in-this-language$ ( -- ca len )
-  \ Return string _ca len_ in the current language.
-
-'n' cconstant language-key
-  \ Key to change the current language.
 
 np@ far," [C]omensar"
 np@ far," [E]mpezar"
@@ -4041,24 +4031,36 @@ false [if] \ XXX TODO --
 
 : .keyset ( -- )
   0 12 at-xy (.keyset
-  \ s" SPACE: change - ENTER: start" 18 center-type ; XXX TMP
-  0 16 at-xy not-in-this-language$ columns type-center-field
   0 19 at-xy start$ columns type-center-field ;
-  \ XXX TMP --
 
 : invariable-menu-screen ( -- ) game-version .copyright ;
   \ Display the parts of the menu screen that are invariable,
   \ i.e., don't depend on the current language.
 
-: variable-menu-screen ( -- ) game-title .players .keyset ;
+: lang>key ( n -- c ) '1' + ;
+
+: .language-option ( ca len n -- )
+  dup 3 + 0 swap at-xy
+  dup lang = ?dup if   ."   " set-bright drop
+                  else lang>key emit space
+                  then type  false set-bright ;
+
+: .language-menu ( -- )
+  s" English"     english     .language-option
+  s" Español"     spanish     .language-option
+  s" Esperanto"   esperanto   .language-option
+  s" Interlingue" interlingue .language-option ;
+
+: variable-menu-screen ( -- )
+  game-title .language-menu .players .keyset ;
   \ Display the parts of the menu screen that are variable,
   \ i.e., depend on the current language.
 
 : menu-screen ( -- )
   cls invariable-menu-screen variable-menu-screen ;
 
-: change-language  ( -- ) lang 1+ dup langs < abs * c!> lang ;
-  \ Change the current language.
+: language  ( n -- ) c!> lang variable-menu-screen ;
+  \ Set _n_ as the current language
 
 [breakable] [if]
 
@@ -4075,15 +4077,20 @@ defer quit-game ( -- )
 
 [then]
 
+english     lang>key cconstant english-key
+esperanto   lang>key cconstant esperanto-key
+spanish     lang>key cconstant spanish-key
+interlingue lang>key cconstant interlingue-key
+
 : menu ( -- )
   begin
     [breakable] [if] ?quit-game [then] \ XXX TMP --
     key lower case
-    start-key    of  exit           endof \ XXX TMP --
-    language-key of change-language variable-menu-screen endof
-    \ bl  of  next-keyset .keyset  endof
-    \ 'p' of  change-players .players  endof
-    \ XXX TMP --
+      start-key       of exit                 endof
+      english-key     of english     language endof
+      esperanto-key   of esperanto   language endof
+      spanish-key     of spanish     language endof
+      interlingue-key of interlingue language endof
     endcase
   again ;
 
