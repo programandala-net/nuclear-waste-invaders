@@ -35,7 +35,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.247.1+201903151453" ;
+: version$ ( -- ca len ) s" 0.248.0+201903151539" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -131,7 +131,7 @@ need roll need cfield: need field: need +field-opt-0124
 need array> need !> need c!> need 2!> need 0dup need 2field:
 need nup
 
-need sconstants
+need far>sconstants need far,"
 
 need xstack need allot-xstack need xdepth need >x need x>
 need xclear
@@ -459,30 +459,11 @@ en c!> lang  \ current language
   \ ===========================================================
   cr .( Texts) ?depth debug-point \ {{{1
 
-  \ XXX FIXME -- 2019-03-14: Suddenly, strings with characters
-  \ above 127 are ignored. But everything seems OK in Solo
-  \ Forth's `scan` and `parse`. And this very same code works
-  \ fine in Solo Forth.
-
-cr .s \ XXX INFORMER
 here ," Invasores de Residuos Nucleares"
-cr .s \ XXX INFORMER
-
 here ," Atomrubaĵaj Invadantoj"
-
-  \ here s" Atomrubaĵaj Invadantoj" s,
-  \ XXX TMP -- no difference
-  \ here ," Atomrubaâaj Invadantoj"
-  \ XXX TMP -- no difference
-
-cr .s \ XXX INFORMER
 here ," Nuclear Waste Invaders"
-cr .s \ XXX INFORMER
-
 localized-string game-title$ ( -- ca len )
   \ Return game title _ca len_ in the current language.
-
-  \ cr .s .( PRESS KEY) key drop \ XXX INFORMER
 
 here ," [N]o en español"
 here ," [N]e en Esperanto"
@@ -507,51 +488,51 @@ localized-character start-key ( -- c )
   \ in the current language.
 
 0
-  here ," Ganta"
-  here ," Kassari"
-  here ," Zagora" \ XXX TODO -- change
-  here ," Las Mesas"
-  here ," Châteaubriant"
-  here ," Peel"
-  here ," Vestmahavn"
-  here ," Longyearbyen"
-sconstants >town$ ( n -- ca len ) drop
+  np@ far," Ganta"
+  np@ far," Kassari"
+  np@ far," Zagora" \ XXX TODO -- change
+  np@ far," Las Mesas"
+  np@ far," Châteaubriant"
+  np@ far," Peel"
+  np@ far," Vestmahavn"
+  np@ far," Longyearbyen"
+far>sconstants >town$ ( n -- ca len ) drop
   \ Return name _ca len_ of town _n_.
 
 0
-  here ," Nimba"
-  here ," " \ XXX TODO
-  here ," " \ XXX TODO
-  here ," Cuenca"
-  here ," Pays de la Loire" \ XXX TODO -- confirm English name
-  here ," Isle of Man"
-  here ," Faroe Islands"
-  here ," Svalbard"
-sconstants >en.region$ ( n -- ca len ) drop
+  np@ far," Nimba"
+  np@ far," " \ XXX TODO
+  np@ far," " \ XXX TODO
+  np@ far," Cuenca"
+  np@ far," Pays de la Loire" \ XXX TODO -- confirm English name
+  np@ far," Isle of Man"
+  np@ far," Faroe Islands"
+  np@ far," Svalbard"
+far>sconstants >en.region$ ( n -- ca len ) drop
   \ Return English name _ca len_ of region _n_.
 
 0
-  here ," Nimba"
-  here ," " \ XXX TODO
-  here ," " \ XXX TODO
-  here ," Kŭenko"
-  here ," Luarlandoj"
-  here ," Manksinsulo"
-  here ," Ferooj"
-  here ," Svalbardo"
-sconstants >eo.region$ ( n -- ca len ) drop
+  np@ far," Nimba"
+  np@ far," " \ XXX TODO
+  np@ far," " \ XXX TODO
+  np@ far," Kŭenko"
+  np@ far," Luarlandoj"
+  np@ far," Manksinsulo"
+  np@ far," Ferooj"
+  np@ far," Svalbardo"
+far>sconstants >eo.region$ ( n -- ca len ) drop
   \ Return Esperanto name _ca len_ of region _n_.
 
 0
-  here ," Nimba"
-  here ," " \ XXX TODO
-  here ," " \ XXX TODO
-  here ," Cuenca"
-  here ," Países del Loira"
-  here ," Isla de Man"
-  here ," Islas Feroes"
-  here ," Svalbard"
-sconstants >es.region$ ( n -- ca len ) drop
+  np@ far," Nimba"
+  np@ far," " \ XXX TODO
+  np@ far," " \ XXX TODO
+  np@ far," Cuenca"
+  np@ far," Países del Loira"
+  np@ far," Isla de Man"
+  np@ far," Islas Feroes"
+  np@ far," Svalbard"
+far>sconstants >es.region$ ( n -- ca len ) drop
   \ Return Spanish name _ca len_ of region _n_.
 
 ' >es.region$
@@ -560,39 +541,39 @@ sconstants >es.region$ ( n -- ca len ) drop
 localized-word >region$ ( n -- ca len )
 
 0
-  here ," Liberia"
-  here ," Mauritania"
-  here ," Morocco"
-  here ," Spain"
-  here ," France"
-  here ," Great Britain"
-  here ," Denmark"
-  here ," Norway"
-sconstants >en.country$ ( n -- ca len ) drop
+  np@ far," Liberia"
+  np@ far," Mauritania"
+  np@ far," Morocco"
+  np@ far," Spain"
+  np@ far," France"
+  np@ far," Great Britain"
+  np@ far," Denmark"
+  np@ far," Norway"
+far>sconstants >en.country$ ( n -- ca len ) drop
   \ Return English name _ca len_ of country _n_.
 
 0
-  here ," Liberio"
-  here ," Mauritanio"
-  here ," Maroko"
-  here ," Hispanujo"
-  here ," Francujo"
-  here ," Britujo"
-  here ," Danujo"
-  here ," Norvegujo"
-sconstants >eo.country$ ( n -- ca len ) drop
+  np@ far," Liberio"
+  np@ far," Mauritanio"
+  np@ far," Maroko"
+  np@ far," Hispanujo"
+  np@ far," Francujo"
+  np@ far," Britujo"
+  np@ far," Danujo"
+  np@ far," Norvegujo"
+far>sconstants >eo.country$ ( n -- ca len ) drop
   \ Return Esperanto name _ca len_ of country _n_.
 
 0
-  here ," Liberia"
-  here ," Mauritania"
-  here ," Marruecos"
-  here ," España"
-  here ," Francia"
-  here ," Reino Unido"
-  here ," Dinamarca"
-  here ," Noruega"
-sconstants >es.country$ ( n -- ca len ) drop
+  np@ far," Liberia"
+  np@ far," Mauritania"
+  np@ far," Marruecos"
+  np@ far," España"
+  np@ far," Francia"
+  np@ far," Reino Unido"
+  np@ far," Dinamarca"
+  np@ far," Noruega"
+far>sconstants >es.country$ ( n -- ca len ) drop
   \ Return Spanish name _ca len_ of country _n_.
 
 ' >es.country$
