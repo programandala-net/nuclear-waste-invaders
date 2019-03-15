@@ -36,7 +36,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.251.0+201903152258" ;
+: version$ ( -- ca len ) s" 0.251.1+201903152316" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -539,7 +539,7 @@ far>sconstants >es.region$ ( n -- ca len ) drop
   np@ far," " \ XXX TODO
   np@ far," Cuenca"
   np@ far," Pais del Loire"
-  np@ far," Insul of Man"
+  np@ far," Insul de Man"
   np@ far," Insules Faroe"
   np@ far," Svalbard"
 far>sconstants >ie.region$ ( n -- ca len ) drop
