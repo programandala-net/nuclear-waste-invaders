@@ -10,7 +10,8 @@
 \ A game for ZX Spectrum 128, written in Forth with Solo Forth
 \ (http://programandala.net/en.program.solo_forth.html).
 
-\ Copyright (C) 2016,2017,2018,2019 Marcos Cruz (programandala.net)
+\ Copyright (C) 2016,2017,2018,2019 Marcos Cruz
+\ (programandala.net)
 
 \ =============================================================
 \ License
@@ -35,7 +36,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.248.0+201903151539" ;
+: version$ ( -- ca len ) s" 0.249.0+201903151728" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -101,7 +102,7 @@ need upper need s+ need char>string need s\"
   cr .(   -Localization) ?depth \ {{{2
 
 need localized-character
-need localized-string
+need far>localized-string
 need localized-word
 
   \ --------------------------------------------
@@ -459,25 +460,25 @@ en c!> lang  \ current language
   \ ===========================================================
   cr .( Texts) ?depth debug-point \ {{{1
 
-here ," Invasores de Residuos Nucleares"
-here ," Atomrubaĵaj Invadantoj"
-here ," Nuclear Waste Invaders"
-localized-string game-title$ ( -- ca len )
+np@ far," Invasores de Residuos Nucleares"
+np@ far," Atomrubaĵaj Invadantoj"
+np@ far," Nuclear Waste Invaders"
+far>localized-string game-title$ ( -- ca len )
   \ Return game title _ca len_ in the current language.
 
-here ," [N]o en español"
-here ," [N]e en Esperanto"
-here ," [N]ot in English"
-localized-string not-in-this-language$ ( -- ca len )
+np@ far," [N]o en español"
+np@ far," [N]e en Esperanto"
+np@ far," [N]ot in English"
+far>localized-string not-in-this-language$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
 'n' cconstant language-key
   \ Key to change the current language.
 
-here ," [E]mpezar"
-here ," [E]ki"
-here ," [S]tart"
-localized-string start$ ( -- ca len )
+np@ far," [E]mpezar"
+np@ far," [E]ki"
+np@ far," [S]tart"
+far>localized-string start$ ( -- ca len )
   \ Return string _ca len_ in the current language.
 
 'e' \ [e]mpezar
@@ -504,7 +505,7 @@ far>sconstants >town$ ( n -- ca len ) drop
   np@ far," " \ XXX TODO
   np@ far," " \ XXX TODO
   np@ far," Cuenca"
-  np@ far," Pays de la Loire" \ XXX TODO -- confirm English name
+  np@ far," Pays de la Loire" \ XXX TODO -- confir
   np@ far," Isle of Man"
   np@ far," Faroe Islands"
   np@ far," Svalbard"
@@ -588,10 +589,10 @@ localized-word >(country)$ ( n -- ca len )
   \ Return name _ca len_ (in parens) of country _n_ in the
   \ current language.
 
-here ," Pulsa una tecla."
-here ," Premu klavon."
-here ," Press any key."
-localized-string press-any-key$ ( -- ca len )
+np@ far," Pulsa una tecla."
+np@ far," Premu klavon."
+np@ far," Press any key."
+far>localized-string press-any-key$ ( -- ca len )
 
   \ ===========================================================
   cr .( Colors) ?depth debug-point \ {{{1
@@ -3670,7 +3671,7 @@ create flying-projectiles /flying-projectiles allot
 : start-flying ( a -- )
   #flying-projectiles c@ flying-projectiles array> !
   #flying-projectiles c1+! used-projectiles 1+!
-  
+
   [debugging] [if] debug-bar [then] ;
   \ Store projectile _a_ into the array of flying projectiles
   \ and update the counts of used and currently flying
@@ -5691,80 +5692,44 @@ cvariable projectile-frame
 7 3 18 18 window constant paper-report-window
 8 4 16 16 window constant report-window
 
-here \ es (Spanish)
-  s" ¡Bien hecho!" s,
+np@ s" ¡Bien hecho!" fars, \ es
+np@ s" Bone farita!" fars, \ eo
+np@ s" Well done!" fars, \ en
+far>localized-string well-done$ ( -- ca len )
 
-here \ eo (Esperanto)
-   s" Bone farita!" s,
+np@ s" El ataque ha sido rechazado, " fars, \ es
+np@ s" La atako estis repuŝita, " fars, \ eo
+np@ s" The attack has been repelled, " fars, \ en
+far>localized-string about-repelled-attack$ ( -- ca len )
 
-here \ en (English)
-  s" Well done!" s,
+np@ s" pero los muros están dañados." fars, \ es
+np@ s" sed la muroj estas damaĝitaj." fars, \ eo
+np@ s" but the walls are damaged." fars, \ en
+far>localized-string about-damaged-walls$ ( -- ca len )
 
-localized-string well-done$ ( -- ca len )
+np@ s" Se prevé un nuevo ataque inminente." fars, \ es
+np@ s" Nova tuja atako antaŭvideblas." fars, \ eo
+np@ s" A new imminent attack is expected." fars, \ en
+far>localized-string about-new-attack$ ( -- ca len )
 
-here \ es (Spanish)
-  s" El ataque ha sido rechazado, " s,
+np@ s" Los invasores han sido aniquilados "
+    s" y el edificio está en buen estado. " s+ fars, \ es
+np@ s" La invadantoj estis destruitaj "
+    s" kaj la konstruaĵo bonstatas. " s+ fars, \ eo
+np@ s" The invaders have been destroyed "
+    s" and the building is in good condition. " s+ fars, \ en
+far>localized-string about-battle$ ( -- ca len )
 
-here \ eo (Esperanto)
-   s" La atako estis repuŝita, " s,
-
-here \ en (English)
-  s" The attack has been repelled, " s,
-
-localized-string about-repelled-attack$ ( -- ca len )
-
-here \ es (Spanish)
-  s" pero los muros están dañados." s,
-
-here \ eo (Esperanto)
-   s" sed la muroj estas damaĝitaj." s,
-
-here \ en (English)
-  s" but the walls are damaged." s,
-
-localized-string about-damaged-walls$ ( -- ca len )
-
-here \ es (Spanish)
-  s" Se prevé un nuevo ataque inminente." s,
-
-here \ eo (Esperanto)
-   s" Nova tuja atako antaŭvideblas." s,
-
-here \ en (English)
-  s" A new imminent attack is expected." s,
-
-localized-string about-new-attack$ ( -- ca len )
-
-here \ es (Spanish)
-  s" Los invasores han sido aniquilados "
-  s" y el edificio está en buen estado. " s+ s,
-
-here \ eo (Esperanto)
-  s" La invadantoj estis destruitaj "
-  s" kaj la konstruaĵo bonstatas. " s+ s,
-
-here \ en (English)
-  s" The invaders have been destroyed "
-  s" and the building is in good condition. " s+ s,
-
-localized-string about-battle$ ( -- ca len )
-
-here \ es (Spanish)
-  s" Ahora se dirigen al sur, "
-  s" hacia su próximo objetivo." s+ s,
-  \ XXX TODO -- Improve.
-
-here \ eo (Esperanto)
-  s" Nun ili flugas suden "
-  s" al ilia posta celo." s+ s,
-  \ XXX TODO -- Improve.
-
-here \ en (English)
-  s" Now they fly south "
-  s" toward their next objective." s+ s,
-  \ XXX TODO -- Improve.
-
-localized-string about-next-location$ ( -- ca len )
+np@ s" Ahora se dirigen al sur, "
+    s" hacia su próximo objetivo." s+ fars, \ es
+    \ XXX TODO -- Improve.
+np@ s" Nun ili flugas suden "
+    s" al ilia posta celo." s+ fars, \ eo
+    \ XXX TODO -- Improve.
+np@ s" Now they fly south "
+    s" toward their next objective." s+ fars, \ en
+    \ XXX TODO -- Improve.
+far>localized-string about-next-location$ ( -- ca len )
 
 : paragraph ( ca len -- ) wltype wcr wcr ;
 
