@@ -1,11 +1,11 @@
 # Makefile
 
-# Author: Marcos Cruz (programandala.net), 2016, 2017
+# Author: Marcos Cruz (programandala.net), 2016, 2017, 2019.
 
 # This file is part of Nuclear Waste Invaders
 # http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 201704202000
+# Last modified: 201903151338
 # See change log at the end of the file
 
 # ==============================================================
@@ -67,7 +67,7 @@ tmp/nuclear_waste_invaders_converted_to_zx_spectrum_charset.fs: src/nuclear_wast
 		-c "set fileencoding=latin1" \
 		-c "wq" $@
 
-tmp/nuclear_waste_invaders_converted_to_zx_spectrum_charset.fba: tmp/nuclear_waste_invaders_converted_to_zx_spectrum_charset.fs
+%.fba: %.fs
 	./make/fs2fba.sh $<
 
 tmp/library.fs: \
@@ -181,3 +181,5 @@ graphics_and_font.tap: $(landscapes_scr_3rd_tap) tmp/font.tap
 # 2017-04-18: Convert UTF-8 characters to ZX Spectrum character codes.
 #
 # 2017-04-20: Add font to the tape.
+#
+# 2019-03-15: Generalize the rule of fs2fba.sh.
