@@ -36,7 +36,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.251.1+201903152316" ;
+: version$ ( -- ca len ) s" 0.251.2+201903181248" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -5733,32 +5733,32 @@ cvariable projectile-frame
 7 3 18 18 window constant paper-report-window
 8 4 16 16 window constant report-window
 
-np@ s" Bon fat!" fars, \ es
+np@ s" Bon fat!" fars, \ ie
 np@ s" ¡Bien hecho!" fars, \ es
 np@ s" Bone farita!" fars, \ eo
 np@ s" Well done!" fars, \ en
 far>localized-string well-done$ ( -- ca len )
 
-np@ s" Li ataca ha esset repulset, " fars, \ es
+np@ s" Li ataca ha esset repulset, " fars, \ ie
 np@ s" El ataque ha sido rechazado, " fars, \ es
 np@ s" La atako estis repuŝita, " fars, \ eo
 np@ s" The attack has been repelled, " fars, \ en
 far>localized-string about-repelled-attack$ ( -- ca len )
 
-np@ s" ma li mures es damageat." fars, \ es
+np@ s" ma li mures es damageat." fars, \ ie
 np@ s" pero los muros están dañados." fars, \ es
 np@ s" sed la muroj estas damaĝitaj." fars, \ eo
 np@ s" but the walls are damaged." fars, \ en
 far>localized-string about-damaged-walls$ ( -- ca len )
 
-np@ s" On expecta un nov ataca iminent." fars, \ es
+np@ s" On expecta un nov ataca iminent." fars, \ ie
 np@ s" Se prevé un nuevo ataque inminente." fars, \ es
 np@ s" Nova tuja atako antaŭvideblas." fars, \ eo
 np@ s" A new imminent attack is expected." fars, \ en
 far>localized-string about-new-attack$ ( -- ca len )
 
-np@ s" Li invasores hat esset destructet "
-    s" e li edificie es in bon statu. " s+ fars, \ es
+np@ s" Li invasores ha esset destructet "
+    s" e li edificie es in bon statu. " s+ fars, \ ie
 np@ s" Los invasores han sido aniquilados "
     s" y el edificio está en buen estado. " s+ fars, \ es
 np@ s" La invadantoj estis destruitaj "
@@ -5768,7 +5768,7 @@ np@ s" The invaders have been destroyed "
 far>localized-string about-battle$ ( -- ca len )
 
 np@ s" Nu ili vola a sude, "
-    s" a su sequent objective." s+ fars, \ es
+    s" a su sequent objective." s+ fars, \ ie
 np@ s" Ahora vuelan al sur, "
     s" hacia su próximo objetivo." s+ fars, \ es
     \ XXX TODO -- Improve.
