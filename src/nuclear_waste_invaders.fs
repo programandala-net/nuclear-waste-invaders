@@ -10,11 +10,11 @@
 \ A game for ZX Spectrum 128, written in Forth with Solo Forth
 \ (http://programandala.net/en.program.solo_forth.html).
 
-\ Copyright (C) 2016,2017,2018,2019 Marcos Cruz
+\ Copyright (C) 2016,2017,2018,2019,2020 Marcos Cruz
 \ (programandala.net)
 
 \ =============================================================
-\ License
+\ License {{{1
 
 \ You may do whatever you want with this work, so long as you
 \ retain all copyright, authorship, acknowledgment and credit
@@ -22,7 +22,7 @@
 \ derived works.  There is no warranty.
 
 \ =============================================================
-\ Credit
+\ Credit {{{1
 
 \ Nuclear Waste Invaders was inspired by and initially based on
 \ Nuclear Invaders (Copyright 2013 Scainet Soft), written by
@@ -30,13 +30,14 @@
 \ http://www.zonadepruebas.com/viewtopic.php?t=4231.
 
 \ =============================================================
+\ Word list and version {{{1
 
 only forth definitions
 
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.251.2+201903181248" ;
+: version$ ( -- ca len ) s" 0.251.3+202001022344" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -52,7 +53,7 @@ true constant [breakable] immediate
   \
   \ XXX TMP -- for debugging
 
-false constant [debugging] immediate
+true constant [debugging] immediate
   \ Compile debugging code?
   \
   \ XXX TMP -- for debugging
@@ -612,7 +613,7 @@ localized-word >(country)$ ( n -- ca len )
   \ Return name _ca len_ (in parens) of country _n_ in the
   \ current language.
 
-np@ far," Presse un clave."
+np@ far," Presse un taste."
 np@ far," Pulsa una tecla."
 np@ far," Premu klavon."
 np@ far," Press any key."
@@ -3674,8 +3675,12 @@ cvariable flying-projectile#
   \ array of flying projectiles.
 
 16 cconstant max-flying-projectiles
+  \ Maximum number of projectiles that can be flying at the
+  \ same time.
+  \
   \ XXX TMP -- for debugging
-  \ Crash when 3 balls are flying at the fourth one is shoot?
+  \
+  \ Crash when 3 balls are flying and the fourth one is shoot?
   \ -  2 : no crash
   \ -  3 : crash
   \ -  4 : crash
@@ -3683,9 +3688,6 @@ cvariable flying-projectile#
   \ -  8 : crash
   \ - 16 : crash
   \ - 32 : crash
-
-  \ Maximum number of projectiles that can be flying at the
-  \ same time.
 
 max-flying-projectiles cells cconstant /flying-projectiles
 
@@ -3695,7 +3697,6 @@ create flying-projectiles /flying-projectiles allot
 : start-flying ( a -- )
   #flying-projectiles c@ flying-projectiles array> !
   #flying-projectiles c1+! used-projectiles 1+!
-
   [debugging] [if] debug-bar [then] ;
   \ Store projectile _a_ into the array of flying projectiles
   \ and update the counts of used and currently flying
