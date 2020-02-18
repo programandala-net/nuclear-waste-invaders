@@ -190,7 +190,7 @@ http://programandala.net/ie.programa.nuclear_waste_invaders.html.
 
 === Qualmen compilar e initiar
 
-Si vu ne posse atender li aparition del prim versión public, vu self
+Si vu ne posse atender li aparition del prim version public, vu self
 posse constructer li programma:
 
 . Controla que li necessi programmas, quel es listat in li supra del
