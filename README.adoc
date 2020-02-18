@@ -21,9 +21,9 @@
 === Project
 
 _Nuclear Waste Invaders_ is a ZX Spectrum 128 remake, under
-development, of
-http://www.zonadepruebas.com/viewtopic.php?t=4231[Jupiter ACE's
-Nuclear Invaders (by Dancresp, 2013),role="external"].
+development, of Jupiter ACE computer's
+http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders,
+role="external"] (Dancresp, 2013).
 
 It is written in
 http://standard-forth.org[Forth,role="external"] with
@@ -73,8 +73,8 @@ build the program yourself:
 
 _Nuclear Waste Invaders_ (Invasores de residuos nucleares) es una
 reinterpretación en desarrollo para ZX Spectrum 128, del
-http://www.zonadepruebas.com/viewtopic.php?t=4231[ Nuclear Invaders
-(Dancresp, 2013),role="external"] de Jupiter Ace.
+http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders,
+role="external"] (Dancresp, 2013) de la computadora Jupiter Ace.
 
 Está escrito en
 http://standard-forth.org[Forth,role="external"] con
@@ -129,12 +129,11 @@ povas konstrui li programon:
 
 _Nuclear Waste Invaders_ (Atomrubaĵaj Invadantoj) esta programata
 reinterpreto, por la komputilo ZX Spectrum 128, el
-http://www.zonadepruebas.com/viewtopic.php?t=4231[ Nuclear Invaders
-(Dancresp, 2013),role="external"] de komputilo Jupiter ACE.
+http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders,
+role="external"] (Dancresp, 2013) de la komputilo Jupiter ACE.
 
-Ĝi estas verkata en
-http://standard-forth.org[Forth,role="external"] per
-http://programandala.net/en.program.solo_forth.html[Solo Forth]
+Ĝi estas verkata en http://standard-forth.org[Forth,role="external"]
+per http://programandala.net/en.program.solo_forth.html[Solo Forth]
 (http://github.com/programandala-net/solo-forth[Solo Forth en
 GitHub,role="external"]).
 
@@ -177,8 +176,8 @@ http://programandala.net/eo.programo.nuclear_waste_invaders.html.
 
 _Nuclear Waste Invaders_ (Invasores de jetallia nucleari) es un
 reinterpretation, developat por ZX Spectrum 128, del
-http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders
-(Dancresp, 2013),role="external"] de Jupiter Ace.
+http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders,
+role="external"] (Dancresp, 2013) del computator Jupiter ACE.
 
 It es scrit in
 http://standard-forth.org[Forth,role="external"] con
