@@ -1,5 +1,5 @@
 = Nuclear Waste Invaders
-:revdate: 2019-03-14
+:revdate: 2020-02-18
 :linkattrs:
 :toc:
 
@@ -58,9 +58,10 @@ build the program yourself:
 . Set your emulator to its maximum speed and wait. When the
   compilation is finished, the screen is cleared and a message is
   displayed.
+. Set your emulator to the normal speed (100%).
 . In order to save the compiled game, create a SZX snapshot with your
   emulator.
-. Type `run` to start the game.
+. Type `run` in Forth to start the game.
 
 // end::en[]
 
@@ -110,9 +111,10 @@ construir el programa tú mismo:
 . Pon la velocidad de tu emulador al máximo y espera. Cuando la
   compilación haya terminado, se borrará la pantalla y se mostrará un
   mensaje.
+. Pon tu emulador a la velocidad normal (100%).
 . Para guardar el juego compilado, crea una imagen del sistema en
   formato SZX usando tu emulador.
-. Escribe `run` para empezar el juego.
+. Escribe `run` en Forth para empezar el juego.
 
 // end::es[]
 
@@ -121,6 +123,9 @@ construir el programa tú mismo:
 // tag::eo[]
 
 === Projekto
+
+Se vi ne povas atendi li aperon de la unua publika versio, vi mem
+povas konstrui li programon:
 
 _Nuclear Waste Invaders_ (Atomrubaĵaj Invadantoj) esta programata
 reinterpreto, por la komputilo ZX Spectrum 128, el
@@ -157,9 +162,61 @@ http://programandala.net/eo.programo.nuclear_waste_invaders.html.
 . Elektu la plej grandan rapidon de via emulilo kaj atendu. Kiam la
   kompilado finiĝos, la ekrano estos forviŝita kaj mesaĝo estos
   printita.
+. Elektu normalan (100%) rapidon en via emulilo.
 . Por konservi la kompilitan ludon, kreu kopion de la tuta sistemo en
   SZX-formata dosiero, uzante vian emulilon.
-. Skribu `run` por komenci la ludon.
+. En Fortho tajpu `run` por komenci la ludon.
 
 // end::eo[]
+
+== Interlingue
+
+// tag::ie[]
+
+=== Projecte
+
+_Nuclear Waste Invaders_ (Invasores de jetallia nucleari) es un
+reinterpretation, developat por ZX Spectrum 128, del
+http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders
+(Dancresp, 2013),role="external"] de Jupiter Ace.
+
+It es scrit in
+http://standard-forth.org[Forth,role="external"] con
+http://programandala.net/en.program.solo_forth.html[Solo Forth]
+(http://github.com/programandala-net/solo-forth[Solo Forth in
+GitHub,role="external"]).
+
+Págine web:
+http://programandala.net/ie.programa.nuclear_waste_invaders.html.
+
+=== Qualmen compilar e initiar
+
+Si vu ne posse atender li aparition del prim versión public, vu self
+posse constructer li programma:
+
+. Controla que li necessi programmas, quel es listat in li supra del
+  document <Makefile>, es instalat in vor computator.
+. Comanda `make` in li documentiere del projecte por constructer li
+  disco-replica <disk_2_nuclear_waste_invaders.mgt> e li bande-replica
+  <graphics.tap>.
+. Initia un emulator de ZX Spectrum 128 con li ínterfacie Plus D.
+. Intra in 128 BASIC.
+. Inserte li disco-replica <disk_0_boot.mgt> de Solo Forth in li
+  disciere 1 de vor emulator.
+. In BASIC comanda `run` por cargar G+DOS e Solo Forth del disciere 1.
+. Inserte li disco-replica <disk_2_nuclear_waste_invaders.mgt> in li
+  disciere 1 de vor emulartor.
+. Aperte li bande-replica <graphics_and_font.tap> quam bendo de
+  intrada de vor emulator.
+. In Forth comanda `1 load` por cargar li bloc 1 del disciere activ.
+  To va comensar li compilation. Durante li operation, divers missages
+  va aparerir sur li ecran.
+. Etablisse li maxim rapiditá de vor emulador e atende. Quande li
+  compilation es finit, li ecran va nettar se e un missage va aparir.
+. Etablisse un rapiditá normal (100%) in vor emulator.
+. Por conservar li lude compilat, fa un replica del sistema con
+  formate SZX usante vor emulator.
+. In Forth comanda `run` por comensar li lude.
+
+// end::ie[]
 
