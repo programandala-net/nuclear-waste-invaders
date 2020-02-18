@@ -37,7 +37,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.251.3+202001022344" ;
+: version$ ( -- ca len ) s" 0.251.4+202002181702" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -464,7 +464,7 @@ english c!> lang  \ current language
   \ ===========================================================
   cr .( Texts) ?depth debug-point \ {{{1
 
-np@ far," Invasores de jetalia nucleari"
+np@ far," Invasores de jetallia nucleari"
 np@ far," Invasores de residuos nucleares"
 np@ far," Atomrubaĵaj invadantoj"
 np@ far," Nuclear Waste Invaders"
@@ -3966,7 +3966,7 @@ constant tank-movements ( -- a )
 : game-version ( -- ) version$ 1 center-type ;
 
 : .copyright ( -- )
-  1 22 at-xy ." (C) 2016..2019 Marcos Cruz"
+  1 22 at-xy ." (C) 2016..2020 Marcos Cruz"
   5 23 at-xy ." (programandala.net)" ;
   \ Display the copyright notice.
 
