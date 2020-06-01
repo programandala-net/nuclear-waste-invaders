@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201807212115
+  \ Last modified: 202005241535
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -190,9 +191,8 @@ variable case-sensitive-esc-chars  case-sensitive-esc-chars on
   \ the `stringer`.
   \
   \ The characters that must be escaped depend on the search
-  \ order set by the deferred word `set-esc-string-order`,
-  \ whose default action is `set-standard-esc-string-order`.
-  \ Therefore, by default, the escaped characters are those
+  \ order set by `set-esc-order`.
+  \ By default, the escaped characters are those
   \ described in Forth-2012's `s\"`.
   \
   \ ``parse-esc-string`` is a common factor of `s\"` and `.\"`.
@@ -228,8 +228,8 @@ need set-esc-order  esc-standard-chars-wordlist 1 set-esc-order
 
   \
   \ Note: When ``s\"`` is loaded, `esc-standard-chars-wordlist`
-  \ is set as the only word list in `esc-order`. That is the
-  \ standard behaviour. Alternative escaped chars can be
+  \ is set as the only word list by `set-esc-order`. That is
+  \ the standard behaviour. Alternative escaped chars can be
   \ configured with `esc-block-chars-wordlist` and
   \ `esc-udg-chars-wordlist`.
   \
@@ -265,8 +265,8 @@ need set-esc-order  esc-standard-chars-wordlist 1 set-esc-order
   \ ``.\"`` is an `immediate` and `compile-only` word.
   \
   \ Note: When ``.\"`` is loaded, `esc-standard-chars-wordlist`
-  \ is set as the only word list in `esc-order`. That is the
-  \ standard behaviour. Alternative escaped chars can be
+  \ is set as the only word list by `set-esc-order`. That is
+  \ the standard behaviour. Alternative escaped chars can be
   \ configured with `esc-block-chars-wordlist` and
   \ `esc-udg-chars-wordlist`.
   \
@@ -303,13 +303,13 @@ variable #esc-order  #esc-order off
 
   \ doc{
   \
-  \ #esc-order ( -- a ) "hash-esc-order"
+  \ #esc-order ( -- a ) "number-sign-esc-order"
   \
   \ A `variable`. _a_ is the address of a cell containing the
   \ number of word lists in the escaped strings search order.
   \
-  \ See: `esc-context`, `esc-max-order`, `esc-get-order`,
-  \ `esc-set-order`, `>esc-order`.
+  \ See: `esc-context`, `max-esc-order`, `get-esc-order`,
+  \ `set-esc-order`, `>esc-order`.
   \
   \ }doc
 
@@ -325,8 +325,8 @@ create esc-context here max-esc-order cells dup allot erase ?)
   \ length is hold in the `#esc-order` variable.  _a_ holds the
   \ word list at the top of the search order.
   \
-  \ See: `esc-max-order`, `>esc-order`, `esc-get-order`,
-  \ `esc-set-order`.
+  \ See: `max-esc-order`, `>esc-order`, `get-esc-order`,
+  \ `set-esc-order`.
   \
   \ }doc
 
@@ -362,14 +362,14 @@ need ?esc-order need #esc-order need esc-context
 
   \ doc{
   \
-  \ esc-set-order ( widn..wid1 n -- )
+  \ set-esc-order ( widn..wid1 n -- )
   \
   \ Set the escaped strings search order to the word lists
   \ identified by _widn..wid1_. Subsequently, word list _wid1_
   \ will be searched first, and word list _widn_ searched last.
   \ If _n_ is zero, empty the escaped strings search order.
   \
-  \ See: `esc-get-order`, `>esc-order`,
+  \ See: `get-esc-order`, `>esc-order`,
   \ `esc-standard-chars-wordlist`, `esc-block-chars-wordlist`,
   \ `esc-udg-chars-wordlist`.
   \
@@ -450,7 +450,7 @@ need parse-char need char>string
   \
   \ The translation is done by searching the name of the
   \ escaped char in the current search order, which has been
-  \ set by calling `set-esc-string-order` in
+  \ set by calling `set-esc-order` in
   \ `parse-esc-string`.
   \
   \ }doc
@@ -542,5 +542,11 @@ need parse-char need char>string
   \ names. Link `variable` and `constant` in documentation.
   \
   \ 2018-07-21: Improve documentation, linking `throw`.
+  \
+  \ 2020-05-03: Fix documentation.
+  \
+  \ 2020-05-04: Fix documentation.
+  \
+  \ 2020-05-24: Replace "hash" notation with "number sign".
 
   \ vim: filetype=soloforth

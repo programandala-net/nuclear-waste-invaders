@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201804012049
+  \ Last modified: 202005292219
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -31,7 +32,7 @@ unneeding str<
 
   \ doc{
   \
-  \ str< ( ca1 len1 ca2 len2 -- f ) "s-t-r-lees-than"
+  \ str< ( ca1 len1 ca2 len2 -- f ) "s-t-r-less-than"
   \
   \ Is string _ca1 len1_ lexicographically smaller than string
   \ _ca2 len2_?
@@ -191,15 +192,12 @@ unneeding n>str
   \
   \ }doc
 
-( char>string chars>string >bstring c>bstring 2>bstring )
+( char>string chars>string >bstring 2>bstring ?stringer )
 
 unneeding char>string ?(
 
 : char>string ( c -- ca len )
   1 allocate-stringer tuck c! 1 ; ?)
-
-  \ XXX TODO -- rename or write after `c>bstring`, which
-  \ does the same but in `pad`.
 
   \ doc{
   \
@@ -208,8 +206,8 @@ unneeding char>string ?(
   \ Convert the char _c_ to a string _ca len_ in the
   \ `stringer`.
   \
-  \ See: `chars>string`, `ruler`, `u>str`, `d>str`,
-  \ `ud>str`.
+  \ See: `chars>string`, `ruler`, `u>str`, `d>str`, `ud>str`,
+  \ `>bstring`, `2>bstring`.
   \
   \ }doc
 
@@ -217,66 +215,66 @@ unneeding chars>string ?(
 
 : chars>string ( c#1..c#n n -- ca len )
   dup if   dup allocate-stringer swap 2dup 2>r
-           \ ( c#1..c#n ca n )
+           \ ( c#1..c#n ca n ) ( R: ca n )
            bounds ?do i c! loop 2r>
-      else pad swap then ; ?)
+      else dup >stringer then ; ?)
 
   \ doc{
   \
   \ chars>string ( c#1..c#n n -- ca len ) "chars-to-string"
   \
-  \ Convert _n_ chars to a string _ca len_ in the `stringer`.
+  \ Convert _n_ chars to a string _ca len_ in the `stringer`,
+  \ being _c#1_ the last character of the string and _c#n_ the
+  \ first one.
   \
-  \ c#1..c#n :: chars to make the string with (_c1_ is the last one)
-  \ n :: number of chars
-  \
-  \ See: `ruler`, `s+`.
+  \ See: `char>string`, `2>bstring`, `>bstring`, `ruler`, `s+`.
   \
   \ }doc
 
-unneeding >bstring
-
-?\ : >bstring ( u -- ca len ) pad ! pad cell ;
+unneeding >bstring ?( : >bstring ( x -- ca len )
+                        cell allocate-stringer tuck ! cell ; ?)
 
   \ doc{
   \
   \ >bstring ( x -- ca len ) "to-b-string"
   \
-  \ Convert _x_ to a 1-cell binary string _ca len_ in `pad`.
-  \ _ca len_ contains _x_ "as is", as stored in memory.
+  \ Convert _x_ to a 1-cell binary string _ca len_ in the
+  \ `stringer`. _ca len_ contains _x_ "as is", as stored in
+  \ memory.
   \
-  \ See: `c>bstring`, `2>bstring`.
-  \
-  \ }doc
-
-unneeding c>bstring
-
-?\ : c>bstring ( c -- ca len ) pad c! pad 1 ;
-
-  \ doc{
-  \
-  \ c>bstring ( c -- ca len ) "c-to-b-string"
-  \
-  \ Convert _c_ to a 1-char binary string _ca len_ in `pad`,
-  \ _ca len_ contains _c_ "as is", as stored in memory.
-  \
-  \ See: `>bstring`, `2>bstring`.
+  \ See: `2>bstring`, `chars>string`, `char>string`.
   \
   \ }doc
 
-unneeding 2>bstring ?(
-
-: 2>bstring ( xd -- ca len )
-  pad 2! pad [ 2 cells ] literal ; ?)
+unneeding 2>bstring ?( : 2>bstring ( x1 x2 -- ca len )
+  [ 2 cells ] xliteral allocate-stringer dup >r 2! r>
+  [ 2 cells ] xliteral ; ?)
 
   \ doc{
   \
-  \ >2bstring ( xd -- ca len ) "to-two-b-string"
+  \ 2>bstring ( x1 x2 -- ca len ) "two-to-b-string"
   \
-  \ Convert _xd_ to a 2-cell binary string in `pad`.
-  \ _ca len_ contains _xd_ "as is", as stored in memory.
+  \ Convert _xd_ to a 2-cell binary string in the `stringer`.
+  \ _ca len_ contains _x2 x1_, i.e. in the usual order in
+  \ memory.
   \
-  \ See: `>bstring`, `c>bstring`.
+  \ See: `>bstring`, `char>string`, `chars>string`.
+  \
+  \ }doc
+
+unneeding ?stringer
+
+?\ : ?stringer ( len -- ) /stringer > #-293 ?throw ;
+
+  \ doc{
+  \
+  \ ?stringer ( len -- ) "question-stringer"
+  \
+  \ If _len_ is greater than `/stringer`, then `throw` error
+  \ #-293 (string too long). Otherwise do nothing.
+  \
+  \ ``?stringer`` is provided as an optional check. for
+  \ `allocate-string`.
   \
   \ }doc
 
@@ -933,7 +931,7 @@ unneeding sconstants ?( need array>
   \ 3 digitname cr type cr
   \ ----
 
-  \ See: `sconstant`, `begin-stringtable`.
+  \ See: `sconstant`, `,"`, `begin-stringtable`.
   \
   \ }doc
 
@@ -964,6 +962,58 @@ unneeding unescape ?(
   \ Origin: Forth-2012 (STRING EXT).
   \
   \ See: `replaces`.
+  \
+  \ }doc
+
+( delete insert replace )
+
+unneeding delete ?(
+
+: delete ( ca1 len1 len2 -- )
+  over min >r r@ - ( left over ) dup 0>
+  if   2dup swap dup r@ + -rot swap move
+  then + r> blank ; ?)
+
+  \ doc{
+  \
+  \ delete ( ca1 len1 len2 -- )
+  \
+  \ Delete _len2_ characters at the start of string _ca1 len1_,
+  \ moving the rest of the string to the left (_ca1_) and
+  \ filling the end with blanks.
+  \
+  \ See: `insert`, `replace`.
+  \
+  \ }doc
+
+unneeding insert ?(
+
+: insert ( ca1 len1 ca2 len2 -- )
+  rot over min >r r@ - over dup r@ + rot move r> move ; ?)
+
+  \ doc{
+  \
+  \ insert ( ca1 len1 ca2 len2 -- )
+  \
+  \ Insert string _ca1 len1_ at the start of string _ca2 len2_.
+  \
+  \ See: `delete`, `replace`.
+  \
+  \ }doc
+
+unneeding replace
+
+?\ : replace ( ca1 len1 ca2 len2 -- ) rot min move ;
+
+  \ doc{
+  \
+  \ replace ( ca1 len1 ca2 len2 -- )
+  \
+  \ Replace the contents of zone _ca2 len2_ with string _ca1
+  \ len1_. If _len1_ is greater than _len2_, only _len2_ bytes
+  \ are replaced.
+  \
+  \ See: `insert`, `delete`, `replaces`.
   \
   \ }doc
 
@@ -1097,5 +1147,20 @@ unneeding unescape ?(
   \ `unneeding` lines. Update notation of stack comments.
   \
   \ 2018-04-01: Add `str<>`.
+  \
+  \ 2020-02-22: Fix typo.
+  \
+  \ 2020-04-27: Improve documentation of `sconstants`.
+  \
+  \ 2020-05-04: Move `insert`, `delete`, `replace` here from
+  \ <prog.editor.gforth.fs>. Fix documentation.
+  \
+  \ 2020-05-26: Modify `chars>string`, `>bstring` and
+  \ `2>bstring` to use the `stringer` instead of `pad`. Remove
+  \ `c>bstring`, because `char>string` does the same. Improve
+  \ documentation.
+  \
+  \ 2020-05-29: Add `?stringer` (its homonym in the kernel has
+  \ been renamed `fit-stringer`).
 
   \ vim: filetype=soloforth

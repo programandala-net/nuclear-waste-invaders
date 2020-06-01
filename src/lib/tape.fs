@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041105
+  \ Last modified: 202005241407
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -30,7 +30,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -100,25 +101,25 @@ create tape-header  /tape-header 2 * allot
 
   \ .Detailed structure of both tape headers
   \ |===
-  \ | First header | Second header | BASIC program | Num DATA | String DATA | CODE | Notes
+  \ | First header | Second header | BASIC program | Num DATA | String DATA | CODE  | Notes
 
-  \ | IX+$00 | IX+$11 | 0     | 1   | 2   | 3     | File type
-  \ | IX+$01 | IX+$12 | x     | x   | x   | x     | F ($FF if filename is null)
-  \ | IX+$02 | IX+$13 | x     | x   | x   | x     | i
-  \ | IX+$03 | IX+$14 | x     | x   | x   | x     | l
-  \ | IX+$04 | IX+$15 | x     | x   | x   | x     | e
-  \ | IX+$05 | IX+$16 | x     | x   | x   | x     | n
-  \ | IX+$06 | IX+$17 | x     | x   | x   | x     | a
-  \ | IX+$07 | IX+$18 | x     | x   | x   | x     | m
-  \ | IX+$08 | IX+$19 | x     | x   | x   | x     | e
-  \ | IX+$09 | IX+$1A | x     | x   | x   | x     | .
-  \ | IX+$0A | IX+$1B | x     | x   | x   | x     | Padding spaces
-  \ | IX+$0B | IX+$1C | lo    | lo  | lo  | lo    | Total...
-  \ | IX+$0C | IX+$1D | hi    | hi  | hi  | hi    | ...length of datablock
-  \ | IX+$0D | IX+$1E | Auto  | -   | -   | Start | Various
-  \ | IX+$0E | IX+$1F | Start | a-z | a-z | addr  | ($80 if no autostart).
-  \ | IX+$0F | IX+$20 | lo    | -   | -   | -     | Length of program only...
-  \ | IX+$10 | IX+$21 | hi    | -   | -   | -     | ...i.e. without variables
+  \ | IX+$00       | IX+$11        | 0             | 1        | 2           | 3     | File type
+  \ | IX+$01       | IX+$12        | x             | x        | x           | x     | F ($FF if filename is null)
+  \ | IX+$02       | IX+$13        | x             | x        | x           | x     | i
+  \ | IX+$03       | IX+$14        | x             | x        | x           | x     | l
+  \ | IX+$04       | IX+$15        | x             | x        | x           | x     | e
+  \ | IX+$05       | IX+$16        | x             | x        | x           | x     | n
+  \ | IX+$06       | IX+$17        | x             | x        | x           | x     | a
+  \ | IX+$07       | IX+$18        | x             | x        | x           | x     | m
+  \ | IX+$08       | IX+$19        | x             | x        | x           | x     | e
+  \ | IX+$09       | IX+$1A        | x             | x        | x           | x     | .
+  \ | IX+$0A       | IX+$1B        | x             | x        | x           | x     | Padding spaces
+  \ | IX+$0B       | IX+$1C        | lo            | lo       | lo          | lo    | Total...
+  \ | IX+$0C       | IX+$1D        | hi            | hi       | hi          | hi    | ...length of datablock
+  \ | IX+$0D       | IX+$1E        | Auto          | -        | -           | Start | Various
+  \ | IX+$0E       | IX+$1F        | Start         | a-z      | a-z         | addr  | ($80 if no autostart).
+  \ | IX+$0F       | IX+$20        | lo            | -        | -           | -     | Length of program only...
+  \ | IX+$10       | IX+$21        | hi            | -        | -           | -     | ...i.e. without variables
   \ |===
 
   \ See: `tape-filename`, `tape-filetype`, `tape-start`,
@@ -282,21 +283,29 @@ code (tape-file> ( -- )
   \
   \ tape-file> ( ca1 len1 ca2 len2 -- ) "tape-file-from"
   \
-  \ Read a tape file _ca1 len1_ (_len1_ is zero if filename is
-  \ unspecified) into a memory region _ca2 len2_.
+  \ Read a tape file _ca1 len1_ into a memory region _ca2
+  \ len2_.
   \
-  \ _ca2_ is zero if the address must be taken from the file
-  \ header instead, which is the address the file was saved
-  \ from.  _len2_ is zero if it's unspecified.
+  \ - When _len1_ is zero, it means the filename is
+  \ unspecified, _ca1_ is irrelevant and the first file must be
+  \ loaded.
+  \
+  \ - When _ca2_ is zero the destination address will be taken
+  \ from the file header, i.e. the address the file was saved
+  \ from.
+  \
+  \ - When _len2_ is zero the zone size will be taken from the
+  \ file header, i.e. the whole length of the file.
   \
   \ WARNING: If _len2_ is not zero or the exact length of the
   \ file, the ROM routine returns to BASIC with "Tape loading
   \ error". This crashes the system, because in Solo Forth the
-  \ lower screen has no lines, and BASIC can not display the
-  \ message. This will be avoided in a future version of Solo
-  \ Forth.
-  \
-  \ See: `>tape-file`, `(tape-file>`, `>file`.
+  \ lower screen has no lines, and BASIC cannot display the
+  \ message.
+
+  \ See: `>tape-file`, `(tape-file>`
+  \ ifdef::plus3dos[.]
+  \ ifdef::gplusdos,trdos[, `>file`.]
   \
   \ }doc
 
@@ -344,7 +353,9 @@ code (>tape-file ( -- )
   \ Write a memory region _ca1 len1_ into a tape file _ca2
   \ len2_.
   \
-  \ See: `tape-file>`, `(>tape-file`, `>file`.
+  \ See: `tape-file>`, `(>tape-file`
+  \ ifdef::plu3dos[.]
+  \ ifdef::gplusdos,trdos[, `>file`.]
   \
   \ }doc
 
@@ -491,7 +502,15 @@ unneeding tape-file>display ?( need tape-file>
   \
   \ 2018-04-11: Fix documentation.
   \
-  \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ 2018-06-04: Update: remove trailing closing paren from word
+  \ names.
+  \
+  \ 2020-05-05: Improve documentation of `tape-file>` and
+  \ `>tape-file` with conditional cross references.
+  \
+  \ 2020-05-14: Tabulate the tape header table (this doesn't
+  \ affect the final documentation).
+  \
+  \ 2020-05-24: Fix typo.
 
   \ vim: filetype=soloforth

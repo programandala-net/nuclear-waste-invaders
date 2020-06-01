@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041144
+  \ Last modified: 202005241405
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -282,7 +283,7 @@ variable loading-program
   \
   \ Load a program from block _u_, i.e. a set of blocks that
   \ are loaded as a whole. The blocks of a program don't have
-  \ block headers.  Therefore programs can not have internal
+  \ block headers.  Therefore programs cannot have internal
   \ requisites, i.e.  they use `need` only to load from the
   \ library, which must be before the blocks of the program on
   \ the disk or disks.
@@ -293,7 +294,7 @@ variable loading-program
   \ `end-program` is executed.
   \
   \ ``(load-program`` is a factor of `load-program`.
-  \ ``(load-program`` can be used to resume the `load-program`
+  \ ``(load-program`` can be used to resume `load-program`
   \ after an error, provided the code of block where the error
   \ happened (`lastblk`) is not the continuation of the
   \ previous block.
@@ -311,7 +312,7 @@ variable loading-program
   \ Load a program, i.e. a set of blocks that are loaded as a
   \ whole. The blocks of a program don't have block headers
   \ except the first one, which contains _name_. Therefore
-  \ programs can not have internal requisites, i.e. they use
+  \ programs cannot have internal requisites, i.e. they use
   \ `need` only to load from the library, which must be before
   \ the blocks of the program on the disk or disks.
   \
@@ -384,5 +385,9 @@ variable loading-program
   \
   \ 2018-06-04: Update: remove trailing closing paren from
   \ word names.
+  \
+  \ 2020-02-27: Fix typo.
+  \
+  \ 2020-05-24: Fix typos.
 
   \ vim: filetype=soloforth

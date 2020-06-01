@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041102
+  \ Last modified: 202005241533
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -25,7 +26,7 @@
 
 ( .word .wordname more-words? words wordlist-words )
 
-unneeding .word ?( need tab  defer .word ( nt -- )
+unneeding .word ?( need tab need .name  defer .word ( nt -- )
 
 : (.word ( nt -- ) .name tab ;  ' (.word ' .word defer! ?)
 
@@ -50,7 +51,8 @@ unneeding .word ?( need tab  defer .word ( nt -- )
   \
   \ }doc
 
-unneeding .wordname ?( need u.r
+unneeding .wordname ?( need u.r need .name
+
 : .wordname ( nt -- ) cr dup 5 u.r space .name ;
 ' .wordname ' .word defer! ?)
 
@@ -96,7 +98,7 @@ unneeding words ?( need trail need more-words?
   \ Origin: Forth-83 (Uncontrolled Reference Words), Forth-94
   \ (TOOLS), Forth-2012 (TOOLS).
   \
-  \ See: `wordlist-wordls`, `wordlists`.
+  \ See: `wordlist-words`, `wordlists`.
   \
   \ }doc
 
@@ -147,7 +149,7 @@ unneeding words# ?( need trail need name<name
 
   \ doc{
   \
-  \ words# ( -- n ) "words-hash"
+  \ words# ( -- n ) "words-number-sign"
   \
   \ Return number _n_ of words defined in the first word list
   \ of the search order.
@@ -177,8 +179,8 @@ unneeding words# ?( need trail need name<name
   \ 2017-02-01: Fix `words-like` with `lowers` (words are
   \ stored in lowercase).
   \
-  \ 2017-02-17: Update notation "behaviour" to "action".
-  \ Update cross references.
+  \ 2017-02-17: Update notation "behaviour" to "action". Update
+  \ cross references.
   \
   \ 2017-03-13: Improve documentation.
   \
@@ -192,7 +194,14 @@ unneeding words# ?( need trail need name<name
   \
   \ 2018-06-04: Fix documentation.
   \
-  \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ 2018-06-04: Update: remove trailing closing paren from word
+  \ names.
+  \
+  \ 2020-02-27: Fix typo in documentation.
+  \
+  \ 2020-05-08: Update requirements: `.name` has been moved
+  \ from the kernel to the library.
+  \
+  \ 2020-05-24: Replace "hash" notation with "number sign".
 
   \ vim: filetype=soloforth

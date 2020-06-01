@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041335
+  \ Last modified: 202005252105
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -31,7 +32,8 @@
   \ 2016-03-13: copied from the kernel, in
   \ order to make it optional in the future.
 
-2variable accept-xy       \ coordinates of the edited string
+need 2variable 2variable accept-xy
+  \ coordinates of the edited string
 
   \
   \ accept-xy ( -- a )
@@ -41,7 +43,8 @@
   \ `accept`.
   \
 
-variable accept-buffer    \ address of the edited string
+variable accept-buffer
+  \ address of the edited string
 
   \
   \ accept-buffer ( -- a )
@@ -173,7 +176,7 @@ noop noop noop noop noop noop noop noop noop noop noop noop [
     else  \ printable
           >r  2dup <>  \ more?
           if r@ over c!  char+  r@ emit
-          then r> drop
+          then rdrop
     then
   repeat  drop nip swap - ;
 
@@ -1468,7 +1471,7 @@ unneeding pressed? ?( need @p
   \
   \ }doc
 
-unneeding pressed ?( need pressed? need kk-ports
+unneeding pressed ?( need pressed? need kk-ports need +loop
 
 : pressed ( -- false | b a true )
   false \ by default
@@ -1495,7 +1498,9 @@ unneeding pressed ?( need pressed? need kk-ports
 
   \ The application must define the `/k` constant.
 
-need kk-ports  0. 2variable kk-pressed
+need kk-ports need +loop need 2variable
+
+0. 2variable kk-pressed
 
 : only-one-pressed ( -- false | b a true )
 
@@ -1757,5 +1762,12 @@ unneeding key-caps-lock ?\ 6 cconstant key-caps-lock
   \ 2018-06-04: Update: remove trailing closing paren from word
   \ names.  Link `variable` in documentation. Replace
   \ `[defined]` with `defined`, which is the kernel.
+  \
+  \ 2020-05-18: Update: `+loop` was moved to the library.
+  \
+  \ 2020-05-19: Update: `2variable` has been moved to the
+  \ library.
+  \
+  \ 2020-05-25: Replace `r> drop` with `rdrop`.
 
   \ vim: filetype=soloforth

@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201807212114
+  \ Last modified: 202005241534
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -29,7 +30,7 @@ unneeding /line# ?\ : /line# ( -- n ) #16 base @ - 4 / 1+ ;
 
   \ doc{
   \
-  \ /line# ( -- n ) "slash-line-hash"
+  \ /line# ( -- n ) "slash-line-number-sign"
   \
   \ Maximum length of a line number in the current radix.
   \ It works for decimal, hex and binary.
@@ -42,7 +43,7 @@ unneeding .line# ?\ need /line# : .line# ( n -- ) /line# .r ;
 
   \ doc{
   \
-  \ .line# ( n -- ) "dot-line-hash"
+  \ .line# ( n -- ) "dot-line-number-sign"
   \
   \ Display line number _n_ right-aligned in a field whose
   \ width depends on the current radix (decimal, hex or
@@ -132,7 +133,7 @@ unneeding view ?( need locate need list
   \
   \ List the block where _name_ is defined, i.e. the first
   \ block where _name_ is in the index line (surrounded by
-  \ spaces). If _name_ can not be found, `throw` an exception
+  \ spaces). If _name_ cannot be found, `throw` an exception
   \ #-286 ("not located").
   \
   \ See: `locate`, `list`.
@@ -515,5 +516,8 @@ need list-lines
   \ 2018-03-14: Fix requirement of `index`.
   \
   \ 2018-07-21: Improve documentation, linking `throw`.
+  \
+  \ 2020-05-24: Fix typo. Replace "hash" notation with "number
+  \ sign".
 
   \ vim: filetype=soloforth

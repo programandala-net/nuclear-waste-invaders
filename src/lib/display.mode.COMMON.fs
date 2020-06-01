@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041137
+  \ Last modified: 202005042022
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -56,7 +57,7 @@ unneeding >form ?( need form>xy need columns need rows need to
   \ display mode whose `form` is _cols rows_.
   \
   \ ``>form`` is used by the display modes, e.g. `mode-32` and
-  \ `mode-64o`.
+  \ `mode-64ao`.
   \
   \ NOTE: When ``>form`` is executed, the action of `at-xy`
   \ must be that of the new mode, but `xy`, `rows` and
@@ -74,7 +75,7 @@ unneeding form ?( need columns need rows
   \ form ( -- cols rows )
   \
   \ Number of `columns` and `rows` in the terminal in the
-  \ current display mode (e.g. `mode-32`, `mode-64o`).
+  \ current display mode (e.g. `mode-32`, `mode-64ao`).
   \
   \ Origin: Gforth.
   \
@@ -89,8 +90,8 @@ unneeding (at-xy
   \
   \ Set the cursor coordinates to column _col_ and row _row_,
   \ by displaying control character 22 followed by _col_ and
-  \ _row_, as needed by some display modes, e.g. `mode-64` and
-  \ `mode-42`.  The upper left corner is column zero, row zero.
+  \ _row_, as needed by some display modes, e.g. `mode-64ao` and
+  \ `mode-42pw`.  The upper left corner is column zero, row zero.
   \
   \ ``(at-xy`` is a possible action of `at-xy`, which is a
   \ deferred word configured by the current display mode.
@@ -223,7 +224,13 @@ code (banked-mode-output ( -- )
   \
   \ 2018-03-09: Update stack notation "x y" to "col row".
   \
-  \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ 2018-06-04: Update: remove trailing closing paren from word
+  \ names.
+  \
+  \ 2020-02-27: Fix: update names that were renamed in
+  \ 2018-01-24: "64o" (Owen) -> "64ao" (Andrew Owen).
+  \
+  \ 2020-05-04: Fix cross references: `mode-64` -> `mode-64ao`.
+  \ `mode-42` -> `mode-42pw`.
 
   \ vim: filetype=soloforth

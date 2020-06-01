@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041145
+  \ Last modified: 202005090035
 
   \ ===========================================================
   \ Description
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -64,7 +65,7 @@ unneeding << unneeding >> and ?(
   \
   \ See the license at <http://pygmy.utoh.org/license.html>.
 
-need c@+ need for need 16hex. need 8hex.
+need depth need 16hex. need 8hex.
 
 : << ( -- ca n ) here depth ;
 
@@ -83,7 +84,7 @@ need c@+ need for need 16hex. need 8hex.
 
 : >> ( ca +n -- )
   depth 1- <> #-258 ?throw
-  cr dup 16hex. here over - for c@+ 8hex. step drop ; ?)
+  cr dup 16hex. here swap ?do i c@ 8hex. loop ; ?)
 
   \ doc{
   \
@@ -177,7 +178,7 @@ unneeding ;code ?(
   \ Place _name_'s data field address _dfa_ on the stack. The
   \ stack effects _i*x_ represent arguments to name.
   \
-  \ name Execution:
+  \ _name_ execution:
   \
   \ Perform the machine code sequence that was generated
   \ following ``;code`` and finished by `end-code`.
@@ -236,7 +237,16 @@ unneeding ;code ?(
   \
   \ 2018-03-05: Update `[unneeded]` to `unneeding`.
   \
-  \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ 2018-06-04: Update: remove trailing closing paren from word
+  \ names.
+  \
+  \ 2020-02-28: Fix markup in documentation.
+  \
+  \ 2020-02-29: Fix `>>`: it displayed one extra byte, it
+  \ needed just `1-` before the loop, but it has been rewritten
+  \ with `?do` instead of `for`, making it simpler.
+  \
+  \ 2020-05-09: Update requirements: `depth` has been moved to
+  \ the library.
 
   \ vim: filetype=soloforth

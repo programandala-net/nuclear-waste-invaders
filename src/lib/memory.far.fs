@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201903151617
+  \ Last modified: 202005190108
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -18,7 +18,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2016, 2017, 2018, 2019,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -40,7 +41,7 @@
   \
   \ http://www.worldofspectrum.org/z88forever/camelforth/camel-pools.html
 
-( far-hl_ ?next-bank_ ?previous-bank_ )
+( far-hl_ ?next-bank_ ?previous-bank_ np! )
 
 get-current assembler-wordlist dup >order set-current
 
@@ -50,7 +51,7 @@ unneeding far-hl_ ?\ ' far 2+ @ constant far-hl_
   \
   \ far-hl_ ( -- a ) "far-h-l-underscore"
   \
-  \ Address of the `far.hl` routine of the kernel, which
+  \ Address of the ``far.hl`` routine of the kernel, which
   \ converts the far-memory address ($0000..$FFFF) hold in the
   \ HL register to its actual equivalent ($C000..$FFFF) and
   \ pages in the corresponding memory bank.
@@ -154,6 +155,29 @@ unneeding ?previous-bank_ ?(
 
 previous set-current
 
+unneeding np!
+
+?\ code np! ( x -- ) E1 c, 22 c, np , jpnext, end-code
+
+  \ pop hl
+  \ ld (names_pointer),hl
+  \ _jp_next
+
+  \ doc{
+  \
+  \ np! ( a -- ) "n-p-store"
+  \
+  \ Store _a_ into the name-space pointer `np`.
+  \
+  \ ``np!`` is written in Z80. Its equivalent definition in
+  \ Forth is the following:
+
+  \ ----
+  \ : np! ( a -- ) np ! ;
+  \ ----
+
+  \ }doc
+
 ( default-bank_ e-bank_ )
 
 get-current assembler-wordlist dup >order set-current
@@ -173,7 +197,7 @@ unneeding default-bank_
   \
   \ Output of the routine: A and E corrupted.
   \
-  \ See: `bank-e_`.
+  \ See: `e-bank_`.
   \
   \ }doc
 
@@ -198,11 +222,9 @@ unneeding e-bank_
 
 previous set-current
 
-( farallot far, far-n, )
+( farallot far, far-n, farfill farerase )
 
-unneeding farallot
-
-?\ : farallot ( n -- ) np +! ;
+unneeding farallot ?\ : farallot ( n -- ) np +! ;
 
   \ doc{
   \
@@ -212,6 +234,8 @@ unneeding farallot
   \ space. If _n_ is less than zero, release _n_ bytes of
   \ headers space. If _n_ is zero, leave the headers-space
   \ pointer unchanged.
+  \
+  \ See: `farfill`, `far-banks`.
   \
   \ }doc
 
@@ -225,9 +249,12 @@ unneeding far, ?( need farallot
   \
   \ Compile _x_ in far-memory headers space.
   \
+  \ See: `far-n,`, `,`, `farallot`.
+  \
   \ }doc
 
 unneeding far-n, ?( need far,
+
 : far-n, ( x[u]..x[1] u -- ) 0 ?do far, loop ; ?)
 
   \ doc{
@@ -239,7 +266,40 @@ unneeding far-n, ?( need far,
   \ space, being _x[1]_ the first one stored and _x[u]_ the
   \ last one.
   \
-  \ See: `far,`, `n,`.
+  \ See: `far,`, `n,`, `farallot`.
+  \
+  \ }doc
+
+unneeding farfill ?(
+
+: farfill ( ca len b -- )
+  rot rot bounds ?do dup i farc! loop drop ; ?)
+
+  \ doc{
+  \
+  \ farfill ( ca len b -- ) "far-fill"
+  \
+  \ If _len_ is not zero, store _b_ in each of _len_
+  \ consecutive characters of far memory beginning at _a_.
+  \
+  \ See: `farerase`, `farallot`, `far-n,`, `farc!`,
+  \ `far-banks`.
+  \
+  \ }doc
+
+unneeding farerase
+
+?\ : farerase ( ca len -- ) bounds ?do 0 i farc! loop ;
+
+  \ doc{
+  \
+  \ farerase ( ca len -- ) "far-erase"
+  \
+  \ If _len_ is greater than zero, clear all bits in each of
+  \ _len_ consecutive address units of far memory beginning at
+  \ _ca_.
+  \
+  \ See: `farfill`, `farallot`, `far-n,`, `farc!`, `far-banks`.
   \
   \ }doc
 
@@ -315,10 +375,10 @@ unneeding 2@+ ?exit need far2@
 
 ( move>far move<far cmove>far cmove<far )
 
-unneeding move>far ?(
+unneeding move>far ?( need +loop
 
 : move>far ( a1 a2 len -- )
-  cells bounds ?do  dup @ i far! cell+ cell +loop  drop ; ?)
+  cells bounds ?do  dup @ i far! cell+ cell +loop drop ; ?)
 
   \ doc{
   \
@@ -330,7 +390,7 @@ unneeding move>far ?(
   \
   \ }doc
 
-unneeding move<far ?(
+unneeding move<far ?( need +loop
 
 : move<far ( a1 a2 len -- )
   cells bounds ?do  dup far@ i ! cell+ cell +loop  drop ; ?)
@@ -486,6 +546,9 @@ code c@bank ( ca n -- c ) D1 c, e-bank_ call,
   \ c@bank ( ca n -- c ) "c-fetch-bank"
   \
   \ Fetch _c_ from address _ca_ ($C000..$FFFF) of `bank` _n_.
+  \
+  \ ``c@bank`` is written in Z80. Its equivalent definition in
+  \ Forth is the following:
 
   \ ----
   \ : c@bank ( ca n -- c )
@@ -560,5 +623,15 @@ code c@bank ( ca n -- c ) D1 c, e-bank_ call,
   \ 2018-04-12: Fix markup in documentation.
   \
   \ 2019-03-15: Add `far-n,`.
+  \
+  \ 2019-03-21: Add `farfill` and `farerase`. Improve
+  \ documentation.
+  \
+  \ 2020-05-04: Fix cross references.
+  \
+  \ 2020-05-18: Update: `+loop` was moved to the library. Move
+  \ `np!` here from the kernel.
+  \
+  \ 2020-05-19: Improve documentation.
 
   \ vim: filetype=soloforth

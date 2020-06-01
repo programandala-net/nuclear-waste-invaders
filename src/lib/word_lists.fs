@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201804141424
+  \ Last modified: 202005261716
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,7 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2016, 2017, 2018, 2020.
 
   \ ===========================================================
   \ License
@@ -37,7 +37,7 @@ unneeding wordlist>link
   \ _wid_, which holds the word-list identifier of the previous
   \ word list defined in the system.
   \
-  \ See: `wordlist`, `wid>name`.
+  \ See: `wordlist`, `wordlist>name`.
   \
   \ }doc
 
@@ -153,7 +153,7 @@ unneeding wordlist-of
   \ Return the word-list identifier _wid_ associated to
   \ vocabulary _name_.
   \
-  \ Origin: eForth's `widof`.
+  \ Origin: eForth's ``widof``.
   \
   \ See: `wordlist`, `vocabulary`.
   \
@@ -258,7 +258,7 @@ unneeding find-name-in
   \ return its _nt_, else return zero.
   \
   \ See: `search-wordlist`, `find-name-from`, `find-name`,
-  \ `find`.
+  \ `<<src-lib-word-lists-fs, find>>`.
   \
   \ }doc
 
@@ -300,7 +300,7 @@ unneeding swap-current ?(
   \
   \ Exchange the contents of the current compilation word list,
   \ which is identified by _wid2_, with the word list
-  \ identified by `wid1`.
+  \ identified by _wid1_.
   \
   \ Origin: lpForth.
   \
@@ -324,7 +324,7 @@ unneeding search-wordlist ?(
   \ Origin: Forth-94 (SEARCH), Forth-2012 (SEARCH).
   \
   \ See: `find-name`, `find-name-from`, `find-name-in`,
-  \ `find`.
+  \ `<<src-lib-word-lists-fs, find>>`.
   \
   \ }doc
 
@@ -384,5 +384,13 @@ unneeding search-wordlist ?(
   \ 2018-03-05: Update `[unneeded]` to `unneeding`.
   \
   \ 2018-04-14: Fix typo.
+  \
+  \ 2020-05-02: Fix false link in documentation.
+  \
+  \ 2020-05-05: Fix markup in documentation. Update cross
+  \ reference.
+  \
+  \ 2020-05-26: Make links to `find` explicit (there's another
+  \ `find` in the Specforth editor).
 
   \ vim: filetype=soloforth

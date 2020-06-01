@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201807292046
+  \ Last modified: 202005261309
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -781,6 +782,8 @@ unneeding 2/ ?( code 2/ ( x1 -- x2 )
   \ Origin: Forth-83 (Required Word Set), Forth-94 (CORE),
   \ Forth-2012 (CORE).
   \
+  \ See: `/`, `rshift`, `s>d`, `fm/mod`.
+  \
   \ }doc
 
 unneeding cell/ ?\ need alias need 2/  ' 2/ alias cell/
@@ -976,7 +979,7 @@ unneeding fm/mod ?(
   over 0<> over 0< and   \ quotient<0 and remainder<>0?
   if swap r> +           \ add divisor to remainder
      swap 1-             \ decrement quotient
-  else r> drop then ; ?)
+  else rdrop then ; ?)
 
   \ Credit:
   \
@@ -1409,5 +1412,9 @@ code join ( b1 b2 -- x )
   \ 2018-07-15: Add `min>top`, `max>top`, `pair=`.
   \
   \ 2018-07-29: Fix typo in documentation.
+  \
+  \ 2020-05-25: Replace `r> drop` with `rdrop`.
+  \
+  \ 2020-05-26: Improve documentation of `2/`.
 
   \ vim: filetype=soloforth

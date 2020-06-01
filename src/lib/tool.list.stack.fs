@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041102
+  \ Last modified: 202005182101
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -23,11 +24,40 @@
   \ retain every copyright, credit and authorship notice, and
   \ this license.  There is no warranty.
 
-( .depth .s u.s )
+( depth .depth .s u.s )
+
+unneeding depth
+
+?\ : depth  ( -- +n ) sp@ sp0 @ - [ cell negate ] literal / ;
+
+  \ doc{
+  \
+  \ depth  ( -- +n )
+  \
+  \ _+n_ is the number of single-cell values contained in the
+  \ data stack before _+n_ was placed on the stack.
+  \
+  \ Origin: Forth-79 (Required Word Set), Forth-83 (Required Word
+  \ Set), Forth-94 (CORE), Forth-2012 (CORE).
+  \
+  \ See: `sp@`, sp0`, `cell`, `rdepth`, `fdepth`, `.depth`.
+  \
+  \ }doc
 
 unneeding .depth ?\ : .depth ( n -- ) ." <" 0 .r ." > " ;
 
-unneeding .s ?( need .depth
+  \ doc{
+  \
+  \ .depth ( n -- )
+  \
+  \ Display _n_ with the format used by `.s` and `u.s` to
+  \ display the `depth` of the data stack`.
+  \
+  \ See: `.r`, `depth`.
+  \
+  \ }doc
+
+unneeding .s ?( need depth need .depth need +loop
 
 defer (.s ( x -- ) ' . ' (.s defer!
 
@@ -39,10 +69,31 @@ defer (.s ( x -- ) ' . ' (.s defer!
   \ Credit:
   \ Code from Afera. Original algorithm from v.Forth.
 
+  \ doc{
+  \
+  \ .s ( -- )
+  \
+  \ Display, using `.`, the values currently on the data stack.
+  \
+  \ See: `u.s`, `depth`, `.depth`.
+  \
+  \ }doc
+
 unneeding u.s ?( need .s
 
 : u.s   ( -- )
   ['] u. ['] (.s defer!  .s  ['] . ['] (.s defer! ; ?)
+
+  \ doc{
+  \
+  \ u.s ( -- )
+  \
+  \ Display, using `u.`,  the values currently on the data
+  \ stack.
+  \
+  \ See: `.s`, `depth`, `.depth`.
+  \
+  \ }doc
 
   \ ===========================================================
   \ Change log
@@ -71,7 +122,14 @@ unneeding u.s ?( need .s
   \
   \ 2018-03-05: Update `[unneeded]` to `unneeding`.
   \
-  \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ 2018-06-04: Update: remove trailing closing paren from word
+  \ names.
+  \
+  \ 2020-05-04: Improve documentation.
+  \
+  \ 2020-05-09: Move `depth` from the kernel. Update the
+  \ corresponding requirements.
+  \
+  \ 2020-05-18: Update: `+loop` was moved to the library.
 
   \ vim: filetype=soloforth
