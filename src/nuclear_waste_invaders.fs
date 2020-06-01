@@ -37,7 +37,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.251.4+202002181702" ;
+: version$ ( -- ca len ) s" 0.252.0+202006011425" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -252,7 +252,7 @@ defer ((debug-point  ' noop ' ((debug-point defer!
   0 ~~y c@ at-xy ." D:" depth . ." R:" rdepth . space ;
   \ XXX TMP -- for debugging
 
-' ~~stack-info ' ~~app-info defer!
+' ~~stack-info ' ~~info defer!
   \ XXX TMP -- for debugging
 
 : notice ( -- ) 1024 0 ?do i %11 and border loop ;
@@ -3809,6 +3809,8 @@ create hit-projectiles /hit-projectiles allot
 
   \ ===========================================================
   cr .( Tank) ?depth debug-point \ {{{1
+
+need 2variable
 
 cvariable tank-x \ column
 
