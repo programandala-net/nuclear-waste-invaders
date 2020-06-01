@@ -204,7 +204,7 @@ posse constructer li programma:
   disciere 1 de vor emulator.
 . In BASIC comanda `run` por cargar G+DOS e Solo Forth del disciere 1.
 . Inserte li disco-replica <disk_2_nuclear_waste_invaders.mgt> in li
-  disciere 1 de vor emulartor.
+  disciere 1 de vor emulator.
 . Aperte li bande-replica <graphics_and_font.tap> quam bendo de
   intrada de vor emulator.
 . In Forth comanda `1 load` por cargar li bloc 1 del disciere activ.
