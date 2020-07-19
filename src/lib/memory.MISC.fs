@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005042225
+  \ Last modified: 202006152055
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -211,9 +211,9 @@ unneeding @+
   \
   \ @+ ( a -- a' x ) "fetch-plus"
   \
-  \ Fetch _x_ from _a_. Return _a'_, which is _a_
-  \ incremented by one cell.
-  \ This is handy for stepping through cell arrays.
+  \ Fetch _x_ from _a_. Return _a'_, which is _a_ incremented
+  \ by one cell. This is handy for stepping through cell
+  \ arrays.
   \
   \ See: `@`, `2@+`, `c@+`.
   \
@@ -227,9 +227,9 @@ unneeding 2@+
   \
   \ 2@+ ( a -- a' xd ) "two-fetch-plus"
   \
-  \ Fetch _xd_ from _a_. Return _a'_, which is _a_
-  \ incremented by two cells.
-  \ This is handy for stepping through double-cell arrays.
+  \ Fetch _xd_ from _a_. Return _a'_, which is _a_ incremented
+  \ by two cells. This is handy for stepping through
+  \ double-cell arrays.
   \
   \ See: `2@`, `@+`, `c@+`.
   \
@@ -245,7 +245,7 @@ unneeding c@+ ?\ need alias ' count alias c@+ ( ca -- ca' c )
   \ _ca_ incremented by one character.  This is handy for
   \ stepping through character arrays.
   \
-  \ This word is an `alias` of `count`.
+  \ ``c@+`` is an `alias` of `count`.
   \
   \ See: `c@`, `2@+`, `@+`.
   \
@@ -507,7 +507,7 @@ unneeding reset-bit? ?( need bit>mask
   \
   \ }doc
 
-( c@and ctoggle coff con c? 2? )
+( c@and ctoggle coff con ? c? 2? )
 
   \ Credit:
   \
@@ -522,8 +522,8 @@ unneeding reset-bit? ?( need bit>mask
   \ c@and? ( b ca -- f )
   \
   \ Fetch the caracter at _ca_ and do a bit-by-bit logical
-  \ "and" of it with _b_. Return _false_ if the result
-  \ is zero, else _true_.
+  \ "and" of it with _b_. Return `false` if the result
+  \ is zero, else `true`.
 
 unneeding c@and ?(
 
@@ -630,6 +630,22 @@ unneeding con
   \ cell, but its 8-bit equivalent $FF.
   \
   \ See: `coff`, `on`.
+  \
+  \ }doc
+
+unneeding ? ?\ : ? ( a -- ) @ . ;
+
+  \ doc{
+  \
+  \ ? ( a -- ) "question"
+  \
+  \ Display the 1-cell signed integer stored at _a_, using the
+  \ format of `.`.
+  \
+  \ Origin: fig-Forth, Forth-79 (Required Word Set), Forth-94
+  \ (TOOLS), Forth-2012 (TOOLS).
+  \
+  \ See: `c?`, `2?`, `@`.
   \
   \ }doc
 
@@ -893,9 +909,9 @@ code cexchange ( ca1 ca2 -- )
   \
   \ 2016-05-09: Add `align`, `aligned`.
   \
-  \ 2016-05-10: Remove the dependency on the assembler.
-  \ Compact the blocks. Remove unfinished words from cmForth.
-  \ Rename `@cell+` to `@+`. Add `2@+`.
+  \ 2016-05-10: Remove the dependency on the assembler. Compact
+  \ the blocks. Remove unfinished words from cmForth. Rename
+  \ `@cell+` to `@+`. Add `2@+`.
   \
   \ 2016-08-01: Fix header line.
   \
@@ -965,5 +981,13 @@ code cexchange ( ca1 ca2 -- )
   \ 2020-05-02: Improve documentation.
   \
   \ 2020-05-04: Fix cross references.
+  \
+  \ 2020-06-08: Improve documentation: make _true_ and _false_
+  \ cross-references.
+  \
+  \ 2020-06-08: Add `?`, moved from the kernel and rewritten in
+  \ Forth.
+  \
+  \ 2020-06-15: Improve documentation.
 
   \ vim: filetype=soloforth

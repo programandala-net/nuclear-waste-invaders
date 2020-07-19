@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005261309
+  \ Last modified: 202007100035
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -45,7 +45,7 @@ code under+ ( n1|u1 x n2|u2 -- n3|u3 x )
   \
   \ under+ ( n1|u1 x n2|u2 -- n3|u3 x ) "under-plus"
   \
-  \ Add _n2|u2_ to _n1|u2_, giving the sum _n3|u3_.
+  \ Add _n2|u2_ to _n1|u1_, giving the sum _n3|u3_.
   \
   \ ``under+`` is written in Z80. Its definition in Forth is
   \ the following:
@@ -151,10 +151,10 @@ unneeding within
   \ within ( n1|u1 n2|u2 n3|u3 -- f )
   \
   \ Perform a comparison of a test value n1|u1 with a lower
-  \ limit _n2|u2_ and an upper limit _n3|u3_, returning _true_
+  \ limit _n2|u2_ and an upper limit _n3|u3_, returning `true`
   \ if either (_n2|u2_ < _n3|u3_ and (_n2|u2_ <= _n1|u1_ and
   \ _n1|u1_ < _n3|u3_)) or (_n2|u2_ > _n3|u3_ and (_n2|u2_ <=
-  \ _n1|u1_ or _n1|u1_ < _n3|u3_)) is true, returning _false_
+  \ _n1|u1_ or _n1|u1_ < _n3|u3_)) is true, returning `false`
   \ otherwise.
   \
   \ Origin: Forth-94 (CORE EXT), Forth-2012 (CORE EXT).
@@ -176,10 +176,10 @@ unneeding between
   \ between ( n1|u1 n2|u2 n3|u3 -- f )
   \
   \ Perform a comparison of a test value _n1|u1_ with a lower
-  \ limit _n2|u2_ and an upper limit _n3|u3_, returning _true_
+  \ limit _n2|u2_ and an upper limit _n3|u3_, returning `true`
   \ if either (_n2|u2_ <= _n3|u3_ and (_n2|u2_ <= _n1|u1_ and
   \ _n1|u1_ <= _n3|u3_)) or (_n2|u2_ > _n3|u3_ and (_n2|u2_ <
-  \ _n1|u1_ or _n1|u1_ < _n3|u3_)) is true, returning _false_
+  \ _n1|u1_ or _n1|u1_ < _n3|u3_)) is true, returning `false`
   \ otherwise.
   \
   \ See: `within`, `polarity`.
@@ -281,7 +281,7 @@ unneeding 8* ?( code 8* ( x1 -- x2 ) e1 c, 29 c, 29 c, 29 c,
   \ most-significant bit, filling the vacated least-significant
   \ bit with zero.
   \
-  \ This is the same as ``3 lshift`` or ``2* 2* 2*``, but
+  \ ``8*`` is equivalent to ``3 lshift`` or ``2* 2* 2*``, but
   \ faster.
   \
   \ See: `2*`, `3*`, `lshift`, `8+`, `8-`, `*`.
@@ -303,9 +303,9 @@ unneeding 8+ ?( code 8+ ( n1 -- n2 ) E1 c, 11 c, 0008 , 19 c,
   \ Add 8 to _n1_, according to the operation of `+`, giving
   \ _n2_.
   \
-  \ This is the same as ``8 +`` but faster.
+  \ ``8+`` is equivalent to ``8 +`` but faster.
   \
-  \ See: `8-`, `1+`, `2+`, `8*`.
+  \ See: `8-`, `1+`, `2+`, `8*`, `+`.
   \
   \ }doc
 
@@ -326,9 +326,9 @@ unneeding 8- ?( code 8- ( n1 -- n2 )
   \ Subtract 8 from _n1_, according to the operation of `-`,
   \ giving _n2_.
   \
-  \ This is the same as ``8 -`` but faster.
+  \ ``8-`` is equivalent to ``8 -`` but faster.
   \
-  \ See: `8+`, `1-`, `2-`, `8*`.
+  \ See: `8+`, `1-`, `2-`, `8*`, `-`.
   \
   \ }doc
 
@@ -350,7 +350,7 @@ code 3* ( x1 -- x2 )
   \
   \ Multiply _n1_ by 3 giving _n2_.
   \
-  \ This is the same as ``3 *`` or ``dup dup + +``, but
+  \ ``3*`` is equivalent to ``3 *`` or ``dup dup + +``, but
   \ faster.
   \
   \ See: `2*`, `8*`, `*`, `+`.
@@ -485,7 +485,7 @@ unneeding u<= ?\ : u<= ( u1 u2 -- f ) u> 0= ;
   \
   \ u<= ( u1 u2 -- f ) "u-less-or-equal"
   \
-  \ _f_ is _true_ if and only if _u1_ is less than or equal
+  \ _f_ is `true` if and only if _u1_ is less than or equal
   \ to _u2_.
   \
   \ See: `u>=`, `<=`, `0<=`.
@@ -498,7 +498,7 @@ unneeding u>= ?\ : u>= ( u1 u2 -- f ) u< 0= ;
   \
   \ u>= ( u1 u2 -- f ) "u-greater-or-equal"
   \
-  \ _f_ is _true_ if and only if _u1_ is greater than or
+  \ _f_ is `true` if and only if _u1_ is greater than or
   \ equal to _u2_.
   \
   \ See: `u<=`, `>=`, `0>=`.
@@ -511,7 +511,7 @@ unneeding <= ?\ : <= ( n1 n2 -- f ) > 0= ;
   \
   \ <= ( n1 n2 -- f ) "less-or-equal"
   \
-  \ _f_ is _true_ if and only if _n1_ is less than or
+  \ _f_ is `true` if and only if _n1_ is less than or
   \ equal to _n2_.
   \
   \ See: `>=`, `u<=`, `0<=`.
@@ -524,7 +524,7 @@ unneeding >= ?\ : >= ( n1 n2 -- f ) < 0= ;
   \
   \ >= ( n1 n2 -- f ) "greater-or-equal"
   \
-  \ _f_ is _true_ if and only if _n1_ is greater than or
+  \ _f_ is `true` if and only if _n1_ is greater than or
   \ equal to _n2_.
   \
   \ See: `<=`, `u>=`, `0>=`.
@@ -537,7 +537,7 @@ unneeding 0>= ?\ : 0>= ( n0 -- f ) 0< 0= ;
   \
   \ 0>= ( n -- f ) "zero-greater-or_equal"
   \
-  \ _f_ is _true_ if and only if _n_ is greater than or equal
+  \ _f_ is `true` if and only if _n_ is greater than or equal
   \ to zero.
   \
   \ See: `0<=`, `>=`, `u>=`.
@@ -550,7 +550,7 @@ unneeding 0<= ?\ : 0<= ( n -- f ) 0> 0= ;
   \
   \ 0<= ( n -- f ) "zero-less-or-equal"
   \
-  \ _f_ is _true_ if and only if _n_ is less than or equal to
+  \ _f_ is `true` if and only if _n_ is less than or equal to
   \ zero.
   \
   \ See: `0>=`, `<=`, `u<=`.
@@ -577,10 +577,10 @@ code 0max ( n -- n | 0 )
   \
   \ 0max ( n -- n | 0 ) "zero-max"
   \
-  \ If _n_ is negative, return 0; else return _n_.  This is a
-  \ faster alternative to the idiom ``0 max``.
+  \ If _n_ is negative, return 0; else return _n_.  ``0max`` is
+  \ a faster alternative to the idiom ``0 max``.
   \
-  \ See: `max`, `min`.
+  \ See: `max`, `min`, `0`.
   \
   \ }doc
 
@@ -647,7 +647,7 @@ code rshift ( x1 u -- x2 )
   \
   \ }doc
 
-need 0exit need rshift need lshift
+need rshift need lshift
 
 : ?shift ( x n -- x | x' )
   ?dup 0exit dup 0< if abs rshift exit then lshift ;
@@ -776,13 +776,13 @@ unneeding 2/ ?( code 2/ ( x1 -- x2 )
   \ least-significant bit, leaving the most-significant bit
   \ unchanged.
   \
-  \ This is the same as ``s>d 2 fm/mod swap drop``. It is not
+  \ ``2/`` is equivalent to ``s>d 2 fm/mod swap drop``. ``2/`` is not
   \ the same as ``2 /``, nor is it the same as ``1 rshift``.
   \
   \ Origin: Forth-83 (Required Word Set), Forth-94 (CORE),
   \ Forth-2012 (CORE).
   \
-  \ See: `/`, `rshift`, `s>d`, `fm/mod`.
+  \ See: `/`, `rshift`, `s>d`, `fm/mod`, `2`.
   \
   \ }doc
 
@@ -1000,14 +1000,15 @@ unneeding fm/mod ?(
   \ the remainder _n2_. Input and output stack arguments are
   \ signed.
 
-  \ [caption="Floored Division Example"]
+  \ [cols=">,>,>,>"]
+  \ .Floored Division Example
   \ |===
-  \ | Dividend   | Divisor  | Remainder  | Quotient
+  \ | Dividend  | Divisor | Remainder | Quotient
 
-  \ >|       10  >|      7  >|        3  >|        1
-  \ >|      -10  >|      7  >|        4  >|       -2
-  \ >|       10  >|     -7  >|       -4  >|       -2
-  \ >|      -10  >|     -7  >|       -3  >|        1
+  \ |       10  |      7  |        3  |        1
+  \ |      -10  |      7  |        4  |       -2
+  \ |       10  |     -7  |       -4  |       -2
+  \ |      -10  |     -7  |       -3  |        1
   \ |===
 
   \ Origin: Forth-94 (CORE), Forth-2012 (CORE).
@@ -1156,8 +1157,8 @@ unneeding either
   \
   \ either ( x1 x2 x3 -- f )
   \
-  \ Return _true_ if _x1_ equals either _x2_ or _x3_;
-  \ else return _false_.
+  \ Return `true` if _x1_ equals either _x2_ or _x3_;
+  \ else return `false`.
   \
   \ Origin: IsForth.
   \
@@ -1177,8 +1178,8 @@ unneeding neither
   \
   \ neither ( x1 x2 x3 -- f )
   \
-  \ Return _true_ if _x1_ is not equal to either _x2_ or _x3_;
-  \ else return _false_.
+  \ Return `true` if _x1_ is not equal to either _x2_ or _x3_;
+  \ else return `false`.
   \
   \ Origin: IsForth.
   \
@@ -1406,8 +1407,8 @@ code join ( b1 b2 -- x )
   \
   \ 2018-04-14: Fix and improve documentation.
   \
-  \ 2018-06-04: Update: remove trailing closing paren from
-  \ word names.
+  \ 2018-06-04: Update: remove trailing closing paren from word
+  \ names.
   \
   \ 2018-07-15: Add `min>top`, `max>top`, `pair=`.
   \
@@ -1416,5 +1417,15 @@ code join ( b1 b2 -- x )
   \ 2020-05-25: Replace `r> drop` with `rdrop`.
   \
   \ 2020-05-26: Improve documentation of `2/`.
+  \
+  \ 2020-06-06: Fix typo in documentation.
+  \
+  \ 2020-06-08: Improve documentation: make _true_ and _false_
+  \ cross-references. Update: now `0exit` is in the kernel.
+  \
+  \ 2020-06-15: Improve documentation.
+  \
+  \ 2020-07-10: Improve layout of the `fm/mod` table and fix
+  \ its title markup.
 
   \ vim: filetype=soloforth

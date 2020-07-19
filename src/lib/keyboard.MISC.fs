@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005252105
+  \ Last modified: 202007112242
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -207,9 +207,9 @@ unneeding nuf? ?( need aborted? need 'cr'
   \
   \ nuf? ( -- f ) "nuf-question"
   \
-  \ If no key is pressed return _false_.  If a key is pressed,
-  \ discard it and wait for a second key. Then return _true_ if
-  \ it's a carriage return, else return _false_.
+  \ If no key is pressed return `false`.  If a key is pressed,
+  \ discard it and wait for a second key. Then return `true` if
+  \ it's a carriage return, else return `false`.
   \
   \ Usage example:
   \
@@ -231,9 +231,9 @@ unneeding aborted? ?(
   \
   \ aborted? ( c -- f ) "aborted-question"
   \
-  \ If no key is pressed return _false_.  If a key is pressed,
-  \ discard it and wait for a second key. Then return _true_ if
-  \ it's _c_, else return _false_.
+  \ If no key is pressed return `false`.  If a key is pressed,
+  \ discard it and wait for a second key. Then return `true` if
+  \ it's _c_, else return `false`.
   \
   \ ``aborted?`` is a useful factor of `nuf?`.
   \
@@ -869,8 +869,8 @@ $10 $7FFE 2constant kk-b  -->
   \
   \ #kk ( -- n ) "dash-k-k"
   \
-  \ A `cconstant`. _n_ is the number of keyboard keys. This is
-  \ the number of physical rubber keys on the keyboard of the
+  \ A `cconstant`. _n_ is the number of keyboard keys, i.e. the
+  \ number of physical rubber keys on the keyboard of the
   \ original ZX Spectrum: 40.
   \
   \ See: `kk-ports`, `kk-chars`, `kk-0#`, `kk-0`, `kk-1#`,
@@ -1408,6 +1408,7 @@ create kk-chars '1' c,  '2' c,  '3' c,  '4' c,  '5' c,
   \ character per key) and it's organized by keyboard rows, as
   \ follows:
 
+  \ .Keyboard matrix pointed by ``kk-chars``.
   \ |===
   \ | 1          | 2            | 3 | 4 | 5 |
   \ | q          | w            | e | r | t |
@@ -1423,13 +1424,14 @@ create kk-chars '1' c,  '2' c,  '3' c,  '4' c,  '5' c,
   \ configuration of `last-font-char` are used for the keys
   \ whose names are not a printable character, as follows:
 
+  \ .Items of ``kk-chars`` used as names of special keys.
   \ |===
-  \ | Byte offset in table `kk-chars` | UDG code | Key
+  \ | Byte offset | UDG code | Key
   \
-  \ | 15                              | 128      | Caps Shift
-  \ | 30                              | 129      | Enter
-  \ | 35                              | 130      | Space
-  \ | 36                              | 131      | Symbol Shift
+  \ | 15          | 128      | Caps Shift
+  \ | 30          | 129      | Enter
+  \ | 35          | 130      | Space
+  \ | 36          | 131      | Symbol Shift
   \ |===
 
   \ The application should define those UDG with proper icons
@@ -1485,8 +1487,8 @@ unneeding pressed ?( need pressed? need kk-ports need +loop
   \
   \ Return the key identifier _b a_ (key bitmask and keyboard
   \ row port) of the first key from table `kk-ports`
-  \ that happens to be pressed, and _true_; if no key is
-  \ pressed, return _false_.
+  \ that happens to be pressed, and `true`; if no key is
+  \ pressed, return `false`.
   \
   \ See: `only-one-pressed`, `pressed?`.
   \
@@ -1519,9 +1521,9 @@ need kk-ports need +loop need 2variable
   \
   \ Return the key identifier _b a_ (key bitmask and keyboard
   \ row port) of the only key from table `kk-ports` that
-  \ happens to be pressed, and _true_; if no key is pressed or
+  \ happens to be pressed, and `true`; if no key is pressed or
   \ more than one key is pressed at the same time, return
-  \ _false_.
+  \ `false`.
   \
   \ See: `pressed`, `pressed?`.
   \
@@ -1769,5 +1771,12 @@ unneeding key-caps-lock ?\ 6 cconstant key-caps-lock
   \ library.
   \
   \ 2020-05-25: Replace `r> drop` with `rdrop`.
+  \
+  \ 2020-06-08: Improve documentation: make _true_ and
+  \ _false_ cross-references.
+  \
+  \ 2020-06-15: Improve documentation.
+  \
+  \ 2020-07-11: Add title to tables. Improve documentation.
 
   \ vim: filetype=soloforth

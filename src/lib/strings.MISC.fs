@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005292219
+  \ Last modified: 202006081220
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -274,7 +274,7 @@ unneeding ?stringer
   \ #-293 (string too long). Otherwise do nothing.
   \
   \ ``?stringer`` is provided as an optional check. for
-  \ `allocate-string`.
+  \ `allocate-stringer`.
   \
   \ }doc
 
@@ -850,7 +850,7 @@ unneeding char-position? ?(
   \ char-position? ( ca len c -- +n true | false ) "char-position-question"
   \
   \ If char _c_ is in string _ca len_, return its first
-  \ position _+n_ and _true_; else return _false_.
+  \ position _+n_ and `true`; else return `false`.
   \
   \ See: `char-in-string?`, `contains`, `compare`.
   \
@@ -1162,5 +1162,10 @@ unneeding replace
   \
   \ 2020-05-29: Add `?stringer` (its homonym in the kernel has
   \ been renamed `fit-stringer`).
+  \
+  \ 2020-06-03: Fix cross-reference.
+  \
+  \ 2020-06-08: Improve documentation: make _true_ and
+  \ _false_ cross-references.
 
   \ vim: filetype=soloforth

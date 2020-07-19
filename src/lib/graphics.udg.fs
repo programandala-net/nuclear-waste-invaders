@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005182049
+  \ Last modified: 202006152048
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -201,7 +201,7 @@ create udg-blank '.' c,  create udg-dot 'X' c,
   \
   \ udg-blank  ( -- ca ) "u-d-g-blank"
   \
-  \ A character variable. _ca_ is the address of a byte
+  \ A `cvariable`. _ca_ is the address of a byte
   \ containing the character used by `udg-group`, `udg-block`,
   \ `,udg-block` and others as a grid blank. By default it's
   \ '.'.
@@ -214,7 +214,7 @@ create udg-blank '.' c,  create udg-dot 'X' c,
   \
   \ udg-dot  ( -- ca ) "u-d-g-dot"
   \
-  \ A character variable. _ca_ is the address of a byte
+  \ A `cvariable`. _ca_ is the address of a byte
   \ containing the character used by `udg-group`, `udg-block`
   \ `,udg-block` and others as a grid blank. By default it's
   \ 'X'.
@@ -249,7 +249,7 @@ create udg-blank '.' c,  create udg-dot 'X' c,
   \ udg-scan>number? ( ca len -- n true | false ) "u-d-g-scan-to-number-question"
   \
   \ Is UDG scan string _ca len_ a valid binary number?
-  \ If so, return _n_ and _true_; else return _false_.
+  \ If so, return _n_ and `true`; else return `false`.
   \ The string is processed by `udg-scan>binary` first.
   \
   \ See: `udg-scan>number`, `udg-dot`, `udg-blank`.
@@ -806,11 +806,11 @@ unused code at-xy-display-udg ( c col row -- )
   \
   \ at-xy-display-udg ( c col row -- ) "at-x-y-display-u-d-g"
   \
-  \ Display UDG _c_ at cursor coordinates _col row_. This is much
-  \ faster than using `at-xy` and `emit-udg`, because no ROM
-  \ routine is used, the cursor coordinates are not updated and
-  \ the screen attributtes are not changed (only the character
-  \ bitmap is displayed).
+  \ Display UDG _c_ at cursor coordinates _col row_.
+  \ ``at-xy-display-udg`` is much faster than using `at-xy` and
+  \ `emit-udg`, because no ROM routine is used, the cursor
+  \ coordinates are not updated and the screen attributtes are
+  \ not changed (only the character bitmap is displayed).
   \
   \ See: `udg-at-xy-display`.
   \
@@ -854,10 +854,11 @@ unused code udg-at-xy-display ( col row c -- )
   \ udg-at-xy-display ( col row c -- ) "u-d-g-at-x-y-display"
   \
   \ Display UDG _c_ (0..255) at cursor coordinates _col row_.
-  \ This is much faster than a combination of `at-xy` and
-  \ `emit-udg`, because no ROM routine is used, the cursor
-  \ coordinates are not updated and the screen attributtes are
-  \ not changed (only the character bitmap is displayed).
+  \ ``udg-at-xy-display`` is much faster than a combination of
+  \ `at-xy` and `emit-udg`, because no ROM routine is used, the
+  \ cursor coordinates are not updated and the screen
+  \ attributtes are not changed (only the character bitmap is
+  \ displayed).
   \
   \ See: `at-xy-display-udg`.
   \
@@ -1215,5 +1216,12 @@ exx, jpnext, end-code
   \ 2020-05-04: Fix/improve documentation.
   \
   \ 2020-05-18: Update: `+loop` was moved to the library.
+  \
+  \ 2020-06-08: Improve documentation: make _true_ and
+  \ _false_ cross-references.
+  \
+  \ 2020-06-15: Improve documentation: Add cross-references to
+  \ `cvariable`; replace "This word" with the corresponding
+  \ word.
 
   \ vim: filetype=soloforth

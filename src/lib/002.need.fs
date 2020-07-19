@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005241405
+  \ Last modified: 202006160034
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -138,10 +138,12 @@ defer unlocated ( block -- )
   \
   \ unlocated ( block -- )
   \
-  \ Deferred word called in the loop of `located`, when the
+  \ A deferred word called in the loop of `located`, when the
   \ word searched for is not located in _block_.  Its default
   \ action is `drop`, which is changed by `use-fly-index`
   \ in order to index the blocks on the fly.
+  \
+  \ See: `defer`.
   \
   \ }doc
 
@@ -267,9 +269,9 @@ defer (located ' 1-line-(located ' (located defer!  -->
   \ Only the blocks delimited by `first-locatable` and
   \ `last-locatable` are searched.
   \
-  \ ``(located`` is a deferred word. Its default value is
+  \ ``(located`` is a deferred word. Its default action is
   \ `multiline-(located`, which is under development; its
-  \ alternative old value is `1-line-(located`.
+  \ alternative old action is `1-line-(located`.
   \
   \ ``(located`` is the default action of `located`, which is
   \ changed by `use-fly-index`.
@@ -293,7 +295,7 @@ defer located ( ca len -- block | 0 )
   \ Only the blocks delimited by `first-locatable` and
   \ `last-locatable` are searched`.
   \
-  \ This is a deferred word whose default action is
+  \ ``located`` is a deferred word whose default action is
   \ `(located`.
   \
   \ See: `need-from`.
@@ -343,7 +345,7 @@ defer reneeded ( ca len -- )
   \ len_ (surrounded by spaces).  If not found, `throw` an
   \ exception #-268 ("needed, but not located").
   \
-  \ This is a deferred word whose default action is
+  \ ``reneeded`` is a deferred word whose default action is
   \ `locate-reneeded`.
   \
   \ See: `make-thru-index`.
@@ -360,8 +362,8 @@ defer reneeded ( ca len -- )
   \ len_ (surrounded by spaces), and `load` it. If not found,
   \ `throw` an exception #-268 ("needed, but not located").
   \
-  \ This is the default action of the deferred word
-  \ `reneeded`.
+  \ ``locate-reneeded`` is the default action of the deferred
+  \ word `reneeded`.
   \
   \ See: `make-thru-index`.
   \
@@ -376,7 +378,7 @@ defer reneed ( "name" -- )  defer needed ( ca len -- )
   \ Load the first block whose header contains _name_
   \ (surrounded by spaces).
   \
-  \ This is a deferred word whose default action is
+  \ ``reneed`` is a deferred word whose default action is
   \ `locate-reneed`.
   \
   \ See: `make-thru-index`.
@@ -390,10 +392,10 @@ defer reneed ( "name" -- )  defer needed ( ca len -- )
   \ If the string _ca len_ is not the name of a word found in
   \ the current search order, load the first block where _ca
   \ len_ is included in the block header (surrounded by
-  \ spaces).  If not found, `throw` an exception #-268 ("needed,
-  \ but not located").
+  \ spaces).  If not found, `throw` an exception #-268
+  \ ("needed, but not located").
   \
-  \ This is a deferred word whose default action is
+  \ ``needed`` is a deferred word whose default action is
   \ `locate-needed`.
   \
   \ See: `make-thru-index`.
@@ -411,7 +413,8 @@ defer reneed ( "name" -- )  defer needed ( ca len -- )
   \ (surrounded by spaces), and load it.  If not found, `throw`
   \ an exception #-268 ("needed, but not located").
   \
-  \ This is the default action of the deferred word `reneed`.
+  \ ``locate-reneed`` is the default action of the deferred
+  \ word `reneed`.
   \
   \ See: `make-thru-index`.
   \
@@ -426,9 +429,9 @@ defer reneed ( "name" -- )  defer needed ( ca len -- )
   \ unneeding ( "name" -- f )
   \
   \ Parse _name_.  If there's no unresolved `need`, `needed`,
-  \ `reneed` or `reneeded`, return _false_.  Otherwise, if _name_
+  \ `reneed` or `reneeded`, return `false`.  Otherwise, if _name_
   \ is the needed word specified by the last execution of
-  \ `need` or `needed`, return _false_, else return _true_.
+  \ `need` or `needed`, return `false`, else return `true`.
   \
   \ See: `needing`.
   \
@@ -466,7 +469,8 @@ defer reneed ( "name" -- )  defer needed ( ca len -- )
   \ spaces), and load it.  If not found, `throw` an exception
   \ #-268 ("needed, but not located").
   \
-  \ This is the default action of the deferred word `needed`.
+  \ ``locate-needed`` is the default action of the deferred
+  \ word `needed`.
   \
   \ See: `make-thru-index`.
   \
@@ -483,7 +487,7 @@ defer need ( "name" -- )
   \ header (surrounded by spaces), and load it.  If not found,
   \ `throw` an exception #-268 ("needed, but not located").
   \
-  \ This is a deferred word whose default action is
+  \ ``need`` is a deferred word whose default action is
   \ `locate-need`.
   \
   \ See: `make-thru-index`.
@@ -501,7 +505,8 @@ defer need ( "name" -- )
   \ header (surrounded by spaces), and load it.  If not found,
   \ `throw` an exception #-268 ("needed, but not located").
   \
-  \ This is the default action of the deferred word `need`.
+  \ ``locate-need`` is the default action of the deferred word
+  \ `need`.
   \
   \ See: `make-thru-index`.
   \
@@ -598,9 +603,9 @@ unneeding needing ?\ : needing ( "name" -- f ) unneeding 0= ;
   \ needing ( "name" -- f )
   \
   \ Parse _name_.  If there's no unresolved `need`, `needed`,
-  \ `reneed` or `reneeded`, return _true_.  Otherwise, if _name_
+  \ `reneed` or `reneeded`, return `true`.  Otherwise, if _name_
   \ is the needed word specified by the last execution of
-  \ `need` or `needed`, return _true_, else return _false_.
+  \ `need` or `needed`, return `true`, else return `false`.
   \
   \ See: `unneeding`.
   \
@@ -617,7 +622,7 @@ unneeding locate ?(
   \
   \ Locate the first block whose header contains _name_
   \ (surrounded by spaces), and return its number _block_. If
-  \ not found, return _false_.  The search is case-sensitive.
+  \ not found, return `false`.  The search is case-sensitive.
   \
   \ Only the blocks delimited by `first-locatable` and
   \ `last-locatable` are searched.
@@ -683,9 +688,9 @@ unneeding need-here ?(
   \ If _name_ is not a word found in the current search order,
   \ load the current block.
   \
-  \ This is a faster alternative to `need`, when the needed
-  \ word is in the same block, and conditional compilation is
-  \ used with `?\`, `?(` or `[if]`.
+  \ ``need-here`` is a faster alternative to `need`, when the
+  \ needed word is in the same block, and conditional
+  \ compilation is used with `?\`, `?(` or `[if]`.
   \
   \ }doc
 
@@ -875,5 +880,12 @@ unneeding need-here ?(
   \ library; `create` is used instead.
   \
   \ 2020-05-24: Fix typo.
+  \
+  \ 2020-06-08: Improve documentation: make _true_ and _false_
+  \ cross-references.
+  \
+  \ 2020-06-15: Improve documentation.
+  \
+  \ 2020-06-16: Improve documentation on deferred words.
 
   \ vim: filetype=soloforth

@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005182101
+  \ Last modified: 202006082154
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -57,14 +57,13 @@ unneeding .depth ?\ : .depth ( n -- ) ." <" 0 .r ." > " ;
   \
   \ }doc
 
-unneeding .s ?( need depth need .depth need +loop
+unneeding .s ?( need depth need .depth need +loop need do
 
 defer (.s ( x -- ) ' . ' (.s defer!
 
-: .s   ( -- )
-  depth dup .depth 0> if
-    sp@ sp0 @ cell- ?do i @ (.s  [ cell negate ] literal +loop
-  then ; ?)
+: .s ( -- )
+  depth dup .depth 0> 0exit
+  sp@ sp0 @ cell- do i @ (.s [ cell negate ] literal +loop ; ?)
 
   \ Credit:
   \ Code from Afera. Original algorithm from v.Forth.
@@ -131,5 +130,9 @@ unneeding u.s ?( need .s
   \ corresponding requirements.
   \
   \ 2020-05-18: Update: `+loop` was moved to the library.
+  \
+  \ 2020-06-06: Fix `.s`.
+  \
+  \ 2020-06-08: Update: now `0exit` is in the kernel.
 
   \ vim: filetype=soloforth

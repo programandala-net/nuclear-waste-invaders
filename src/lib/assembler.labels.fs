@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005241534
+  \ Last modified: 202006161756
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -36,8 +36,8 @@ assembler-wordlist dup >order set-current need ?rel
   \ rl-id ( -- b ) "r-l-i-d"
   \
   \ _b_ is the identifier of relative references created by
-  \ `rl#`.  ``rl-id`` is used as a bitmask added to the label
-  \ number stored in `l-refs`.
+  \ `rl#`.  ``rl-id`` is used as a bitmask added to the
+  \ `assembler` label number stored in `l-refs`.
   \
   \ See: `al-id`.
   \
@@ -48,8 +48,8 @@ assembler-wordlist dup >order set-current need ?rel
   \ al-id ( -- b ) "a-l-i-d"
   \
   \ _b_ is the identifier of absolute references created by
-  \ `al#`.  ``al-id`` is used as a bitmask added to the label
-  \ number stored in `l-refs`.
+  \ `al#`.  ``al-id`` is used as a bitmask added to the
+  \ `assembler` label number stored in `l-refs`.
   \
   \ See: `rl-id`.
   \
@@ -59,13 +59,13 @@ create max-labels 8 c,  create max-l-refs 16 c,
 
   \ doc{
   \
-  \ max-labels  ( -- ca )
+  \ max-labels ( -- ca )
   \
   \ _ca_ is the address of a byte containing the maximum number
-  \ (count) of labels that can be defined by `l:`.  Its default
-  \ value is 8, i.e. labels 0..7 can be used. The program can
-  \ change the value, but the default one should be restored
-  \ after the code word has been compiled.
+  \ (count) of `assembler` `labels` that can be defined by
+  \ `l:`.  Its default value is 8, i.e. labels 0..7 can be
+  \ used. The program can change the value, but the default one
+  \ should be restored after the code word has been compiled.
   \
   \ ``max-labels`` is used by `init-labels` to allocate the
   \ `labels` table.
@@ -90,12 +90,12 @@ create max-labels 8 c,  create max-l-refs 16 c,
 
   \ doc{
   \
-  \ max-l-refs  ( -- ca )
+  \ max-l-refs ( -- ca )
   \
   \ _ca_ is the address of a byte containing the maximum number
-  \ (count) of unresolved label references that can be created
-  \ by `rl#` or `al#`.  Its default value is 16. The program
-  \ can change the value, but the default one should be
+  \ (count) of unresolved `assembler` label references that can
+  \ be created by `rl#` or `al#`.  Its default value is 16. The
+  \ program can change the value, but the default one should be
   \ restored after the code word has been compiled.
   \
   \ ``max-l-refs`` is used by `init-labels` to allocate the
@@ -125,8 +125,8 @@ create max-labels 8 c,  create max-l-refs 16 c,
   \
   \ /l-ref ( -- n ) "slash-l-ref"
   \
-  \ _n_ is the size in bytes of each label reference stored in
-  \ the `l-refs` table.
+  \ _n_ is the size in bytes of each `assembler` label
+  \ reference stored in the `l-refs` table.
   \
   \ See: `/l-refs`.
   \
@@ -160,7 +160,7 @@ variable labels  variable l-refs
 
   \ doc{
   \
-  \ labels  ( -- a )
+  \ labels ( -- a )
   \
   \ A `variable`. _a_ is the address of a cell containing the
   \ address of the labels table, which is allocated in the
@@ -177,7 +177,7 @@ variable labels  variable l-refs
 
   \ doc{
   \
-  \ l-refs  ( -- a )
+  \ l-refs ( -- a )
   \
   \ A `variable`. _a_ is the address of a cell containing the
   \ address of the label references table, which is allocated
@@ -209,7 +209,7 @@ init-labels ' init-labels ' init-asm defer!
   \
   \ init-labels ( -- )
   \
-  \ Init the assembler labels and their references, by
+  \ Init the `assembler` labels and their references, by
   \ allocating space for them in the `stringer` and erasing it.
   \ `labels` and `l-refs` are given new values.
   \
@@ -228,7 +228,7 @@ init-labels ' init-labels ' init-asm defer!
   \
   \ ?l# ( n -- ) "question-l-number-sign"
   \
-  \ If assembler label _n_ is out of range, `throw` exception
+  \ If `assembler` label _n_ is out of range, `throw` exception
   \ #-283.
   \
   \ See: `max-labels`.
@@ -283,7 +283,8 @@ init-labels ' init-labels ' init-asm defer!
   \
   \ resolve-rl# ( orig b -- ) "resolve-r-l-number-sign"
   \
-  \ Resolve a relative reference at _orig_ to label _b_.
+  \ Resolve a relative reference at _orig_ to `assembler` label
+  \ _b_.
   \
   \ See: `resolve-al#`, `(resolve-ref`, `>l`.
   \
@@ -297,7 +298,7 @@ init-labels ' init-labels ' init-asm defer!
   \
   \ (resolve-ref ( orig b -- ) "paren-resolve-ref"
   \
-  \ Resolve reference at _orig_ to label _b_.
+  \ Resolve reference at _orig_ to `assembler` label _b_.
   \
   \ See: `resolve-rl#`, `resolve-al#`.
   \
@@ -308,9 +309,9 @@ init-labels ' init-labels ' init-asm defer!
 
   \ doc{
   \
-  \ al#  ( -- ) "a-l-number-sign"
+  \ al# ( -- ) "a-l-number-sign"
   \
-  \ Create an absolute reference to an assembler label defined
+  \ Create an absolute reference to an `assembler` label defined
   \ by `l:`. The label number has been compiled in the last
   \ cell of the latest Z80 instruction.  If the corresponding
   \ label is already defined, its value is patched into the
@@ -340,9 +341,9 @@ init-labels ' init-labels ' init-asm defer!
 
   \ doc{
   \
-  \ rl#  ( n -- a ) "r-l-number-sign"
+  \ rl# ( n -- a ) "r-l-number-sign"
   \
-  \ Create a relative reference to assembler label number _n_,
+  \ Create a relative reference to `assembler` label number _n_,
   \ defined by `l:`.  If label _n_ is already defined, _a_ is
   \ its value. Otherwise _a_ is a temporary address to be
   \ consumed by the relative jump instruction, and the actual
@@ -380,23 +381,33 @@ init-labels ' init-labels ' init-asm defer!
 
 : resolve-refs ( n -- )
   max-l-refs c@ 0 ?do dup i ?resolve-ref loop drop ;
-  \ Resolve all references to label _n_.
+
+  \ doc{
+  \
+  \ resolve-refs ( n -- )
+  \
+  \ Resolve all references to `assembler` label _n_, which was
+  \ defined by `l:`.
+  \
+  \ ``resolve-refs`` is a factor of `l!`.
+  \
+  \ }doc
 
 : l! ( x n -- )
   dup >l dup @ #-284 ?throw rot swap ! resolve-refs ;
 
   \ doc{
   \
-  \ l!  ( x n -- ) "l-store"
+  \ l! ( x n -- ) "l-store"
   \
-  \ If assembler label _n_ has been defined in the current
+  \ If `assembler` label _n_ has been defined in the current
   \ definition, `throw` exception #-284 (assembly label number
-  \ already used); else create a new assembler label _n_ with
+  \ already used); else create a new `assembler` label _n_ with
   \ value _x_ and resolve all previous references to it that
   \ could have been created by `rl#` or `al#`. Usually _x_ is
   \ an address.
   \
-  \ See: `l:`.
+  \ See: `l:`, `resolve-refs`.
   \
   \ }doc
 
@@ -404,16 +415,18 @@ init-labels ' init-labels ' init-asm defer!
 
   \ doc{
   \
-  \ l:  ( n -- ) "l-colon"
+  \ l: ( n -- ) "l-colon"
   \
-  \ If assembler label _n_ has been defined in the current
+  \ If `assembler` label _n_ has been defined in the current
   \ definition, `throw` exception #-284 (assembly label number
-  \ already used); else create a new assembler label _n_ with
+  \ already used); else create a new `assembler` label _n_ with
   \ the value returned by `here` and resolve all previous
   \ references to it that could have been created by `rl#` or
   \ `al#`.
   \
-  \ See: `l!`, `.l`.
+  \ See: `l!`, `.l`, `labels`, `l-refs`, `init-labels`.
+  \
+  \ See also `unresolved` for an alternative method.
   \
   \ }doc
 
@@ -440,7 +453,6 @@ assembler-wordlist >order
   \ }doc
 
 previous
-
 
   \ ===========================================================
   \ Change log
@@ -519,5 +531,7 @@ previous
   \ 2020-05-05: Fix typo in cross reference.
   \
   \ 2020-05-24: Replace "hash" notation with "number sign".
+  \
+  \ 2020-06-16: Improve documentation.
 
   \ vim: filetype=soloforth

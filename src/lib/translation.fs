@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201903151737
+  \ Last modified: 202006161653
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -17,7 +17,7 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2017, 2018, 2019.
+  \ Marcos Cruz (programandala.net), 2017, 2018, 2019, 2020.
 
   \ ===========================================================
   \ License
@@ -28,7 +28,7 @@
 
   \ ===========================================================
 
-( lang langs localized, )
+( lang langs localized, far-localized, )
 
   \ Words used by `localized-word`, `localized-character`,
   \ `localized-string`, `far-localized-string` and
@@ -59,7 +59,7 @@ unneeding lang ?\ 0 cconstant lang  \ current language
   \
   \ lang ( -- b )
   \
-  \ A `cconstant` containint the number _b_ of the current
+  \ A `cconstant` containing the number _b_ of the current
   \ language, used by translation tools `localized-word`,
   \ `localized-string` and `localized-character`.
   \
@@ -74,9 +74,36 @@ unneeding localized, ?( need langs need n,
 
 : localized, ( x[langs]..x[1] -- ) langs n, ; ?)
 
+  \ doc{
+  \
+  \ localized, ( x[langs]..x[1] -- )
+  \
+  \ Store a `langs` number of cells, from _x[1]_ to _x[langs]_
+  \ in the data space, updating `dp`.
+  \
+  \ ``localized,`` is a factor of `localized-word`,
+  \ `localized-string`, `far-localized-string` and
+  \ far>localized-string.
+  \
+  \ See: `far-localized,`.
+  \
+  \ }doc
+
 unneeding far-localized, ?( need langs need far-n,
 
-: far-localized, ( x[langs]..x[1] -- ) langs ? far-n, ; ?)
+: far-localized, ( x[langs]..x[1] -- ) langs far-n, ; ?)
+
+  \ doc{
+  \
+  \ far-localized, ( x[langs]..x[1] -- )
+  \
+  \ Store a `langs` number of cells, from _x[1]_ to _x[langs]_
+  \ in the far-memory name space, updating `np`.
+  \
+  \ ``far-localized,`` is an unused alternative to
+  \ `localized,`.
+  \
+  \ }doc
 
 ( localized-word localized-string localized-character )
 
@@ -223,5 +250,11 @@ need localized, need lang need array> need far>stringer
   \ 2019-03-15: Improve documentation and needing. Add
   \ `far-localized-string`, `localized,`,
   \ `far>localized-string`.
+  \
+  \ 2020-06-08: Fix `far-localized,`. Document `localized,` and
+  \ `far-localized,`. Make `far-localized,` accessible, even if
+  \ it's not used yet.
+  \
+  \ 2020-06-16: Fix typo.
 
   \ vim: filetype=soloforth

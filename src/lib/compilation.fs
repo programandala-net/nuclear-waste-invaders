@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005080137
+  \ Last modified: 202006160052
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -383,7 +383,7 @@ unneeding >name ?(
 need array> need name>> need name<name need wordlist>link
 
 : >name ( xt -- nt | 0 )
-  latest-wordlist @ ( xt wid|0 )
+  last-wordlist @ ( xt wid|0 )
   begin  dup
   while  tuck @ ( wid xt nt0 )
          begin  ?dup
@@ -534,7 +534,7 @@ need array> need name>> need name<name need wordlist>link
 
 : >oldest-name ( xt -- nt|0 )
   0 >r \ default result
-  latest-wordlist @ ( xt wid|0 )
+  last-wordlist @ ( xt wid|0 )
   begin  dup
   while  tuck @ ( wid xt nt1 )
 
@@ -647,7 +647,7 @@ need >>name need name>name need name>>
 unneeding name>string ?( need name>str
 
 : name>string ( nt -- ca len )
-  name>str allocate-stringer ( ca1 len ca )
+  name>str dup allocate-stringer ( ca1 len ca )
   2dup swap 2>r ( R: ca len ) -rot ( ca ca1 len )
   0 ?do ( ca ca1 )
     2dup farc@ swap i + c! char+
@@ -871,7 +871,7 @@ unneeding no-exit ?\ : no-exit ( -- ) cell negate allot ;
   \ used after a colon definition that contains and end-less
   \ loop, or exits only through an explicit `exit`, `quit` or
   \ other means. In such cases the `exit` compiled by `;` can
-  \ never be reached, so its space is wasted. 
+  \ never be reached, so its space is wasted.
   \
   \ Usage examples:
 
@@ -995,6 +995,8 @@ unneeding possibly ?(
   \ Parse _name_.  If _name_ is the name of a word in the
   \ current search order, execute it; else do nothing.
   \
+  \ See: `exec`, `defined`, `name>`, `execute`, `anew`.
+  \
   \ }doc
 
 unneeding exec ?(
@@ -1010,7 +1012,7 @@ unneeding exec ?(
   \ current search order, `execute` it; else `throw` an
   \ exception #-13 ("undefined word").
   \
-  \ See: `defined`, `name>`.
+  \ See: `possibly`, `defined`, `name>`, `?throw`, `execute`.
   \
   \ }doc
 
@@ -1024,7 +1026,7 @@ unneeding eval ?( need evaluate
   \
   \ Parse and `evaluate` _name_.
   \
-  \ This is a common factor of `[const]`, `[2const]` and
+  \ ``eval`` is a common factor of `[const]`, `[2const]` and
   \ `[cconst]`.
   \
   \ See: `parse-name`.
@@ -1162,7 +1164,7 @@ variable warnings  warnings on
   \ A `user` variable. _a_ is the address of a cell containing a
   \ flag. If it's zero, no warning is shown when a compiled
   \ word is not unique in the compilation word list.  Its
-  \ default value is _true_.
+  \ default value is `true`.
   \
   \ }doc
 
@@ -1228,12 +1230,14 @@ unneeding warn.throw ?( need ?warn
   \
   \ warn.throw ( ca len -- ca len ) "warn-dot-throw"
   \
-  \ Alternative action for the deferred word `warn`.  If the
-  \ contents of the user variable `warnings` is not zero and
-  \ the word name _ca len_ is already defined in the current
-  \ compilation word list, display a `throw` exception #-257
-  \ ("warning: is not unique") without actually throwing an
-  \ exception.
+  \ If the contents of the user variable `warnings` is not zero
+  \ and the word name _ca len_ is already defined in the
+  \ current compilation word list, display a `throw` exception
+  \ #-257 ("warning: is not unique") without actually throwing
+  \ an exception.
+  \
+  \ ``warn.throw`` is an alternative action of the deferred
+  \ word `warn`.
   \
   \ See: `warnings`, `warn-throw`, `warn.message`, `?warn`.
   \
@@ -1250,10 +1254,12 @@ unneeding warn.message ?( need ?warn need >name need .name
   \
   \ warn.message ( ca len -- ca len ) "warn-dot-message"
   \
-  \ Alternative action for the deferred word `warn`.  If the
-  \ contents of the user variable `warnings` is not zero and
-  \ the word name _ca len_ is already defined in the current
-  \ compilation word list, display a warning message.
+  \ If the contents of the user variable `warnings` is not zero
+  \ and the word name _ca len_ is already defined in the
+  \ current compilation word list, display a warning message.
+  \
+  \ ``warn.message`` is an alternative action of the deferred
+  \ word `warn`.
   \
   \ See: `warnings`, `warn.throw`, `warn-throw`, `?warn`.
   \
@@ -1270,11 +1276,13 @@ unneeding warn-throw ?( need ?warn
   \
   \ warn-throw ( ca len -- ca len )
   \
-  \ Alternative action for the deferred word `warn`.  If the
-  \ contents of the user variable `warnings` is not zero and
-  \ the word name _ca len_ is already defined in the current
-  \ compilation word list, `throw` an exception #-257 instead
-  \ of printing a warning message.
+  \ If the contents of the user variable `warnings` is not zero
+  \ and the word name _ca len_ is already defined in the
+  \ current compilation word list, `throw` an exception #-257
+  \ instead of printing a warning message.
+  \
+  \ ``warn-throw`` is the default action of the deferred word
+  \ `warn`.
   \
   \ See: `warnings`, `warn.throw`, `warn.message`, `?warn`.
   \
@@ -1532,5 +1540,17 @@ unneeding warn-throw ?( need ?warn
   \
   \ 2020-05-08: Move `name>str`, `name>string` and `.name` from
   \ the kernel.
+  \
+  \ 2020-06-03: Improve documentation.
+  \
+  \ 2020-06-06: Fix `name>string`.
+  \
+  \ 2020-06-08: Improve documentation: make _true_ and _false_
+  \ cross-references. Update: rename `latest-wordlist` to
+  \ `last-wordlist`.
+  \
+  \ 2020-06-15: Improve documentation.
+  \
+  \ 2020-06-16: Improve documentation.
 
   \ vim: filetype=soloforth
