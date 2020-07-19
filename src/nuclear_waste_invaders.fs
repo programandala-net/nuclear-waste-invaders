@@ -37,7 +37,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.252.0+202006011425" ;
+: version$ ( -- ca len ) s" 0.252.0+202007191552" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -143,6 +143,7 @@ need xclear
 
 need at-y need at-x need type-left-field need type-right-field
 need type-center-field need gigatype-title need mode-32iso
+need ?
 
   \ --------------------------------------------
   cr .(   -Graphics) ?depth \ {{{2
