@@ -1,5 +1,5 @@
 = Nuclear Waste Invaders
-:revdate: 2020-02-18
+:revdate: 2020-07-19
 :linkattrs:
 :toc:
 
@@ -198,7 +198,7 @@ posse constructer li programma:
 . Comanda `make` in li documentiere del projecte por constructer li
   disco-replica <disk_2_nuclear_waste_invaders.mgt> e li bande-replica
   <graphics.tap>.
-. Initia un emulator de ZX Spectrum 128 con li ínterfacie Plus D.
+. Initia un emulator de ZX Spectrum 128 con li interfacie Plus D.
 . Intra in 128 BASIC.
 . Inserte li disco-replica <disk_0_boot.mgt> de Solo Forth in li
   disciere 1 de vor emulator.
