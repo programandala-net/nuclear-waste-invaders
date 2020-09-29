@@ -37,7 +37,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.252.0+202007191552" ;
+: version$ ( -- ca len ) s" 0.252.0+202009300053" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -53,7 +53,7 @@ true constant [breakable] immediate
   \
   \ XXX TMP -- for debugging
 
-true constant [debugging] immediate
+false constant [debugging] immediate
   \ Compile debugging code?
   \
   \ XXX TMP -- for debugging
@@ -905,8 +905,12 @@ kk-3# keyset~ ~keyset-ball-gun c!
   \ Column of the current gun's ammo figure at the status bar.
 
 : (.ammo ( -- )
+  \ 3 border \ XXX INFORMER
   projectiles-left 0 <# [ ammo-digits ] [#] #>
-  ammo-x status-bar-y at-xy type ;
+  \ 4 border \ XXX INFORMER
+  ammo-x status-bar-y at-xy type
+  \ 5 border \ XXX INFORMER
+  ;
   \ Display the current ammo left, with the current attribute.
 
 : .ammo ( -- ) ammo-attr attr! (.ammo ;
@@ -3621,8 +3625,8 @@ variable used-projectiles
 #bullets #missiles + #balls + cconstant #projectiles
   \ Total number of projectiles the tank can hold.
 
-  \ XXX TMP -- 2+ added to stack sizes, for debugging,
-  \ but it makes no difference.
+  \ XXX TMP -- `2+` added to stack sizes, for debugging,
+  \ but it makes no difference. Also `8 +` makes no difference.
 
 #bullets 2+ allot-xstack constant bullets-stack
   \ Create an extra stack to store the unused bullets
@@ -3687,7 +3691,7 @@ cvariable flying-projectile#
   \ -  4 : crash
   \ -  6 : crash
   \ -  8 : crash
-  \ - 16 : crash
+  \ - 16 : crash (default value)
   \ - 32 : crash
 
 max-flying-projectiles cells cconstant /flying-projectiles
@@ -5550,11 +5554,14 @@ cvariable projectile-frame
   x> !> projectile~
   gun-x projectile~ ~projectile-x c!
   projectile-y0 projectile~ ~projectile-y c!
-  ball-gun? if   ball-sprite&action
-            else gun~ ~gun-projectile-sprite @
+  ball-gun? if   \ 3 border \ XXX INFORMER
+                 ball-sprite&action
+            else \ 4 border \ XXX INFORMER
+                 gun~ ~gun-projectile-sprite @
                  gun~ ~gun-projectile-frames c@
                  gun~ ~gun-projectile-action @
-            then projectile~ ~projectile-action !
+            then \ 5 border \ XXX INFORMER
+                 projectile~ ~projectile-action !
                  projectile~ ~projectile-frames c!
                  projectile~ ~projectile-sprite !
   gun~ ~gun-projectile-attr c@
@@ -5564,7 +5571,9 @@ cvariable projectile-frame
   gun~ ~gun-projectile-altitude c@
   projectile~ ~projectile-altitude c!
   gun~ ~gun-projectile-power c@
-  projectile~ ~projectile-power c! ;
+  projectile~ ~projectile-power c!
+  \ 6 border \ XXX INFORMER
+  ;
   \ Get a new projectile from the stack of unused projectiles
   \ and set its data according to the current value of `gun~`.
   \ For the sake of run-time speed, some fields are copied from
@@ -5572,11 +5581,25 @@ cvariable projectile-frame
   \ `projectile~`.
 
 : launch-projectile ( -- )
-  .projectile projectile~ start-flying fire-sound ;
+  \ XXX FIXME the crash happens here (2):
+  4 border \ XXX INFORMER
+  .projectile
+  5 border \ XXX INFORMER
+  projectile~ start-flying
+  6 border \ XXX INFORMER
+  fire-sound ;
 
 : fire ( -- )
-  get-projectile launch-projectile .ammo
-  trigger-time gun~ ~gun-trigger-interval c@ schedule ;
+  1 border \ XXX INFORMER
+  \ XXX FIXME the crash happens here (1):
+  get-projectile launch-projectile
+  \ XXX FIXME the flow does not return here
+  2 border \ XXX INFORMER
+  .ammo
+  \ 6 border \ XXX INFORMER
+  trigger-time gun~ ~gun-trigger-interval c@
+  \ 7 border \ XXX INFORMER
+  schedule ;
   \ Fire the gun of the tank.
 
 : next-flying-projectile ( -- )
@@ -5603,9 +5626,10 @@ cvariable projectile-frame
   trigger-time already?   0exit
   projectiles-left        0exit
 
-  \ max-flying-projectiles? ?exit
-  max-flying-projectiles?
-  if 2 border 999 ms key 0 border exit then
+  max-flying-projectiles? ?exit
+
+  \ max-flying-projectiles?
+  \ if 2 border 999 ms key 0 border exit then
   \ XXX TMP -- for debugging
 
   gun-below-building?     ?exit fire ;
