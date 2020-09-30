@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201803112107
+  \ Last modified: 202007282109
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -27,7 +27,7 @@
 
 unneeding cvalue ?( need to need ;code
 
-: cvalue ( c "name"  -- )
+: cvalue ( c "name" -- )
   create 0 c, c, ;code 23 c, ' c@ 1+ jp, end-code ?)
                    \ inc hl
                    \ jp c_fetch.hl
@@ -40,13 +40,13 @@ unneeding cvalue ?( need to need ;code
   \ _name_ is later executed, _c_ will be placed on the stack.
   \ `to` can be used to assign a new value to _name_.
   \
-  \ See: `value`, `2value`, `cconstant`, `cvariable`, `cval`.
+  \ See also: `value`, `2value`, `cconstant`, `cvariable`, `cval`.
   \
   \ }doc
 
 unneeding value ?( need to need ;code
 
-: value ( n "name"  -- )
+: value ( n "name" -- )
   create 1 c, , ;code 23 c, ' @ 1+ jp, end-code ?)
                   \ inc hl
                   \ jp fetch.hl
@@ -61,13 +61,13 @@ unneeding value ?( need to need ;code
   \
   \ Origin: Forth-94 (CORE EXT), Forth-2012 (CORE EXT).
   \
-  \ See: `cvalue`, `2value`, `constant`, `variable`, `val`.
+  \ See also: `cvalue`, `2value`, `constant`, `variable`, `val`.
   \
   \ }doc
 
 unneeding 2value ?( need to need ;code
 
-: 2value ( x1 x2 "name"  -- )
+: 2value ( x1 x2 "name" -- )
   create 2 c, 2, ;code 23 c, ' 2@ 1+ jp, end-code ?)
                    \ inc hl
                    \ jp two_fetch.hl
@@ -82,7 +82,7 @@ unneeding 2value ?( need to need ;code
   \
   \ Origin: Forth-94 (CORE EXT), Forth-2012 (CORE EXT).
   \
-  \ See: `cvalue`, `value`, `2constant`, `2variable`, `2val`.
+  \ See also: `cvalue`, `value`, `2constant`, `2variable`, `2val`.
   \
   \ }doc
 
@@ -124,7 +124,7 @@ create to> ' c! , ' ! , ' 2! ,
   \
   \ Origin: Forth-94 (CORE EXT), Forth-2012 (CORE EXT).
   \
-  \ See: `!>`, `c!>`, `2!>`, `toval`, `ctoval`, `2toval`.
+  \ See also: `!>`, `c!>`, `2!>`, `toval`, `ctoval`, `2toval`.
   \
   \ }doc
 

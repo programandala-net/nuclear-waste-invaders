@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202006161654
+  \ Last modified: 202007282107
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -41,11 +41,11 @@ unneeding buffer:
   \
   \ Origin: Forth-2012 (CORE EXT).
   \
-  \ See: `reserve`, `allotted`, `create`, `allot`.
+  \ See also: `reserve`, `allotted`, `create`, `allot`.
   \
   \ }doc
 
-unneeding 2variable ?( : 2variable ( "name"  -- ) create
+unneeding 2variable ?( : 2variable ( "name" -- ) create
   [ 2 cells ] cliteral allot ; ?)
 
   \ doc{
@@ -65,13 +65,13 @@ unneeding 2variable ?( : 2variable ( "name"  -- ) create
   \ Number Extension Word Set), Forth-94 (DOUBLE), Forth-2012
   \ (DOUBLE).
   \
-  \ See: `cells`, `literal`, `variable`, `2variable`,
+  \ See also: `cells`, `literal`, `variable`, `2variable`,
   \ `2constant`.
   \
   \ }doc
 
 unneeding cvariable
-?\ : cvariable ( "name"  -- ) create 1 allot ;
+?\ : cvariable ( "name" -- ) create 1 allot ;
 
   \ doc{
   \
@@ -81,7 +81,7 @@ unneeding cvariable
   \ character of data space. When _name_ is executed, it
   \ returns the address of the reserved space.
   \
-  \ See: `c!`, `c@`, `variable`.
+  \ See also: `c!`, `c@`, `variable`.
   \
   \ }doc
 
@@ -104,7 +104,7 @@ unneeding enum
   \ drop
   \ ----
   \
-  \ See: `cenum`, `enumcell`.
+  \ See also: `cenum`, `enumcell`.
   \
   \ }doc
 
@@ -127,7 +127,7 @@ unneeding cenum
   \ drop
   \ ----
   \
-  \ See: `enum`, `enumcell`.
+  \ See also: `enum`, `enumcell`.
   \
   \ }doc
 
@@ -155,7 +155,7 @@ unneeding enumcell
   \ drop
   \ ----
   \
-  \ See: `enum`.
+  \ See also: `enum`.
   \
   \ }doc
 
@@ -176,7 +176,7 @@ need alias ' @ alias link@ ( node1 -- node2 )
   \ Fetch the node _node2_ from the linked list node _node1_.
   \ ``link@`` is an alias of `@`.
   \
-  \ See: `link,`.
+  \ See also: `link,`.
   \
   \ }doc
 
@@ -197,7 +197,7 @@ need alias ' @ alias link@ ( node1 -- node2 )
   \ - head -> new_node
   \ - new_node -> old_node
   \
-  \ See: `link@`.
+  \ See also: `link@`.
   \
   \ }doc
 

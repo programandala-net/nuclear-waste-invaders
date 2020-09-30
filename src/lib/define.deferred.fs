@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202007080016
+  \ Last modified: 202007282109
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -38,7 +38,7 @@ unneeding deferred
   \ Therefore ``xt deferred name`` is equivalent to ``defer
   \ name  xt ' name defer!``.
   \
-  \ See: `defer`, `defer!`.
+  \ See also: `defer`, `defer!`.
   \
   \ }doc
 
@@ -56,15 +56,15 @@ unneeding defers ?( need defer@
   \   Compilation:    ( "name" -- )
   \   Run-time:       ( -- )
   \
-  \ Compile the present contents of the deferred word "name"
+  \ Compile the present contents of the deferred word _name_
   \ into the current definition. I.e. this produces static
-  \ binding as if "name" was not deferred.
+  \ binding as if _name_ was not deferred.
   \
   \ ``defers`` is an `immediate` word.
   \
   \ Origin: Gforth.
   \
-  \ See: `defer`, `defer@`, `action-of`, `compile,`.
+  \ See also: `defer`, `defer@`, `action-of`, `compile,`.
   \
   \ }doc
 
@@ -83,7 +83,7 @@ unneeding defer@ ?\ : defer@ ( xt1 -- xt2 ) >action @ ;
   \
   \ Origin: Forth-2012 (CORE EXT).
   \
-  \ See: `defer!`, `defer`, `>action`.
+  \ See also: `defer!`, `defer`, `>action`.
   \
   \ }doc
 
@@ -99,7 +99,7 @@ unneeding deferred? ?\ : deferred? ( xt -- f ) c@ $C3 = ;
   \ ($C3) to the word it's associated to. This is what
   \ ``deferred?`` checks.
   \
-  \ See: `defer`, `defer@`, `action-of`.
+  \ See also: `defer`, `defer@`, `action-of`.
   \
   \ }doc
 
@@ -137,7 +137,7 @@ unneeding action-of ?( need defer@
   \
   \ Origin: Forth-2012 (CORE EXT).
   \
-  \ See: `defer@`, `defers`.
+  \ See also: `defer@`, `defers`.
   \
   \ }doc
 
@@ -163,7 +163,7 @@ unneeding <is> ?\ : <is> ( xt "name" -- ) ' defer! ;
   \
   \ Origin: Gforth.
   \
-  \ See: `[is]`.
+  \ See also: `[is]`.
   \
   \ }doc
 
@@ -195,7 +195,7 @@ unneeding [is] ?(
   \
   \ Origin: Gforth.
   \
-  \ See: `<is>`.
+  \ See also: `<is>`.
   \
   \ }doc
 
@@ -231,7 +231,7 @@ unneeding is ?( need [is] need <is>
   \
   \ Origin: Forth-2012 (CORE EXT).
   \
-  \ See: `[is]`, `<is>`.
+  \ See also: `[is]`, `<is>`.
   \
   \ }doc
 
@@ -264,5 +264,8 @@ unneeding is ?( need [is] need <is>
   \ 2018-04-11: Document `is`, `[is]`, and `<is>`.
   \
   \ 2020-07-08: Improve documentation.
+  \
+  \ 2020-07-28: Update notation of parsed "name" in word
+  \ descriptions.
 
   \ vim: filetype=soloforth

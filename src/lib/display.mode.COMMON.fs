@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 202005042022
+  \ Last modified: 202007282031
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -90,11 +90,13 @@ unneeding (at-xy
   \
   \ Set the cursor coordinates to column _col_ and row _row_,
   \ by displaying control character 22 followed by _col_ and
-  \ _row_, as needed by some display modes, e.g. `mode-64ao` and
-  \ `mode-42pw`.  The upper left corner is column zero, row zero.
+  \ _row_, as needed by some display modes, e.g. `mode-64ao`
+  \ and `mode-42pw`.  The upper left corner is column zero, row
+  \ zero.
   \
   \ ``(at-xy`` is a possible action of `at-xy`, which is a
-  \ deferred word configured by the current display mode.
+  \ deferred word (see `defer`) configured by the current
+  \ display mode.
 
   \ WARNING: The default `mode-32` expects _row_ right after
   \ control character 22, and then _col_, i.e in the order used
@@ -112,7 +114,7 @@ unneeding columns ?\ need cvalue 32 cvalue columns
   \ Return the number of columns in the current screen mode.
   \ The default value is 32.
   \
-  \ See: `rows`, last-column`, `column`.
+  \ See also: `rows`, last-column`, `column`.
   \
   \ }doc
 
@@ -125,7 +127,7 @@ unneeding rows ?\ need cvalue 24 cvalue rows
   \ Return the number of rows in the current screen mode.  The
   \ default value is 24.
   \
-  \ See: `columns`, `last-row`, `row`.
+  \ See also: `columns`, `last-row`, `row`.
   \
   \ }doc
 
@@ -232,5 +234,7 @@ code (banked-mode-output ( -- )
   \
   \ 2020-05-04: Fix cross references: `mode-64` -> `mode-64ao`.
   \ `mode-42` -> `mode-42pw`.
+  \
+  \ 2020-07-28: Improve documentation of deferred words.
 
   \ vim: filetype=soloforth

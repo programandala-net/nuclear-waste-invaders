@@ -3,7 +3,7 @@
   \ This file is part of Solo Forth
   \ http://programandala.net/en.program.solo_forth.html
 
-  \ Last modified: 201806041302
+  \ Last modified: 202007282053
   \ See change log at the end of the file
 
   \ ===========================================================
@@ -14,7 +14,8 @@
   \ ===========================================================
   \ Author
 
-  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018.
+  \ Marcos Cruz (programandala.net), 2015, 2016, 2017, 2018,
+  \ 2020.
 
   \ ===========================================================
   \ License
@@ -41,13 +42,14 @@ unneeding +field ?\ defer +field ( n1 n2 "name" -- n3 )
   \
   \ Add _n1_ to _a1_ giving _a2_.
   \
-  \ In Solo Forth, ``+field`` is an unitialized deferred word,
-  \ for which three implementations are provided:
-  \ `+field-unopt`, `+field-opt-0` and `+field-opt-0124`.
+  \ In Solo Forth, ``+field`` is an unitialized deferred word
+  \ (see `defer`), for which three implementations are
+  \ provided: `+field-unopt`, `+field-opt-0` and
+  \ `+field-opt-0124`.
   \
   \ Origin: Forth-2012 (FACILITY EXT).
   \
-  \ See: `begin-structure`.
+  \ See also: `begin-structure`.
   \
   \ }doc
 
@@ -73,7 +75,7 @@ unneeding field: ?( need +field
   \
   \ Origin: Forth-2012 (FACILITY EXT).
   \
-  \ See: `begin-structure`, `+field`.
+  \ See also: `begin-structure`, `+field`.
   \
   \ }doc
 
@@ -97,7 +99,7 @@ unneeding 2field: ?( need +field
   \ Add the _offset_ calculated during the compile-time action
   \ to _a1_ giving the address _a2_.
   \
-  \ See: `begin-structure`, `+field`.
+  \ See also: `begin-structure`, `+field`.
   \
   \ }doc
 
@@ -123,7 +125,7 @@ unneeding cfield: ?( need +field
   \
   \ Origin: Forth-2012 (FACILITY EXT).
   \
-  \ See: `begin-structure`, `+field`.
+  \ See also: `begin-structure`, `+field`.
   \
   \ }doc
 
@@ -165,7 +167,7 @@ unneeding begin-structure unneeding end-structure and ?(
   \       9 record> ~month c@  \ fetch the month from record 9
   \ ----
 
-  \ Note: ``begin-structure`` and `end-structure` are not
+  \ NOTE: ``begin-structure`` and `end-structure` are not
   \ necessary to create a structure. Only the initial offset 0
   \ is needed at the start, and saving the structure size at
   \ the end, e.g. using a `constant` or a `value`:
@@ -180,7 +182,7 @@ unneeding begin-structure unneeding end-structure and ?(
   \
   \ Origin: Forth-2012 (FACILITY EXT).
   \
-  \ See: `end-structure`, `field:`, `cfield:`, `2field:`,
+  \ See also: `end-structure`, `field:`, `cfield:`, `2field:`,
   \ `+field`.
   \
   \ }doc
@@ -342,5 +344,9 @@ unneeding +field-opt-0124 ?( need case need +field
   \ 2018-03-13: Improve documentation.
   \
   \ 2018-06-04: Fix typo in documentation.
+  \
+  \ 2020-07-28: Improve documentation of deferred words.
+  \
+  \ 2020-07-28: Replace "Note:" with the "NOTE:" markup.
 
   \ vim: filetype=soloforth
