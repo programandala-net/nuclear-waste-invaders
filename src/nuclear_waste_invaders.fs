@@ -37,7 +37,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.252.0+202009300053" ;
+: version$ ( -- ca len ) s" 0.252.0+202009301630" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -5342,10 +5342,11 @@ defer projectile ( -- c )
 
 [then]
 
-: projectile ( -- c )
+: projectile ( -- ca )
   projectile~ ~projectile-sprite @
   projectile~ ~projectile-frames c@ random /udg* + ;
-  \ Return the UDG _c_ of a random frame of the projectile.
+  \ Return the UDG address _ca_ of a random frame of the
+  \ projectile.
 
 : .projectile ( -- ) projectile~ ~projectile-attr c@ attr!
                      at-projectile projectile emit-udga ;
@@ -5584,21 +5585,12 @@ cvariable projectile-frame
   \ XXX FIXME the crash happens here (2):
   4 border \ XXX INFORMER
   .projectile
-  5 border \ XXX INFORMER
   projectile~ start-flying
-  6 border \ XXX INFORMER
   fire-sound ;
 
 : fire ( -- )
-  1 border \ XXX INFORMER
-  \ XXX FIXME the crash happens here (1):
-  get-projectile launch-projectile
-  \ XXX FIXME the flow does not return here
-  2 border \ XXX INFORMER
-  .ammo
-  \ 6 border \ XXX INFORMER
+  get-projectile launch-projectile .ammo
   trigger-time gun~ ~gun-trigger-interval c@
-  \ 7 border \ XXX INFORMER
   schedule ;
   \ Fire the gun of the tank.
 
