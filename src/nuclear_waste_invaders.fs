@@ -37,7 +37,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.252.0+202009301630" ;
+: version$ ( -- ca len ) s" 0.252.0+202009301958" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -85,7 +85,7 @@ here 512 dup allot !> /stringer !> stringer empty-stringer
   cr .(   -Development tools) \ {{{2
 
 need [if] need ~~ need list
-need warn.message need order need see need rdepth need where
+need message-warn need order need see need rdepth need where
 need evaluate need ?depth need see-colon-body>
 
   \ --------------------------------------------
@@ -905,12 +905,8 @@ kk-3# keyset~ ~keyset-ball-gun c!
   \ Column of the current gun's ammo figure at the status bar.
 
 : (.ammo ( -- )
-  \ 3 border \ XXX INFORMER
   projectiles-left 0 <# [ ammo-digits ] [#] #>
-  \ 4 border \ XXX INFORMER
-  ammo-x status-bar-y at-xy type
-  \ 5 border \ XXX INFORMER
-  ;
+  ammo-x status-bar-y at-xy type ;
   \ Display the current ammo left, with the current attribute.
 
 : .ammo ( -- ) ammo-attr attr! (.ammo ;
@@ -5349,7 +5345,11 @@ defer projectile ( -- c )
   \ projectile.
 
 : .projectile ( -- ) projectile~ ~projectile-attr c@ attr!
-                     at-projectile projectile emit-udga ;
+                     at-projectile projectile
+                     5 border \ XXX INFORMER
+                     emit-udga
+                     6 border \ XXX INFORMER
+                     ;
   \ Display the projectile.
 
 ' whip-sound alias fire-sound ( -- )
