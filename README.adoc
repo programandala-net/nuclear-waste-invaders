@@ -1,5 +1,5 @@
 = Nuclear Waste Invaders
-:revdate: 2020-07-19
+:revdate: 2020-12-05
 :linkattrs:
 :toc:
 
@@ -33,6 +33,10 @@ GitHub,role="external"]).
 
 Web page:
 http://programandala.net/en.program.nuclear_waste_invaders.html.
+
+:note-caption: Note
+NOTE: On 2020-12-05 the Git repository was converted to
+http://fossil-scm.rog[Fossil]. GitHub is used only as a copy.
 
 === How to compile and run
 
@@ -84,6 +88,11 @@ GitHub,role="external"]).
 
 Página en la red:
 http://programandala.net/es.programa.nuclear_waste_invaders.html.
+
+:note-caption: Nota
+NOTE: En 2020-12-05 el repositorio Git fue convertido a
+http://fossil-scm.org[Fossil]. GitHub se usa solo
+como una copia.
 
 === Cómo compilar y arrancar
 
@@ -140,6 +149,10 @@ GitHub,role="external"]).
 Retpaĝo:
 http://programandala.net/eo.programo.nuclear_waste_invaders.html.
 
+:note-caption: Noto
+NOTE: Je 2020-12-05 la Git-deponejo estis konvertita al
+http://fossil-scm.org[Fossil]. GitHub estas uzata nur kiel kopio.
+
 === Kiel kompili kaj funkciigi
 
 . Certiĝu ke la necesaj programoj, listigitaj supre de la dosiero
@@ -187,6 +200,10 @@ GitHub,role="external"]).
 
 Págine web:
 http://programandala.net/ie.programa.nuclear_waste_invaders.html.
+
+:note-caption: Note
+NOTE: In 2020-12-05 li depositoria de Git esset convertet a
+http://fossil-scm.org[Fossil]. GitHub es usat solmen quam un copie.
 
 === Qualmen compilar e initiar
 
