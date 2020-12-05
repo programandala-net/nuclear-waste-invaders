@@ -37,7 +37,7 @@ http://programandala.net/en.program.nuclear_waste_invaders.html.
 
 :note-caption: Note
 NOTE: On 2020-12-05 the Git repository was converted to
-http://fossil-scm.rog[Fossil]. GitHub is used only as a copy.
+http://fossil-scm.org[Fossil]. GitHub is used only as a copy.
 
 === How to compile and run
 
