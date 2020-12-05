@@ -206,7 +206,7 @@ http://programandala.net/ie.programa.nuclear_waste_invaders.html.
 NOTE: In 2020-12-05 li depositoria de Git esset convertet a
 http://fossil-scm.org[Fossil]. GitHub es usat solmen quam un copie.
 
-=== Qualmen compilar e initiar
+=== Qualmen compilar e iniciar
 
 Si vu ne posse atender li aparition del prim version public, vu self
 posse constructer li programma:
@@ -216,7 +216,7 @@ posse constructer li programma:
 . Comanda `make` in li documentiere del projecte por constructer li
   disco-replica <disk_2_nuclear_waste_invaders.mgt> e li bande-replica
   <graphics.tap>.
-. Initia un emulator de ZX Spectrum 128 con li interfacie Plus D.
+. Inicia un emulator de ZX Spectrum 128 con li interfacie Plus D.
 . Intra in 128 BASIC.
 . Inserte li disco-replica <disk_0_boot.mgt> de Solo Forth in li
   disciere 1 de vor emulator.
