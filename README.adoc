@@ -2,6 +2,7 @@
 :revdate: 2020-12-05
 :linkattrs:
 :toc:
+:toc-title:
 
 // This file is part of Nuclear Waste Invaders
 // http://programandala.net/en.program.nuclear_waste_invaders.html
