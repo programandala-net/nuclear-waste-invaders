@@ -37,7 +37,7 @@ only forth definitions
 wordlist dup constant nuclear-waste-invaders-wordlist
          dup >order set-current
 
-: version$ ( -- ca len ) s" 0.252.0+202009301958" ;
+: version$ ( -- ca len ) s" 0.252.0+202009302041" ;
 
 cr cr .( Nuclear Waste Invaders) cr version$ type cr
 
@@ -5345,11 +5345,7 @@ defer projectile ( -- c )
   \ projectile.
 
 : .projectile ( -- ) projectile~ ~projectile-attr c@ attr!
-                     at-projectile projectile
-                     5 border \ XXX INFORMER
-                     emit-udga
-                     6 border \ XXX INFORMER
-                     ;
+                     at-projectile projectile emit-udga ;
   \ Display the projectile.
 
 ' whip-sound alias fire-sound ( -- )
@@ -5586,7 +5582,10 @@ cvariable projectile-frame
   4 border \ XXX INFORMER
   .projectile
   projectile~ start-flying
-  fire-sound ;
+  5 border \ XXX INFORMER
+  fire-sound
+  6 border \ XXX INFORMER
+  ;
 
 : fire ( -- )
   get-projectile launch-projectile .ammo
