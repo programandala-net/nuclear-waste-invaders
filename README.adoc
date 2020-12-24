@@ -1,5 +1,5 @@
 = Nuclear Waste Invaders
-:revdate: 2020-12-05
+:revdate: 2020-12-24
 :linkattrs:
 :toc:
 :toc-title:
@@ -37,7 +37,8 @@ http://programandala.net/en.program.nuclear_waste_invaders.html.
 
 :note-caption: Note
 NOTE: On 2020-12-05 the Git repository was converted to
-http://fossil-scm.org[Fossil]. GitHub is used only as a copy.
+a http://fossil.programandala.net/nuclear_waste_invaders[Fossil repository],
+keeping http://github.com/programandala-net/nuclear-waste-invaders[GitHub] only as a mirror.
 
 === How to compile and run
 
@@ -92,8 +93,8 @@ http://programandala.net/es.programa.nuclear_waste_invaders.html.
 
 :note-caption: Nota
 NOTE: En 2020-12-05 el repositorio Git fue convertido a
-http://fossil-scm.org[Fossil]. GitHub se usa solo
-como una copia.
+un http://fossil.programandala.net/nuclear_waste_invaders[repositorio de Fossil],
+conservando http://github.com/programandala-net/nuclear-waste-invaders[GitHub] solo como una réplica.
 
 === Cómo compilar y arrancar
 
@@ -152,7 +153,8 @@ http://programandala.net/eo.programo.nuclear_waste_invaders.html.
 
 :note-caption: Noto
 NOTE: Je 2020-12-05 la Git-deponejo estis konvertita al
-http://fossil-scm.org[Fossil]. GitHub estas uzata nur kiel kopio.
+http://fossil.programandala.net/nuclear_waste_invaders[Fossil-deponejo],
+konservante http://github.com/programandala-net/nuclear-waste-invaders[GitHub] nur kiel kopion.
 
 === Kiel kompili kaj funkciigi
 
@@ -204,7 +206,8 @@ http://programandala.net/ie.programa.nuclear_waste_invaders.html.
 
 :note-caption: Note
 NOTE: In 2020-12-05 li depositoria de Git esset convertet a
-http://fossil-scm.org[Fossil]. GitHub es usat solmen quam un copie.
+un http://fossil.programandala.net/nuclear_waste_invaders[depositoria de Fossil],
+conservante http://github.com/programandala-net/nuclear-waste-invaders[GitHub] solmen quam un copie.
 
 === Qualmen compilar e iniciar
 
