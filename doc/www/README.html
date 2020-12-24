@@ -1,0 +1,412 @@
+<div class='fossil-doc' data-title='README'>
+<div id="toc" class="toc">
+<div id="toctitle"></div>
+<ul class="sectlevel1">
+<li><a href="#_english">English</a>
+<ul class="sectlevel2">
+<li><a href="#_project">Project</a></li>
+<li><a href="#_how_to_compile_and_run">How to compile and run</a></li>
+</ul>
+</li>
+<li><a href="#_español">Español</a>
+<ul class="sectlevel2">
+<li><a href="#_proyecto">Proyecto</a></li>
+<li><a href="#_cómo_compilar_y_arrancar">Cómo compilar y arrancar</a></li>
+</ul>
+</li>
+<li><a href="#_esperanto">Esperanto</a>
+<ul class="sectlevel2">
+<li><a href="#_projekto">Projekto</a></li>
+<li><a href="#_kiel_kompili_kaj_funkciigi">Kiel kompili kaj funkciigi</a></li>
+</ul>
+</li>
+<li><a href="#_interlingue">Interlingue</a>
+<ul class="sectlevel2">
+<li><a href="#_projecte">Projecte</a></li>
+<li><a href="#_qualmen_compilar_e_iniciar">Qualmen compilar e iniciar</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="_english">English</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_project">Project</h3>
+<div class="paragraph">
+<p><em>Nuclear Waste Invaders</em> is a ZX Spectrum 128 remake, under
+development, of Jupiter ACE computer&#8217;s
+<a href="http://www.zonadepruebas.com/viewtopic.php?t=4231" class="external">Nuclear Invaders</a> (Dancresp, 2013).</p>
+</div>
+<div class="paragraph">
+<p>It is written in
+<a href="http://standard-forth.org" class="external">Forth</a> with
+<a href="http://programandala.net/en.program.solo_forth.html">Solo Forth</a>
+(<a href="http://github.com/programandala-net/solo-forth" class="external">Solo Forth in GitHub</a>).</p>
+</div>
+<div class="paragraph">
+<p>Web page:
+<a href="http://programandala.net/en.program.nuclear_waste_invaders.html" class="bare">http://programandala.net/en.program.nuclear_waste_invaders.html</a>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+On 2020-12-05 the Git repository was converted to
+<a href="http://fossil-scm.org">Fossil</a>. GitHub is used only as a copy.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_how_to_compile_and_run">How to compile and run</h3>
+<div class="paragraph">
+<p>If you cannot wait until the first public version is resealed, you can
+build the program yourself:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Make sure the required programs, listed in the header of the
+&lt;Makefile&gt; file, are installed on your system.</p>
+</li>
+<li>
+<p>Type <code>make</code> in the project directory to build the
+&lt;disk_2_nuclear_waste_invaders.mgt&gt; disk image and the
+&lt;graphics.tap&gt; tape image.</p>
+</li>
+<li>
+<p>Start a ZX Spectrum 128 emulator with the Plus D interface.</p>
+</li>
+<li>
+<p>Enter 128 BASIC.</p>
+</li>
+<li>
+<p>Insert the Solo Forth&#8217;s &lt;disk_0_boot.mgt&gt; disk image into disk drive
+1 of your emulator.</p>
+</li>
+<li>
+<p>Type the BASIC command <code>run</code> to load G+DOS and Solo Forth from disk drive 1.</p>
+</li>
+<li>
+<p>Insert the &lt;disk_2_nuclear_waste_invaders.mgt&gt; disk image into disk
+drive 1 of your emulator.</p>
+</li>
+<li>
+<p>Open the &lt;graphics_and_font.tap&gt; tape image as the input tape of
+your emulator.</p>
+</li>
+<li>
+<p>Type Forth command <code>1 load</code> to load block 1 from the current drive. This will
+start the compilation. Messages will be shown during the process.</p>
+</li>
+<li>
+<p>Set your emulator to its maximum speed and wait. When the
+compilation is finished, the screen is cleared and a message is
+displayed.</p>
+</li>
+<li>
+<p>Set your emulator to the normal speed (100%).</p>
+</li>
+<li>
+<p>In order to save the compiled game, create a SZX snapshot with your
+emulator.</p>
+</li>
+<li>
+<p>Type <code>run</code> in Forth to start the game.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_español">Español</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_proyecto">Proyecto</h3>
+<div class="paragraph">
+<p><em>Nuclear Waste Invaders</em> (Invasores de residuos nucleares) es una
+reinterpretación en desarrollo para ZX Spectrum 128, del
+<a href="http://www.zonadepruebas.com/viewtopic.php?t=4231" class="external">Nuclear Invaders</a> (Dancresp, 2013) de la computadora Jupiter Ace.</p>
+</div>
+<div class="paragraph">
+<p>Está escrito en
+<a href="http://standard-forth.org" class="external">Forth</a> con
+<a href="http://programandala.net/en.program.solo_forth.html">Solo Forth</a>
+(<a href="http://github.com/programandala-net/solo-forth" class="external">Solo Forth en GitHub</a>).</p>
+</div>
+<div class="paragraph">
+<p>Página en la red:
+<a href="http://programandala.net/es.programa.nuclear_waste_invaders.html" class="bare">http://programandala.net/es.programa.nuclear_waste_invaders.html</a>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Nota</div>
+</td>
+<td class="content">
+En 2020-12-05 el repositorio Git fue convertido a
+<a href="http://fossil-scm.org">Fossil</a>. GitHub se usa solo
+como una copia.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_cómo_compilar_y_arrancar">Cómo compilar y arrancar</h3>
+<div class="paragraph">
+<p>Si no puedes esperar a la salida de la primera versión pública, puedes
+construir el programa tú mismo:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Asegúrate de que los programas necesarios, que están listados en la
+cabecera del fichero &lt;Makefile&gt;, están instalados en tu sistema.</p>
+</li>
+<li>
+<p>Da la orden <code>make</code> en el directorio del proyecto para construir la
+imagen de disquete &lt;disk_2_nuclear_waste_invaders.mgt&gt; y la imagen
+de cinta de casete &lt;graphics.tap&gt;.</p>
+</li>
+<li>
+<p>Arranca un emulador de ZX Spectrum 128 con la interfaz Plus D.</p>
+</li>
+<li>
+<p>Entra en 128 BASIC.</p>
+</li>
+<li>
+<p>Inserta la imagen de disquete &lt;disk_0_boot.mgt&gt; de Solo Forth en la
+disquetera 1 de tu emulador.</p>
+</li>
+<li>
+<p>Da el comando de BASIC <code>run</code> para cargar G+DOS y Solo Forth desde la
+disquetera 1.</p>
+</li>
+<li>
+<p>Inserta la imagen de disquete &lt;disk_2_nuclear_waste_invaders.mgt&gt; en
+la disquetera 1 de tu emulador.</p>
+</li>
+<li>
+<p>Abre la imagen de cinta de casete &lt;graphics_and_font.tap&gt; como cinta
+de entrada de tu emulador.</p>
+</li>
+<li>
+<p>Escribe el comando de Forth <code>1 load</code> para cargar el bloque 1 de la
+disquetera actual. Esto iniciará la compilación. Durante el proceso
+se mostrarán mensajes en la pantalla.</p>
+</li>
+<li>
+<p>Pon la velocidad de tu emulador al máximo y espera. Cuando la
+compilación haya terminado, se borrará la pantalla y se mostrará un
+mensaje.</p>
+</li>
+<li>
+<p>Pon tu emulador a la velocidad normal (100%).</p>
+</li>
+<li>
+<p>Para guardar el juego compilado, crea una imagen del sistema en
+formato SZX usando tu emulador.</p>
+</li>
+<li>
+<p>Escribe <code>run</code> en Forth para empezar el juego.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_esperanto">Esperanto</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_projekto">Projekto</h3>
+<div class="paragraph">
+<p>Se vi ne povas atendi li aperon de la unua publika versio, vi mem
+povas konstrui li programon:</p>
+</div>
+<div class="paragraph">
+<p><em>Nuclear Waste Invaders</em> (Atomrubaĵaj Invadantoj) esta programata
+reinterpreto, por la komputilo ZX Spectrum 128, el
+<a href="http://www.zonadepruebas.com/viewtopic.php?t=4231" class="external">Nuclear Invaders</a> (Dancresp, 2013) de la komputilo Jupiter ACE.</p>
+</div>
+<div class="paragraph">
+<p>Ĝi estas verkata en <a href="http://standard-forth.org" class="external">Forth</a>
+per <a href="http://programandala.net/en.program.solo_forth.html">Solo Forth</a>
+(<a href="http://github.com/programandala-net/solo-forth" class="external">Solo Forth en GitHub</a>).</p>
+</div>
+<div class="paragraph">
+<p>Retpaĝo:
+<a href="http://programandala.net/eo.programo.nuclear_waste_invaders.html" class="bare">http://programandala.net/eo.programo.nuclear_waste_invaders.html</a>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Noto</div>
+</td>
+<td class="content">
+Je 2020-12-05 la Git-deponejo estis konvertita al
+<a href="http://fossil-scm.org">Fossil</a>. GitHub estas uzata nur kiel kopio.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_kiel_kompili_kaj_funkciigi">Kiel kompili kaj funkciigi</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Certiĝu ke la necesaj programoj, listigitaj supre de la dosiero
+&lt;Makefile&gt;, estas instalitaj en via sistemo.</p>
+</li>
+<li>
+<p>Tajpu <code>make</code> en la dosierujo de la projekto por krei la diskedeskan
+dosieron &lt;disk_2_nuclear_waste_invaders.mgt&gt; kaj la kasedeskan
+dosieron &lt;graphics.tap&gt;.</p>
+</li>
+<li>
+<p>Enmetu la diskedeskan dosieron &lt;disk_0_boot.mgt&gt; de Solo Forth en la
+diskedujon 1 de via emulilo.</p>
+</li>
+<li>
+<p>Skribu la BASIC-ordonon <code>run</code> por funkciigi G+DOS kaj Solo Forth el
+la diskedujo 1.</p>
+</li>
+<li>
+<p>Enmetu la diskedeskan dosieron &lt;disk_2_nuclear_waste_invaders.mgt&gt;
+en la diskedujon 1 de via emulilo.</p>
+</li>
+<li>
+<p>Malfermu la kasedeskan dosieron &lt;graphics_and_font.tap&gt; kiel
+enir-kasedon de via emulilo.</p>
+</li>
+<li>
+<p>Skribu ordonon de Forth <code>1 load</code> por preni blokon 1 el la nuna
+diskedujo. Ĉi tio komencos la kompiladon, dum kiu mesaĝoj estos
+montrataj sur la ekrano.</p>
+</li>
+<li>
+<p>Elektu la plej grandan rapidon de via emulilo kaj atendu. Kiam la
+kompilado finiĝos, la ekrano estos forviŝita kaj mesaĝo estos
+printita.</p>
+</li>
+<li>
+<p>Elektu normalan (100%) rapidon en via emulilo.</p>
+</li>
+<li>
+<p>Por konservi la kompilitan ludon, kreu kopion de la tuta sistemo en
+SZX-formata dosiero, uzante vian emulilon.</p>
+</li>
+<li>
+<p>En Fortho tajpu <code>run</code> por komenci la ludon.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_interlingue">Interlingue</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_projecte">Projecte</h3>
+<div class="paragraph">
+<p><em>Nuclear Waste Invaders</em> (Invasores de jetallia nucleari) es un
+reinterpretation, developat por ZX Spectrum 128, del
+<a href="http://www.zonadepruebas.com/viewtopic.php?t=4231" class="external">Nuclear Invaders</a> (Dancresp, 2013) del computator Jupiter ACE.</p>
+</div>
+<div class="paragraph">
+<p>It es scrit in
+<a href="http://standard-forth.org" class="external">Forth</a> con
+<a href="http://programandala.net/en.program.solo_forth.html">Solo Forth</a>
+(<a href="http://github.com/programandala-net/solo-forth" class="external">Solo Forth in GitHub</a>).</p>
+</div>
+<div class="paragraph">
+<p>Págine web:
+<a href="http://programandala.net/ie.programa.nuclear_waste_invaders.html" class="bare">http://programandala.net/ie.programa.nuclear_waste_invaders.html</a>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+In 2020-12-05 li depositoria de Git esset convertet a
+<a href="http://fossil-scm.org">Fossil</a>. GitHub es usat solmen quam un copie.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_qualmen_compilar_e_iniciar">Qualmen compilar e iniciar</h3>
+<div class="paragraph">
+<p>Si vu ne posse atender li aparition del prim version public, vu self
+posse constructer li programma:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Controla que li necessi programmas, quel es listat in li supra del
+document &lt;Makefile&gt;, es instalat in vor computator.</p>
+</li>
+<li>
+<p>Comanda <code>make</code> in li documentiere del projecte por constructer li
+disco-replica &lt;disk_2_nuclear_waste_invaders.mgt&gt; e li bande-replica
+&lt;graphics.tap&gt;.</p>
+</li>
+<li>
+<p>Inicia un emulator de ZX Spectrum 128 con li interfacie Plus D.</p>
+</li>
+<li>
+<p>Intra in 128 BASIC.</p>
+</li>
+<li>
+<p>Inserte li disco-replica &lt;disk_0_boot.mgt&gt; de Solo Forth in li
+disciere 1 de vor emulator.</p>
+</li>
+<li>
+<p>In BASIC comanda <code>run</code> por cargar G+DOS e Solo Forth del disciere 1.</p>
+</li>
+<li>
+<p>Inserte li disco-replica &lt;disk_2_nuclear_waste_invaders.mgt&gt; in li
+disciere 1 de vor emulator.</p>
+</li>
+<li>
+<p>Aperte li bande-replica &lt;graphics_and_font.tap&gt; quam bendo de
+intrada de vor emulator.</p>
+</li>
+<li>
+<p>In Forth comanda <code>1 load</code> por cargar li bloc 1 del disciere activ.
+To va comensar li compilation. Durante li operation, divers missages
+va aparerir sur li ecran.</p>
+</li>
+<li>
+<p>Etablisse li maxim rapiditá de vor emulador e atende. Quande li
+compilation es finit, li ecran va nettar se e un missage va aparir.</p>
+</li>
+<li>
+<p>Etablisse un rapiditá normal (100%) in vor emulator.</p>
+</li>
+<li>
+<p>Por conservar li lude compilat, fa un replica del sistema con
+formate SZX usante vor emulator.</p>
+</li>
+<li>
+<p>In Forth comanda <code>run</code> por comensar li lude.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div></div>

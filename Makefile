@@ -5,11 +5,14 @@
 # This file is part of Nuclear Waste Invaders
 # http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 201903151338
+# Last modified: 202012241708
 # See change log at the end of the file
 
 # ==============================================================
-# Requirements
+# Requirements {{{1
+
+# Asciidoctor (by Dan Allen, Sarah White et al.)
+#	http://asciidoctor.org
 
 # bin2code (by Metalbrain)
 # 	http://metalbrain.speccy.org/link-eng.htm
@@ -28,7 +31,7 @@
 #	http://www.worldofspectrum.org/infoseekid.cgi?id=0027996
 
 # ==============================================================
-# Notes
+# Notes {{{1
 
 # $^ list of all prerequisites
 # $? list of prerequisites changed more recently than current target
@@ -36,7 +39,7 @@
 # $@ name of current target
 
 # ==============================================================
-# Config
+# Config {{{1
 
 VPATH = ./
 
@@ -45,7 +48,7 @@ MAKEFLAGS = --no-print-directory
 .ONESHELL:
 
 # ==============================================================
-# Main
+# Main {{{1
 
 .PHONY: all
 all: disk_2_nuclear_waste_invaders.mgt graphics_and_font.tap
@@ -56,7 +59,7 @@ clean:
 	rm -f disk_2_nuclear_waste_invaders.mgt *.tap
 
 # ==============================================================
-# Source block disk
+# Source block disk {{{1
 
 secondary_source_files=$(sort $(wildcard src/00*.fs))
 library_source_files=$(sort $(wildcard src/lib/*.fs))
@@ -90,10 +93,10 @@ disk_2_nuclear_waste_invaders.mgt: tmp/disk_2_nuclear_waste_invaders.fb
 	mv $<.copy $<
 
 # ==============================================================
-# Tape
+# Tape {{{1
 
 # ----------------------------------------------
-# Font
+# Font {{{2
 
 tmp/font.bin: fonts/chato.fs
 	gforth $< > $@
@@ -102,7 +105,7 @@ tmp/font.tap: tmp/font.bin
 	make/bin2code0 $< $@
 
 # ----------------------------------------------
-# Landscape graphics
+# Landscape graphics {{{2
 
 landscapes_scr=$(wildcard graphics/landscapes/*.scr)
 
@@ -154,13 +157,40 @@ landscapes_scr_3rd_tap=$(addsuffix .tap,$(landscapes_scr_zx7))
 	zx7 $<
 
 # ----------------------------------------------
-# Tape
+# Tape {{{2
 
 graphics_and_font.tap: $(landscapes_scr_3rd_tap) tmp/font.tap
 	cat $(sort $^) > $@
 
 # ==============================================================
-# Change log
+# Online documentation {{{1
+
+# Online documentation displayed on the Fossil repository.
+
+.PHONY: wwwdoc
+wwwdoc: wwwreadme
+
+.PHONY: cleanwww
+cleanwww:
+	rm -f \
+		doc/www/* \
+		tmp/README.*
+
+.PHONY: wwwreadme
+wwwreadme: doc/www/README.html
+
+doc/www/README.html: tmp/README.html
+	echo "<div class='fossil-doc' data-title='README'>" > $@;\
+	cat $< >> $@;\
+	echo "</div>" >> $@
+
+tmp/README.html: README.adoc
+	asciidoctor \
+		--embedded \
+		--out-file=$@ $<
+
+# ==============================================================
+# Change log {{{1
 
 # 2016-03-22: First version, based on the Makefile of Solo Forth.
 #
@@ -183,3 +213,5 @@ graphics_and_font.tap: $(landscapes_scr_3rd_tap) tmp/font.tap
 # 2017-04-20: Add font to the tape.
 #
 # 2019-03-15: Generalize the rule of fs2fba.sh.
+#
+# 2020-12-24: Make an online version of the README file.
