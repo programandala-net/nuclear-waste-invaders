@@ -1,5 +1,5 @@
 = Nuclear Waste Invaders
-:revdate: 2020-12-24
+:revdate: 2021-02-02
 :linkattrs:
 :toc:
 :toc-title:
@@ -209,7 +209,7 @@ NOTE: In 2020-12-05 li depositoria de Git esset convertet a
 un http://fossil.programandala.net/nuclear_waste_invaders[depositoria de Fossil],
 conservante http://github.com/programandala-net/nuclear-waste-invaders[GitHub] solmen quam un copie.
 
-=== Qualmen compilar e iniciar
+=== Qualmen compilar e initiar
 
 Si vu ne posse atender li aparition del prim version public, vu self
 posse constructer li programma:
