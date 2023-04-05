@@ -1,5 +1,5 @@
 = Nuclear Waste Invaders
-:revdate: 2021-02-02
+:revdate: 2023-04-05
 :linkattrs:
 :toc:
 :toc-title:
@@ -35,11 +35,6 @@ GitHub,role="external"]).
 Web page:
 http://programandala.net/en.program.nuclear_waste_invaders.html.
 
-:note-caption: Note
-NOTE: On 2020-12-05 the Git repository was converted to
-a http://fossil.programandala.net/nuclear_waste_invaders[Fossil repository],
-keeping http://github.com/programandala-net/nuclear-waste-invaders[GitHub] only as a mirror.
-
 === How to compile and run
 
 If you cannot wait until the first public version is resealed, you can
@@ -69,6 +64,16 @@ build the program yourself:
   emulator.
 . Type `run` in Forth to start the game.
 
+=== History of the repository
+
+- 2020-12-05: The Git repository was converted to
+  https://fossil-scm.org[Fossil,role="external"], keeping
+  http://github.com/programandala-net/nuclear-waste-invaders[GitHub as
+  a mirror,role="external"].
+- 2023-04-05: The repository was converted to
+  https:://mercurial-scm.org[Mercurial,role="external"], enabling a
+  better interaction with GitHub.
+
 // end::en[]
 
 == Español
@@ -90,11 +95,6 @@ GitHub,role="external"]).
 
 Página en la red:
 http://programandala.net/es.programa.nuclear_waste_invaders.html.
-
-:note-caption: Nota
-NOTE: En 2020-12-05 el repositorio Git fue convertido a
-un http://fossil.programandala.net/nuclear_waste_invaders[repositorio de Fossil],
-conservando http://github.com/programandala-net/nuclear-waste-invaders[GitHub] solo como una réplica.
 
 === Cómo compilar y arrancar
 
@@ -127,6 +127,16 @@ construir el programa tú mismo:
   formato SZX usando tu emulador.
 . Escribe `run` en Forth para empezar el juego.
 
+=== Historia del repositorio
+
+- 2020-12-05: El repositorio de Git fue convertido a
+  https://fossil-scm.org[Fossil,role="external"], dejando
+  http://github/programandala-net/nuclear-waste-invaders[GitHub como
+  réplica,role="external"].
+- 2023-04-05: El repositorio fue convertido a
+  https://mercurial-scm.org[Mercurial,role="external"], posibilitando
+  una mejor interacción con GitHub.
+
 // end::es[]
 
 == Esperanto
@@ -150,11 +160,6 @@ GitHub,role="external"]).
 
 Retpaĝo:
 http://programandala.net/eo.programo.nuclear_waste_invaders.html.
-
-:note-caption: Noto
-NOTE: Je 2020-12-05 la Git-deponejo estis konvertita al
-http://fossil.programandala.net/nuclear_waste_invaders[Fossil-deponejo],
-konservante http://github.com/programandala-net/nuclear-waste-invaders[GitHub] nur kiel kopion.
 
 === Kiel kompili kaj funkciigi
 
@@ -182,6 +187,16 @@ konservante http://github.com/programandala-net/nuclear-waste-invaders[GitHub] n
   SZX-formata dosiero, uzante vian emulilon.
 . En Fortho tajpu `run` por komenci la ludon.
 
+=== Historio de la deponejo
+
+- 2020-12-05: La Git-deponejo estis konvertita al
+  https://fossil-scm.org[Fossil,role="external"], konservante
+  http://github/programandala-net/nuclear-waste-invaders[GitHub kiel
+  kopion,role="external"].
+- 2023-04-05: La deponejo estis konvertita al
+  https://mercurial-scm.org[Mercurial,role="external"], ebligante pli
+  bonan interagon kun GitHub.
+
 // end::eo[]
 
 == Interlingue
@@ -203,11 +218,6 @@ GitHub,role="external"]).
 
 Págine web:
 http://programandala.net/ie.programa.nuclear_waste_invaders.html.
-
-:note-caption: Note
-NOTE: In 2020-12-05 li depositoria de Git esset convertet a
-un http://fossil.programandala.net/nuclear_waste_invaders[depositoria de Fossil],
-conservante http://github.com/programandala-net/nuclear-waste-invaders[GitHub] solmen quam un copie.
 
 === Qualmen compilar e initiar
 
@@ -237,6 +247,16 @@ posse constructer li programma:
 . Por conservar li lude compilat, fa un replica del sistema con
   formate SZX usante vor emulator.
 . In Forth comanda `run` por comensar li lude.
+
+=== Historie del depositoria
+
+- 2020-12-05: Li depositoria de Git esset convertet a
+  https://fossil-scm.org[Fossil,role="external"], conservante
+  http://github/programandala-net/nuclear-waste-invaders[GitHub quam
+  un copie,role="external"].
+- 2023-04-05: Li depositoria esset convertet a
+  https://mercurial-scm.org[Mercurial,role="external"], possibilisante
+  un melior interaction con GitHub.
 
 // end::ie[]
 

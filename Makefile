@@ -5,7 +5,7 @@
 # This file is part of Nuclear Waste Invaders
 # http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 202012241708
+# Last modified: 20230405T1633+0200
 # See change log at the end of the file
 
 # ==============================================================
@@ -163,33 +163,6 @@ graphics_and_font.tap: $(landscapes_scr_3rd_tap) tmp/font.tap
 	cat $(sort $^) > $@
 
 # ==============================================================
-# Online documentation {{{1
-
-# Online documentation displayed on the Fossil repository.
-
-.PHONY: wwwdoc
-wwwdoc: wwwreadme
-
-.PHONY: cleanwww
-cleanwww:
-	rm -f \
-		doc/www/* \
-		tmp/README.*
-
-.PHONY: wwwreadme
-wwwreadme: doc/www/README.html
-
-doc/www/README.html: tmp/README.html
-	echo "<div class='fossil-doc' data-title='README'>" > $@;\
-	cat $< >> $@;\
-	echo "</div>" >> $@
-
-tmp/README.html: README.adoc
-	asciidoctor \
-		--embedded \
-		--out-file=$@ $<
-
-# ==============================================================
 # Change log {{{1
 
 # 2016-03-22: First version, based on the Makefile of Solo Forth.
@@ -215,3 +188,6 @@ tmp/README.html: README.adoc
 # 2019-03-15: Generalize the rule of fs2fba.sh.
 #
 # 2020-12-24: Make an online version of the README file.
+#
+# 2023-04-05: Remove online documentation rule, after converting the repo to
+# Mercurial.
