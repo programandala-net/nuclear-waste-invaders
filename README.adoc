@@ -1,5 +1,5 @@
 = Nuclear Waste Invaders
-:revdate: 2023-04-05
+:revdate: 2023-05-30
 :linkattrs:
 :toc:
 :toc-title:
@@ -145,9 +145,6 @@ construir el programa tú mismo:
 
 === Projekto
 
-Se vi ne povas atendi li aperon de la unua publika versio, vi mem
-povas konstrui li programon:
-
 _Nuclear Waste Invaders_ (Atomrubaĵaj Invadantoj) esta programata
 reinterpreto, por la komputilo ZX Spectrum 128, el
 http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders,
@@ -162,6 +159,9 @@ Retpaĝo:
 http://programandala.net/eo.programo.nuclear_waste_invaders.html.
 
 === Kiel kompili kaj funkciigi
+
+Se vi ne povas atendi li aperon de la unua publika versio, vi mem
+povas konstrui li programon:
 
 . Certiĝu ke la necesaj programoj, listigitaj supre de la dosiero
   <Makefile>, estas instalitaj en via sistemo.
