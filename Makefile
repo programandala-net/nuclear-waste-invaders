@@ -1,15 +1,15 @@
 # Makefile
 
-# Author: Marcos Cruz (programandala.net), 2016, 2017, 2019.
+# Author: Marcos Cruz (programandala.net), 2016, 2017, 2019, 2020, 2023, 2025.
 
 # This file is part of Nuclear Waste Invaders
 # http://programandala.net/en.program.nuclear_waste_invaders.html
 
-# Last modified: 20230405T1633+0200
+# Last modified: 20250224T1401+0100
 # See change log at the end of the file
 
-# ==============================================================
 # Requirements {{{1
+# ==============================================================
 
 # Asciidoctor (by Dan Allen, Sarah White et al.)
 #	http://asciidoctor.org
@@ -30,16 +30,8 @@
 # ZX7 (by Einar Saukas et al.)
 #	http://www.worldofspectrum.org/infoseekid.cgi?id=0027996
 
-# ==============================================================
-# Notes {{{1
-
-# $^ list of all prerequisites
-# $? list of prerequisites changed more recently than current target
-# $< name of first prerequisite
-# $@ name of current target
-
-# ==============================================================
 # Config {{{1
+# ==============================================================
 
 VPATH = ./
 
@@ -47,8 +39,8 @@ MAKEFLAGS = --no-print-directory
 
 .ONESHELL:
 
-# ==============================================================
 # Main {{{1
+# ==============================================================
 
 .PHONY: all
 all: disk_2_nuclear_waste_invaders.mgt graphics_and_font.tap
@@ -58,8 +50,8 @@ clean:
 	rm -f tmp/*
 	rm -f disk_2_nuclear_waste_invaders.mgt *.tap
 
-# ==============================================================
 # Source block disk {{{1
+# ==============================================================
 
 secondary_source_files=$(sort $(wildcard src/00*.fs))
 library_source_files=$(sort $(wildcard src/lib/*.fs))
@@ -92,11 +84,11 @@ disk_2_nuclear_waste_invaders.mgt: tmp/disk_2_nuclear_waste_invaders.fb
 	mv $(basename $<).mgt .
 	mv $<.copy $<
 
-# ==============================================================
 # Tape {{{1
+# ==============================================================
 
-# ----------------------------------------------
 # Font {{{2
+# ----------------------------------------------
 
 tmp/font.bin: fonts/chato.fs
 	gforth $< > $@
@@ -104,8 +96,8 @@ tmp/font.bin: fonts/chato.fs
 tmp/font.tap: tmp/font.bin
 	make/bin2code0 $< $@
 
-# ----------------------------------------------
 # Landscape graphics {{{2
+# ----------------------------------------------
 
 landscapes_scr=$(wildcard graphics/landscapes/*.scr)
 
@@ -156,14 +148,21 @@ landscapes_scr_3rd_tap=$(addsuffix .tap,$(landscapes_scr_zx7))
 %.zx7: %
 	zx7 $<
 
-# ----------------------------------------------
 # Tape {{{2
+# ----------------------------------------------
 
 graphics_and_font.tap: $(landscapes_scr_3rd_tap) tmp/font.tap
 	cat $(sort $^) > $@
 
+# README {{{1
 # ==============================================================
+
+readme_title=Nuclear Waste Invaders
+
+include Makefile.readme
+
 # Change log {{{1
+# ==============================================================
 
 # 2016-03-22: First version, based on the Makefile of Solo Forth.
 #
@@ -191,3 +190,5 @@ graphics_and_font.tap: $(landscapes_scr_3rd_tap) tmp/font.tap
 #
 # 2023-04-05: Remove online documentation rule, after converting the repo to
 # Mercurial.
+#
+# 2025-02-24: Include <Makefile.readme>.
