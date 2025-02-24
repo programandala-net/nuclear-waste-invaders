@@ -1,6 +1,14 @@
 # Nuclear Waste Invaders
 
-## English
+- [English](#en)
+
+- [Español](#es)
+
+- [Esperanto](#es)
+
+- [Interlingue/Occidental](#ie)
+
+## <span id="en"></span>English
 
 ### Project
 
@@ -11,7 +19,8 @@ Invaders](http://www.zonadepruebas.com/viewtopic.php?t=4231) (Dancresp,
 
 It is written in [Forth](http://standard-forth.org) with [Solo
 Forth](http://programandala.net/en.program.solo_forth.html) ([Solo Forth
-in GitHub](http://github.com/programandala-net/solo-forth)).
+in SourceHut](https://hg.sr.ht/~programandala_net/solo_forth); [Solo
+Forth mirror in GitHub](http://github.com/programandala-net/solo-forth).
 
 Web page:
 <http://programandala.net/en.program.nuclear_waste_invaders.html>.
@@ -66,10 +75,13 @@ build the program yourself:
   mirror](http://github.com/programandala-net/nuclear-waste-invaders).
 
 - 2023-04-05: The repository was converted to
-  https:://mercurial-scm.org\[Mercurial,role="external"\], enabling a
+  https:://mercurial-scm.org\[Mercurial, role="external"\], enabling a
   better interaction with GitHub.
 
-## Español
+- 2025-02-23: The repository was uploaded to
+  [SourceHut](https://hg.sr.ht/~programandala_net/nuclear_waste_invaders).
+
+## <span id="es"></span>Español
 
 ### Proyecto
 
@@ -80,7 +92,9 @@ Invaders](http://www.zonadepruebas.com/viewtopic.php?t=4231) (Dancresp,
 
 Está escrito en [Forth](http://standard-forth.org) con [Solo
 Forth](http://programandala.net/en.program.solo_forth.html) ([Solo Forth
-en GitHub](http://github.com/programandala-net/solo-forth)).
+en SourceHut](https://hg.sr.ht/~programandala_net/solo_forth); [réplica
+de Solo Forth en
+GitHub](http://github.com/programandala-net/solo-forth)).
 
 Página en la red:
 <http://programandala.net/es.programa.nuclear_waste_invaders.html>.
@@ -138,7 +152,10 @@ construir el programa tú mismo:
   [Mercurial](https://mercurial-scm.org), posibilitando una mejor
   interacción con GitHub.
 
-## Esperanto
+- 2025-02-23: El repositorio fue subido a
+  [SourceHut](https://hg.sr.ht/~programandala_net/nuclear_waste_invaders).
+
+## <span id="eo"></span>Esperanto
 
 ### Projekto
 
@@ -149,7 +166,8 @@ Invaders](http://www.zonadepruebas.com/viewtopic.php?t=4231) (Dancresp,
 
 Ĝi estas verkata en [Forth](http://standard-forth.org) per [Solo
 Forth](http://programandala.net/en.program.solo_forth.html) ([Solo Forth
-en GitHub](http://github.com/programandala-net/solo-forth)).
+in SourceHut](https://hg.sr.ht/~programandala_net/solo_forth); [kopio de
+Solo Forth en GitHub](http://github.com/programandala-net/solo-forth)).
 
 Retpaĝo:
 <http://programandala.net/eo.programo.nuclear_waste_invaders.html>.
@@ -203,7 +221,10 @@ konstrui li programon:
   [Mercurial](https://mercurial-scm.org), ebligante pli bonan interagon
   kun GitHub.
 
-## Interlingue
+- 2025-02-23: La deponejo estis alŝutita al
+  [SourceHut](https://hg.sr.ht/~programandala_net/nuclear_waste_invaders).
+
+## <span id="ie"></span>Interlingue
 
 ### Projecte
 
@@ -212,9 +233,10 @@ reinterpretation, developat por ZX Spectrum 128, del [Nuclear
 Invaders](http://www.zonadepruebas.com/viewtopic.php?t=4231) (Dancresp,
 2013) del computator Jupiter ACE.
 
-It es scrit in [Forth](http://standard-forth.org) con [Solo
+It es scrit in [Forth](http://standard-forth.org) per [Solo
 Forth](http://programandala.net/en.program.solo_forth.html) ([Solo Forth
-in GitHub](http://github.com/programandala-net/solo-forth)).
+in SourceHut](https://hg.sr.ht/~programandala_net/solo_forth); [copie de
+Solo Forth in GitHub](http://github.com/programandala-net/solo-forth)).
 
 Págine web:
 <http://programandala.net/ie.programa.nuclear_waste_invaders.html>.
@@ -269,3 +291,6 @@ posse constructer li programma:
 - 2023-04-05: Li depositoria esset convertet a
   [Mercurial](https://mercurial-scm.org), possibilisante un melior
   interaction con GitHub.
+
+- 2025-02-23: Li depositoria esset cargat in
+  [SourceHut](https://hg.sr.ht/~programandala_net/nuclear_waste_invaders).

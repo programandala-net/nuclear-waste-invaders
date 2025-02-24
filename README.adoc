@@ -1,8 +1,6 @@
 = Nuclear Waste Invaders
-:revdate: 2023-05-30
+:revdate: 2025-02-24
 :linkattrs:
-:toc:
-:toc-title:
 
 // This file is part of Nuclear Waste Invaders
 // http://programandala.net/en.program.nuclear_waste_invaders.html
@@ -15,10 +13,17 @@
 // license in all redistributed copies and derived works.  There is no
 // warranty.
 
-== English
+- <<en, English>>
+- <<es, Español>>
+- <<es, Esperanto>>
+- <<ie, Interlingue/Occidental>>
+
+// English {{{1
+== [[en]]English
 
 // tag::en[]
 
+// Project {{{2
 === Project
 
 _Nuclear Waste Invaders_ is a ZX Spectrum 128 remake, under
@@ -26,15 +31,17 @@ development, of Jupiter ACE computer's
 http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders,
 role="external"] (Dancresp, 2013).
 
-It is written in
-http://standard-forth.org[Forth,role="external"] with
+It is written in http://standard-forth.org[Forth, role="external"] with
 http://programandala.net/en.program.solo_forth.html[Solo Forth]
-(http://github.com/programandala-net/solo-forth[Solo Forth in
-GitHub,role="external"]).
+(https://hg.sr.ht/~programandala_net/solo_forth[Solo Forth in
+SourceHut, role="external"];
+http://github.com/programandala-net/solo-forth[Solo Forth mirror in
+GitHub, role="external"].
 
 Web page:
 http://programandala.net/en.program.nuclear_waste_invaders.html.
 
+// How to compile and run {{{2
 === How to compile and run
 
 If you cannot wait until the first public version is resealed, you can
@@ -64,22 +71,27 @@ build the program yourself:
   emulator.
 . Type `run` in Forth to start the game.
 
+// History of the repository {{{2
 === History of the repository
 
 - 2020-12-05: The Git repository was converted to
-  https://fossil-scm.org[Fossil,role="external"], keeping
+  https://fossil-scm.org[Fossil, role="external"], keeping
   http://github.com/programandala-net/nuclear-waste-invaders[GitHub as
-  a mirror,role="external"].
+  a mirror, role="external"].
 - 2023-04-05: The repository was converted to
-  https:://mercurial-scm.org[Mercurial,role="external"], enabling a
+  https:://mercurial-scm.org[Mercurial, role="external"], enabling a
   better interaction with GitHub.
+- 2025-02-23: The repository was uploaded to 
+  https://hg.sr.ht/~programandala_net/nuclear_waste_invaders[SourceHut].
 
 // end::en[]
 
-== Español
+// Español {{{1
+== [[es]]Español
 
 // tag::es[]
 
+// Proyecto {{{2
 === Proyecto
 
 _Nuclear Waste Invaders_ (Invasores de residuos nucleares) es una
@@ -87,15 +99,17 @@ reinterpretación en desarrollo para ZX Spectrum 128, del
 http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders,
 role="external"] (Dancresp, 2013) de la computadora Jupiter Ace.
 
-Está escrito en
-http://standard-forth.org[Forth,role="external"] con
+Está escrito en http://standard-forth.org[Forth, role="external"] con
 http://programandala.net/en.program.solo_forth.html[Solo Forth]
-(http://github.com/programandala-net/solo-forth[Solo Forth en
-GitHub,role="external"]).
+(https://hg.sr.ht/~programandala_net/solo_forth[Solo Forth en
+SourceHut, role="external"];
+http://github.com/programandala-net/solo-forth[réplica de Solo Forth
+en GitHub, role="external"]).
 
 Página en la red:
 http://programandala.net/es.programa.nuclear_waste_invaders.html.
 
+// Cómo compilar y arrancar {{{2
 === Cómo compilar y arrancar
 
 Si no puedes esperar a la salida de la primera versión pública, puedes
@@ -127,22 +141,27 @@ construir el programa tú mismo:
   formato SZX usando tu emulador.
 . Escribe `run` en Forth para empezar el juego.
 
+// Historia del repositorio {{{2
 === Historia del repositorio
 
 - 2020-12-05: El repositorio de Git fue convertido a
-  https://fossil-scm.org[Fossil,role="external"], dejando
+  https://fossil-scm.org[Fossil, role="external"], dejando
   http://github/programandala-net/nuclear-waste-invaders[GitHub como
-  réplica,role="external"].
+  réplica, role="external"].
 - 2023-04-05: El repositorio fue convertido a
-  https://mercurial-scm.org[Mercurial,role="external"], posibilitando
+  https://mercurial-scm.org[Mercurial, role="external"], posibilitando
   una mejor interacción con GitHub.
+- 2025-02-23: El repositorio fue subido a
+  https://hg.sr.ht/~programandala_net/nuclear_waste_invaders[SourceHut].
 
 // end::es[]
 
-== Esperanto
+// Esperanto {{{1
+== [[eo]]Esperanto
 
 // tag::eo[]
 
+// Projekto {{{2
 === Projekto
 
 _Nuclear Waste Invaders_ (Atomrubaĵaj Invadantoj) esta programata
@@ -150,14 +169,17 @@ reinterpreto, por la komputilo ZX Spectrum 128, el
 http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders,
 role="external"] (Dancresp, 2013) de la komputilo Jupiter ACE.
 
-Ĝi estas verkata en http://standard-forth.org[Forth,role="external"]
+Ĝi estas verkata en http://standard-forth.org[Forth, role="external"]
 per http://programandala.net/en.program.solo_forth.html[Solo Forth]
-(http://github.com/programandala-net/solo-forth[Solo Forth en
-GitHub,role="external"]).
+(https://hg.sr.ht/~programandala_net/solo_forth[Solo Forth in
+SourceHut, role="external"];
+http://github.com/programandala-net/solo-forth[kopio de Solo Forth en
+GitHub, role="external"]).
 
 Retpaĝo:
 http://programandala.net/eo.programo.nuclear_waste_invaders.html.
 
+// Kiel kompili kaj funkciigi {{{2
 === Kiel kompili kaj funkciigi
 
 Se vi ne povas atendi li aperon de la unua publika versio, vi mem
@@ -187,22 +209,27 @@ povas konstrui li programon:
   SZX-formata dosiero, uzante vian emulilon.
 . En Fortho tajpu `run` por komenci la ludon.
 
+// Historio de la deponejo {{{2
 === Historio de la deponejo
 
 - 2020-12-05: La Git-deponejo estis konvertita al
-  https://fossil-scm.org[Fossil,role="external"], konservante
+  https://fossil-scm.org[Fossil, role="external"], konservante
   http://github/programandala-net/nuclear-waste-invaders[GitHub kiel
-  kopion,role="external"].
+  kopion, role="external"].
 - 2023-04-05: La deponejo estis konvertita al
-  https://mercurial-scm.org[Mercurial,role="external"], ebligante pli
+  https://mercurial-scm.org[Mercurial, role="external"], ebligante pli
   bonan interagon kun GitHub.
+- 2025-02-23: La deponejo estis alŝutita al
+  https://hg.sr.ht/~programandala_net/nuclear_waste_invaders[SourceHut].
 
 // end::eo[]
 
-== Interlingue
+// Interlingue {{{1
+== [[ie]]Interlingue
 
 // tag::ie[]
 
+// Projecte {{{2
 === Projecte
 
 _Nuclear Waste Invaders_ (Invasores de jetallia nucleari) es un
@@ -210,15 +237,17 @@ reinterpretation, developat por ZX Spectrum 128, del
 http://www.zonadepruebas.com/viewtopic.php?t=4231[Nuclear Invaders,
 role="external"] (Dancresp, 2013) del computator Jupiter ACE.
 
-It es scrit in
-http://standard-forth.org[Forth,role="external"] con
+It es scrit in http://standard-forth.org[Forth, role="external"] per
 http://programandala.net/en.program.solo_forth.html[Solo Forth]
-(http://github.com/programandala-net/solo-forth[Solo Forth in
-GitHub,role="external"]).
+(https://hg.sr.ht/~programandala_net/solo_forth[Solo Forth in
+SourceHut, role="external"];
+http://github.com/programandala-net/solo-forth[copie de Solo Forth in
+GitHub, role="external"]).
 
 Págine web:
 http://programandala.net/ie.programa.nuclear_waste_invaders.html.
 
+// Qualmen compilar e initiar {{{2
 === Qualmen compilar e initiar
 
 Si vu ne posse atender li aparition del prim version public, vu self
@@ -248,15 +277,17 @@ posse constructer li programma:
   formate SZX usante vor emulator.
 . In Forth comanda `run` por comensar li lude.
 
+// Historie del depositoria {{{2
 === Historie del depositoria
 
 - 2020-12-05: Li depositoria de Git esset convertet a
-  https://fossil-scm.org[Fossil,role="external"], conservante
+  https://fossil-scm.org[Fossil, role="external"], conservante
   http://github/programandala-net/nuclear-waste-invaders[GitHub quam
-  un copie,role="external"].
+  un copie, role="external"].
 - 2023-04-05: Li depositoria esset convertet a
-  https://mercurial-scm.org[Mercurial,role="external"], possibilisante
-  un melior interaction con GitHub.
+  https://mercurial-scm.org[Mercurial, role="external"],
+  possibilisante un melior interaction con GitHub.
+- 2025-02-23: Li depositoria esset cargat in
+  https://hg.sr.ht/~programandala_net/nuclear_waste_invaders[SourceHut].
 
 // end::ie[]
-
